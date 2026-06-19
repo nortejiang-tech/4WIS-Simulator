@@ -1,0 +1,39 @@
+project:
+  name: delivery_robot
+  description: "低速全向配送机器人 — 大转向角，适合验证蟹行与零半径"
+
+vehicle:
+  model: kinematic
+  wheelbase: 1.200
+  track_front: 0.900
+  track_rear: 0.900
+  mass: 250.0
+  inertia_z: 80.0
+  cg_to_front: 0.600
+  tire_radius: 0.180
+  steer_limit: 1.5708          # ±90° — 满足蟹行 90° 与零半径
+  v_max: 4.0                   # 4 m/s ≈ 14 km/h
+
+suspension:
+  caster_angle: 0.0
+  kingpin_inclination: 0.0
+  camber: 0.0
+  scrub_radius: 0.010
+
+controller:
+  type: crab
+  params: {}
+
+scene:
+  surface: flat
+  disturbances: []
+
+recording:
+  enabled: true
+  channels:
+    - vx
+    - vy
+    - yaw_rate
+    - wheel_angles
+    - wheel_torques
+    - icr_position

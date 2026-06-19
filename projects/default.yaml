@@ -1,0 +1,76 @@
+# 4WIS Simulator — default project file (Phase 1 schema preview)
+# This is a non-binding example used for documentation. The real pydantic
+# schema is defined in backend/src/sim4wis/project/schema.py (Step 5).
+
+project:
+  name: "default"
+  description: "默认车辆 = 智己 LS9（IM LS9，全尺寸 4WIS SUV）。公开规格用实测，未公开项为工程估算。"
+
+# Vehicle geometry (SI units in YAML: m, kg, rad, s, N, N·m)
+# 标定到智己 LS9；详见 backend/src/sim4wis/core/state.py 的来源说明。
+vehicle:
+  model: kinematic        # 默认运动学模型（几何最干净、跑得快）
+  wheelbase: 3.160        # 轴距 L（LS9 ≈3160 mm）
+  track_front: 1.565172   # 前主销距/等效轮距（LS9 转向几何表 b=1565.172 mm）
+  track_rear: 1.565172    # 后主销距/等效轮距（按前轴几何对称估算）
+  mass: 2900.0            # 整备质量（LS9 ≈2.9 t）
+  inertia_z: 7500.0       # 绕 Z 轴横摆转动惯量（估算 ≈ m·a·b）
+  cg_to_front: 1.550      # 质心到前轴距离（估算，略偏前）
+  cg_height: 0.620        # 质心高度（估算，大型 SUV）
+  tire_radius: 0.395      # 轮胎滚动半径（285/45 R21 ≈0.395）
+  tire_width: 0.265       # 轮胎名义宽度
+  contact_patch_radius: 0.110  # 等效接地印迹扭转半径
+  steer_limit: 0.6109     # ±35° → 0.6109 rad，每个车轮的最大转角
+  v_max: 55.6             # 最大车速 [m/s]（≈200 km/h 顶速）
+  wheel_inertia: 2.5      # 单轮转动惯量（估算，21" 轮）
+  motor_torque_max: 3000.0  # 单轮电机扭矩上限（估算）
+  steering_arm_length: 0.146451  # 梯形臂长 r（146.451 mm）
+  pinion_radius: 0.020
+  tie_rod_angle_deg: 6.67
+  rack_mech_efficiency: 0.92
+  motor_gear_ratio: 10.0
+
+# Suspension parameters（标定到 LS9；角度为工程估算）
+suspension:
+  caster_angle: 0.1047    # 主销后倾角 ≈6°
+  kingpin_inclination: 0.2094  # 主销内倾角 ≈12°
+  camber: -0.0131         # 外倾角 ≈-0.75°
+  scrub_radius: 0.015     # 主销偏置量
+
+steering_geometry:
+  # 由用户提供 LS9 转向几何表反推：a=840 mm, b=1565.172 mm,
+  # r=146.451 mm, h=176.324 mm, θ=85.361°。内部仍用 m 保存。
+  front_outer_x: -0.145971235
+  front_outer_y: -0.011844575
+  front_inner_x: -0.176324
+  front_inner_y: -0.362586
+  front_rack_axis_deg: 90.0
+  front_rack_travel_limit: 0.085
+  rear_outer_x: 0.145971235
+  rear_outer_y: -0.011844575
+  rear_inner_x: 0.176324
+  rear_inner_y: -0.362586
+  rear_rack_axis_deg: 90.0
+  rear_rack_travel_limit: 0.085
+
+# Controller selection
+controller:
+  type: ideal_ackermann
+  params:
+    # type-specific parameters (filled by each strategy's schema in Step 2)
+
+# Scene / disturbances (Phase 2)
+scene:
+  surface: flat
+  disturbances: []
+
+# Recording
+recording:
+  enabled: true
+  channels:
+    - vx
+    - vy
+    - yaw_rate
+    - wheel_angles
+    - wheel_torques
+    - icr_position

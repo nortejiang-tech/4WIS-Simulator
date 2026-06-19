@@ -1,0 +1,61 @@
+project:
+  name: bumpy_road
+  description: "减速带 + 斜坡综合场景 — 需要动力学模型才有意义"
+
+vehicle:
+  model: simplified_dynamic
+  wheelbase: 2.800
+  track_front: 1.560
+  track_rear: 1.560
+  mass: 1800.0
+  inertia_z: 2800.0
+  cg_to_front: 1.350
+  cg_height: 0.55
+  tire_radius: 0.330
+  steer_limit: 0.6109
+  v_max: 20.0
+  wheel_inertia: 1.2
+  motor_torque_max: 2000.0
+  bump_steer_coeff: 2.5    # 过减速带时车轮按垂向行程产生 toe 扰动（rad/m），制造可见的"跳一下"
+
+suspension:
+  caster_angle: 0.0436
+  kingpin_inclination: 0.1396
+  camber: -0.0175
+  scrub_radius: 0.025
+
+controller:
+  type: ideal_ackermann
+  params: {}
+
+scene:
+  surface: flat
+  base_mu: 0.9
+  disturbances:
+    - type: speed_bump
+      id: bump1
+      x: 25.0
+      y: 0.0
+      width: 6.0
+      length: 0.5
+      height: 0.05         # 5 cm 高
+      stiffness: 1.0e5     # 峰值 fz ≈ 5 kN（约一个静载）；过大会致积分器发散
+    - type: slope
+      id: ramp_up
+      x: 60.0
+      y: 0.0
+      width: 8.0
+      length: 15.0
+      angle: 0.0873        # 5° 上坡 (~8.7% grade)
+      heading: 0.0
+    - type: split_mu
+      id: split_after_ramp
+      x: 90.0
+      y: 0.0
+      width: 6.0
+      length: 20.0
+      mu_left: 0.9
+      mu_right: 0.3
+
+recording:
+  enabled: true

@@ -1,0 +1,66 @@
+project:
+  name: multibody_demo
+  description: "多体动力学演示（步19）— 智己 LS9，含侧倾/俯仰/悬架跳动，过减速带 + 对开 + 减速带"
+
+vehicle:
+  model: multibody              # ← 14 DOF 研究/回归模型；主线工程模型仍是 simplified_dynamic
+  wheelbase: 3.160
+  track_front: 1.720
+  track_rear: 1.720
+  mass: 2900.0
+  inertia_z: 7500.0
+  cg_to_front: 1.550
+  cg_height: 0.620
+  tire_radius: 0.395
+  steer_limit: 0.6109
+  v_max: 55.6
+  wheel_inertia: 2.5
+  motor_torque_max: 3000.0
+  bump_steer_coeff: 3.0         # 悬架行程→前束（rad/m），过坎可见 bump-steer
+  unsprung_mass: 55.0
+  tire_vertical_stiffness: 280000.0
+
+suspension:
+  caster_angle: 0.1047
+  kingpin_inclination: 0.2094
+  camber: -0.0131
+  scrub_radius: 0.015
+  spring_rate: 70000.0          # 单角弹簧刚度 [N/m]
+  damper_rate: 4000.0           # 单角阻尼 [N·s/m]
+  anti_roll_rate: 30000.0       # 防倾杆等效横摆刚度 [N·m/rad]
+
+controller:
+  type: ideal_ackermann
+  params: {}
+
+scene:
+  surface: flat
+  base_mu: 0.9
+  disturbances:
+    - type: speed_bump
+      id: bump1
+      x: 30.0
+      y: 0.0
+      width: 6.0
+      length: 0.6
+      height: 0.06
+      stiffness: 1.0e5
+    - type: split_mu
+      id: split1
+      x: 60.0
+      y: 0.0
+      width: 6.0
+      length: 25.0
+      mu_left: 0.9
+      mu_right: 0.35
+
+recording:
+  enabled: true
+  channels:
+    - vx
+    - vy
+    - yaw_rate
+    - fz_fl
+    - fz_fr
+    - fz_rl
+    - fz_rr

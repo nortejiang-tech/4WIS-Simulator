@@ -1,0 +1,147 @@
+// Shared TypeScript types — must match what the backend sends/receives over WS.
+
+export interface WheelState {
+  delta: number;          // actual steer angle [rad]
+  delta_cmd: number;      // commanded steer angle [rad]
+  omega: number;          // wheel spin angular velocity [rad/s]
+  fz: number;             // vertical load [N]
+  torque_steer: number;   // steering resistance torque [N·m]
+  mu?: number;            // effective surface μ at this wheel
+  susp_defl?: number;     // suspension compression vs static [m] (multibody)
+  pos_body: [number, number]; // wheel position in body frame [m]
+  // Per-wheel steering centre: vehicle ICR projected onto this wheel's
+  // perpendicular line (body frame), and the signed deviation [m].
+  icr_body?: [number | null, number | null];
+  icr_dev?: number | null;
+  // Split-rack force chain (分体齿条力链)
+  rack_force?: number;           // rack axial force [N]
+  motor_torque_demand?: number;  // motor shaft torque demand [N·m]
+  linkage_arm_tie_angle?: number | null; // steering arm vs tie rod [rad]
+  linkage_tie_rack_angle?: number | null; // tie rod vs rack axis [rad]
+  linkage_efficiency?: number;   // combined hardpoint/rack efficiency [-]
+  tire_fx?: number;              // tyre force in wheel frame [N]
+  tire_fy?: number;              // tyre force in wheel frame [N]
+  side_force_body_y?: number;    // lateral force in body-Y [N]
+  force_source?: string;         // tire_model | kinematic_estimate
+  // Tyre slip diagnostics (dynamic models only; 0 for kinematic)
+  slip_alpha?: number;           // side-slip angle α [rad]
+  slip_kappa?: number;           // longitudinal slip ratio κ [-]
+}
+
+export interface Pose { x: number; y: number; psi: number }
+export interface Attitude { z: number; roll: number; pitch: number }
+export interface Velocity { vx: number; vy: number; yaw_rate: number }
+export interface SideForceSummary {
+  left: number;
+  right: number;
+  total: number;
+  source: string;
+}
+
+export interface DriverEcho {
+  throttle: number;
+  steering: number;
+  handbrake: number;
+  mode_params: Record<string, unknown>;
+}
+
+export interface VehicleParamsLite {
+  wheelbase: number;
+  track_front: number;
+  track_rear: number;
+  tire_radius: number;
+  steer_limit: number;
+  v_max: number;
+}
+
+export interface DisturbanceBase {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  width: number;
+  length: number;
+  heading: number;
+}
+export interface IcePatchD extends DisturbanceBase {
+  type: "ice_patch";
+  mu: number;   // absolute μ inside the patch
+}
+export interface SplitMuD extends DisturbanceBase {
+  type: "split_mu";
+  mu_left: number;
+  mu_right: number;
+}
+export interface SpeedBumpD extends DisturbanceBase {
+  type: "speed_bump";
+  height: number;
+  stiffness: number;
+}
+export interface SlopeD extends DisturbanceBase {
+  type: "slope";
+  angle: number;
+}
+export type DisturbanceMsg = IcePatchD | SplitMuD | SpeedBumpD | SlopeD;
+
+export interface SceneSnapshot {
+  base_mu: number;
+  surface: string;
+  disturbances: DisturbanceMsg[];
+}
+
+export interface SimStateMessage {
+  type: "state";
+  t: number;             // simulation time [s]
+  wall: number;          // server wall-clock at emission
+  strategy: string;
+  driver: DriverEcho;
+  pose: Pose;
+  attitude?: Attitude;   // z/roll/pitch — nonzero only for the multibody model
+  velocity: Velocity;
+  wheels: WheelState[];  // length 4 — FL, FR, RL, RR
+  side_force_summary?: SideForceSummary;
+  icr_vehicle_body: [number | null, number | null];
+  icr_target_body: [number | null, number | null];
+  params: VehicleParamsLite;
+  scene: SceneSnapshot | null;
+  model_type?: string;   // "kinematic" | "simplified_dynamic" | "multibody"
+  path_version?: number; // bumps when the reference path changes
+  scenario_version?: number; // bumps when the active scenario changes
+  fault_active?: boolean; // true when at least one fault is active
+}
+
+// Reference path (fetched from REST when path_version changes)
+export interface PathPlan {
+  name: string;
+  closed: boolean;
+  points: [number, number][];  // world frame
+  cones: [number, number][];   // ground markers
+}
+
+// Static driving scenario (fetched from REST when scenario_version changes)
+export interface ScenarioSurface { points: [number, number][]; color: string; kind: string }
+export interface ScenarioLine { points: [number, number][]; color: string; width: number; dash: boolean }
+export interface ScenarioMarker { type: string; x: number; y: number; heading: number; meta: Record<string, unknown> }
+export interface Scenario {
+  name: string;
+  label: string;
+  surfaces: ScenarioSurface[];
+  lines: ScenarioLine[];
+  markers: ScenarioMarker[];
+  spawn: [number, number, number];
+}
+
+// Client → Server messages
+export interface DriverMsg {
+  type: "driver";
+  throttle?: number;
+  steering?: number;
+  handbrake?: number;
+  mode_params?: Record<string, unknown>;
+}
+export interface StrategyMsg { type: "strategy"; name: string }
+export interface ResetMsg { type: "reset" }
+export type ClientMessage = DriverMsg | StrategyMsg | ResetMsg;
+
+export const WHEEL_LABELS = ["FL", "FR", "RL", "RR"] as const;
+export type WheelLabel = typeof WHEEL_LABELS[number];

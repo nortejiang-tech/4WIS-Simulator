@@ -1,0 +1,14 @@
+script:
+  name: crab_park
+  description: "蟹行入位 — 直行加速、切蟹行右移、停下"
+  loop: false
+  # 加载脚本时铺设停车位桩作为视觉/手动参考
+  path_template: { name: parking, params: {} }
+  actions:
+    - { t: 0.0,  action: set_strategy, name: ideal_ackermann }
+    - { t: 0.0,  action: drive,        throttle: 0.4, steering: 0.0 }
+    - { t: 3.0,  action: brake,        duration: 1.5 }
+    - { t: 4.5,  action: set_strategy, name: crab }
+    - { t: 4.5,  action: drive,        throttle: 0.3, steering: -0.8 }
+    - { t: 6.5,  action: brake,        duration: 1.0 }
+    - { t: 7.5,  action: stop }

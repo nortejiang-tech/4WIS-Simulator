@@ -1,0 +1,14 @@
+script:
+  name: double_lane_change
+  description: "ISO 3888-2 双移线（简化版） — 验证瞬态转向"
+  loop: false
+  # 加载脚本时铺设双移线门桩作为视觉/手动参考
+  path_template: { name: double_lane_change, params: {} }
+  actions:
+    - { t: 0.0,  action: set_strategy, name: ideal_ackermann }
+    - { t: 0.0,  action: drive,        throttle: 0.65, steering: 0.0 }
+    - { t: 2.5,  action: steer_ramp,   from_: 0.0,  to: +0.55, duration: 0.4 }
+    - { t: 2.9,  action: steer_ramp,   from_: +0.55, to: -0.55, duration: 0.8 }
+    - { t: 3.7,  action: steer_ramp,   from_: -0.55, to: +0.3,  duration: 0.6 }
+    - { t: 4.3,  action: steer_ramp,   from_: +0.3,  to: 0.0,   duration: 0.5 }
+    - { t: 6.0,  action: brake,        duration: 3.0 }

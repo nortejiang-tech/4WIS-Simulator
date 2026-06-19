@@ -1,0 +1,9 @@
+script:
+  name: spin_demo
+  description: "零半径转向演示 — 原地旋转 720°"
+  loop: false
+  actions:
+    - { t: 0.0,  action: set_strategy, name: zero_radius }
+    - { t: 0.0,  action: drive,        throttle: 0.4, steering: +1.0 }
+    - { t: 6.5,  action: drive,        throttle: 0.0, steering: 0.0 }
+    - { t: 7.0,  action: stop }

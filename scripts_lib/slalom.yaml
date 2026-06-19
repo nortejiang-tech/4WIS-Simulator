@@ -1,0 +1,15 @@
+script:
+  name: slalom_3m
+  description: "3 m 间距小幅 slalom — 验证 4WIS 横摆响应"
+  loop: false
+  # 加载脚本时铺设对应桩阵作为视觉/手动参考
+  path_template: { name: slalom, params: { n_gates: 6, spacing: 18.0, offset: 2.5 } }
+  actions:
+    - { t: 0.0,  action: set_strategy, name: ideal_ackermann }
+    - { t: 0.0,  action: drive,        throttle: 0.5, steering: 0.0 }
+    - { t: 2.0,  action: steer_ramp,   from_: 0.0,  to: +0.4, duration: 0.4 }
+    - { t: 3.0,  action: steer_ramp,   from_: +0.4, to: -0.4, duration: 0.4 }
+    - { t: 4.0,  action: steer_ramp,   from_: -0.4, to: +0.4, duration: 0.4 }
+    - { t: 5.0,  action: steer_ramp,   from_: +0.4, to: -0.4, duration: 0.4 }
+    - { t: 6.0,  action: steer_ramp,   from_: -0.4, to: 0.0,  duration: 0.4 }
+    - { t: 8.0,  action: brake,        duration: 2.0 }

@@ -1,0 +1,61 @@
+project:
+  name: dynamic_demo
+  description: "动力学模型演示 — 含载荷转移、轮胎滑移、对开扰动"
+
+vehicle:
+  model: simplified_dynamic         # ← 切到动力学模型
+  wheelbase: 2.800
+  track_front: 1.560
+  track_rear: 1.560
+  mass: 1800.0
+  inertia_z: 2800.0
+  cg_to_front: 1.350
+  cg_height: 0.55
+  tire_radius: 0.330
+  steer_limit: 0.6109
+  v_max: 20.0
+  wheel_inertia: 1.2
+  motor_torque_max: 2000.0
+
+suspension:
+  caster_angle: 0.0436              # 2.5°
+  kingpin_inclination: 0.1396       # 8°
+  camber: -0.0175                   # -1°
+  scrub_radius: 0.025
+
+controller:
+  type: ideal_ackermann
+  params: {}
+
+scene:
+  surface: flat
+  base_mu: 0.9
+  disturbances:
+    - type: split_mu
+      id: split_demo
+      x: 40.0
+      y: 0.0
+      width: 6.0
+      length: 25.0
+      mu_left: 0.9
+      mu_right: 0.3
+      heading: 0.0
+
+recording:
+  enabled: true
+  channels:
+    - vx
+    - vy
+    - yaw_rate
+    - delta_fl
+    - delta_fr
+    - delta_rl
+    - delta_rr
+    - torque_steer_fl
+    - torque_steer_fr
+    - torque_steer_rl
+    - torque_steer_rr
+    - fz_fl
+    - fz_fr
+    - fz_rl
+    - fz_rr

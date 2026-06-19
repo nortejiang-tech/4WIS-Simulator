@@ -1,0 +1,39 @@
+project:
+  name: compact_ev
+  description: "紧凑型 4WIS 电动车 — 短轴距、轻车身，适合验证理想阿克曼"
+
+vehicle:
+  model: kinematic
+  wheelbase: 2.500
+  track_front: 1.500
+  track_rear: 1.500
+  mass: 1400.0
+  inertia_z: 2000.0
+  cg_to_front: 1.200
+  tire_radius: 0.300
+  steer_limit: 0.7854          # ±45° — 比常规车更大的转向范围
+  v_max: 16.0
+
+suspension:
+  caster_angle: 0.0436         # 2.5°
+  kingpin_inclination: 0.1396  # 8°
+  camber: -0.0175              # -1°
+  scrub_radius: 0.025
+
+controller:
+  type: ideal_ackermann
+  params: {}
+
+scene:
+  surface: flat
+  disturbances: []
+
+recording:
+  enabled: true
+  channels:
+    - vx
+    - vy
+    - yaw_rate
+    - wheel_angles
+    - wheel_torques
+    - icr_position
