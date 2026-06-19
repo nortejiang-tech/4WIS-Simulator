@@ -46,7 +46,7 @@ import numpy as np
 from sim4wis.core.state import SuspensionParams
 
 
-def kingpin_torque(
+def kingpin_torque_terms(
     fx: np.ndarray,         # (4,) tyre Fx in wheel-aligned frame [N]
     fy: np.ndarray,         # (4,) tyre Fy in wheel-aligned frame [N]
     mz: np.ndarray,         # (4,) tyre self-aligning torque [N·m]
@@ -56,8 +56,18 @@ def kingpin_torque(
     delta: np.ndarray | None = None,  # (4,) actual steer angles [rad]
     tire_radius: float = 0.33,
     t_pneumatic_extra: float = 0.0,   # extra mechanical trail (cumulative)
-) -> np.ndarray:
-    """Compute per-wheel kingpin moment (4,)."""
+) -> dict[str, np.ndarray]:
+    """Per-wheel kingpin moment broken into its four physical contributions.
+
+    Single source of truth for both ``kingpin_torque`` (which sums these) and
+    the model-doc page's term-decomposition demo.
+
+    Returns dict of length-4 arrays:
+        m_fy  — lateral force × (scrub + mechanical + pneumatic trail)
+        m_fx  — longitudinal force × scrub radius
+        m_mz  — tyre self-aligning torque (pass-through)
+        m_kpi — kingpin-inclination jacking, ∝ sin(δ)
+    """
     scrub = suspension.scrub_radius
     caster = suspension.caster_angle
     kpi = suspension.kingpin_inclination
@@ -73,10 +83,34 @@ def kingpin_torque(
     m_from_fx = fx * scrub
 
     # 3) Tyre self-aligning torque (pneumatic trail effect; pass through).
-    m_from_mz = mz
+    m_from_mz = np.asarray(mz, dtype=np.float64)
 
     # 4) Kingpin-inclination jacking — the wheel "lifts the car" as it turns,
     #    so the restoring moment grows with sin(δ) (≈0 straight-ahead).
     m_from_kpi = fz * math.sin(kpi) * scrub * np.sin(delta)
 
-    return m_from_fy + m_from_fx + m_from_mz + m_from_kpi
+    return {
+        "m_fy": m_from_fy,
+        "m_fx": m_from_fx,
+        "m_mz": m_from_mz,
+        "m_kpi": m_from_kpi,
+    }
+
+
+def kingpin_torque(
+    fx: np.ndarray,         # (4,) tyre Fx in wheel-aligned frame [N]
+    fy: np.ndarray,         # (4,) tyre Fy in wheel-aligned frame [N]
+    mz: np.ndarray,         # (4,) tyre self-aligning torque [N·m]
+    fz: np.ndarray,         # (4,) tyre vertical load [N]
+    suspension: SuspensionParams,
+    *,
+    delta: np.ndarray | None = None,  # (4,) actual steer angles [rad]
+    tire_radius: float = 0.33,
+    t_pneumatic_extra: float = 0.0,   # extra mechanical trail (cumulative)
+) -> np.ndarray:
+    """Compute per-wheel kingpin moment (4,) — sum of the four physical terms."""
+    terms = kingpin_torque_terms(
+        fx, fy, mz, fz, suspension,
+        delta=delta, tire_radius=tire_radius, t_pneumatic_extra=t_pneumatic_extra,
+    )
+    return terms["m_fy"] + terms["m_fx"] + terms["m_mz"] + terms["m_kpi"]

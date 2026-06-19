@@ -12,6 +12,7 @@ from sim4wis.api.routers import (
     fault,
     load_analysis,
     meta,
+    model_demo,
     params,
     path,
     projects,
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/api", tags=["api"])
 router.include_router(meta.router)
 router.include_router(fault.router)
 router.include_router(load_analysis.router)
+router.include_router(model_demo.router)
 router.include_router(params.router)
 router.include_router(scene.router)
 router.include_router(scenario.router)
