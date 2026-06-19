@@ -2,6 +2,76 @@
 
 本项目版本约定：阶段即次版本（Phase 1 = 0.1，Phase 2 = 0.2，Phase 3 = 0.3，改进轮 = 0.4 起）。
 
+## 0.8.0 — 2026-06-20（统一底座 · bicycle 耦合 · 模型讲解页）
+
+### 背景
+
+v0.7.3 给负载页加完物理项后，做了一次完整的底盘动力学 review，发现两个根本性问题：
+(a) **物理散落**——同一份物理（轮胎力、kingpin 力矩、载荷转移、bicycle 耦合）在
+时域 3 个模型 + 准静态负载页 + 控制器里各写一遍，会漂；
+(b) **单轮 sweep 用 α = −δ 把速度约掉了**，看不到高速线性区收缩、斜率随 v² 增长的关键 4WIS 行为。
+本版同时解决：把底座统一到 `model_core`，把 α 升级为真实的 bicycle 耦合，并新建一个由浅入深的数学模型讲解页。
+
+### 新增 (Added)
+
+- **统一物理底座** `vehicle/model_core.py`：唯一共享数学层（轮心速度合成、轮坐标变换、
+  滑移角/滑移率、稳态 bicycle 解 `solve_steady_state_body`、载荷敏感刚度
+  `load_sensitive_cornering_stiffness`、气动升力、对齐、parking）。**不依赖** simulator/
+  controller/API/前端，被 `load_analysis` / `dynamic` / `multibody` 共用。
+- **统一轮胎力内核** `tire.pacejka_combined_forces`：唯一的 Pacejka pure-slip + friction
+  ellipse 实现，准静态和时域共用。
+- **kingpin 力矩四项分解** `kingpin.kingpin_torque_terms`：原 `kingpin_torque` 改为求和，
+  保证单一来源；让讲解页能展示 Fy·拖距 / Fx·偏置 / Mz / KPI 各项随 δ 的贡献。
+- **模型注册中心** `vehicle/model_registry.py`：把模型收敛为 primary 两层（运动学/动力学）
+  + research 层（多体 14DOF 保留作回归参考）。新增 `/api/meta/model` 暴露注册信息。
+- **稳态 bicycle 耦合（W1，关键物理升级）**：单轮 sweep 不再假设车身锁直行。
+  对每个 (速度, δ) 解 2×2 bicycle 方程 (β, r) → 反推每轮真实 α。对 LS9 对称底盘：
+  `α_FL ≈ -δ·(1/2 + mV²/(8 C_α L))`，斜率随 v² 增长，饱和发生点随车速收缩——
+  这是 4WIS 工程师的常识，台架口径模型把它藏起来了。
+- **轮胎载荷敏感刚度 (U2/M1)**：`c_α(F_z) = c_α0·(F_z/F_z,nom)^p`，p 默认 0.8。
+  高速气动升力降 F_z → 线性区斜率也跟着软化，不是定值。
+- **数学模型讲解页**（新顶栏 Tab「数学模型」）：
+  - 单流逐步加深，10 章 + 附录，每章三段式：直觉（白话，给 PM/领导）→ 关键公式（KaTeX）→
+    可展开的推导（教科书级，工程师可引用）；
+  - 9 张教学 SVG（车-轴-轮层次、坐标系、滑移角、轮胎曲线、摩擦椭圆、载荷转移、
+    主销侧/俯视、bicycle 模型、齿条机构、力链路）；
+  - 3 个交互演示（拖滑块实时调后端真模型）：
+    bicycle 滑移增益 vs 车速、轮胎 Fy-α vs Fz/μ、主销力矩四项分解 vs δ；
+  - 内容数据抽到 `frontend/src/components/model/modelChapters.tsx`，
+    SVG 在 `diagrams.tsx`，交互演示在 `demos.tsx`，主页面只做编排。
+- **只读教学端点** `POST /api/model/demo/{bicycle-gain,tire-curve,kingpin-breakdown}`：
+  讲解页交互直接复用真底座（`model_core` / `tire` / `kingpin` / `load_analysis`），
+  不在前端重算公式。
+
+### 修复 (Fixed / 物理修正)
+
+- **U1 删除几何站不住的 caster 交叉项**：`kingpin_torque` 里 `−Fx · trail · sin(δ)` 是
+  Fx ∥ trail 的叉乘=0，不是真物理项。已删除并加 Reimpell 等效力臂的注释说明。
+- **U3 Pacejka 死代码**：v0.7.3 切到 Pacejka 后却把结果扔掉，主图仍是线性硬剪。
+  现在改成等效滑移法 (`α_eq = α − C_γ γ F_z / c_α`、`κ_eq = F_x_drive / c_κ`)
+  一次 Pacejka pure-slip + friction ellipse 成型，主图蓝线终于平滑饱和。
+- **气动升力默认值** `aero_lift_coeff_front/rear` 提到 0.30/0.15，让车速依赖在 UI 上明显。
+
+### 变更 (Changed / 工程边界与解耦)
+
+- **控制器、API、前端不持有物理**：控制器只输出 δ/ω；API router 只做请求/响应适配；
+  前端图表只消费后端结果。讲解页第 10 章把这些边界写明。
+- **参数瘦身**（中度）：分核心 / 高级两组（`frontend/src/vehicle/parameterGroups.ts`），
+  讲解页附录列两组对比。
+- **CSS 扩展** `model-*` 系列：章节卡、KaTeX 容器、教学 SVG 配色、交互演示卡。
+
+### 测试 (Tests)
+
+- 后端测试 144 → 161 passed：U1 caster 删项、U2 载荷敏感斜率、U3 Pacejka 平滑肩部、
+  W1 bicycle 增益随车速、W1 饱和点收缩、3 个 model_demo 端点 sanity + round-trip。
+- smoke 32/32 passed。
+
+### 内部 (Internal)
+
+- 全部 squash 到 baseline commit；本版按 plan 拆为 2 个 commit 推 `main`：
+  ①教学端点 + kingpin 分项 helper + 测试（后端）、②讲解页重做（前端）。
+- 仓库：`nortejiang-tech/4WIS-Simulator`。
+
 ## 0.7.3 — 2026-06-18（负载特性页：物理补完 · δ_eq 敏感度 · 组件拆分）
 
 ### 背景
