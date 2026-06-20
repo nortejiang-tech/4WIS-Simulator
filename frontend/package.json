@@ -1,7 +1,7 @@
 {
   "name": "sim4wis-frontend",
   "private": true,
-  "version": "0.8.1",
+  "version": "0.8.2",
   "type": "module",
   "description": "4WIS Simulator — web frontend",
   "scripts": {

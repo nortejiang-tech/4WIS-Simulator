@@ -77,16 +77,66 @@ html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden }
 .page-tabs button.active {
   color: #fff;
   background: var(--accent);
+  box-shadow: 0 1px 6px rgba(59, 130, 246, .45);
 }
 .page-tabs button:hover:not(.active) { color: var(--text) }
-.app-header .header-strategy {
-  margin-left: 10px;
-  color: var(--muted);
-  font-weight: 400;
-  font-size: 13px;
-}
-.app-header .theme-toggle {
+/* Current-state summary cluster (pushed to the right of the header). */
+.app-header .header-summary {
   margin-left: auto;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.app-header .hs-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 3px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  line-height: 1.2;
+}
+.app-header .hs-k {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.app-header .hs-v {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-header .hs-v i {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: 3px;
+}
+.app-header .quickstart-reopen {
+  margin-left: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.app-header .quickstart-reopen:hover { border-color: var(--accent); background: rgba(96,165,250,.12); }
+.app-header .theme-toggle {
+  margin-left: 10px;
   background: var(--bg-2);
   border: 1px solid var(--border);
   color: var(--text);
@@ -121,6 +171,79 @@ html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden }
   width: 100%;
   height: 100%;
 }
+/* First-visit onboarding card, floats over the viewport (top-left). */
+.quickstart-card {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 20;
+  width: min(340px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .38);
+}
+.quickstart-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 11px 12px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.quickstart-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.quickstart-sub { font-size: 11px; color: var(--muted); }
+.quickstart-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.quickstart-close:hover { color: var(--text); }
+.quickstart-steps {
+  list-style: none;
+  margin: 0;
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.quickstart-step { display: flex; gap: 10px; align-items: flex-start; }
+.quickstart-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.quickstart-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.quickstart-step-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.quickstart-step-desc { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.quickstart-jump {
+  align-self: flex-start;
+  margin-top: 2px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.quickstart-jump:hover { border-color: var(--accent); background: rgba(96, 165, 250, .1); }
 .view-switch {
   position: absolute;
   top: 12px;
@@ -253,6 +376,8 @@ html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden }
   color: var(--accent, #58a6ff);
   border-bottom-color: var(--accent, #58a6ff);
   background: var(--bg-1);
+  font-weight: 700;
+  box-shadow: inset 0 2px 0 var(--accent, #58a6ff);
 }
 /* Scrollable region holding the active group's panels */
 .side-scroll {
@@ -802,6 +927,31 @@ html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden }
   gap: 8px;
   min-width: 0;
 }
+/* Labelled sections (模型选择 / 计算设置 / 输出结果) for clear operation grouping. */
+.load-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.load-section-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.load-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.load-controls .load-section-label {
+  flex-basis: 100%;
+  margin-bottom: 2px;
+}
 .load-toolbar label,
 .load-controls label {
   display: flex;
@@ -1252,6 +1402,12 @@ html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden }
   flex-direction: column;
   gap: 5px;
 }
+/* Decision-critical KPIs (peak rack force, δ_eq) get visual priority. */
+.load-kpi.primary {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(96, 165, 250, .08), transparent);
+}
+.load-kpi.primary b { color: var(--accent); font-size: 20px; }
 .load-kpi span {
   color: var(--muted);
   font-size: 11px;

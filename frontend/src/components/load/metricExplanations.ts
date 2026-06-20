@@ -217,28 +217,6 @@ export const KPI_PEAK_RACK: ExplanationContent = {
   ],
 };
 
-export const KPI_PEAK_MOTOR: ExplanationContent = {
-  title: "峰值电机力矩",
-  sections: [
-    {
-      heading: "含义",
-      body: `<p>整个 sweep 范围内<strong>电机轴扭矩需求的绝对值最大值</strong>。</p>`,
-    },
-    {
-      heading: "怎么算",
-      body: `<p>每个采样点的电机扭矩：</p>
-$$\\tau_{motor} = F_{rack}\\cdot \\frac{r_p}{i}$$
-<p>其中 $r_p$ 是齿轮节圆半径、$i$ 是减速比。然后取绝对值最大：</p>
-$$\\tau_{motor,peak} = \\max |F_{rack}\\cdot r_p / i|$$`,
-    },
-    {
-      heading: "工程价值",
-      body: `<p><strong>直接决定电机额定扭矩</strong>。把这个数 × 工程安全系数 → 电机选型表。
-注意 sizing 一般还要看<strong>峰值时间</strong>（短时过载 vs 持续）和<strong>电流热限</strong>。</p>`,
-    },
-  ],
-};
-
 export const KPI_MIN_EFF: ExplanationContent = {
   title: "最低几何效率",
   sections: [

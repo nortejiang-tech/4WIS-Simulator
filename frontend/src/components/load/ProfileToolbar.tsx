@@ -21,31 +21,40 @@ export function ProfileToolbar({
   const [saveName, setSaveName] = useState("");
   return (
     <section className="load-toolbar">
-      <div className="load-toolbar-group">
-        <label>车型</label>
-        <select value={selected} onChange={(e) => onSelect(e.target.value)} style={selectStyle}>
-          {profiles.map((p) => <option key={p.name} value={p.name}>{p.label}</option>)}
-        </select>
-        <button onClick={onLoad} disabled={busy}>载入</button>
-        <button onClick={onApply} disabled={busy}>应用到仿真</button>
+      <div className="load-section">
+        <span className="load-section-label">模型选择</span>
+        <div className="load-section-body">
+          <label className="load-field">
+            车型
+            <select value={selected} onChange={(e) => onSelect(e.target.value)} style={selectStyle}>
+              {profiles.map((p) => <option key={p.name} value={p.name}>{p.label}</option>)}
+            </select>
+          </label>
+          <button onClick={onLoad} disabled={busy}>载入</button>
+          <button onClick={onApply} disabled={busy}>应用到仿真</button>
+        </div>
       </div>
-      <div className="load-toolbar-group">
-        <input
-          value={saveName}
-          onChange={(e) => setSaveName(e.target.value)}
-          placeholder="新车型名"
-          style={{ ...inputStyle, width: 150 }}
-        />
-        <button
-          onClick={() => {
-            const name = saveName.trim();
-            if (!name) return;
-            onSave(name);
-            setSaveName("");
-          }}
-          disabled={busy || !saveName.trim()}
-        >保存车型</button>
-        <button onClick={onExport} disabled={rows.length === 0}>导出 CSV</button>
+
+      <div className="load-section">
+        <span className="load-section-label">输出结果</span>
+        <div className="load-section-body">
+          <input
+            value={saveName}
+            onChange={(e) => setSaveName(e.target.value)}
+            placeholder="新车型名"
+            style={{ ...inputStyle, width: 150 }}
+          />
+          <button
+            onClick={() => {
+              const name = saveName.trim();
+              if (!name) return;
+              onSave(name);
+              setSaveName("");
+            }}
+            disabled={busy || !saveName.trim()}
+          >保存车型</button>
+          <button onClick={onExport} disabled={rows.length === 0}>导出 CSV</button>
+        </div>
       </div>
     </section>
   );

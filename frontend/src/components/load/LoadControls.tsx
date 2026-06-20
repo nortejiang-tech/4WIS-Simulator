@@ -36,6 +36,7 @@ export function LoadControls(p: Props) {
   const effectiveProfileSpeedKmh = Math.max(0, Math.min(p.profileSpeedKmh, p.speedMaxKmh));
   return (
     <div className="load-controls">
+      <span className="load-section-label">计算设置</span>
       <label>
         车轮
         <select value={p.wheelIndex} onChange={(e) => p.setWheelIndex(Number(e.target.value))} style={selectStyle}>

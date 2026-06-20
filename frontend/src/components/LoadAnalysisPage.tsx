@@ -295,7 +295,6 @@ export default function LoadAnalysisPage() {
 
           <LoadKpis
             peakRack={summary.peak_abs_rack_force}
-            peakMotor={summary.peak_abs_motor_torque}
             minEfficiency={summary.min_geometry_efficiency}
             maxUtilization={summary.max_friction_utilization}
             profileEquilibrium={profileEquilibrium}

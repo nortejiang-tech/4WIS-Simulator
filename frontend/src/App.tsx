@@ -21,6 +21,7 @@ import ExcitationPanel from "@/components/ExcitationPanel";
 import ScorePanel from "@/components/ScorePanel";
 import LoadAnalysisPage from "@/components/LoadAnalysisPage";
 import ModelTheoryPage from "@/components/ModelTheoryPage";
+import QuickStartCard from "@/components/QuickStartCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Toasts from "@/components/Toasts";
 import { connectSimSocket, fetchPath, fetchScenario } from "@/api/ws";
@@ -46,9 +47,13 @@ function TabGroup({ id, tab, children }: { id: TabId; tab: TabId; children: Reac
   return <div style={{ display: tab === id ? "contents" : "none" }}>{children}</div>;
 }
 
+const QUICKSTART_KEY = "4wis_quickstart_dismissed";
+
 export default function App() {
   const online = useSimStore((s) => s.online);
   const strategy = useSimStore((s) => s.state?.strategy ?? "—");
+  const vx = useSimStore((s) => s.state?.velocity?.vx ?? 0);
+  const vy = useSimStore((s) => s.state?.velocity?.vy ?? 0);
   const setStrategies = useSimStore((s) => s.setStrategies);
   const pathVersion = useSimStore((s) => s.pathVersion);
   const scenarioVersion = useSimStore((s) => s.scenarioVersion);
@@ -56,6 +61,20 @@ export default function App() {
   const setTheme = useSimStore((s) => s.setTheme);
   const [tab, setTab] = useState<TabId>("drive");
   const [page, setPage] = useState<PageId>("sim");
+  const [quickStart, setQuickStart] = useState(
+    () => localStorage.getItem(QUICKSTART_KEY) !== "1",
+  );
+
+  const speedKmh = Math.hypot(vx, vy) * 3.6;
+
+  const dismissQuickStart = () => {
+    setQuickStart(false);
+    try {
+      localStorage.setItem(QUICKSTART_KEY, "1");
+    } catch {
+      /* ignore storage failures (private mode) */
+    }
+  };
 
   // Apply theme to the document root (drives the CSS variables).
   useEffect(() => {
@@ -100,7 +119,26 @@ export default function App() {
             数学模型
           </button>
         </nav>
-        <span className="header-strategy">策略：{strategy}</span>
+        <div className="header-summary" aria-label="当前状态摘要">
+          <span className="hs-item">
+            <span className="hs-k">车速</span>
+            <span className="hs-v">{speedKmh.toFixed(1)}<i>km/h</i></span>
+          </span>
+          <span className="hs-item">
+            <span className="hs-k">策略</span>
+            <span className="hs-v" title={strategy}>{strategy}</span>
+          </span>
+        </div>
+        {page === "sim" && (
+          <button
+            className="quickstart-reopen"
+            onClick={() => setQuickStart(true)}
+            title="重新打开快速开始"
+            aria-label="快速开始"
+          >
+            ?
+          </button>
+        )}
         <button
           className="theme-toggle"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -119,6 +157,13 @@ export default function App() {
             <ErrorBoundary label="视图">
               <Viewport />
             </ErrorBoundary>
+            {quickStart && (
+              <QuickStartCard
+                onClose={dismissQuickStart}
+                onGoTab={(t) => setTab(t as TabId)}
+                onGoPage={(p) => setPage(p as PageId)}
+              />
+            )}
           </section>
 
           <aside className="side-pane">
