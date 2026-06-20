@@ -527,3 +527,118 @@ def test_ws_serialization_contains_side_force_fields() -> None:
     assert "side_force_summary" in msg
     assert "side_force_body_y" in msg["wheels"][0]
     assert "linkage_efficiency" in msg["wheels"][0]
+
+
+# ---------------------------------------------------------------------------
+# v0.8.1: body_coupling toggle (isolated bench vs vehicle-attached)
+# ---------------------------------------------------------------------------
+
+
+def _eq_at(p, v_ms, coupling):
+    angles = [a * math.radians(15) / 30 for a in range(-30, 31)]
+    out = sweep_load_analysis(
+        p, speeds=[v_ms], angles=angles, wheel_index=0,
+        mode="single_wheel", mu=0.85, body_coupling=coupling,
+    )
+    return out["summary"]["per_speed_equilibrium"][0]
+
+
+def test_isolated_mode_delta_eq_almost_speed_independent() -> None:
+    """Y2-1: isolated 模式去掉了 bicycle 耦合，δ_eq 随车速只受
+    aero lift / load-sensitivity 的二阶效应影响，比 vehicle 模式平缓得多。
+    LS9 默认：10→200 km/h 下 isolated |Δδ_eq| 应 < vehicle 的 1/2。
+    """
+    p = VehicleParams()
+    iso_lo = _eq_at(p, 10 / 3.6, "isolated")["delta_eq_deg"]
+    iso_hi = _eq_at(p, 200 / 3.6, "isolated")["delta_eq_deg"]
+    veh_lo = _eq_at(p, 10 / 3.6, "vehicle")["delta_eq_deg"]
+    veh_hi = _eq_at(p, 200 / 3.6, "vehicle")["delta_eq_deg"]
+    iso_swing = abs(iso_lo - iso_hi)
+    veh_swing = abs(veh_lo - veh_hi)
+    assert iso_swing < veh_swing * 0.5
+
+
+def test_isolated_linear_slope_stable_vehicle_slope_grows() -> None:
+    """Y2-2: 小信号线性斜率 dτ/dδ —— isolated 几乎不随车速变
+    （仅 c_α(Fz) 的载荷敏感二阶项），vehicle 随 v² 显著增长。这是两种口径
+    在曲线形状上的根本差异。
+    """
+    p = VehicleParams()
+    # 取 ±0.5° 内的小信号差分
+    angles = [a * math.radians(0.5) / 6 for a in range(-6, 7)]
+
+    def slope(v_ms, coupling):
+        out = sweep_load_analysis(
+            p, speeds=[v_ms], angles=angles, wheel_index=0,
+            mode="single_wheel", mu=0.85, body_coupling=coupling,
+        )
+        rows = sorted(
+            (r for r in out["rows"] if r["wheel_index"] == 0),
+            key=lambda r: r["delta_cmd"],
+        )
+        return (rows[-1]["torque_steer"] - rows[0]["torque_steer"]) / (
+            rows[-1]["delta_cmd"] - rows[0]["delta_cmd"])
+
+    iso_lo, iso_hi = abs(slope(5.0, "isolated")), abs(slope(50.0, "isolated"))
+    veh_lo, veh_hi = abs(slope(5.0, "vehicle")), abs(slope(50.0, "vehicle"))
+    # isolated 高速 vs 低速斜率应在 0.85~1.05（载荷敏感小幅软化，不增长）
+    assert 0.85 < iso_hi / iso_lo < 1.05
+    # vehicle 斜率必须显著增长（≥ 2×）
+    assert veh_hi / veh_lo > 2.0
+
+
+def test_both_modes_zero_delta_eq_with_zero_bias_sources() -> None:
+    """Y2-3: 关掉所有偏置源（toe/camber/drag/lift/parking），两种模式下
+    δ_eq 都必须基本为零——这把"差别只在 α 怎么算"的边界条件钉死。
+    """
+    p = VehicleParams(
+        static_toe_front=0.0, static_toe_rear=0.0,
+        camber_thrust_coeff=0.0,
+        rolling_resistance_coeff=0.0, drag_coeff_cd=0.0,
+        aero_lift_coeff_front=0.0, aero_lift_coeff_rear=0.0,
+        parking_lateral_coeff=0.0, parking_torque_coeff=0.0,
+    )
+    for coupling in ("isolated", "vehicle"):
+        eq = _eq_at(p, 25.0, coupling)
+        assert abs(eq["delta_eq_deg"]) < 0.005, f"{coupling} should give δ_eq≈0"
+
+
+def test_isolated_and_vehicle_match_at_delta_zero() -> None:
+    """Y2-4: 在 δ_cmd=0 处（即 sweep 中点），两种口径产生完全相同的 rack/τ
+    残值——因为 δ=0 时 forcing 为 0，bicycle 解 (β=0, r=0)，两边都得 α=0。
+    """
+    p = VehicleParams()
+    iso = _eq_at(p, 30 / 3.6, "isolated")
+    veh = _eq_at(p, 30 / 3.6, "vehicle")
+    assert math.isclose(iso["rack_at_zero"], veh["rack_at_zero"], rel_tol=1e-6)
+    assert math.isclose(iso["torque_at_zero"], veh["torque_at_zero"], rel_tol=1e-6)
+
+
+def test_sweep_response_carries_body_coupling_field() -> None:
+    """Y2-5: API 契约——返回里要标明用了哪个口径，便于前端反查。"""
+    p = VehicleParams()
+    out_v = sweep_load_analysis(p, speeds=[8.0], angles=[0.0], wheel_index=0,
+                                 mode="single_wheel", mu=0.85, body_coupling="vehicle")
+    out_i = sweep_load_analysis(p, speeds=[8.0], angles=[0.0], wheel_index=0,
+                                 mode="single_wheel", mu=0.85, body_coupling="isolated")
+    assert out_v["body_coupling"] == "vehicle"
+    assert out_i["body_coupling"] == "isolated"
+
+
+def test_sweep_endpoint_accepts_body_coupling() -> None:
+    """Y2-6: REST round-trip."""
+    reset_simulator()
+    with TestClient(app) as client:
+        r = client.post("/api/load-analysis/sweep", json={
+            "speeds": [8.0], "angles": [-0.1, 0, 0.1], "wheel_index": 0,
+            "mode": "single_wheel", "mu": 0.85, "body_coupling": "isolated",
+        })
+        assert r.status_code == 200
+        assert r.json()["body_coupling"] == "isolated"
+        # invalid value rejected
+        r_bad = client.post("/api/load-analysis/sweep", json={
+            "speeds": [8.0], "angles": [0.0], "wheel_index": 0,
+            "mode": "single_wheel", "mu": 0.85, "body_coupling": "moonbeam",
+        })
+        assert r_bad.status_code == 422
+    reset_simulator()

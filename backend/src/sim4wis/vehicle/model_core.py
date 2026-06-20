@@ -78,6 +78,26 @@ class SteadyStateBody:
     used_bicycle: bool
 
 
+# Single-wheel analysis can be performed under two physically distinct framings:
+#
+#   "isolated"  — the wheel is treated as a stand-alone unit on a test bench.
+#                 The vehicle body is *locked* in straight-line motion at speed
+#                 V, so α_i = −δ_i exactly. All wheel-self physics (toe, camber
+#                 thrust, drive force, aero lift on Fz, load-sensitive c_α,
+#                 friction ellipse, kingpin chain, parking) are still applied;
+#                 only the body's response (β, r) is suppressed.
+#                 Engineering use: actuator/motor *worst-case* sizing.
+#
+#   "vehicle"   — the wheel is mounted on a real chassis whose body responds
+#                 to the analysed wheel's force. The remaining three wheels
+#                 hold δ=0 and provide reaction force; the body develops
+#                 sideslip β and yaw rate r in steady-state equilibrium.
+#                 α_i = β + r·x_i/V − δ_i then exhibits the well-known
+#                 high-speed gain growth.
+#                 Engineering use: driving-feel and δ_eq under cornering.
+BodyCoupling = str  # "isolated" | "vehicle"
+
+
 def wheel_center_velocities_body(
     vx: float,
     vy: float,
@@ -307,19 +327,26 @@ def steady_state_slip_angles(
     c_alpha: np.ndarray,
     wheel_positions_body: np.ndarray,
     mass: float,
+    body_coupling: BodyCoupling = "vehicle",
     bicycle_min_speed: float = 1.0,
     min_longitudinal_speed: float = VMIN_SLIP,
 ) -> tuple[np.ndarray, SteadyStateBody]:
     """Slip angles for quasi-static sweeps.
 
-    Above ``bicycle_min_speed`` this uses the steady-state body response. At
-    parking/creep speed it falls back to straight-body kinematics, matching the
-    time-domain slip convention without dividing by a tiny speed.
+    ``body_coupling`` selects the analysis framing — see the BodyCoupling
+    docstring above. ``"vehicle"`` (default) solves the steady-state bicycle
+    above ``bicycle_min_speed`` and falls back to straight-body kinematics
+    below that (numerical safety, not a model choice). ``"isolated"`` *always*
+    uses the bench framing α = −δ regardless of speed; the wheel is treated
+    as a stand-alone test unit.
     """
 
     d = np.asarray(delta, dtype=np.float64).reshape(N_WHEELS)
     wp = np.asarray(wheel_positions_body, dtype=np.float64).reshape(N_WHEELS, 2)
-    if float(speed) > float(bicycle_min_speed):
+
+    use_vehicle = body_coupling == "vehicle" and float(speed) > float(bicycle_min_speed)
+
+    if use_vehicle:
         beta, yaw_rate = solve_steady_state_body(
             speed=speed,
             delta=d,

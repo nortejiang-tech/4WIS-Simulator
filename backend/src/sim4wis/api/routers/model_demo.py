@@ -148,6 +148,7 @@ class KingpinBreakdownRequest(BaseModel):
     points: int = Field(61, ge=11, le=161)
     wheel_index: int = Field(0, ge=0, le=3)
     mu: float = Field(0.85, gt=0.05, le=2.0)
+    body_coupling: str = Field("vehicle", pattern="^(vehicle|isolated)$")
 
 
 @router.post("/model/demo/kingpin-breakdown")
@@ -169,6 +170,7 @@ async def kingpin_breakdown(body: KingpinBreakdownRequest) -> dict[str, Any]:
     sweep = sweep_load_analysis(
         p, speeds=[speed], angles=angles, wheel_index=wheel_index,
         mode="single_wheel", mu=body.mu,
+        body_coupling=body.body_coupling,
     )
     rows = [r for r in sweep["rows"] if int(r["wheel_index"]) == wheel_index]
     rows.sort(key=lambda r: float(r["delta_cmd"]))

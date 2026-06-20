@@ -50,8 +50,19 @@ def sweep_load_analysis(
     wheel_index: int = 0,
     mode: str = "single_wheel",
     mu: float = 0.85,
+    body_coupling: str = "vehicle",
 ) -> dict[str, Any]:
-    """Return flattened load rows for speed/steer-angle sweeps."""
+    """Return flattened load rows for speed/steer-angle sweeps.
+
+    ``body_coupling`` is ``"vehicle"`` (default — current behaviour, bicycle
+    coupling above 1 m/s) or ``"isolated"`` (the wheel is treated as a stand-
+    alone bench unit, α = −δ regardless of speed). All other physics — toe,
+    camber thrust, drive force, aero lift, load-sensitive c_α, Pacejka /
+    friction ellipse, kingpin chain, parking — are applied identically in
+    both modes.
+    """
+    if body_coupling not in {"vehicle", "isolated"}:
+        body_coupling = "vehicle"
     wheel_index = int(np.clip(wheel_index, 0, 3))
     safe_speeds = [float(np.clip(v, 0.0, max(params.v_max, 0.1))) for v in speeds[:80]]
     safe_angles = [
@@ -79,6 +90,7 @@ def sweep_load_analysis(
             rows.extend(_analyze_state(
                 params, speed, angle, deltas_cmd, mu,
                 tire=tire, loads=loads, alignment=alignment,
+                body_coupling=body_coupling,
             ))
 
     summary = _summary(rows, wheel_index)
@@ -86,6 +98,7 @@ def sweep_load_analysis(
         "mode": mode,
         "wheel_index": wheel_index,
         "wheel_label": WHEEL_LABELS[wheel_index],
+        "body_coupling": body_coupling,
         "rows": rows,
         "summary": summary,
     }
@@ -160,6 +173,7 @@ def _analyze_state(
     fz: np.ndarray | None = None,
     toe_offsets: np.ndarray | None = None,
     camber: np.ndarray | None = None,
+    body_coupling: str = "vehicle",
 ) -> list[dict[str, Any]]:
     if alignment is None:
         if toe_offsets is not None and camber is not None:
@@ -210,6 +224,7 @@ def _analyze_state(
         c_alpha=c_alpha_eff,
         wheel_positions_body=wheel_positions,
         mass=float(params.mass),
+        body_coupling=body_coupling,
     )
 
     for i in range(4):
@@ -542,6 +557,7 @@ def sweep_sensitivity(
     angles: list[float],
     wheel_index: int = 0,
     mu: float = 0.85,
+    body_coupling: str = "vehicle",
 ) -> dict[str, Any]:
     """For each value of `vary_param`, run a single-speed sweep and return the
     equilibrium δ_eq / rack_at_zero / torque_at_zero. Used by the UI sensitivity
@@ -565,6 +581,7 @@ def sweep_sensitivity(
             wheel_index=wheel_index,
             mode="single_wheel",
             mu=mu,
+            body_coupling=body_coupling,
         )
         eq_list = sweep.get("summary", {}).get("per_speed_equilibrium") or []
         eq = eq_list[0] if eq_list else {}
@@ -580,5 +597,6 @@ def sweep_sensitivity(
         "vary_param": vary_param,
         "speed": safe_speed,
         "wheel_index": int(wheel_index),
+        "body_coupling": body_coupling,
         "points": points,
     }

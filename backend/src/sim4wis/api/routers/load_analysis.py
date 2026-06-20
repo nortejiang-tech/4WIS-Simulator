@@ -22,6 +22,9 @@ class LoadSweepRequest(BaseModel):
     wheel_index: int = Field(0, ge=0, le=3)
     mode: str = "single_wheel"
     mu: float = Field(0.85, gt=0.05, le=2.0)
+    # v0.8.1: single-wheel analysis framing — "vehicle" (default, body-coupled
+    # bicycle response) or "isolated" (stand-alone wheel-on-bench, α = −δ).
+    body_coupling: str = Field("vehicle", pattern="^(vehicle|isolated)$")
 
 
 @router.post("/load-analysis/sweep")
@@ -35,6 +38,7 @@ async def load_analysis_sweep(body: LoadSweepRequest) -> dict[str, Any]:
         wheel_index=body.wheel_index,
         mode=body.mode,
         mu=body.mu,
+        body_coupling=body.body_coupling,
     )
 
 
@@ -46,6 +50,7 @@ class SensitivityRequest(BaseModel):
     angles: list[float] = Field(default_factory=list)
     wheel_index: int = Field(0, ge=0, le=3)
     mu: float = Field(0.85, gt=0.05, le=2.0)
+    body_coupling: str = Field("vehicle", pattern="^(vehicle|isolated)$")
 
 
 @router.post("/load-analysis/sensitivity")
@@ -60,6 +65,7 @@ async def load_analysis_sensitivity(body: SensitivityRequest) -> dict[str, Any]:
         angles=body.angles,
         wheel_index=body.wheel_index,
         mu=body.mu,
+        body_coupling=body.body_coupling,
     )
 
 
