@@ -1,6 +1,7 @@
 import type { VerticalMarker } from "@/charts/uplotFactory";
 import { ChartBox } from "./ChartBox";
 import { CHART_CATALOG, CHART_ORDER, type ChartContext, type ChartId } from "./chartCatalog";
+import type { BodyCoupling } from "./types";
 
 interface Props {
   slotIndex: number;
@@ -8,9 +9,13 @@ interface Props {
   onChange: (id: ChartId) => void;
   ctx: ChartContext;
   signal: string;
+  // v0.8.1: included in the React key so charts whose series labels don't
+  // change with the toggle (notably δ_eq) still remount and reseed uPlot
+  // with fresh data instead of showing the previous body_coupling's curve.
+  bodyCoupling: BodyCoupling;
 }
 
-export function ChartSlot({ slotIndex, chartId, onChange, ctx, signal }: Props) {
+export function ChartSlot({ slotIndex, chartId, onChange, ctx, signal, bodyCoupling }: Props) {
   const cfg = CHART_CATALOG[chartId];
   const headerSlot = (
     <select
@@ -45,7 +50,7 @@ export function ChartSlot({ slotIndex, chartId, onChange, ctx, signal }: Props) 
   // but charts like "equilibrium" with constant labels never remount otherwise.
   return (
     <ChartBox
-      key={`${chartId}-${slotIndex}`}
+      key={`${chartId}-${slotIndex}-${bodyCoupling}`}
       title={cfg.title(ctx)}
       filename={`${cfg.filename}_slot${slotIndex + 1}`}
       series={series}

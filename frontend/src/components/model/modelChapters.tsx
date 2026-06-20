@@ -206,9 +206,20 @@ $$\\alpha_i = \\beta + \\frac{r\\,x_i}{V} - \\delta_i
 <p>把四轮当广义线性 bicycle：侧向力平衡 $\\sum F_y=mVr$（向心力）+ 稳态横摆 $\\sum x_i F_{y,i}=0$（无角加速度），
 代入 $F_{y,i}=-C_\\alpha\\alpha_i$ 与 $\\alpha_i=\\beta+rx_i/V-\\delta_i$，得 2×2 线性方程组解 $(\\beta,r)$。
 对单轮转向的对称底盘可得闭式增益 $\\big(\\tfrac12+mV^2/(8C_\\alpha L)\\big)$，随 $V^2$ 增长。
-实现 <code>model_core.solve_steady_state_body</code> / <code>steady_state_slip_angles</code>，负载页 sweep 用它把"台架口径 α=−δ"修正成"行驶口径"。下面的演示直接来自该求解器。</p>`,
-    calloutHtml: `<strong>LS9 量级</strong>：增益从 v=10 km/h 的 ~0.5 涨到 v=200 km/h 的 ~3，即同样转角下高速 α 大 6 倍，
-饱和转角从 ~6° 收缩到 ~1°。`,
+实现 <code>model_core.solve_steady_state_body</code> / <code>steady_state_slip_angles</code>，负载页 sweep 用它把"台架口径 α=−δ"修正成"行驶口径"。下面的演示直接来自该求解器。</p>
+<h4 style="margin-top:16px">v0.8.1：两种单轮分析口径开关</h4>
+<p>负载页顶栏和本页第 5 章的主销力矩演示都有一个<strong>受力口径</strong>开关，让你在两种物理框架之间切换：</p>
+<ul>
+<li><strong>整车装载（vehicle，默认）</strong>：本节描述的稳态 bicycle 耦合。轮装在车身上、车身按 $(\\beta, r)$ 响应。
+工程用途：<em>驾驶手感、$\\delta_{eq}$ 真实预测</em>。</li>
+<li><strong>单轮台架（isolated）</strong>：把被分析轮视为独立台架上的单元，车身锁定直行 $(V, 0)$，
+$\\alpha = -\\delta$ 与车速无关。轮自身物理（载荷敏感 $C_\\alpha(F_z)$、气动升力降 $F_z$、驱动力 $F_x$、camber thrust、toe、parking）<strong>全部照算</strong>，
+但<strong>不发展车身响应</strong>。工程用途：<em>作动器/电机最差工况（worst-case）选型</em>——它给的是"无论车身怎么响应，单轮自己一定要扛住多少力"。</li>
+</ul>
+<p>两种口径下 $\\delta_{cmd}=0$ 处的残余力<strong>完全一致</strong>（无 forcing → 无 $\\beta, r$），但<strong>曲线斜率与饱和位置截然不同</strong>。
+LS9 默认参数下 isolated 模式 $\\delta_{eq}$ 在 10→200 km/h 仅从 0.13° 降到 0.08°（载荷敏感二阶效应），vehicle 模式从 0.25° 显著降到 0.02°（bicycle 主导）——并排比较能给出立竿见影的物理直觉。</p>`,
+    calloutHtml: `<strong>LS9 量级</strong>：vehicle 模式下增益从 v=10 km/h 的 ~0.5 涨到 v=200 km/h 的 ~3（同样转角下 α 大 6 倍，
+饱和转角从 ~6° 收缩到 ~1°）；isolated 模式下增益基本恒定 0.5，仅 $C_\\alpha(F_z)$ 随气动升力小幅软化。`,
     demo: "bicycleGain",
   },
   {

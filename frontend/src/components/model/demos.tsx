@@ -126,6 +126,7 @@ interface KpResp {
 
 function KingpinBreakdownDemo() {
   const [speed, setSpeed] = useState(30);
+  const [coupling, setCoupling] = useState<"vehicle" | "isolated">("vehicle");
   const d = useDebounced(speed, 250);
   const [resp, setResp] = useState<KpResp | null>(null);
   const reqId = useRef(0);
@@ -133,9 +134,9 @@ function KingpinBreakdownDemo() {
   useEffect(() => {
     const id = ++reqId.current;
     postJSON<KpResp>("/api/model/demo/kingpin-breakdown", {
-      speed_kmh: d, angle_max_deg: 20, points: 61,
+      speed_kmh: d, angle_max_deg: 20, points: 61, body_coupling: coupling,
     }, 10000).then((r) => { if (id === reqId.current) setResp(r); }).catch(() => {});
-  }, [d]);
+  }, [d, coupling]);
 
   const data = useMemo((): uPlot.AlignedData => {
     const c = resp?.curve ?? [];
@@ -158,9 +159,22 @@ function KingpinBreakdownDemo() {
     <div className="model-demo">
       <div className="model-demo-controls">
         <Slider label="车速" value={speed} min={0} max={200} step={10} unit=" km/h" onChange={setSpeed} />
+        <div className="load-bcoup" title="切换两种单轮分析口径">
+          <span className="load-bcoup-label">口径</span>
+          <div className="load-bcoup-seg" role="group">
+            {(["vehicle", "isolated"] as const).map((id) => (
+              <button key={id} type="button"
+                className={`load-bcoup-btn${coupling === id ? " active" : ""}`}
+                onClick={() => setCoupling(id)}>
+                {id === "vehicle" ? "整车装载" : "单轮台架"}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-      <ChartBox title="主销力矩四项分解 vs δ（FL）" filename="demo_kingpin_breakdown"
-        series={series} data={data} signal={`${resp?.curve.length ?? 0}:${d}`}
+      <ChartBox title={`主销力矩四项分解 vs δ（FL · ${coupling === "vehicle" ? "整车装载" : "单轮台架"}）`}
+        filename={`demo_kingpin_breakdown_${coupling}`}
+        series={series} data={data} signal={`${resp?.curve.length ?? 0}:${d}:${coupling}`}
         valueUnit="Nm" xLabel="δ_cmd" xUnit="°" xAxisLabel="δ_cmd (°)" yAxisLabel="力矩 (N·m)" />
     </div>
   );

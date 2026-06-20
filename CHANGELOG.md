@@ -2,6 +2,37 @@
 
 本项目版本约定：阶段即次版本（Phase 1 = 0.1，Phase 2 = 0.2，Phase 3 = 0.3，改进轮 = 0.4 起）。
 
+## 0.8.1 — 2026-06-20（单轮分析口径开关 · body_coupling）
+
+### 背景
+
+v0.8.0 把单轮 sweep 升级到 bicycle 耦合（α = β + r·x/V − δ）后，工程师反馈
+**少了一档**：bicycle 口径对"驾驶手感、δ_eq 工程预测"很对，但选作动器/电机
+最差工况时，工程师想知道"无论车身怎么响应，单轮自己一定要扛住多少力"——
+这就是 v0.7.x 之前的"单轮台架（α = −δ）"口径。
+本版把两种口径做成开关同时提供。
+
+### 新增 (Added)
+
+- **`body_coupling` 参数**贯穿 `model_core.steady_state_slip_angles` → `load_analysis.sweep_load_analysis` / `sweep_sensitivity` → `/api/load-analysis/sweep` / `/api/load-analysis/sensitivity` / `/api/model/demo/kingpin-breakdown`，
+  取值 `"vehicle"`（默认，v0.8.0 的 bicycle 耦合）或 `"isolated"`（单轮台架，α = −δ）。
+  两种口径下轮自身物理（载荷敏感 c_α(F_z)、气动升力、驱动力 F_x、camber thrust、toe、parking）
+  **全部照算**，只有车身响应是否生效的差别。
+- **负载页"受力口径"分段开关**：顶栏新增 `[整车装载][单轮台架]` 切换，所有曲线/KPI/敏感度即刻按所选口径重算。
+- **数学模型讲解页第 5 章和第 8 章**补充两种口径用途说明 + 主销力矩分解 demo 也加同一开关。
+
+### 修复 (Fixed)
+
+- 负载页 `chartSignal` 改用结果里的 `body_coupling` 而非 UI 状态，避免数据回来前 uPlot
+  错把旧模式数据当新模式渲染（KPI 已更新但曲线仍展示旧口径的状态机问题）。
+- `LoadSweepResponse` 类型补 `body_coupling` 字段，去掉前端 `as any`。
+
+### 测试
+
+- 后端新增 6 个 body_coupling 回归（isolated δ_eq(v) 几乎恒定、linear 斜率不随 v 增长、
+  δ=0 处两口径残余力完全一致、δ=0 sanity、sweep 端点收 body_coupling、result 携带字段）。
+- 全量 167 passed。
+
 ## 0.8.0 — 2026-06-20（统一底座 · bicycle 耦合 · 模型讲解页）
 
 ### 背景

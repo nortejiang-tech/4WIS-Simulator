@@ -1,6 +1,12 @@
 import { WHEEL_LABELS } from "@/types/sim";
 import { numInput, selectStyle } from "@/ui/styles";
-import { displayNumber, MODE_OPTIONS } from "./types";
+import {
+  BODY_COUPLING_HINTS,
+  BODY_COUPLING_LABELS,
+  displayNumber,
+  MODE_OPTIONS,
+  type BodyCoupling,
+} from "./types";
 
 interface Props {
   wheelIndex: number;
@@ -19,6 +25,8 @@ interface Props {
   setAngleMaxDeg: (v: number) => void;
   angleSteps: number;
   setAngleSteps: (v: number) => void;
+  bodyCoupling: BodyCoupling;
+  setBodyCoupling: (v: BodyCoupling) => void;
   onRun: () => void;
   busy: boolean;
   paramsReady: boolean;
@@ -66,6 +74,22 @@ export function LoadControls(p: Props) {
       </label>
       <label>最大转角 ° <input type="number" step="1" value={p.angleMaxDeg} onChange={(e) => p.setAngleMaxDeg(Number(e.target.value))} style={numInput} /></label>
       <label>转角点 <input type="number" step="2" value={p.angleSteps} onChange={(e) => p.setAngleSteps(Number(e.target.value))} style={numInput} /></label>
+      <div className="load-bcoup" title={BODY_COUPLING_HINTS[p.bodyCoupling]}>
+        <span className="load-bcoup-label">受力口径</span>
+        <div className="load-bcoup-seg" role="group" aria-label="受力分析口径">
+          {(["vehicle", "isolated"] as BodyCoupling[]).map((id) => (
+            <button
+              key={id}
+              type="button"
+              className={`load-bcoup-btn${p.bodyCoupling === id ? " active" : ""}`}
+              onClick={() => p.setBodyCoupling(id)}
+              title={BODY_COUPLING_HINTS[id]}
+            >
+              {BODY_COUPLING_LABELS[id]}
+            </button>
+          ))}
+        </div>
+      </div>
       <button onClick={p.onRun} disabled={p.busy || !p.paramsReady}>{p.busy ? "计算中..." : "重新计算"}</button>
     </div>
   );

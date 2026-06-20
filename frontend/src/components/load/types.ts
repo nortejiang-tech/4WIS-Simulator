@@ -19,6 +19,25 @@ export interface ProfileListItem {
   builtin: boolean;
 }
 
+/** v0.8.1: how the single-wheel analysis frames body motion.
+ *  - "vehicle"  车身随被分析轮的力做稳态响应（bicycle 耦合，v0.8.0 默认）
+ *  - "isolated" 单轮台架，车身锁直行，α = −δ */
+export type BodyCoupling = "vehicle" | "isolated";
+
+export const BODY_COUPLING_LABELS: Record<BodyCoupling, string> = {
+  vehicle: "整车装载",
+  isolated: "单轮台架",
+};
+
+export const BODY_COUPLING_HINTS: Record<BodyCoupling, string> = {
+  vehicle:
+    "整车装载：被分析轮装在车身上，车身随该轮力发展出侧偏 β / 横摆 r，每轮真实 α = β + r·x/V − δ。" +
+    "斜率随 v² 增长、饱和点高速收缩——用于驾驶手感与 δ_eq 工程预测。",
+  isolated:
+    "单轮台架：把这个轮看作独立台架上的单元，车身锁定直行 (V, 0)，α = −δ 与车速无关。" +
+    "所有轮自身物理（toe、camber、驱动力、气动升力、Pacejka、kingpin、parking）照算，但不发展车身响应——用于作动器/电机最差工况选型。",
+};
+
 export interface LoadRow {
   speed: number;
   requested_angle: number;
@@ -54,6 +73,8 @@ export interface PerSpeedEquilibrium {
 
 export interface LoadSweepResponse {
   rows: LoadRow[];
+  /** v0.8.1: which body-coupling framing was used for this result. */
+  body_coupling?: BodyCoupling;
   summary: {
     peak_abs_rack_force?: number;
     peak_abs_rack_force_at?: { speed: number; requested_angle: number; wheel_label: string };

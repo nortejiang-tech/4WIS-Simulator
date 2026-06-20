@@ -21,6 +21,7 @@ import {
   deg,
   equilibriumAt,
   paramsHash,
+  type BodyCoupling,
   type LoadRow,
 } from "./load/types";
 import { useLoadSweep } from "./load/useLoadSweep";
@@ -112,6 +113,10 @@ export default function LoadAnalysisPage() {
   const [profileSpeedKmh, setProfileSpeedKmh] = useState(30);
   const [angleMaxDeg, setAngleMaxDeg] = useState(35);
   const [angleSteps, setAngleSteps] = useState(101);
+  // v0.8.1: single-wheel analysis framing — vehicle (default, bicycle-coupled)
+  // or isolated (bench, α=−δ). Toggle in the toolbar; touching it triggers
+  // a full re-sweep via the dep-list below.
+  const [bodyCoupling, setBodyCoupling] = useState<BodyCoupling>("vehicle");
 
   // 4-slot grid layout: dropdown selections per slot.
   const [slotCharts, setSlotCharts] = useState<[ChartId, ChartId, ChartId, ChartId]>(DEFAULT_SLOT_CHARTS);
@@ -123,7 +128,8 @@ export default function LoadAnalysisPage() {
 
   const inputs = useMemo(() => ({
     wheelIndex, mode, mu, speedMaxKmh, speedSteps, profileSpeedKmh, angleMaxDeg, angleSteps,
-  }), [wheelIndex, mode, mu, speedMaxKmh, speedSteps, profileSpeedKmh, angleMaxDeg, angleSteps]);
+    bodyCoupling,
+  }), [wheelIndex, mode, mu, speedMaxKmh, speedSteps, profileSpeedKmh, angleMaxDeg, angleSteps, bodyCoupling]);
 
   const doSweep = useCallback(() => runSweep(inputs), [runSweep, inputs]);
 
@@ -140,7 +146,7 @@ export default function LoadAnalysisPage() {
     const handle = window.setTimeout(() => { void doSweep(); }, 350);
     return () => window.clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wheelIndex, mode, mu, speedMaxKmh, speedSteps, angleMaxDeg, angleSteps]);
+  }, [wheelIndex, mode, mu, speedMaxKmh, speedSteps, angleMaxDeg, angleSteps, bodyCoupling]);
 
   const exportRows = () => {
     const rows = result?.rows ?? [];
@@ -177,7 +183,13 @@ export default function LoadAnalysisPage() {
   const effectiveProfileSpeedKmh = Math.max(0, Math.min(profileSpeedKmh, speedMaxKmh));
   const effectiveProfileSpeedMs = effectiveProfileSpeedKmh / 3.6;
 
-  const chartSignal = `${selectedRows.length}:${wheelIndex}:${mode}:${speedMaxKmh}:${profileSpeedKmh}:${angleMaxDeg}:${paramsHash(params)}`;
+  // chartSignal must change ONLY when fresh data arrives. Using the UI
+  // bodyCoupling state would change at click-time (before the re-sweep finishes)
+  // and then not change again when data arrives — leaving uPlot with the
+  // previous mode's data. Using result.body_coupling solves this: it stays the
+  // old value until the new sweep completes, then flips.
+  const resultCoupling = result?.body_coupling ?? "vehicle";
+  const chartSignal = `${selectedRows.length}:${wheelIndex}:${mode}:${speedMaxKmh}:${profileSpeedKmh}:${angleMaxDeg}:${resultCoupling}:${paramsHash(params)}`;
 
   const speedSeries = useMemo(() => {
     const speeds = Array.from(new Set(selectedRows.map((r) => r.speed))).slice(0, 6);
@@ -253,6 +265,7 @@ export default function LoadAnalysisPage() {
             profileSpeedKmh={profileSpeedKmh} setProfileSpeedKmh={setProfileSpeedKmh}
             angleMaxDeg={angleMaxDeg} setAngleMaxDeg={setAngleMaxDeg}
             angleSteps={angleSteps} setAngleSteps={setAngleSteps}
+            bodyCoupling={bodyCoupling} setBodyCoupling={setBodyCoupling}
             onRun={doSweep}
             busy={busy}
             paramsReady={!!params}
@@ -269,6 +282,7 @@ export default function LoadAnalysisPage() {
                 onChange={setSlot(i)}
                 ctx={chartCtx}
                 signal={chartSignal}
+                bodyCoupling={resultCoupling}
               />
             ))}
           </section>

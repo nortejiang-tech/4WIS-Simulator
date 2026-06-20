@@ -7,6 +7,7 @@ import {
   rad,
   rangeValues,
   uniqueSorted,
+  type BodyCoupling,
   type LoadSweepResponse,
   type ProfileListItem,
   type VehicleParams,
@@ -21,6 +22,7 @@ interface SweepInputs {
   profileSpeedKmh: number;
   angleMaxDeg: number;
   angleSteps: number;
+  bodyCoupling: BodyCoupling;
 }
 
 export function useLoadSweep() {
@@ -64,6 +66,7 @@ export function useLoadSweep() {
         wheel_index: inputs.wheelIndex,
         mode: inputs.mode,
         mu: inputs.mu,
+        body_coupling: inputs.bodyCoupling,
       };
       setResult(await postJSON<LoadSweepResponse>("/api/load-analysis/sweep", body, 15000));
     } catch (e: any) {
