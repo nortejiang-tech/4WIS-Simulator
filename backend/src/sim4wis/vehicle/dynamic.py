@@ -162,7 +162,6 @@ class SimplifiedDynamicModel(VehicleModel):
         s.torque_steer = kingpin_torque(
             fx=self.tire_fx, fy=self.tire_fy, mz=self.tire_mz, fz=s.fz,
             suspension=p.suspension, delta=s.delta, tire_radius=p.tire_radius,
-            t_pneumatic_extra=getattr(self.tire, "t_pneumatic", 0.03),
         )
 
         # 6) Wheel positions (constant) — set once for the streamer

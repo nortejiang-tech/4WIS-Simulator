@@ -349,6 +349,5 @@ class MultiBodyModel(VehicleModel):
             fx=self.tire_fx, fy=self.tire_fy, mz=self.tire_mz, fz=s.fz,
             suspension=self.params.suspension, delta=s.delta,
             tire_radius=self.params.tire_radius,
-            t_pneumatic_extra=getattr(self.tire, "t_pneumatic", 0.03),
         )
         s.wheel_pos_body = self._wheels

@@ -185,7 +185,6 @@ async def kingpin_breakdown(body: KingpinBreakdownRequest) -> dict[str, Any]:
             suspension=p.suspension,
             delta=np.array([float(r["delta"])]),
             tire_radius=p.tire_radius,
-            t_pneumatic_extra=p.tire_t_pneumatic,
         )
         out.append({
             "delta_cmd_deg": math.degrees(float(r["delta_cmd"])),

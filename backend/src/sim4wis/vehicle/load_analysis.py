@@ -284,7 +284,6 @@ def _analyze_state(
         suspension=params.suspension,
         delta=deltas,
         tire_radius=params.tire_radius,
-        t_pneumatic_extra=t_pn,
     )
     tau = tau + _parking_torque(params, deltas, fz, speed, mu)
     rack, motor, linkage = wheel_rack_force_from_linkage(
@@ -317,7 +316,6 @@ def _analyze_state(
         suspension=params.suspension,
         delta=deltas,
         tire_radius=params.tire_radius,
-        t_pneumatic_extra=t_pn,
     )
     tau_ideal = tau_ideal + _parking_torque(params, deltas, fz, speed, mu)
     rack_ideal, motor_ideal, _ = wheel_rack_force_from_linkage(
