@@ -105,7 +105,8 @@ $$\\Big(\\tfrac{F_x}{\\mu F_z}\\Big)^2 + \\Big(\\tfrac{F_y}{\\mu F_z}\\Big)^2 \\
 <p>采用简化魔术公式（Magic Formula）：$B$ 由小信号刚度反推（$B_y=C_\\alpha/(C_y D)$），保证<strong>原点斜率严格等于 Cα</strong>、
 峰值等于 $\\mu F_z$。组合滑移用摩擦椭圆一次裁剪（friction ellipse），是线性 friction circle 的光滑版本，避免硬拐角。
 载荷敏感性 $C_\\alpha(F_z)=C_{\\alpha 0}(F_z/F_{z,\\text{nom}})^{p}$（默认 $p=0.8$）：高速气动升力降低 $F_z$ 时，
-线性区斜率和饱和峰值<strong>同时</strong>下降。唯一内核 <code>tire.pacejka_combined_forces</code>，时域与准静态共用。</p>`,
+线性区斜率和饱和峰值<strong>同时</strong>下降。唯一内核 <code>tire.pacejka_combined_forces</code>，时域与准静态共用。</p>
+<p>口径说明：更一般的摩擦椭圆允许纵横峰值不同 $\\big((F_x/\\mu_x F_z)^2+(F_y/\\mu_y F_z)^2\\le1\\big)$；本模型取 $\\mu_x=\\mu_y=\\mu$（圆），$\\mu$ 由场景逐轮给定。</p>`,
     calloutHtml: `<strong>LS9 量级</strong>：单轮静载约 7 kN，μ=0.85 → 峰值侧向力约 6 kN；Cα ≈ 1.2×10⁵ N/rad，
 峰值出现在 α ≈ 6–8°。`,
     demo: "tireCurve",
@@ -138,16 +139,23 @@ $$F_{z,i} = \\underbrace{F_{z,\\text{static}}}_{mgb/2L\\ \\text{或}\\ mga/2L}
 主销有后倾（caster）、有偏置（scrub）——这些几何决定了同样的轮胎力会产生多大的转向阻力矩 $\\tau_{KP}$。
 这就是电机选型最关心的量。</p>`,
     formulaHtml: `
-$$\\tau_{KP} = \\underbrace{F_y\\,(s + t_m + t_p)}_{\\text{侧向力×拖距}}
+$$\\tau_{KP} = \\underbrace{F_y\\,(s + t_m)}_{\\text{侧向力×（偏置+机械拖距）}}
 + \\underbrace{F_x\\,s}_{\\text{纵向力×偏置}}
-+ \\underbrace{M_z}_{\\text{气胎回正}}
++ \\underbrace{M_z}_{\\text{气胎拖距自回正}}
 + \\underbrace{F_z\\sin(\\text{KPI})\\,s\\sin\\delta}_{\\text{主销内倾抬升}}$$
-<p>其中机械拖距 $t_m = R\\tan\\varepsilon$（$\\varepsilon$ 后倾角），$s$ 为主销偏置，$t_p$ 气胎拖距。</p>`,
+<p>其中机械拖距 $t_m = R\\tan\\varepsilon$（$\\varepsilon$ 后倾角），$s$ 主销偏置；气胎拖距 $t_p$ <strong>只</strong>经
+$M_z \\approx -F_y\\,t_p(\\alpha)$ 进入，<strong>不</strong>再加进 $F_y$ 力臂——否则同一份 $t_p$ 被算两次（重复计算）。</p>`,
     derivationHtml: `
-<p>四项依 Reimpell §3.10 / Pacejka §9：①侧向力经"主销偏置+机械拖距+气胎拖距"的等效力臂回正（最大头）；
-②纵向力经主销偏置（scrub）产生 torque-steer；③轮胎自身气胎回正力矩 $M_z$ 直通；④主销内倾（KPI）在转角下"把车顶起来"的回正，$\\propto\\sin\\delta$，直行时为 0。
-注：$F_y(s+t_m+t_p)$ 是 Reimpell 的工程等效力臂写法（把倾斜主销的一阶 3D 耦合并进单一杠杆），EPS 选型行业标准用法；严格 3D 推导会略小并多出 $F_z$ 二阶项。
-唯一来源 <code>kingpin.kingpin_torque</code>（<code>kingpin_torque_terms</code> 给分项，本页第 5 节交互演示就用它）。</p>`,
+<p>四项依 Reimpell §3.10 / Pacejka §9（口径与《Steering Handbook》Ch.6 一致）：</p>
+<ul>
+<li>① <strong>侧向力经拖距回正</strong>：$F_y$ 经机械拖距 $t_m=R\\tan\\varepsilon$ 对主销形成回正力矩（最大头）。</li>
+<li>② <strong>纵向力转向</strong>：驱动/制动力 $F_x$ 经主销偏置 $s$ 形成力矩，即 torque-steer（轮毂电机尤其敏感，$s\\to 0$ 可抑制）。</li>
+<li>③ <strong>气胎自回正 $M_z$</strong>：轮胎自身回正力矩 $M_z\\approx -F_y\\,t_p(\\alpha)$ 直接进链——气胎拖距 $t_p$ 的贡献<strong>已经在这里</strong>，且 $t_p(\\alpha)$ 随滑移衰减（大滑移趋零）。它与 $t_m$ 项<strong>同向叠加</strong>（都把轮回正）。</li>
+<li>④ <strong>主销内倾抬升</strong>：转角下 KPI"把车顶起来"的回正分量，$\\propto\\sin\\delta$，直行为 0。</li>
+</ul>
+<p><strong>易错点（本版已修正）</strong>：$M_z$ 已含气胎拖距贡献，<strong>不能</strong>再把 $t_p$ 加进 $F_y$ 机械力臂。旧版两处都写了 $t_p$——力臂里 $+F_y t_p$、求和里又 $+M_z=-F_y t_p$，二者符号相反相互抵消，反把气胎回正抹平（小转角处最明显，正是 $\\delta_{eq}$ 所在区）。现仅经 $M_z$ 计一次。</p>
+<p>关于 $s$：严格 3D 视角下主销偏置是<strong>正视面</strong>力臂、本不该与<strong>侧视</strong>拖距 $t_m$ 直接相加；这里沿用 Reimpell 工程等效写法把 $s$ 并进 $F_y$ 力臂（EPS 选型行业惯例），会略高估 $F_y$ 项。</p>
+<p>唯一来源 <code>kingpin.kingpin_torque</code>（<code>kingpin_torque_terms</code> 给分项，本页第 5 节交互演示就用它）。</p>`,
     demo: "kingpinBreakdown",
   },
   {

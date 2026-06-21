@@ -116,7 +116,7 @@ export default function App() {
             负载特性
           </button>
           <button className={page === "model" ? "active" : ""} onClick={() => setPage("model")}>
-            数学模型
+            原理简介
           </button>
         </nav>
         <div className="header-summary" aria-label="当前状态摘要">
@@ -219,7 +219,7 @@ export default function App() {
           <LoadAnalysisPage />
         </ErrorBoundary>
       ) : (
-        <ErrorBoundary label="数学模型">
+        <ErrorBoundary label="原理简介">
           <ModelTheoryPage />
         </ErrorBoundary>
       )}

@@ -148,7 +148,7 @@ function KingpinBreakdownDemo() {
     ];
   }, [resp]);
   const series: SeriesSpec[] = [
-    { label: "Fy×拖距", color: "#60a5fa", width: 2 },
+    { label: "Fy×(s+t_m)", color: "#60a5fa", width: 2 },
     { label: "Fx×偏置", color: "#f59e0b", width: 2 },
     { label: "Mz 气胎回正", color: "#a78bfa", width: 2 },
     { label: "KPI 抬升", color: "#34d399", width: 2 },

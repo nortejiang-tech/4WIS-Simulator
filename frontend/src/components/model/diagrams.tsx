@@ -191,7 +191,7 @@ function KingpinTopDiagram() {
       <circle cx="350" cy="140" r="4" className="model-dot" />
       <text x="356" y="136">接地中心</text>
       <text x="300" y="160" className="model-muted">主销偏置 s（scrub）</text>
-      <text x="120" y="255" className="model-muted">Fy 经 (s+t_m+t_p)、Fx 经 s 产生主销力矩</text>
+      <text x="96" y="255" className="model-muted">Fy 经 (s+t_m)、Fx 经 s 产生主销力矩；t_p 只走 Mz</text>
     </Svg>
   );
 }
