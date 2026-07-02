@@ -102,15 +102,33 @@ class FaultSpec(BaseModel):
     *command/mechanism* failure, not a teleporting wheel.
 
         stuck_zero   δ_cmd[i] ≡ 0            actuator returns to centre and jams
-        stuck_hold   δ_cmd[i] ≡ δ(t_start)   mechanical jam at the angle in use
+        stuck_hold   δ_cmd[i] ≡ δ(t_start)   self-locking mechanism jams in place
         stuck_value  δ_cmd[i] ≡ value        runaway-then-jam at a given angle
         limited      |δ_cmd[i]| ≤ value      restricted authority (degraded)
+        free_caster  actuator de-energised on a NON-self-locking mechanism —
+                     the wheel becomes a dynamic castering DOF driven by the
+                     tyre kingpin torque through the back-drive path:
+
+                         J·δ̈ = −η_rev·τ_kingpin − c·δ̇ − τ_c·sign(δ̇)
+
+                     (τ_kingpin is the platform's per-wheel Reimpell moment;
+                     the session integrates this ODE and feeds δ through the
+                     actuator lag, which adds mechanism-lag damping.)
+
+    Mechanism parameters (free_caster only): ``eta_rev`` back-drive
+    efficiency, ``j_steer`` steering-system inertia about the kingpin
+    [kg·m²] (wheel assembly + reflected rack/motor), ``c_damp`` viscous
+    damping [N·m·s/rad], ``tau_coulomb`` breakaway friction [N·m].
     """
 
-    fault_type: Literal["stuck_zero", "stuck_hold", "stuck_value", "limited"]
+    fault_type: Literal["stuck_zero", "stuck_hold", "stuck_value", "limited", "free_caster"]
     wheel: int = Field(..., ge=0, le=3)              # 0=FL 1=FR 2=RL 3=RR
     value: float = 0.0                               # [rad] meaning per type
     t_start: float = Field(0.0, ge=0.0)              # sim time [s]
+    eta_rev: float = Field(0.6, ge=0.0, le=1.0)      # back-drive efficiency
+    j_steer: float = Field(3.0, gt=0.0)              # [kg·m²]
+    c_damp: float = Field(80.0, ge=0.0)              # [N·m·s/rad]
+    tau_coulomb: float = Field(5.0, ge=0.0)          # [N·m]
 
 
 class PathSpec(BaseModel):

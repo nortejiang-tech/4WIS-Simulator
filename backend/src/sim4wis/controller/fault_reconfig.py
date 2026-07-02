@@ -41,13 +41,25 @@ evaluated and rejected for the in-emergency phase; see the safety report
 creep-home* mode where scrub-free rolling matters more than course holding.
 
 mode_params (ground truth from the experiment; from the monitor in a real car):
+**Free-castering failure (`fault_kind: "free"`).** A de-energised wheel on a
+non-self-locking mechanism passively aligns with its local velocity (caster
+equilibrium ≈ the ideal-Ackermann direction), so it injects almost no
+parasitic force — but the axle loses that wheel's cornering-stiffness share.
+Mirroring is wrong here (there is nothing to cancel); the mitigation is
+**authority compensation**: the healthy same-axle wheel takes `front_gain`
+(≈2) times its nominal allocation to restore the axle force in the linear
+range, with the same yaw PI and ramped speed cap on top.
+
+mode_params (ground truth from the experiment; from the monitor in a real car):
     fault_wheel    0..3 (FL FR RL RR)
-    fault_angle    stuck angle [rad] (angle-sensor estimate)
+    fault_kind     "stuck" (self-locking jam) | "free" (castering), default "stuck"
+    fault_angle    stuck angle [rad] (angle-sensor estimate; unused for free)
     fault_time     sim time of the fault [s]
     detect_delay   detection + arbitration latency [s] (default 0.15)
     v_limit_kmh    degraded-mode speed cap (default 60)
     k_yaw          yaw-rate feedback gain [rad per rad/s] (default 0.5)
     decel_max      speed-cap approach decel [m/s²] (default 3.0)
+    front_gain     healthy-partner authority boost in free mode (default 2.0)
 """
 
 from __future__ import annotations
@@ -106,13 +118,21 @@ class FaultReconfigStrategy(ControllerStrategy):
         if not detected:
             return cmd
 
-        # ---- degraded mode: mirror cancellation + yaw stabilisation ---------
+        # ---- degraded mode ---------------------------------------------------
         partner = PARTNER[wheel]
-        e = delta_s - float(cmd.delta_cmd[wheel])       # stuck wheel's angle error
-
+        fault_kind = str(mp.get("fault_kind", "stuck"))
         delta = np.array(cmd.delta_cmd, dtype=np.float64)
-        delta[wheel] = delta_s                          # reflect physical truth
-        delta[partner] = delta[partner] - e             # force+moment cancel
+
+        if fault_kind == "free":
+            # Castering wheel: no parasitic force to cancel — restore the lost
+            # axle authority by boosting the healthy partner's allocation.
+            front_gain = float(mp.get("front_gain", 2.0))
+            delta[partner] = front_gain * delta[partner]
+        else:
+            # Self-locking jam: mirror cancellation of force AND moment.
+            e = delta_s - float(cmd.delta_cmd[wheel])   # stuck wheel's angle error
+            delta[wheel] = delta_s                      # reflect physical truth
+            delta[partner] = delta[partner] - e
 
         # ESP-grade yaw-rate PI on every healthy wheel (front +, rear −: equal
         # arms → pure yaw moment). The integral term holds a standing counter-

@@ -94,6 +94,8 @@ class SimSession:
                 self.strategy.plan_override = plan
         # Latched hold angles for stuck_hold faults (captured at activation).
         self._fault_hold: dict[int, float] = {}
+        # Free-caster integrator states: key → [delta, delta_dot].
+        self._free_state: dict[int, list[float]] = {}
 
     # ---- execution -----------------------------------------------------------
 
@@ -161,14 +163,15 @@ class SimSession:
     def _apply_faults(self, cmd) -> None:
         """Overwrite steer commands for active faults (see schema.FaultSpec)."""
         t = float(self.model.state.t)
+        dt = float(self.exp.dt)
         for i, f in enumerate(self.exp.faults):
             if t < f.t_start:
                 continue
             w = int(f.wheel)
+            key = i * 4 + w
             if f.fault_type == "stuck_zero":
                 cmd.delta_cmd[w] = 0.0
             elif f.fault_type == "stuck_hold":
-                key = i * 4 + w
                 if key not in self._fault_hold:
                     # Latch the *actual* wheel angle at activation — a jam
                     # freezes the mechanism where it physically is.
@@ -179,6 +182,27 @@ class SimSession:
             elif f.fault_type == "limited":
                 lim = abs(float(f.value))
                 cmd.delta_cmd[w] = max(-lim, min(lim, float(cmd.delta_cmd[w])))
+            elif f.fault_type == "free_caster":
+                # De-energised, non-self-locking mechanism: the wheel is a
+                # castering DOF driven back by the tyre kingpin moment.
+                # τ_steer > 0 is the holding torque the (absent) actuator
+                # would have to supply, so the free wheel feels −τ_steer.
+                if key not in self._free_state:
+                    self._free_state[key] = [float(self.model.state.delta[w]), 0.0]
+                delta, ddot = self._free_state[key]
+                tau_kp = float(self.model.state.torque_steer[w])
+                drive = -f.eta_rev * tau_kp
+                fric = f.c_damp * ddot + f.tau_coulomb * math.tanh(ddot / 0.05)
+                acc = (drive - fric) / f.j_steer
+                ddot += acc * dt                      # semi-implicit Euler
+                delta += ddot * dt
+                lim = float(self.params.steer_limit)
+                if delta > lim:
+                    delta, ddot = lim, min(ddot, 0.0)
+                elif delta < -lim:
+                    delta, ddot = -lim, max(ddot, 0.0)
+                self._free_state[key] = [delta, ddot]
+                cmd.delta_cmd[w] = delta
 
     # ---- sampling --------------------------------------------------------------
 

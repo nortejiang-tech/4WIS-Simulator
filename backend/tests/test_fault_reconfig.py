@@ -116,6 +116,56 @@ def test_reconfig_mirror_cancellation_geometry() -> None:
     assert cmd_r.delta_cmd[3] == pytest.approx(-delta_s, abs=1e-9)
 
 
+def test_free_caster_self_aligns_and_stays_stable() -> None:
+    """Non-self-locking front failure: the wheel casters to its zero-force
+    equilibrium (α≈0) within ~0.5 s and shows no shimmy divergence."""
+    exp = Experiment(
+        name="free",
+        strategy="ideal_ackermann",
+        faults=[FaultSpec(fault_type="free_caster", wheel=0, t_start=10.5)],
+        maneuver=Maneuver(steps=[
+            ManeuverStep(name="accel", duration=6.0, speed_kmh=60.0, speed_ramp_s=4.0),
+            ManeuverStep(name="in", duration=2.0,
+                         steer=SteerProfile(kind="ramp", start=0.0, amplitude=0.05)),
+            ManeuverStep(name="hold", duration=6.0,
+                         steer=SteerProfile(kind="constant", amplitude=0.05)),
+        ]),
+    )
+    r = run_experiment(exp)
+    t = np.asarray(r.t)
+    alpha_fl = np.asarray(r.channels["slip_alpha_fl"])
+    # Pre-fault: cornering slip present; post-settle: castered to near-zero force.
+    assert abs(np.rad2deg(alpha_fl[np.searchsorted(t, 10.4)])) > 1.0
+    i_late = np.searchsorted(t, 12.5)
+    assert abs(np.rad2deg(alpha_fl[i_late])) < 0.3
+    # No shimmy: wheel angle bounded and quiescent at the end.
+    d_fl = np.rad2deg(np.asarray(r.channels["delta_fl"]))
+    tail = d_fl[np.searchsorted(t, 13.0):]
+    assert np.all(np.isfinite(tail))
+    assert float(np.ptp(tail)) < 0.5
+
+
+def test_reconfig_free_mode_boosts_healthy_partner() -> None:
+    """free fault_kind: no mirror; healthy same-axle wheel gets gain-boosted."""
+    p = VehicleParams()
+    strat = make_strategy("fault_reconfig", p)
+    driver = DriverInput(throttle=0.3, steering=0.10, mode_params={
+        "fault_wheel": 0, "fault_kind": "free",
+        "fault_time": 0.0, "detect_delay": 0.0, "front_gain": 2.0,
+    })
+    # Steady-state condition: yaw rate matches the (speed-capped) request so
+    # the yaw-PI term is quiescent and the pure feedforward is visible.
+    v_cmd = min(0.3 * p.v_max, 60.0 / 3.6)
+    kappa = strat._kappa_max * 0.10
+    state = VehicleState(t=1.0, yaw_rate=v_cmd * kappa)
+    cmd = strat.compute(driver, state)
+    nom = strat._ideal(kappa, v_cmd)
+    assert cmd.delta_cmd[1] == pytest.approx(2.0 * float(nom.delta_cmd[1]), abs=1e-6)
+    # Rears keep their nominal allocation.
+    assert cmd.delta_cmd[2] == pytest.approx(float(nom.delta_cmd[2]), abs=1e-6)
+    assert cmd.delta_cmd[3] == pytest.approx(float(nom.delta_cmd[3]), abs=1e-6)
+
+
 def test_reconfig_reduces_post_fault_heading_drift() -> None:
     """Headline claim: reconfiguration cuts uncorrected heading drift by a
     large factor vs. no mitigation (FL stuck at +4° @ 80 km/h straight)."""
