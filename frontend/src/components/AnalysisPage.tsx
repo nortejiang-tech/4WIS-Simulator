@@ -20,6 +20,7 @@ import {
   listRuns,
 } from "@/api/experiments";
 import { exportPNG, useLiveChart } from "@/charts/uplotFactory";
+import ReplayPanel from "@/components/ReplayPanel";
 import { useSimStore } from "@/store/sim";
 
 const PALETTE = ["#60a5fa", "#f59e0b", "#34d399", "#f87171", "#a78bfa", "#22d3ee"];
@@ -43,6 +44,9 @@ const CHANNEL_LABELS: Record<string, string> = {
 };
 
 const PRESET_CHIPS = ["vx", "yaw_rate", "driver_steering", "delta_fl", "rack_force_fl", "slip_alpha_fl"];
+
+// Channels the ghost-vehicle replay needs on top of whatever is charted.
+const REPLAY_CHANNELS = ["pose_x", "pose_y", "pose_psi", "delta_fl", "delta_fr", "delta_rl", "delta_rr"];
 
 const KPI_ROWS: { key: string; label: string; digits: number }[] = [
   { key: "yaw_rate_peak_dps", label: "横摆角速度峰值 °/s", digits: 2 },
@@ -74,6 +78,8 @@ export default function AnalysisPage() {
   const [charts, setCharts] = useState<string[]>(["vx", "yaw_rate"]);
   const [pickerCh, setPickerCh] = useState("rack_force_fl");
   const [dataVersion, setDataVersion] = useState(0);
+  const [replayOpen, setReplayOpen] = useState(false);
+  const [replayT, setReplayT] = useState<number | null>(null);
   const cache = useRef<Map<string, RunCache>>(new Map());
 
   const refresh = () => listRuns().then(setRuns).catch(() => setRuns([]));
@@ -111,7 +117,10 @@ export default function AnalysisPage() {
 
   // ---- data loading ----------------------------------------------------------
 
-  const neededChannels = [...new Set([...charts, "pose_x", "pose_y"])];
+  const neededChannels = [...new Set([
+    ...charts, "pose_x", "pose_y",
+    ...(replayOpen ? REPLAY_CHANNELS : []),
+  ])];
 
   useEffect(() => {
     let cancelled = false;
@@ -139,7 +148,7 @@ export default function AnalysisPage() {
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, charts, runs]);
+  }, [selected, charts, runs, replayOpen]);
 
   const selectedRuns = selected
     .map((id) => runs.find((r) => r.run_id === id))
@@ -196,7 +205,24 @@ export default function AnalysisPage() {
           </div>
         ) : (
           <>
-            <div className="wf-col-head"><span>KPI 对比</span></div>
+            <div className="wf-col-head">
+              <span>KPI 对比</span>
+              <button className={`wf-btn ${replayOpen ? "primary" : ""}`}
+                      onClick={() => setReplayOpen((v) => !v)}>
+                {replayOpen ? "⏹ 关闭回放" : "▶ 回放"}
+              </button>
+            </div>
+
+            {replayOpen && (
+              <ReplayPanel
+                runs={selectedRuns}
+                colors={selectedRuns.map((r) => colorOf(r.run_id) ?? "#888")}
+                cache={cache.current}
+                version={dataVersion}
+                onTime={setReplayT}
+                onClose={() => { setReplayOpen(false); setReplayT(null); }}
+              />
+            )}
             <div className="wf-kpi-wrap">
               <table className="wf-kpi">
                 <thead>
@@ -265,6 +291,7 @@ export default function AnalysisPage() {
                   colors={selectedRuns.map((r) => colorOf(r.run_id) ?? "#888")}
                   cache={cache.current}
                   version={dataVersion}
+                  marker={replayOpen ? replayT : null}
                   onClose={() => setCharts((cur) => cur.filter((x) => x !== ch))}
                 />
               ))}
@@ -278,12 +305,13 @@ export default function AnalysisPage() {
 
 // ─── one uPlot card: a single channel overlaid across the selected runs ─────
 
-function OverlayChart({ channel, runs, colors, cache, version, onClose }: {
+function OverlayChart({ channel, runs, colors, cache, version, marker, onClose }: {
   channel: string;
   runs: RunListItem[];
   colors: string[];
   cache: Map<string, RunCache>;
   version: number;
+  marker?: number | null;
   onClose: () => void;
 }) {
   const series = runs.map((r, i) => ({
@@ -310,6 +338,9 @@ function OverlayChart({ channel, runs, colors, cache, version, onClose }: {
   const { containerRef, plotRef } = useLiveChart(
     series, getData, version, undefined,
     { x: "t [s]", y: CHANNEL_LABELS[channel] ?? channel },
+    // Replay-time cursor: a fresh array per render keeps the marker effect
+    // firing; useLiveChart redraws without tearing down zoom state.
+    { verticalMarkers: marker != null ? [{ x: marker, color: "#fbbf24" }] : [] },
   );
 
   return (

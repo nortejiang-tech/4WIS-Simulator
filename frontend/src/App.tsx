@@ -23,6 +23,7 @@ import LoadAnalysisPage from "@/components/LoadAnalysisPage";
 import ModelTheoryPage from "@/components/ModelTheoryPage";
 import ExperimentPage from "@/components/ExperimentPage";
 import AnalysisPage from "@/components/AnalysisPage";
+import CommandPalette from "@/components/CommandPalette";
 import QuickStartCard from "@/components/QuickStartCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Toasts from "@/components/Toasts";
@@ -307,6 +308,7 @@ export default function App() {
 
       {/* Listens to window-level keyboard events and pushes driver input */}
       <KeyboardInput />
+      <CommandPalette />
       <Toasts />
     </div>
   );

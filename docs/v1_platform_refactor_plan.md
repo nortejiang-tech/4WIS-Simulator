@@ -12,8 +12,11 @@
 >
 > Phase B 第一批已于 v0.11.0 完成——B1 工作流七段 rail + 面板归位、
 > 试验页（实验编辑/运行矩阵/进度/KPI 小表）、分析页（run 浏览器/KPI
-> 对比表/通道叠图/轨迹俯视）。B 期剩余：dockview 自由布局、run 回放
-> （2D/3D + scrubber）、⌘K 命令面板、单位体系。
+> 对比表/通道叠图/轨迹俯视）。
+>
+> Phase B 第二批已于 v0.11.1 完成——run 回放（幽灵车叠放 + 时间轴 +
+> 叠图黄游标联动）、⌘K 命令面板。B 期剩余（B-3）：dockview 自由布局、
+> per-channel 单位体系、ExcitationPanel/ScorePanel 降级。
 
 ---
 
