@@ -92,6 +92,8 @@ class SimSession:
             plan = build_plan(exp.path)
             if plan is not None and hasattr(self.strategy, "plan_override"):
                 self.strategy.plan_override = plan
+        # Latched hold angles for stuck_hold faults (captured at activation).
+        self._fault_hold: dict[int, float] = {}
 
     # ---- execution -----------------------------------------------------------
 
@@ -132,6 +134,7 @@ class SimSession:
                 driver.throttle = max(-1.0, min(1.0, v_cmd / v_max))
                 driver.steering = max(-1.0, min(1.0, step_def.steer.value(t_local, step_def.duration)))
                 cmd = self.strategy.compute(driver, self.model.state)
+                self._apply_faults(cmd)
                 self.model.step(dt, cmd, self.env)
                 update_derived_outputs(self.model.state, self.params)
                 if n_steps % record_every == 0:
@@ -152,6 +155,30 @@ class SimSession:
                 "n_samples": len(t_out),
             },
         )
+
+    # ---- fault injection ---------------------------------------------------------
+
+    def _apply_faults(self, cmd) -> None:
+        """Overwrite steer commands for active faults (see schema.FaultSpec)."""
+        t = float(self.model.state.t)
+        for i, f in enumerate(self.exp.faults):
+            if t < f.t_start:
+                continue
+            w = int(f.wheel)
+            if f.fault_type == "stuck_zero":
+                cmd.delta_cmd[w] = 0.0
+            elif f.fault_type == "stuck_hold":
+                key = i * 4 + w
+                if key not in self._fault_hold:
+                    # Latch the *actual* wheel angle at activation — a jam
+                    # freezes the mechanism where it physically is.
+                    self._fault_hold[key] = float(self.model.state.delta[w])
+                cmd.delta_cmd[w] = self._fault_hold[key]
+            elif f.fault_type == "stuck_value":
+                cmd.delta_cmd[w] = float(f.value)
+            elif f.fault_type == "limited":
+                lim = abs(float(f.value))
+                cmd.delta_cmd[w] = max(-lim, min(lim, float(cmd.delta_cmd[w])))
 
     # ---- sampling --------------------------------------------------------------
 

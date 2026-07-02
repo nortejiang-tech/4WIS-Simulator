@@ -93,6 +93,26 @@ class ExperimentVehicle(BaseModel):
     overrides: dict[str, Any] = Field(default_factory=dict)
 
 
+class FaultSpec(BaseModel):
+    """Time-triggered actuator fault for headless runs (ISO 26262 studies).
+
+    Applied to the steer command of one wheel from ``t_start`` onward; the
+    steering-actuator model (first-order lag + rate limit) still governs how
+    fast the physical wheel reaches the faulted angle — i.e. this models the
+    *command/mechanism* failure, not a teleporting wheel.
+
+        stuck_zero   δ_cmd[i] ≡ 0            actuator returns to centre and jams
+        stuck_hold   δ_cmd[i] ≡ δ(t_start)   mechanical jam at the angle in use
+        stuck_value  δ_cmd[i] ≡ value        runaway-then-jam at a given angle
+        limited      |δ_cmd[i]| ≤ value      restricted authority (degraded)
+    """
+
+    fault_type: Literal["stuck_zero", "stuck_hold", "stuck_value", "limited"]
+    wheel: int = Field(..., ge=0, le=3)              # 0=FL 1=FR 2=RL 3=RR
+    value: float = 0.0                               # [rad] meaning per type
+    t_start: float = Field(0.0, ge=0.0)              # sim time [s]
+
+
 class PathSpec(BaseModel):
     """Reference path for follow_trajectory: template or explicit waypoints."""
 
@@ -111,6 +131,7 @@ class Experiment(BaseModel):
     mode_params: dict[str, Any] = Field(default_factory=dict)
     scene: dict[str, Any] | None = None              # SceneSection payload
     path: PathSpec | None = None
+    faults: list[FaultSpec] = Field(default_factory=list)
     maneuver: Maneuver = Field(default_factory=Maneuver)
     dt: float = Field(0.005, gt=0.0005, le=0.05)
     record_hz: float = Field(50.0, gt=1.0, le=200.0)

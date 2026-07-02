@@ -12,6 +12,7 @@ from typing import Callable
 from sim4wis.controller.ackermann import AckermannStrategy
 from sim4wis.controller.base import ControllerStrategy
 from sim4wis.controller.crab import CrabStrategy
+from sim4wis.controller.fault_reconfig import FaultReconfigStrategy
 from sim4wis.controller.follow_trajectory import FollowTrajectoryStrategy
 from sim4wis.controller.ideal_ackermann import IdealAckermannStrategy
 from sim4wis.controller.rear_wheel_steer import RearWheelSteerStrategy
@@ -28,6 +29,7 @@ _BUILTIN: dict[str, Callable[[VehicleParams], ControllerStrategy]] = {
     CrabStrategy.name: CrabStrategy,
     ZeroRadiusStrategy.name: ZeroRadiusStrategy,
     FollowTrajectoryStrategy.name: FollowTrajectoryStrategy,
+    FaultReconfigStrategy.name: FaultReconfigStrategy,
     HotReloadStrategy.name: HotReloadStrategy,
     UserJsStrategy.name: UserJsStrategy,
 }
