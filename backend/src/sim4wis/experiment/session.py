@@ -1,0 +1,199 @@
+"""SimSession — headless, deterministic, faster-than-realtime execution.
+
+The realtime `Simulator` and this class are two hosts of the same simulation
+core: model + strategy + scene stepped at a fixed dt, with the shared
+`update_derived_outputs` filling the rack-force chain after every step. The
+differences are deliberate:
+
+    * No wall-clock pacing — a run executes as fast as the CPU allows.
+    * Driver input comes from the experiment's sim-time maneuver, not the WS.
+    * Every push-interval sample is written into in-memory channel arrays that
+      the caller persists as a run artifact.
+
+Determinism: no clocks, no randomness — running the same Experiment twice
+produces identical arrays (guarded by tests).
+"""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field
+from typing import Any, Callable
+
+from sim4wis.controller.registry import make_strategy
+from sim4wis.core.derived import update_derived_outputs
+from sim4wis.core.state import DriverInput, EnvironmentState, VehicleParams
+from sim4wis.environment.disturbance import Scene
+from sim4wis.experiment.schema import Experiment, PathSpec
+from sim4wis.project.params_codec import params_from_dict
+from sim4wis.vehicle.model_registry import make_vehicle_model
+
+WHEELS = ("fl", "fr", "rl", "rr")
+
+# Channels recorded by every headless run (superset of the RT recorder's
+# defaults — batch analysis wants slip + driver inputs too).
+SCALAR_CHANNELS = (
+    "pose_x", "pose_y", "pose_psi",
+    "vx", "vy", "yaw_rate",
+    "driver_steering", "driver_throttle",
+)
+WHEEL_CHANNELS = (
+    "delta", "delta_cmd", "omega", "fz", "torque_steer",
+    "rack_force", "motor_torque", "slip_alpha", "slip_kappa", "icr_dev",
+)
+
+
+def resolve_vehicle_params(exp: Experiment) -> VehicleParams:
+    """profile (optional) + overrides (optional) → VehicleParams."""
+    base = VehicleParams()
+    if exp.vehicle.profile:
+        from sim4wis.project.vehicle_profiles import load_profile
+        raw = load_profile(exp.vehicle.profile)
+        base = params_from_dict(raw.get("vehicle"), base)
+    if exp.vehicle.overrides:
+        base = params_from_dict(exp.vehicle.overrides, base)
+    return base
+
+
+def build_plan(spec: PathSpec):
+    """PathSpec → PathPlan (pure; never touches the process-wide active plan)."""
+    from sim4wis.controller.path import plan_from_template, plan_from_waypoints
+    if spec.template:
+        return plan_from_template(spec.template, spec.params)
+    if spec.waypoints:
+        return plan_from_waypoints(spec.waypoints, closed=spec.closed)
+    return None
+
+
+@dataclass
+class RunResult:
+    t: list[float]
+    channels: dict[str, list[float]]
+    duration_s: float
+    n_steps: int
+    meta: dict[str, Any] = field(default_factory=dict)
+
+    def channel_names(self) -> list[str]:
+        return list(self.channels.keys())
+
+
+class SimSession:
+    """One headless execution context for one Experiment."""
+
+    def __init__(self, exp: Experiment) -> None:
+        self.exp = exp
+        self.params = resolve_vehicle_params(exp)
+        self.model = make_vehicle_model(self.params, exp.model_type)
+        self.strategy = make_strategy(exp.strategy, self.params)
+        from sim4wis.project.schema import SceneSection
+        scene = SceneSection(**exp.scene).to_scene() if exp.scene else Scene()
+        self.env = EnvironmentState(scene=scene, mu=scene.base_mu)
+        if exp.path is not None:
+            plan = build_plan(exp.path)
+            if plan is not None and hasattr(self.strategy, "plan_override"):
+                self.strategy.plan_override = plan
+
+    # ---- execution -----------------------------------------------------------
+
+    def run(self, progress: Callable[[float], None] | None = None) -> RunResult:
+        exp = self.exp
+        dt = float(exp.dt)
+        record_every = max(1, int(round(1.0 / (float(exp.record_hz) * dt))))
+
+        t_out: list[float] = []
+        chans: dict[str, list[float]] = {c: [] for c in SCALAR_CHANNELS}
+        for base in WHEEL_CHANNELS:
+            for w in WHEELS:
+                chans[f"{base}_{w}"] = []
+
+        driver = DriverInput(mode_params=dict(exp.mode_params))
+        v_max = max(float(self.params.v_max), 0.1)
+        total = max(exp.maneuver.total_duration, 1e-9)
+        elapsed = 0.0
+        n_steps = 0
+        speed_target = 0.0  # current speed target [m/s]
+
+        self.model.reset()
+
+        for step_def in exp.maneuver.steps:
+            if step_def.mode_params:
+                driver.mode_params.update(step_def.mode_params)
+            speed_prev = speed_target
+            if step_def.speed_kmh is not None:
+                speed_target = float(step_def.speed_kmh) / 3.6
+            ramp = float(step_def.speed_ramp_s) if step_def.speed_kmh is not None else 0.0
+            n = max(1, int(round(step_def.duration / dt)))
+            for k in range(n):
+                t_local = k * dt
+                if ramp > 0.0 and t_local < ramp:
+                    v_cmd = speed_prev + (speed_target - speed_prev) * (t_local / ramp)
+                else:
+                    v_cmd = speed_target
+                driver.throttle = max(-1.0, min(1.0, v_cmd / v_max))
+                driver.steering = max(-1.0, min(1.0, step_def.steer.value(t_local, step_def.duration)))
+                cmd = self.strategy.compute(driver, self.model.state)
+                self.model.step(dt, cmd, self.env)
+                update_derived_outputs(self.model.state, self.params)
+                if n_steps % record_every == 0:
+                    self._sample(t_out, chans, cmd, driver)
+                n_steps += 1
+            elapsed += step_def.duration
+            if progress is not None:
+                progress(min(elapsed / total, 1.0))
+
+        return RunResult(
+            t=t_out,
+            channels=chans,
+            duration_s=exp.maneuver.total_duration,
+            n_steps=n_steps,
+            meta={
+                "experiment": exp.model_dump(mode="json"),
+                "record_hz": exp.record_hz,
+                "n_samples": len(t_out),
+            },
+        )
+
+    # ---- sampling --------------------------------------------------------------
+
+    def _sample(self, t_out: list[float], chans: dict[str, list[float]], cmd, driver: DriverInput) -> None:
+        s = self.model.state
+        t_out.append(float(s.t))
+        chans["pose_x"].append(float(s.x))
+        chans["pose_y"].append(float(s.y))
+        chans["pose_psi"].append(float(s.psi))
+        chans["vx"].append(float(s.vx))
+        chans["vy"].append(float(s.vy))
+        chans["yaw_rate"].append(float(s.yaw_rate))
+        chans["driver_steering"].append(float(driver.steering))
+        chans["driver_throttle"].append(float(driver.throttle))
+        slip_a = getattr(self.model, "slip_alpha", None)
+        slip_k = getattr(self.model, "slip_kappa", None)
+        for i, w in enumerate(WHEELS):
+            chans[f"delta_{w}"].append(float(s.delta[i]))
+            chans[f"delta_cmd_{w}"].append(float(cmd.delta_cmd[i]))
+            chans[f"omega_{w}"].append(float(s.wheel_omega[i]))
+            chans[f"fz_{w}"].append(float(s.fz[i]))
+            chans[f"torque_steer_{w}"].append(float(s.torque_steer[i]))
+            chans[f"rack_force_{w}"].append(float(s.rack_force[i]))
+            chans[f"motor_torque_{w}"].append(float(s.motor_torque_demand[i]))
+            chans[f"slip_alpha_{w}"].append(_finite(slip_a[i]) if slip_a is not None else 0.0)
+            chans[f"slip_kappa_{w}"].append(_finite(slip_k[i]) if slip_k is not None else 0.0)
+            dev = float(s.wheel_icr_dev[i])
+            chans[f"icr_dev_{w}"].append(dev if math.isfinite(dev) else math.nan)
+
+
+def _finite(v: Any) -> float:
+    f = float(v)
+    return f if math.isfinite(f) else 0.0
+
+
+def run_experiment(exp: Experiment, progress: Callable[[float], None] | None = None) -> RunResult:
+    """Convenience: build a fresh session and execute it once."""
+    return SimSession(exp).run(progress)
+
+
+__all__ = [
+    "SimSession", "RunResult", "run_experiment",
+    "resolve_vehicle_params", "build_plan",
+    "SCALAR_CHANNELS", "WHEEL_CHANNELS", "WHEELS",
+]

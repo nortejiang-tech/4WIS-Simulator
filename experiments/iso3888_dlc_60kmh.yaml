@@ -1,0 +1,59 @@
+name: iso3888_dlc_60kmh
+description: ISO 3888 风格开环双移线 @60 km/h（LS9 默认车），配套参考路径与锥桶
+vehicle:
+  profile: null
+  overrides: {}
+model_type: simplified_dynamic
+strategy: ideal_ackermann
+mode_params: {}
+scene: null
+path:
+  template: double_lane_change
+  params: {}
+  waypoints: null
+  closed: false
+maneuver:
+  name: dlc
+  steps:
+  - name: 加速到 60
+    duration: 6.0
+    steer:
+      kind: constant
+      amplitude: 0.0
+      freq_hz: 0.5
+      f0_hz: 0.1
+      f1_hz: 2.0
+      t_step: 0.5
+      start: 0.0
+    speed_kmh: 60.0
+    speed_ramp_s: 4.0
+    mode_params: {}
+  - name: 双移线
+    duration: 8.0
+    steer:
+      kind: dlc
+      amplitude: 0.06
+      freq_hz: 0.5
+      f0_hz: 0.1
+      f1_hz: 2.0
+      t_step: 0.5
+      start: 0.0
+    speed_kmh: null
+    speed_ramp_s: 0.0
+    mode_params: {}
+  - name: 稳定段
+    duration: 2.0
+    steer:
+      kind: constant
+      amplitude: 0.0
+      freq_hz: 0.5
+      f0_hz: 0.1
+      f1_hz: 2.0
+      t_step: 0.5
+      start: 0.0
+    speed_kmh: null
+    speed_ramp_s: 0.0
+    mode_params: {}
+dt: 0.005
+record_hz: 50.0
+kpis: []

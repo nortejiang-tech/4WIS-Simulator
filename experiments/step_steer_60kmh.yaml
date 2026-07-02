@@ -1,0 +1,42 @@
+name: step_steer_60kmh
+description: ISO 7401 风格角阶跃 @60 km/h：横摆增益/上升时间/超调/稳定时间
+vehicle:
+  profile: null
+  overrides: {}
+model_type: simplified_dynamic
+strategy: ideal_ackermann
+mode_params: {}
+scene: null
+path: null
+maneuver:
+  name: step_steer
+  steps:
+  - name: 加速到 60
+    duration: 6.0
+    steer:
+      kind: constant
+      amplitude: 0.0
+      freq_hz: 0.5
+      f0_hz: 0.1
+      f1_hz: 2.0
+      t_step: 0.5
+      start: 0.0
+    speed_kmh: 60.0
+    speed_ramp_s: 4.0
+    mode_params: {}
+  - name: 角阶跃
+    duration: 6.0
+    steer:
+      kind: step
+      amplitude: 0.05
+      freq_hz: 0.5
+      f0_hz: 0.1
+      f1_hz: 2.0
+      t_step: 0.5
+      start: 0.0
+    speed_kmh: null
+    speed_ramp_s: 0.0
+    mode_params: {}
+dt: 0.005
+record_hz: 50.0
+kpis: []

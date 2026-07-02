@@ -9,6 +9,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from sim4wis.api.routers import (
+    experiments,
     fault,
     load_analysis,
     meta,
@@ -36,3 +37,4 @@ router.include_router(path.router)
 router.include_router(script.router)
 router.include_router(recording.router)
 router.include_router(vehicle_profiles.router)
+router.include_router(experiments.router)

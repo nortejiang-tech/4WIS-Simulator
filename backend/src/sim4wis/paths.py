@@ -44,6 +44,18 @@ def scripts_lib_dir() -> Path:
     return data_root() / "scripts_lib"
 
 
+def experiments_dir() -> Path:
+    """Experiment definitions (*.yaml) — the batch-run unit of work."""
+    env = os.environ.get("SIM4WIS_EXPERIMENTS_DIR")
+    return Path(env) if env else data_root() / "experiments"
+
+
+def runs_dir() -> Path:
+    """Run artifacts (runs/<id>/meta.json + data.csv)."""
+    env = os.environ.get("SIM4WIS_RUNS_DIR")
+    return Path(env) if env else data_root() / "runs"
+
+
 def plugins_dir() -> Path:
     """Directory containing strategy plugins (*.fmu, *.slx, …)."""
     return data_root() / "plugins" / "strategies"

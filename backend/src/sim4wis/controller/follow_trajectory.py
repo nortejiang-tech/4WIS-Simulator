@@ -48,6 +48,9 @@ class FollowTrajectoryStrategy(ControllerStrategy):
 
     def __init__(self, params: VehicleParams) -> None:
         super().__init__(params)
+        # Headless sessions (experiment.batch) inject their own plan here so
+        # they never touch the process-wide active plan used by the RT loop.
+        self.plan_override = None
 
     @staticmethod
     def _mp(driver: DriverInput, key: str, default: float) -> float:
@@ -58,7 +61,7 @@ class FollowTrajectoryStrategy(ControllerStrategy):
 
     def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:
         p = self.params
-        plan = get_active_plan()
+        plan = self.plan_override if self.plan_override is not None else get_active_plan()
 
         cruise = self._mp(driver, "cruise_speed", 0.0)
         k_v = self._mp(driver, "lookahead_kv", self.K_V)

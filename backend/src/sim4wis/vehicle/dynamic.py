@@ -64,15 +64,20 @@ class SimplifiedDynamicModel(VehicleModel):
         super().__init__(params)
         self.tire = tire or make_tire(params)
         t_max = getattr(params, "motor_torque_max", 2000.0)
+        self.iw = getattr(params, "wheel_inertia", 1.2)
+        # Reflected vehicle inertia per wheel for the servo's cmd-rate
+        # feedforward: accelerating the body through the tyre looks like an
+        # extra m·r²/4 on each wheel shaft.
+        ff_inertia = self.iw + params.mass * params.tire_radius**2 / N_WHEELS
         self.servos = [
             WheelSpeedServo(
                 kp=getattr(params, "servo_kp", 200.0),
                 ki=getattr(params, "servo_ki", 50.0),
                 torque_limit=t_max,
+                ff_inertia=ff_inertia,
             )
             for _ in range(N_WHEELS)
         ]
-        self.iw = getattr(params, "wheel_inertia", 1.2)
         # Per-wheel slip diagnostics (populated each step)
         self.slip_alpha = np.zeros(N_WHEELS)
         self.slip_kappa = np.zeros(N_WHEELS)

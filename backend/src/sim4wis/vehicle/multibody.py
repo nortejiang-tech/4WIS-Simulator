@@ -70,15 +70,19 @@ class MultiBodyModel(VehicleModel):
         super().__init__(params)
         self.tire = tire or make_tire(params)
         t_max = getattr(params, "motor_torque_max", 2000.0)
+        self.iw = getattr(params, "wheel_inertia", 1.2)
+        # Reflected vehicle inertia per wheel (same feedforward as the
+        # simplified model — see WheelSpeedServo docstring).
+        ff_inertia = self.iw + params.mass * params.tire_radius**2 / N_WHEELS
         self.servos = [
             WheelSpeedServo(
                 kp=getattr(params, "servo_kp", 200.0),
                 ki=getattr(params, "servo_ki", 50.0),
                 torque_limit=t_max,
+                ff_inertia=ff_inertia,
             )
             for _ in range(N_WHEELS)
         ]
-        self.iw = getattr(params, "wheel_inertia", 1.2)
 
         self._precompute()
 

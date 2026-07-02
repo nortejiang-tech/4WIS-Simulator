@@ -303,7 +303,13 @@ def case_load_transfer_balance() -> bool:
 
 
 def case_dynamic_straight_line() -> bool:
-    """SimplifiedDynamicModel: straight-line accel reaches commanded speed (±15%)."""
+    """SimplifiedDynamicModel: straight-line accel reaches commanded speed (±15%).
+
+    3.5 s window: the launch is friction-limited (a ≈ μ·g ≈ 9.8 m/s², ideal
+    floor 2.4 s to 23.6 m/s). The pre-v0.10 window of 3.0 s only passed
+    because the old servo's integral windup overdrove the approach; the
+    anti-windup fix makes the approach clean but ~0.2 % slower.
+    """
     from sim4wis.vehicle.dynamic import SimplifiedDynamicModel
 
     params = VehicleParams()
@@ -311,7 +317,7 @@ def case_dynamic_straight_line() -> bool:
     strat = make_strategy("ideal_ackermann", params)
     env = EnvironmentState()
     dt = 0.005
-    for _ in range(int(3.0 / dt)):
+    for _ in range(int(3.5 / dt)):
         cmd = strat.compute(DriverInput(throttle=0.5, steering=0.0), model.state)
         model.step(dt, cmd, env)
     s = model.state

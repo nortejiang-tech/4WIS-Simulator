@@ -2,6 +2,57 @@
 
 本项目版本约定：阶段即次版本（Phase 1 = 0.1，Phase 2 = 0.2，Phase 3 = 0.3，改进轮 = 0.4 起）。
 
+## 0.10.0 — 2026-07-02（平台重构 Phase A：实验底座 · 伺服前馈修正）
+
+### 背景
+
+v1.0 平台重构（docs/v1_platform_refactor_plan.md，已批准 A→B→C）第一期：
+对标 CarSim/CarMaker 的核心范式——"实验是一等公民、每次运行留下结果资产"。
+此前机动激励跑在前端 wall-clock 定时器上（不可复现/不可批量），KPI 算在浏览器
+30 s 环形缓冲上（不落盘），求解器只有 1× 实时一种形态。
+
+### 新增 (Added) — `sim4wis.experiment` 包
+
+- **Experiment schema**（`experiment/schema.py`）：车辆(profile+overrides) +
+  模型 + 策略(+mode_params) + 场景 + 参考路径(模板/waypoints) + **sim-time 机动**
+  （分段：constant/step/ramp/sine/sweep/dlc 转向剖面 × 目标车速+斜坡）+ 记录率 +
+  KPI 选择，YAML 存 `experiments/`。附两个示例：`iso3888_dlc_60kmh`、
+  `step_steer_60kmh`。
+- **SimSession 无头会话**（`experiment/session.py`）：与实时 Simulator 共享
+  同一内核（模型+策略+场景+共享的 `core/derived.py` 派生量），去 wall-clock、
+  全速执行、逐位可复现（确定性有测试兜底）；记录 46 通道（含滑移角/滑移率/
+  驾驶员输入，比实时 Recorder 更全）。
+- **KPI 后端化**（`experiment/kpi.py`）：ScorePanel 七项指标迁到后端并扩展——
+  瞬心偏差峰值/RMS、横摆峰值、侧向速度峰值、转向能耗、齿条力峰值、侧偏峰值、
+  车速跟踪 RMS + **阶跃响应组**（横摆增益、10–90% 上升时间、超调、5% 稳定时间）。
+- **run 结果资产**（`experiment/store.py`）：`runs/<id>/meta.json`（实验快照+
+  KPI+版本）+ `data.csv`；experiments YAML CRUD。
+- **批量/变体矩阵**（`experiment/batch.py`）：dotted-path overrides 变体展开
+  （如 `maneuver.steps.0.speed_kmh` / `strategy` / `vehicle.overrides.mass`），
+  后台线程顺序执行不阻塞实时环，job 注册表可轮询/取消。
+- **REST**（`/api/experiments`、`/api/batch`、`/api/runs`…）：定义 CRUD、
+  批量启动/进度/取消、run 列表/通道查询(可抽取+抽稀)/删除。
+- follow_trajectory 增加 `plan_override`：无头会话注入自己的路径，不再碰
+  进程级单例 active plan。
+
+### 修复 (Fixed)
+
+- **轮速伺服斜坡跟踪结构性超调**：纯 PI 追速度斜坡需要持续误差喂 P 项
+  （整车折算惯量 m·r²/4≈113 kg·m² ≫ 轮惯量），积分器在斜坡段合法充电、
+  到速后把车速挂在 cmd+ki·I/kp（实测 60 指令稳在 64.6 km/h，只能靠风阻放电）。
+  两处修正：①防饱卷从"先积后夹"改为**条件积分**（饱和且误差同向时冻结）；
+  ②增加**指令加速度前馈** `ff_inertia·dω_cmd/dt`（滤波指令导数，非被否决的
+  r·Fx 状态反馈，无反馈回路）。修后斜坡滞后 ~1.5 km/h、超调 0.4 km/h。
+- smoke「动力学直线」窗口 3.0→3.5 s：旧窗口是靠积分饱卷的"超速冲刺"擦线
+  通过的（摩擦限幅起步理想下限就要 2.4 s）。
+
+### 测试
+
+- 新增 `test_experiment_batch.py` 9 项：schema YAML 往返、转向剖面形状、
+  会话确定性（两次运行逐位一致）、path override、阶跃 KPI、变体展开、
+  DLC 批量验收（2 策略×2 车速落盘+回读+删除）、CSV NaN 往返、REST 全链路。
+- 全量 188 passed + smoke 全绿。
+
 ## 0.9.0 — 2026-07-02（时域物理补齐 · 轮速积分稳定性 · 手柄输入）
 
 ### 背景

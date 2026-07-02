@@ -30,8 +30,8 @@ from sim4wis.core.state import (
 from sim4wis.environment.disturbance import Scene
 from sim4wis.fault import FaultInjector
 from sim4wis.recorder.buffer import Recorder, RecorderConfig
+from sim4wis.core.derived import update_derived_outputs
 from sim4wis.vehicle.base import VehicleModel
-from sim4wis.vehicle.geometry import wheel_icr_projection, wheel_rack_force_from_linkage
 from sim4wis.vehicle.model_registry import make_vehicle_model
 # ScriptRunner is imported lazily inside Simulator to avoid an import cycle
 # (script.py imports Simulator).
@@ -171,25 +171,9 @@ class Simulator:
                     )
                 self.last_cmd = cmd
                 self.model.step(self.dt_sim, cmd, self.env)
-                # Per-wheel steering centre (single hook for all three models).
-                st = self.model.state
-                st.wheel_icr_body, st.wheel_icr_dev = wheel_icr_projection(
-                    st.wheel_pos_body, st.delta, st.vehicle_icr_body
-                )
-                # Split-rack force chain: kingpin τ → rack force → motor torque.
-                p = self.params
-                st.rack_force, st.motor_torque_demand, linkage = wheel_rack_force_from_linkage(
-                    st.torque_steer,
-                    st.delta,
-                    p.steering_geometry,
-                    p.steering_arm_length,
-                    p.pinion_radius,
-                    p.rack_mech_efficiency,
-                    p.motor_gear_ratio,
-                )
-                st.linkage_arm_tie_angle = linkage["arm_tie_angle"]
-                st.linkage_tie_rack_angle = linkage["tie_rack_angle"]
-                st.linkage_efficiency = linkage["efficiency"]
+                # Per-wheel steering centre + split-rack force chain (shared
+                # with the headless batch SimSession).
+                update_derived_outputs(self.model.state, self.params)
             except Exception:
                 logger.exception("Simulator loop step failed")
                 # Recover by resetting the model so we don't get NaN-locked.
