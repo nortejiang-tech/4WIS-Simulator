@@ -228,6 +228,44 @@ def drive_force_per_wheel(params: VehicleParams, speed: float) -> np.ndarray:
     return np.full(N_WHEELS, fx_total / N_WHEELS, dtype=np.float64)
 
 
+def body_resistance_force(params: VehicleParams, vx: float) -> float:
+    """Aero drag + rolling resistance along body X (signed, opposes motion).
+
+    Same Crr / Cd·A coefficients the quasi-static load page uses in
+    ``drive_force_per_wheel`` — this is the time-domain twin of that term so
+    the workbench and the load page share one longitudinal-balance story.
+    The rolling term uses tanh(v/0.5) as a smooth sign() so the force vanishes
+    at standstill instead of chattering.
+    """
+
+    crr = float(params.rolling_resistance_coeff)
+    rho = float(params.air_density)
+    cd = float(params.drag_coeff_cd)
+    area = float(params.frontal_area)
+    v = float(vx)
+    f_roll = crr * float(params.mass) * G_ACCEL * math.tanh(v / 0.5)
+    f_aero = 0.5 * rho * cd * area * v * abs(v)
+    return -(f_roll + f_aero)
+
+
+def camber_thrust_alpha_offset(params: VehicleParams, fz: np.ndarray) -> np.ndarray:
+    """Equivalent slip-angle offset that absorbs camber thrust into the tyre model.
+
+    Same absorption the load-analysis page uses (H1): camber thrust
+    ``Fy_camber = Cγ·γ·Fz`` at α = 0 maps to ``Δα = −Fy_camber / c_α`` so that
+    feeding ``α + Δα`` into the tyre model reproduces the combined slip+camber
+    force at small angles and saturates smoothly with it. Divides by the
+    *constant* ``tire_c_alpha`` because that is the stiffness the time-domain
+    tyre models actually run with.
+    """
+
+    c_gamma = float(params.camber_thrust_coeff)
+    camber = camber_per_wheel(params)
+    c_alpha = max(float(params.tire_c_alpha), 1.0)
+    fz_arr = np.asarray(fz, dtype=np.float64).reshape(N_WHEELS)
+    return -(c_gamma * camber * fz_arr) / c_alpha
+
+
 def fz_with_aero_lift(
     params: VehicleParams,
     fz_static: np.ndarray,
@@ -363,6 +401,77 @@ def steady_state_slip_angles(
     denom = np.maximum(np.abs(vx_wheel), float(min_longitudinal_speed))
     alpha = np.arctan2(vy_wheel, denom)
     return alpha, SteadyStateBody(beta=0.0, yaw_rate=0.0, used_bicycle=False)
+
+
+def semi_implicit_wheel_spin(
+    *,
+    dt: float,
+    wheel_omega: np.ndarray,
+    vx_wheel: np.ndarray,
+    alpha: np.ndarray,
+    fz: np.ndarray,
+    mu: np.ndarray,
+    torque: np.ndarray,
+    tire,
+    tire_radius: float,
+    wheel_inertia: float,
+    min_longitudinal_speed: float = VMIN_SLIP,
+) -> tuple[np.ndarray, WheelForceSet, np.ndarray]:
+    """Advance the wheel-spin ODE one step with a stiff-stable scheme.
+
+    Why not leave ω inside the models' RK4 vector: the linearised wheel-spin
+    mode has λ = c_κ·r²/(I_w·v_x,wheel). With the default parameters
+    (c_κ = 1e5, r = 0.395, I_w = 2.5) that gives λ·h ≈ 3.1 at 10 m/s and ≈ 62
+    at the 0.5 m/s slip floor — beyond RK4's real-axis stability limit (≈2.78).
+    The instability is invisible when the equilibrium force is exactly zero
+    (pre-v0.9 flat-road cruise) but erupts as sustained κ oscillation the
+    moment any steady longitudinal force exists (drag, slope, accel).
+
+    Scheme: backward-Euler on the *linear* slip force (unconditionally stable
+    in the stiff regime), switching to forward-Euler when the tyre is
+    friction-saturated (∂Fx/∂ω ≈ 0 there, so the ODE is non-stiff and the
+    implicit-linear denominator would wrongly suppress wheelspin).
+
+    Returns (omega_new, WheelForceSet at the new slip, kappa_new).
+    """
+
+    r = float(tire_radius)
+    iw = max(float(wheel_inertia), 1e-6)
+    c_kappa = float(getattr(tire, "c_kappa", 100_000.0))
+    omega = np.asarray(wheel_omega, dtype=np.float64).reshape(N_WHEELS)
+    vxw = np.asarray(vx_wheel, dtype=np.float64).reshape(N_WHEELS)
+    al = np.asarray(alpha, dtype=np.float64).reshape(N_WHEELS)
+    fz_arr = np.asarray(fz, dtype=np.float64).reshape(N_WHEELS)
+    mu_arr = np.asarray(mu, dtype=np.float64).reshape(N_WHEELS)
+    tq = np.asarray(torque, dtype=np.float64).reshape(N_WHEELS)
+
+    omega_new = np.empty(N_WHEELS)
+    fx_new = np.empty(N_WHEELS)
+    fy_new = np.empty(N_WHEELS)
+    mz_new = np.empty(N_WHEELS)
+    kappa_new = np.empty(N_WHEELS)
+
+    for i in range(N_WHEELS):
+        d = max(abs(float(vxw[i])), float(min_longitudinal_speed))
+        kappa_n = (r * float(omega[i]) - float(vxw[i])) / d
+        fx_n, fy_n, _mz_n = tire.forces(float(al[i]), kappa_n, float(fz_arr[i]), float(mu_arr[i]))
+        cap = float(mu_arr[i]) * float(fz_arr[i])
+        saturated = cap > 1e-6 and math.hypot(fx_n, fy_n) >= 0.98 * cap
+        if saturated:
+            w = float(omega[i]) + dt / iw * (float(tq[i]) - r * fx_n)
+        else:
+            w = (iw * float(omega[i]) + dt * (float(tq[i]) + r * c_kappa * float(vxw[i]) / d)) / (
+                iw + dt * r * r * c_kappa / d
+            )
+        k_new = (r * w - float(vxw[i])) / d
+        fx_i, fy_i, mz_i = tire.forces(float(al[i]), k_new, float(fz_arr[i]), float(mu_arr[i]))
+        omega_new[i] = w
+        kappa_new[i] = k_new
+        fx_new[i] = fx_i
+        fy_new[i] = fy_i
+        mz_new[i] = mz_i
+
+    return omega_new, WheelForceSet(fx=fx_new, fy=fy_new, mz=mz_new, frame="wheel"), kappa_new
 
 
 def low_speed_blend(params: VehicleParams, speed: float) -> float:

@@ -37,10 +37,11 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    from sim4wis import __version__
     app = FastAPI(
         title="4WIS Simulator",
         description="4-Wheel Independent Steering Simulator backend.",
-        version="0.3.0",
+        version=__version__,
         lifespan=lifespan,
     )
 

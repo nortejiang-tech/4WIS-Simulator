@@ -56,6 +56,9 @@ export default function ControlPanel() {
   const setCruiseSpeed = useSimStore((s) => s.setCruiseSpeed);
   const steerReturn = useSimStore((s) => s.steerReturn);
   const setSteerReturn = useSimStore((s) => s.setSteerReturn);
+  const gamepadEnabled = useSimStore((s) => s.gamepadEnabled);
+  const setGamepadEnabled = useSimStore((s) => s.setGamepadEnabled);
+  const gamepadId = useSimStore((s) => s.gamepadId);
   const requestZero = useSimStore((s) => s.requestZero);
   const modelType = useSimStore((s) => s.state?.model_type);
   const baseMu = useSimStore((s) => s.state?.scene?.base_mu ?? 0.85);
@@ -204,6 +207,34 @@ export default function ControlPanel() {
             <span>0 保持</span><span>默认</span><span>1.5× 最快</span>
           </div>
         </div>
+
+        {/* Gamepad / USB steering wheel (Web Gamepad API, standard mapping). */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12 }}>
+            <input
+              type="checkbox"
+              checked={gamepadEnabled}
+              onChange={(e) => setGamepadEnabled(e.target.checked)}
+            />
+            🎮 手柄 / USB 方向盘
+          </label>
+          <span
+            className="small"
+            style={{
+              marginLeft: "auto",
+              color: gamepadId ? "var(--ok, #4ade80)" : "var(--muted)",
+              maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}
+            title={gamepadId ?? "未检测到设备（连接后按任意键/扳机激活）"}
+          >
+            {gamepadId ? `已连接：${gamepadId}` : "未检测到"}
+          </span>
+        </div>
+        {gamepadEnabled && gamepadId && (
+          <div className="small" style={{ color: "var(--muted)", marginTop: 4 }}>
+            左摇杆 X = 转向 · RT/LT 扳机 = 前进/后退（无扳机设备退化为左摇杆 Y）；与键盘输入叠加
+          </div>
+        )}
 
         <div className="keyhint" style={{ marginTop: 8 }}>
           <kbd>W</kbd><span>{holdSpeed ? "加速（保持）" : "前进"}</span>

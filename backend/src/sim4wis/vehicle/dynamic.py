@@ -3,11 +3,16 @@
 Assumptions:
     * Body is a rigid block; no roll or pitch DOFs.
     * Suspension is rigid; vertical loads come from quasi-static load transfer
-      (see `load_transfer.vertical_loads`).
-    * Steering is instantaneous — δ tracks δ_cmd with no actuator lag (Phase 3
-      will add a first-order steer servo).
+      (see `load_transfer.vertical_loads`) plus per-axle aero lift (∝ v²).
+    * Steering: δ tracks δ_cmd through a first-order lag + rate limit
+      (`steer_actuator`), then static toe offsets are added per wheel.
     * Each wheel has its own moment of inertia and motor torque servo.
-    * Linear tire (with friction-circle saturation); see `tire.LinearTireModel`.
+    * Pluggable tire (linear / Pacejka, friction-circle/ellipse saturation);
+      camber thrust enters as an equivalent slip-angle offset (same absorption
+      as the load-analysis page).
+    * Body-X resistance: aero drag (½ρ·Cd·A·v²) + rolling resistance (Crr·m·g)
+      via `model_core.body_resistance_force` — shared coefficients with the
+      quasi-static load page.
     * Per-wheel μ comes from `env.scene.wheel_env(wheel_world_pos)` if a scene
       is attached, else `env.mu`.
     * Slope: when the scene's `wheel_env` returns a nonzero `ground_z` profile
@@ -39,7 +44,15 @@ from sim4wis.vehicle.base import VehicleModel
 from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.load_transfer import vertical_loads
-from sim4wis.vehicle.model_core import rotate_wheel_forces_to_body, wheel_slip_kinematics
+from sim4wis.vehicle.model_core import (
+    body_resistance_force,
+    camber_thrust_alpha_offset,
+    fz_with_aero_lift,
+    rotate_wheel_forces_to_body,
+    semi_implicit_wheel_spin,
+    static_toe_offsets,
+    wheel_slip_kinematics,
+)
 from sim4wis.vehicle.tire import TireModel, make_tire
 from sim4wis.vehicle.wheel_servo import WheelSpeedServo
 
@@ -69,6 +82,9 @@ class SimplifiedDynamicModel(VehicleModel):
         self.tire_mz = np.zeros(N_WHEELS)
         # Actual steer angle (tracks command through the steering actuator).
         self._delta_act = np.zeros(N_WHEELS)
+        # Static toe (A3, same convention as the load page): the physical wheel
+        # angle is the actuator angle plus the per-wheel alignment offset.
+        self._toe = static_toe_offsets(params)
         # Initialize static vertical loads
         self.state.fz = vertical_loads(params, ax=0.0, ay=0.0)
 
@@ -97,7 +113,7 @@ class SimplifiedDynamicModel(VehicleModel):
             self._delta_act, cmd.delta_cmd, dt,
             getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
         )
-        s.delta[:] = self._delta_act
+        s.delta[:] = np.clip(self._delta_act + self._toe, -p.steer_limit, p.steer_limit)
 
         # Per-wheel surface mu cache (re-evaluated using world wheel positions at start)
         wheel_mus, fz_offset, ground_z = self._compute_wheel_env(env)
@@ -112,13 +128,15 @@ class SimplifiedDynamicModel(VehicleModel):
                 s.delta + bsc * ground_z * toe_sign, -p.steer_limit, p.steer_limit
             )
 
-        # 2) RK4 integration of body + wheel dynamics
-        y0 = np.concatenate([
-            [s.vx, s.vy, s.yaw_rate],
-            s.wheel_omega,
-        ])
+        # 2) RK4 integration of the body DOFs (vx, vy, ω). Wheel spin is
+        #    deliberately NOT in the RK4 vector: its linearised mode has
+        #    λ·h > RK4's stability limit at low-mid speed (see
+        #    model_core.semi_implicit_wheel_spin) — ω is held over the body
+        #    step and advanced stiff-stably afterwards.
+        y0 = np.array([s.vx, s.vy, s.yaw_rate])
         # Capture the per-wheel motor torques computed at start of step (held over dt).
         t_motor = self._compute_motor_torques(cmd, s.wheel_omega, dt)
+        wheel_omega_held = s.wheel_omega.copy()
         # Estimate longitudinal grade from front-rear z difference (body frame).
         # Front wheels are at +L/2, rear at -L/2; positive Δz/L = uphill.
         z_front = 0.5 * (ground_z[0] + ground_z[1])
@@ -126,7 +144,9 @@ class SimplifiedDynamicModel(VehicleModel):
         grade_long = math.atan2(z_front - z_rear, p.wheelbase)
 
         def f(yv: np.ndarray) -> np.ndarray:
-            return self._derivatives(yv, s.delta, t_motor, wheel_mus, fz_offset, grade_long, env)
+            return self._derivatives(
+                yv, wheel_omega_held, s.delta, wheel_mus, fz_offset, grade_long, env
+            )
 
         h = dt
         k1 = f(y0)
@@ -138,7 +158,35 @@ class SimplifiedDynamicModel(VehicleModel):
         s.vx = float(y1[0])
         s.vy = float(y1[1])
         s.yaw_rate = float(y1[2])
-        s.wheel_omega[:] = y1[3:3 + N_WHEELS]
+
+        # 2b) Wheel-spin update at the final body state (semi-implicit, stiff-
+        #     stable) + final consistent tyre forces for the diagnostics.
+        kin = wheel_slip_kinematics(
+            vx=s.vx, vy=s.vy, yaw_rate=s.yaw_rate,
+            wheel_omega=wheel_omega_held, delta=s.delta,
+            wheel_positions_body=p.wheel_positions_body(),
+            tire_radius=p.tire_radius,
+        )
+        fz_now = np.clip(self.state.fz + fz_offset, 0.0, p.mass * 9.81)
+        alpha_camber = camber_thrust_alpha_offset(p, fz_now)
+        omega_new, forces, kappa_new = semi_implicit_wheel_spin(
+            dt=dt,
+            wheel_omega=wheel_omega_held,
+            vx_wheel=kin.vx_wheel,
+            alpha=kin.alpha + alpha_camber,
+            fz=fz_now,
+            mu=wheel_mus,
+            torque=t_motor,
+            tire=self.tire,
+            tire_radius=p.tire_radius,
+            wheel_inertia=self.iw,
+        )
+        s.wheel_omega[:] = omega_new
+        self.slip_alpha[:] = kin.alpha
+        self.slip_kappa[:] = kappa_new
+        self.tire_fx[:] = forces.fx
+        self.tire_fy[:] = forces.fy
+        self.tire_mz[:] = forces.mz
 
         # Reflect the disturbance vertical load (SpeedBump) in the reported Fz
         # so the transient is visible in telemetry / CSV / 3D — clamped to the
@@ -220,16 +268,15 @@ class SimplifiedDynamicModel(VehicleModel):
     def _derivatives(
         self,
         y: np.ndarray,
+        wheel_omega: np.ndarray,
         delta: np.ndarray,
-        t_motor: np.ndarray,
         wheel_mus: np.ndarray,
         fz_offset: np.ndarray,
         grade_long: float,
         env: EnvironmentState,  # noqa: ARG002
     ) -> np.ndarray:
-        """Return dy/dt for state y = [vx, vy, ω, ω_FL, ω_FR, ω_RL, ω_RR]."""
+        """Return dy/dt for body state y = [vx, vy, ω] (wheel ω held over dt)."""
         vx, vy, omega = y[0], y[1], y[2]
-        wheel_omega = y[3:3 + N_WHEELS]
         p = self.params
         wheels = p.wheel_positions_body()
 
@@ -239,8 +286,6 @@ class SimplifiedDynamicModel(VehicleModel):
         fx_wheel_per = np.zeros(N_WHEELS)
         fy_wheel_per = np.zeros(N_WHEELS)
         mz_wheel_per = np.zeros(N_WHEELS)
-        alpha_per = np.zeros(N_WHEELS)
-        kappa_per = np.zeros(N_WHEELS)
 
         # Use current Fz (held over the RK4 sub-steps — we update it after the step)
         # Add disturbance Fz pulse (SpeedBump), then clamp to a physical band.
@@ -259,15 +304,20 @@ class SimplifiedDynamicModel(VehicleModel):
             tire_radius=p.tire_radius,
         )
 
+        # Camber thrust (A2): absorbed as an equivalent slip-angle offset so the
+        # tyre model's friction limit applies to the combined force — the same
+        # absorption the load-analysis page uses. Diagnostics keep the true α.
+        alpha_camber = camber_thrust_alpha_offset(p, fz)
+
         for i in range(N_WHEELS):
             alpha = float(kin.alpha[i])
             kappa = float(kin.kappa[i])
-            fx, fy, mz = self.tire.forces(alpha, kappa, float(fz[i]), float(wheel_mus[i]))
+            fx, fy, mz = self.tire.forces(
+                alpha + float(alpha_camber[i]), kappa, float(fz[i]), float(wheel_mus[i])
+            )
             fx_wheel_per[i] = fx
             fy_wheel_per[i] = fy
             mz_wheel_per[i] = mz
-            alpha_per[i] = alpha
-            kappa_per[i] = kappa
 
         fx_body, fy_body = rotate_wheel_forces_to_body(
             fx_wheel_per, fy_wheel_per, delta
@@ -287,27 +337,23 @@ class SimplifiedDynamicModel(VehicleModel):
         f_grade = -m * g * math.sin(grade_long)
         fx_total += f_grade
 
+        # Aero drag + rolling resistance (time-domain twin of the load page's
+        # drive-force balance) — opposes body-X motion, vanishes at standstill.
+        fx_total += body_resistance_force(p, vx)
+
         # Newton-Euler in body frame (with Coriolis terms)
         iz = p.inertia_z
         vx_dot = fx_total / m + omega * vy
         vy_dot = fy_total / m - omega * vx
         omega_dot = m_z_total / iz
 
-        # Wheel rotational dynamics
-        omega_w_dot = np.zeros(N_WHEELS)
-        for i in range(N_WHEELS):
-            omega_w_dot[i] = (t_motor[i] - p.tire_radius * fx_wheel_per[i]) / self.iw
-
-        # Side-effect: stash latest slip + force for diagnostics
-        self.slip_alpha[:] = alpha_per
-        self.slip_kappa[:] = kappa_per
-        self.tire_fx[:] = fx_wheel_per
-        self.tire_fy[:] = fy_wheel_per
-        self.tire_mz[:] = mz_wheel_per
-
-        # Update Fz from latest accel estimate (so the NEXT step uses fresh loads)
+        # Update Fz from latest accel estimate (so the NEXT step uses fresh loads).
+        # Aero lift (per axle, ∝ v²) is applied on top of the quasi-static
+        # transfer so high speed unloads the tyres — same as the load page.
         ax_body = vx_dot - omega * vy   # body-frame longitudinal accel
         ay_body = vy_dot + omega * vx   # body-frame lateral accel
-        self.state.fz = vertical_loads(self.params, ax_body, ay_body)
+        self.state.fz = fz_with_aero_lift(
+            self.params, vertical_loads(self.params, ax_body, ay_body), abs(vx)
+        )
 
-        return np.concatenate([[vx_dot, vy_dot, omega_dot], omega_w_dot])
+        return np.array([vx_dot, vy_dot, omega_dot])

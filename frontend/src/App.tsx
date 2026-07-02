@@ -61,6 +61,7 @@ export default function App() {
   const setTheme = useSimStore((s) => s.setTheme);
   const [tab, setTab] = useState<TabId>("drive");
   const [page, setPage] = useState<PageId>("sim");
+  const [version, setVersion] = useState<string | null>(null);
   const [quickStart, setQuickStart] = useState(
     () => localStorage.getItem(QUICKSTART_KEY) !== "1",
   );
@@ -93,6 +94,13 @@ export default function App() {
       .catch(() => setStrategies([]));
   }, [setStrategies]);
 
+  // Backend version for the header badge.
+  useEffect(() => {
+    fetchJSON<{ version: string }>("/api/version")
+      .then((d) => setVersion(d.version ?? null))
+      .catch(() => setVersion(null));
+  }, []);
+
   // Re-fetch the reference path whenever the backend bumps path_version.
   useEffect(() => {
     if (pathVersion >= 0) fetchPath().catch(() => undefined);
@@ -108,6 +116,15 @@ export default function App() {
       <header className="app-header">
         <span className="brand">4WIS</span>
         <span className="title">Simulator</span>
+        {version && (
+          <span
+            className="small mono"
+            style={{ color: "var(--muted)", fontSize: 10, alignSelf: "flex-end", paddingBottom: 2 }}
+            title="后端版本（/api/version）"
+          >
+            v{version}
+          </span>
+        )}
         <nav className="page-tabs" aria-label="页面">
           <button className={page === "sim" ? "active" : ""} onClick={() => setPage("sim")}>
             仿真工作台

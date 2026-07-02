@@ -53,6 +53,11 @@ interface SimStore {
   // Fixed-speed cruise: when on, KeyboardInput holds throttle at cruiseSpeed.
   cruiseOn: boolean;
   cruiseSpeed: number;        // target speed [m/s]
+  // Gamepad input (Web Gamepad API, standard mapping). `gamepadId` is set by
+  // connect/disconnect events; when enabled, gamepad axes merge additively
+  // with the keyboard axes in KeyboardInput's single-writer loop.
+  gamepadEnabled: boolean;
+  gamepadId: string | null;
   // Measurement tool (2D canvas): click two world points to read a distance.
   measureMode: boolean;
   measurePts: [number, number][];   // world frame, length 0..2
@@ -97,6 +102,8 @@ interface SimStore {
   setSteerReturn: (v: number) => void;
   setCruiseOn: (b: boolean) => void;
   setCruiseSpeed: (ms: number) => void;
+  setGamepadEnabled: (b: boolean) => void;
+  setGamepadId: (id: string | null) => void;
   setMeasureMode: (b: boolean) => void;
   addMeasurePt: (x: number, y: number) => void;
   clearMeasure: () => void;
@@ -153,6 +160,8 @@ export const useSimStore = create<SimStore>((set, get) => ({
   zeroRequest: 0,
   cruiseOn: false,
   cruiseSpeed: 5,       // m/s (≈ 18 km/h)
+  gamepadEnabled: true,
+  gamepadId: null,
   measureMode: false,
   measurePts: [],
   theme: (typeof localStorage !== "undefined" && localStorage.getItem("sim4wis-theme") === "light")
@@ -220,6 +229,8 @@ export const useSimStore = create<SimStore>((set, get) => ({
   setSteerReturn: (v) => set({ steerReturn: Math.max(0, Math.min(1, v)) }),
   setCruiseOn: (b) => set({ cruiseOn: b }),
   setCruiseSpeed: (ms) => set({ cruiseSpeed: Math.max(0, ms) }),
+  setGamepadEnabled: (b) => set({ gamepadEnabled: b }),
+  setGamepadId: (id) => set({ gamepadId: id }),
   setMeasureMode: (b) => set({
     measureMode: b,
     measurePts: b ? get().measurePts : [],

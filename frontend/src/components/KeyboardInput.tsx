@@ -9,6 +9,15 @@
  *     τ_ramp ~ 0.18 s, so the vehicle doesn't snap to full throttle/steering.
  *   * Releasing returns the axis toward 0 with τ_return ~ 0.25 s (slightly
  *     slower so a tap leaves a tiny residual).
+ *
+ * Gamepad (Web Gamepad API, "standard" mapping):
+ *   * This component is the single writer of driver input — the gamepad is
+ *     polled inside the same rAF loop and merged additively with the keyboard
+ *     axes (so an idle stick doesn't cancel W/S and vice versa).
+ *   * Steering = −axes[0] (left stick X; stick left = steer left = +1).
+ *   * Throttle = RT − LT analog triggers (buttons 7/6); if the device has no
+ *     analog triggers (some wheels), falls back to −axes[1] (left stick Y).
+ *   * Deadzone 0.08 per axis; no extra smoothing (sticks are already analog).
  */
 
 import { useEffect, useRef } from "react";
@@ -28,6 +37,32 @@ const HOTKEYS_STRATEGY: Record<string, number> = {
   Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4,
 };
 
+const GP_DEADZONE = 0.08;
+
+function deadzone(v: number): number {
+  if (Math.abs(v) < GP_DEADZONE) return 0;
+  // Rescale so the response is continuous at the deadzone edge.
+  const s = Math.sign(v);
+  return s * (Math.abs(v) - GP_DEADZONE) / (1 - GP_DEADZONE);
+}
+
+/** Read (throttle, steering) from the first connected gamepad, or null. */
+function readGamepad(): { throttle: number; steering: number } | null {
+  if (typeof navigator === "undefined" || !navigator.getGamepads) return null;
+  const gp = Array.from(navigator.getGamepads()).find((g) => g && g.connected);
+  if (!gp) return null;
+  const steering = deadzone(-(gp.axes[0] ?? 0));
+  // Prefer analog triggers (standard mapping: 6 = LT, 7 = RT).
+  const rt = gp.buttons[7]?.value ?? 0;
+  const lt = gp.buttons[6]?.value ?? 0;
+  let throttle = deadzone(rt - lt);
+  if (rt === 0 && lt === 0) {
+    // No trigger input — fall back to left stick Y (push forward = +throttle).
+    throttle = deadzone(-(gp.axes[1] ?? 0));
+  }
+  return { throttle, steering };
+}
+
 export default function KeyboardInput() {
   const pressed = useRef<Record<string, boolean>>({});
   const throttle = useRef(0);
@@ -44,6 +79,7 @@ export default function KeyboardInput() {
   const cruiseOnRef = useRef(false);
   const cruiseSpeedRef = useRef(5);
   const vMaxRef = useRef(20);
+  const gamepadEnabledRef = useRef(true);
   useEffect(() => useSimStore.subscribe((st) => {
     strategiesRef.current = st.strategies;
     holdSpeedRef.current = st.holdSpeed;
@@ -51,6 +87,7 @@ export default function KeyboardInput() {
     cruiseOnRef.current = st.cruiseOn;
     cruiseSpeedRef.current = st.cruiseSpeed;
     vMaxRef.current = st.state?.params.v_max ?? 20;
+    gamepadEnabledRef.current = st.gamepadEnabled;
     // A bump in zeroRequest = UI asked us to zero the persistent targets.
     if (st.zeroRequest !== zeroReqRef.current) {
       zeroReqRef.current = st.zeroRequest;
@@ -86,6 +123,23 @@ export default function KeyboardInput() {
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+    };
+  }, []);
+
+  // Track gamepad connect/disconnect so the UI can show the device name.
+  useEffect(() => {
+    const sync = () => {
+      const gp = navigator.getGamepads
+        ? Array.from(navigator.getGamepads()).find((g) => g && g.connected)
+        : null;
+      useSimStore.getState().setGamepadId(gp ? gp.id : null);
+    };
+    sync();
+    window.addEventListener("gamepadconnected", sync);
+    window.addEventListener("gamepaddisconnected", sync);
+    return () => {
+      window.removeEventListener("gamepadconnected", sync);
+      window.removeEventListener("gamepaddisconnected", sync);
     };
   }, []);
 
@@ -140,9 +194,20 @@ export default function KeyboardInput() {
         }
       }
 
+      // --- Gamepad (merged additively; idle stick leaves keyboard in charge) ---
+      let outThrottle = throttle.current;
+      let outSteering = steering.current;
+      if (gamepadEnabledRef.current) {
+        const gp = readGamepad();
+        if (gp) {
+          if (!cruiseOnRef.current) outThrottle = clamp(outThrottle + gp.throttle);
+          outSteering = clamp(outSteering + gp.steering);
+        }
+      }
+
       // Throttle output rate to the backend
       if (now - lastPush.current >= PUSH_INTERVAL_MS) {
-        setDriver(throttle.current, steering.current);
+        setDriver(outThrottle, outSteering);
         lastPush.current = now;
       }
 
