@@ -10,6 +10,11 @@ export interface ToastMsg {
 }
 
 export type RunSlot = "A" | "B";
+
+// Top-level workflow pages (CarMaker-style rail): drive workbench, experiment
+// composer, analysis workbench, vehicle datasets, scene editor, plus the two
+// knowledge pages.
+export type AppPage = "run" | "experiment" | "analysis" | "vehicle" | "scene" | "load" | "model";
 export interface RunSnapshot {
   trajectory: number[];   // flat [x0,y0,x1,y1,...] world frame
   t: number[];
@@ -58,6 +63,10 @@ interface SimStore {
   // with the keyboard axes in KeyboardInput's single-writer loop.
   gamepadEnabled: boolean;
   gamepadId: string | null;
+  // Workflow page routing (in the store so any page can navigate, e.g.
+  // "run batch → jump to analysis with these runs preselected").
+  page: AppPage;
+  analysisPreselect: string[];   // run ids the analysis page should auto-select
   // Measurement tool (2D canvas): click two world points to read a distance.
   measureMode: boolean;
   measurePts: [number, number][];   // world frame, length 0..2
@@ -104,6 +113,8 @@ interface SimStore {
   setCruiseSpeed: (ms: number) => void;
   setGamepadEnabled: (b: boolean) => void;
   setGamepadId: (id: string | null) => void;
+  setPage: (p: AppPage) => void;
+  setAnalysisPreselect: (runIds: string[]) => void;
   setMeasureMode: (b: boolean) => void;
   addMeasurePt: (x: number, y: number) => void;
   clearMeasure: () => void;
@@ -162,6 +173,8 @@ export const useSimStore = create<SimStore>((set, get) => ({
   cruiseSpeed: 5,       // m/s (≈ 18 km/h)
   gamepadEnabled: true,
   gamepadId: null,
+  page: "run",
+  analysisPreselect: [],
   measureMode: false,
   measurePts: [],
   theme: (typeof localStorage !== "undefined" && localStorage.getItem("sim4wis-theme") === "light")
@@ -231,6 +244,8 @@ export const useSimStore = create<SimStore>((set, get) => ({
   setCruiseSpeed: (ms) => set({ cruiseSpeed: Math.max(0, ms) }),
   setGamepadEnabled: (b) => set({ gamepadEnabled: b }),
   setGamepadId: (id) => set({ gamepadId: id }),
+  setPage: (p) => set({ page: p }),
+  setAnalysisPreselect: (runIds) => set({ analysisPreselect: runIds }),
   setMeasureMode: (b) => set({
     measureMode: b,
     measurePts: b ? get().measurePts : [],

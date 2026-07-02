@@ -21,28 +21,37 @@ import ExcitationPanel from "@/components/ExcitationPanel";
 import ScorePanel from "@/components/ScorePanel";
 import LoadAnalysisPage from "@/components/LoadAnalysisPage";
 import ModelTheoryPage from "@/components/ModelTheoryPage";
+import ExperimentPage from "@/components/ExperimentPage";
+import AnalysisPage from "@/components/AnalysisPage";
 import QuickStartCard from "@/components/QuickStartCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Toasts from "@/components/Toasts";
 import { connectSimSocket, fetchPath, fetchScenario } from "@/api/ws";
 import { fetchJSON } from "@/api/http";
-import { useSimStore } from "@/store/sim";
+import { AppPage, useSimStore } from "@/store/sim";
 
-// Sidebar tab groups. All panels stay mounted (so timers / WS subscriptions in
-// ExcitationPanel / ScorePanel / MeasurePanel keep running across tab switches);
-// inactive groups are hidden via CSS, not unmounted.
+// Workbench sidebar tab groups (scene editing moved to the 场景 page).
+// All panels stay mounted (timers / WS subscriptions keep running across tab
+// switches); inactive groups are hidden via CSS, not unmounted.
 const TABS = [
   { id: "drive", label: "驾驶", hint: "策略 / 模型 / 油门 / 路面 / 仿真控制" },
-  { id: "design", label: "设计", hint: "策略设计器 / 轨迹 / Python·JS 策略" },
+  { id: "design", label: "设计", hint: "策略设计器 / Python·JS 策略" },
   { id: "validate", label: "验证", hint: "开环激励 / 评分 / A/B 对比" },
-  { id: "scene", label: "场景", hint: "车辆悬架参数 / 扰动 / 故障 / 项目" },
   { id: "data", label: "数据", hint: "测量 / 录制 / 脚本 / 实时曲线" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
-type PageId = "sim" | "load" | "model";
 
-// Keeps children mounted; uses display:contents when active so panels flow into
-// the sidebar's flex column, display:none when inactive (state preserved).
+// CarMaker-style workflow rail: 建模 → 场景 → 试验 → 运行 → 分析 → 知识.
+const RAIL: { id: AppPage; icon: string; label: string; hint: string }[] = [
+  { id: "run", icon: "🕹", label: "运行", hint: "交互驾驶工作台（键盘/手柄实时仿真）" },
+  { id: "experiment", icon: "🧪", label: "试验", hint: "定义可复现实验，批量运行策略×车速矩阵" },
+  { id: "analysis", icon: "📊", label: "分析", hint: "run 结果库：KPI 对比 / 多 run 叠图 / 轨迹" },
+  { id: "vehicle", icon: "🚗", label: "车辆", hint: "车辆/悬架/转向几何参数与项目管理" },
+  { id: "scene", icon: "🛣", label: "场景", hint: "参考路径 / 扰动（冰面·减速带·坡道）/ 故障注入" },
+  { id: "load", icon: "⚙", label: "负载", hint: "准静态负载特性（齿条力/δ_eq/敏感度）" },
+  { id: "model", icon: "📖", label: "原理", hint: "数学模型与理论简介" },
+];
+
 function TabGroup({ id, tab, children }: { id: TabId; tab: TabId; children: React.ReactNode }) {
   return <div style={{ display: tab === id ? "contents" : "none" }}>{children}</div>;
 }
@@ -59,8 +68,9 @@ export default function App() {
   const scenarioVersion = useSimStore((s) => s.scenarioVersion);
   const theme = useSimStore((s) => s.theme);
   const setTheme = useSimStore((s) => s.setTheme);
+  const page = useSimStore((s) => s.page);
+  const setPage = useSimStore((s) => s.setPage);
   const [tab, setTab] = useState<TabId>("drive");
-  const [page, setPage] = useState<PageId>("sim");
   const [version, setVersion] = useState<string | null>(null);
   const [quickStart, setQuickStart] = useState(
     () => localStorage.getItem(QUICKSTART_KEY) !== "1",
@@ -125,17 +135,7 @@ export default function App() {
             v{version}
           </span>
         )}
-        <nav className="page-tabs" aria-label="页面">
-          <button className={page === "sim" ? "active" : ""} onClick={() => setPage("sim")}>
-            仿真工作台
-          </button>
-          <button className={page === "load" ? "active" : ""} onClick={() => setPage("load")}>
-            负载特性
-          </button>
-          <button className={page === "model" ? "active" : ""} onClick={() => setPage("model")}>
-            原理简介
-          </button>
-        </nav>
+        <span className="page-title">{RAIL.find((r) => r.id === page)?.label ?? ""}</span>
         <div className="header-summary" aria-label="当前状态摘要">
           <span className="hs-item">
             <span className="hs-k">车速</span>
@@ -146,7 +146,7 @@ export default function App() {
             <span className="hs-v" title={strategy}>{strategy}</span>
           </span>
         </div>
-        {page === "sim" && (
+        {page === "run" && (
           <button
             className="quickstart-reopen"
             onClick={() => setQuickStart(true)}
@@ -168,78 +168,142 @@ export default function App() {
         </span>
       </header>
 
-      {page === "sim" ? (
-        <main className="app-main">
-          <section className="viewport-pane">
-            <ErrorBoundary label="视图">
-              <Viewport />
-            </ErrorBoundary>
-            {quickStart && (
-              <QuickStartCard
-                onClose={dismissQuickStart}
-                onGoTab={(t) => setTab(t as TabId)}
-                onGoPage={(p) => setPage(p as PageId)}
-              />
-            )}
-          </section>
+      <div className="app-body">
+        {/* ── workflow rail ── */}
+        <nav className="nav-rail" aria-label="工作流">
+          {RAIL.map((r) => (
+            <button
+              key={r.id}
+              className={`rail-item ${page === r.id ? "active" : ""}`}
+              title={r.hint}
+              onClick={() => setPage(r.id)}
+            >
+              <span className="rail-icon">{r.icon}</span>
+              <span className="rail-label">{r.label}</span>
+            </button>
+          ))}
+        </nav>
 
-          <aside className="side-pane">
-            <nav className="side-tabs" role="tablist" aria-label="功能分组">
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  role="tab"
-                  aria-selected={tab === t.id}
-                  className={`side-tab ${tab === t.id ? "active" : ""}`}
-                  title={t.hint}
-                  onClick={() => setTab(t.id)}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-            <div className="side-scroll">
-              <ErrorBoundary label="侧栏">
-                <TabGroup id="drive" tab={tab}>
-                  <ControlPanel />
-                </TabGroup>
-                <TabGroup id="design" tab={tab}>
-                  <StrategyDesignerPanel />
-                  <TrajectoryPanel />
-                  <UserPythonPanel />
-                  <JsStrategyPanel />
-                </TabGroup>
-                <TabGroup id="validate" tab={tab}>
-                  <ExcitationPanel />
-                  <ScorePanel />
-                  <ComparePanel />
-                </TabGroup>
-                <TabGroup id="scene" tab={tab}>
+        {/* ── pages ── */}
+        {page === "run" && (
+          <main className="app-main">
+            <section className="viewport-pane">
+              <ErrorBoundary label="视图">
+                <Viewport />
+              </ErrorBoundary>
+              {quickStart && (
+                <QuickStartCard
+                  onClose={dismissQuickStart}
+                  onGoTab={(t) => setTab(t as TabId)}
+                  onGoPage={(p) => setPage(p === "sim" ? "run" : (p as AppPage))}
+                />
+              )}
+            </section>
+
+            <aside className="side-pane">
+              <nav className="side-tabs" role="tablist" aria-label="功能分组">
+                {TABS.map((t) => (
+                  <button
+                    key={t.id}
+                    role="tab"
+                    aria-selected={tab === t.id}
+                    className={`side-tab ${tab === t.id ? "active" : ""}`}
+                    title={t.hint}
+                    onClick={() => setTab(t.id)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </nav>
+              <div className="side-scroll">
+                <ErrorBoundary label="侧栏">
+                  <TabGroup id="drive" tab={tab}>
+                    <ControlPanel />
+                  </TabGroup>
+                  <TabGroup id="design" tab={tab}>
+                    <StrategyDesignerPanel />
+                    <UserPythonPanel />
+                    <JsStrategyPanel />
+                  </TabGroup>
+                  <TabGroup id="validate" tab={tab}>
+                    <ExcitationPanel />
+                    <ScorePanel />
+                    <ComparePanel />
+                  </TabGroup>
+                  <TabGroup id="data" tab={tab}>
+                    <MeasurePanel />
+                    <RecordingPanel />
+                    <ScriptPanel />
+                    <ChartPanel />
+                  </TabGroup>
+                </ErrorBoundary>
+              </div>
+            </aside>
+          </main>
+        )}
+
+        {page === "experiment" && (
+          <ErrorBoundary label="试验">
+            <ExperimentPage />
+          </ErrorBoundary>
+        )}
+
+        {page === "analysis" && (
+          <ErrorBoundary label="分析">
+            <AnalysisPage />
+          </ErrorBoundary>
+        )}
+
+        {page === "vehicle" && (
+          <ErrorBoundary label="车辆">
+            <div className="wf-page veh-grid">
+              <div className="veh-col">
+                <ParamsPanel />
+              </div>
+              <div className="veh-col">
+                <ProjectPanel />
+                <div className="wf-hintcard">
+                  <b>提示</b>：车辆预置（LS9 等 profile）与转向几何标定在
+                  <button className="wf-link" onClick={() => setPage("load")}>负载特性</button>
+                  页；此处参数保存进项目（YAML）。
+                </div>
+              </div>
+            </div>
+          </ErrorBoundary>
+        )}
+
+        {page === "scene" && (
+          <main className="app-main">
+            <section className="viewport-pane">
+              <ErrorBoundary label="场景视图">
+                <Viewport />
+              </ErrorBoundary>
+            </section>
+            <aside className="side-pane">
+              <div className="side-scroll" style={{ paddingTop: 8 }}>
+                <ErrorBoundary label="场景编辑">
                   <ScenarioPanel />
-                  <ParamsPanel />
+                  <TrajectoryPanel />
                   <DisturbancePanel />
                   <FaultPanel />
-                  <ProjectPanel />
-                </TabGroup>
-                <TabGroup id="data" tab={tab}>
-                  <MeasurePanel />
-                  <RecordingPanel />
-                  <ScriptPanel />
-                  <ChartPanel />
-                </TabGroup>
-              </ErrorBoundary>
-            </div>
-          </aside>
-        </main>
-      ) : page === "load" ? (
-        <ErrorBoundary label="负载特性">
-          <LoadAnalysisPage />
-        </ErrorBoundary>
-      ) : (
-        <ErrorBoundary label="原理简介">
-          <ModelTheoryPage />
-        </ErrorBoundary>
-      )}
+                </ErrorBoundary>
+              </div>
+            </aside>
+          </main>
+        )}
+
+        {page === "load" && (
+          <ErrorBoundary label="负载特性">
+            <LoadAnalysisPage />
+          </ErrorBoundary>
+        )}
+
+        {page === "model" && (
+          <ErrorBoundary label="原理简介">
+            <ModelTheoryPage />
+          </ErrorBoundary>
+        )}
+      </div>
 
       {/* Listens to window-level keyboard events and pushes driver input */}
       <KeyboardInput />

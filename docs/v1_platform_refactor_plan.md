@@ -9,7 +9,11 @@
 > **进度**：Phase A（A1–A5）已于 v0.10.0 完成——`sim4wis.experiment` 包
 > （schema/session/kpi/store/batch）+ REST + 9 项测试 + 2 个示例实验；
 > 顺带修复轮速伺服斜坡超调（条件积分防饱卷 + 指令加速度前馈）。
-> 下一步：Phase B 界面壳（dockview）。
+>
+> Phase B 第一批已于 v0.11.0 完成——B1 工作流七段 rail + 面板归位、
+> 试验页（实验编辑/运行矩阵/进度/KPI 小表）、分析页（run 浏览器/KPI
+> 对比表/通道叠图/轨迹俯视）。B 期剩余：dockview 自由布局、run 回放
+> （2D/3D + scrubber）、⌘K 命令面板、单位体系。
 
 ---
 

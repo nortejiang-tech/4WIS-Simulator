@@ -1717,3 +1717,253 @@ html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden }
     white-space: normal;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Platform refactor Phase B — workflow rail + 试验/分析 pages (wf-*)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.app-body {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  overflow: hidden;
+  min-height: 0;
+}
+.app-body > .app-main { min-height: 0 }
+
+.app-header .page-title {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.nav-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 6px;
+  background: var(--bg-1);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+.rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 2px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.rail-item .rail-icon { font-size: 17px; line-height: 1 }
+.rail-item .rail-label { font-size: 10px; font-weight: 600; letter-spacing: .06em }
+.rail-item:hover { color: var(--text); background: var(--bg-2) }
+.rail-item.active {
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 1px 8px rgba(59, 130, 246, .4);
+}
+
+/* ---- generic workflow page scaffolding ---- */
+
+.wf-page {
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+.wf-3col { grid-template-columns: 250px 1fr 340px }
+.wf-analysis { grid-template-columns: 280px 1fr }
+
+.wf-col {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  overflow-y: auto;
+}
+.wf-col.wf-main { overflow-y: auto }
+
+.wf-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.wf-col-head > button { margin-left: auto }
+.wf-subhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 10px 0 6px;
+}
+.wf-subhead > button { margin-left: auto }
+
+.wf-btn {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.wf-btn:hover { border-color: var(--accent) }
+.wf-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600 }
+.wf-btn.primary:disabled { opacity: .5; cursor: default }
+.wf-btn.big { width: 100%; padding: 8px 0; font-size: 13px }
+.wf-link {
+  background: none; border: none; color: var(--accent);
+  cursor: pointer; font-size: inherit; padding: 0 3px; text-decoration: underline;
+}
+.wf-x {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+.wf-x:hover { color: var(--bad); background: rgba(239, 68, 68, .12) }
+
+.wf-input {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  min-width: 0;
+}
+.wf-input.num { width: 84px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace }
+
+.wf-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px }
+.wf-field { display: flex; flex-direction: column; gap: 3px; font-size: 10px; color: var(--muted) }
+.wf-field.wf-grow { flex: 1 }
+.wf-field.wf-grow .wf-input { width: 100% }
+
+/* experiment list */
+.wf-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0 }
+.wf-list-item {
+  position: relative;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 26px 7px 10px;
+  cursor: pointer;
+}
+.wf-list-item:hover { border-color: var(--accent) }
+.wf-list-item.active { border-color: var(--accent); background: rgba(59, 130, 246, .1) }
+.wf-list-item .wf-x { position: absolute; top: 4px; right: 4px }
+.wf-list-title { font-size: 12px; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; gap: 6px; word-break: break-all }
+.wf-list-sub { font-size: 10px; color: var(--muted); margin-top: 2px }
+.wf-list-desc { font-size: 10px; color: var(--muted); margin-top: 2px; opacity: .8 }
+.wf-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 18px 6px }
+.wf-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0 }
+
+/* maneuver step cards */
+.wf-step {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+.wf-step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px }
+.wf-step-no { font-size: 11px; font-weight: 700; color: var(--accent) }
+
+/* chips */
+.wf-chiprow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px }
+.wf-chip {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.wf-chip.on { border-color: var(--accent); color: var(--accent); background: rgba(59, 130, 246, .1) }
+
+/* batch progress + mini KPI */
+.wf-job { margin-top: 10px }
+.wf-progress { height: 6px; background: var(--bg-2); border-radius: 3px; overflow: hidden }
+.wf-progress-fill { height: 100%; transition: width .3s }
+.wf-kpi-mini { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 8px }
+.wf-kpi-mini th { color: var(--muted); font-weight: 500; text-align: right; padding: 2px 4px }
+.wf-kpi-mini th:first-child { text-align: left }
+.wf-kpi-mini td { text-align: right; padding: 2px 4px; border-top: 1px solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace }
+.wf-kpi-mini td:first-child { text-align: left; font-family: inherit }
+
+/* analysis: KPI comparison table */
+/* flex-shrink:0 — as a flex-column child with overflow-x set, the automatic
+   minimum size is 0 and the whole table collapses when the column overflows. */
+.wf-kpi-wrap { overflow-x: auto; flex-shrink: 0 }
+.wf-kpi { width: 100%; border-collapse: collapse; font-size: 12px }
+.wf-kpi th { color: var(--muted); font-weight: 600; text-align: right; padding: 4px 8px;
+  white-space: nowrap }
+.wf-kpi th .wf-dot { margin-right: 5px }
+.wf-kpi td { text-align: right; padding: 4px 8px; border-top: 1px solid var(--border) }
+.wf-kpi td:first-child, .wf-kpi th:first-child { text-align: left }
+.wf-kpi td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace }
+
+/* analysis: chart grid */
+.wf-charts {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+.wf-chart-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+.wf-chart-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; color: var(--text);
+  margin-bottom: 6px;
+}
+.wf-chart-head > .wf-btn { margin-left: auto }
+.wf-chart-head > .wf-btn + .wf-x { margin-left: 0 }
+.wf-chart-body { flex: 1; min-height: 240px; position: relative }
+.wf-chart-body canvas { position: absolute; inset: 0 }
+
+/* vehicle page */
+.veh-grid { grid-template-columns: 420px 420px; align-content: start; overflow-y: auto }
+.veh-col { display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.wf-hintcard {
+  background: var(--bg-1);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
