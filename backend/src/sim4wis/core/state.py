@@ -141,6 +141,11 @@ class VehicleParams:
     # the linear-region slope of the τ-δ curve softens, not just the saturation
     # plateau height.
     tire_load_sensitivity_exp: float = 0.8
+    # C3-1: apply the same c_α(Fz) law in the TIME-DOMAIN tyre models (the
+    # load page always applies it). On = lateral load transfer reduces an
+    # axle's total lateral capacity (real understeer-budget physics). Only
+    # c_α scales — c_κ stays constant so the wheel-speed servo tuning holds.
+    tire_load_sensitivity_time_domain: bool = True
     parking_scrub_coeff: float = 0.80   # 低速/原地轮胎扭转阻力系数 [-]（旧字段，向后兼容）
     parking_lateral_coeff: float = 0.80  # 静态接地斑侧向力系数（A 块拆分自 parking_scrub_coeff）
     parking_torque_coeff: float = 0.80   # 静态接地斑阻力矩系数（A 块拆分自 parking_scrub_coeff）

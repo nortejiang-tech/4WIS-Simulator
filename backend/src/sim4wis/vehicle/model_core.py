@@ -254,15 +254,18 @@ def camber_thrust_alpha_offset(params: VehicleParams, fz: np.ndarray) -> np.ndar
     Same absorption the load-analysis page uses (H1): camber thrust
     ``Fy_camber = Cγ·γ·Fz`` at α = 0 maps to ``Δα = −Fy_camber / c_α`` so that
     feeding ``α + Δα`` into the tyre model reproduces the combined slip+camber
-    force at small angles and saturates smoothly with it. Divides by the
-    *constant* ``tire_c_alpha`` because that is the stiffness the time-domain
-    tyre models actually run with.
+    force at small angles and saturates smoothly with it. The divisor must be
+    the stiffness the tyre model actually runs with — load-sensitive c_α(Fz)
+    when ``tire_load_sensitivity_time_domain`` is on, constant otherwise.
     """
 
     c_gamma = float(params.camber_thrust_coeff)
     camber = camber_per_wheel(params)
-    c_alpha = max(float(params.tire_c_alpha), 1.0)
     fz_arr = np.asarray(fz, dtype=np.float64).reshape(N_WHEELS)
+    if getattr(params, "tire_load_sensitivity_time_domain", False):
+        c_alpha = np.maximum(load_sensitive_cornering_stiffness(params, fz_arr), 1.0)
+    else:
+        c_alpha = max(float(params.tire_c_alpha), 1.0)
     return -(c_gamma * camber * fz_arr) / c_alpha
 
 
