@@ -249,9 +249,26 @@ def capture() -> dict[str, bool]:
             shot("13_fault_panel", panel("故障注入"))
             page.evaluate("fetch('/api/scene/clear',{method:'POST'})")
 
-            # 14 车辆页
-            rail("车辆")
+            # 14 车辆页几何工作室：整车 / 主销·车轮 / 齿条硬点 三图
+            rail("车辆", settle=1400)
             shot("14_vehicle_page")
+            cards = page.locator(".vg-card")
+            if cards.count() >= 1:
+                shot("14a_vehicle_diagram", cards.nth(0))
+            if cards.count() >= 2:
+                cards.nth(1).scroll_into_view_if_needed(); page.wait_for_timeout(300)
+                shot("14b_kingpin_diagram", cards.nth(1))
+            if cards.count() >= 3:
+                cards.nth(2).scroll_into_view_if_needed(); page.wait_for_timeout(300)
+                # push the rack to full travel so the Ackermann steer shows
+                page.evaluate("""() => {
+                    const s = document.querySelector('.vg-slider input[type=range]');
+                    if (!s) return;
+                    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+                    set.call(s, s.max); s.dispatchEvent(new Event('input',{bubbles:true}));
+                }""")
+                page.wait_for_timeout(400)
+                shot("14c_rack_diagram", cards.nth(2))
 
             # 15 试验页：载入示例 → 2 策略矩阵 → 跑完出 KPI
             rail("试验")
@@ -587,10 +604,25 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 {img("12_disturbance", "扰动示例：减速带（横条）与低附着冰面（色块），车轮驶过时逐轮生效")}
 {img("13_fault_panel", "故障注入面板")}
 
-<h2 id="s6">6　车辆页</h2>
-<p>左列参数组（车身/悬架主销/轮胎/转向传动/气动……全部 SI 单位，改动即时生效并重置模型），
-右列项目管理（当前 车辆+策略+场景 快照存为 YAML，可加载/分发；内置 LS9 等预置）。</p>
-{img("14_vehicle_page", "车辆页：参数编辑 + 项目保存/加载")}
+<h2 id="s6">6　车辆页 · 几何工作室</h2>
+<p>左列参数组（车身/悬架主销/轮胎/转向传动/气动……全部 SI 单位）+ 项目管理（车辆+策略+场景
+快照存 YAML，内置 LS9 等预置）；右列三张<b>随参数实时重建、可拖拽建模</b>的 2D 示意图。
+数值表与拖拽共用一个编辑缓冲，一个「应用」提交并重置模型——把标定从"填数字"变成"看着几何调"。</p>
+{img("14_vehicle_page", "几何工作室：左参数表 + 右整车俯视图（轴距/轮距/质心/前后轴荷/转弯圆）")}
+<h3>6.1 核心整车（俯视 + 侧视）</h3>
+<p>俯视显示车身、四轮、轴距 L、前后轮距、质心位置 a、前后轴荷分配%、阿克曼最小转弯圆；
+侧视显示质心高。拖动质心/车轮/前轴的圆点即改对应参数。</p>
+{img("14a_vehicle_diagram", "整车图：CG 及尺寸线随参数变，前 51% / 后 49% 轴荷、R=3.0 m 转弯圆")}
+<h3>6.2 核心主销 / 车轮</h3>
+<p>正视看主销内倾、车轮外倾、主销偏置 scrub；侧视看主销后倾 ε、机械拖距 t_m=R·tanε、气胎拖距 t_p。
+拖主销轴顶改内倾/后倾，拖轮顶改外倾。派生量（机械拖距、总拖距）实时算出——选转向电机时最关心。</p>
+{img("14b_kingpin_diagram", "主销/车轮图：内倾 12°、后倾 6°、机械拖距 42 mm 等真实派生值")}
+<h3>6.3 齿条硬点（前桥俯视）</h3>
+<p>真实 4-bar 连杆求解：拖内/外球头改硬点，「齿条位移」滑杆推动齿条、两前轮按连杆几何转向，
+实时给出内/外轮转角、<b>阿克曼误差</b>、转弯半径、连杆效率 η 与奇异红旗。</p>
+{img("14c_rack_diagram", "齿条硬点图：满舵下内轮 40.1°/外轮 33.7°，阿克曼误差 −4.8°，效率随行程变化")}
+<div class="tip">越界或奇异（连杆效率→0、scrub 过大、质心出轴距、阿克曼严重偏离）会在图上变红提示；
+理论页的主销/齿条示意图与此共用同一套几何数学，数值一致。</div>
 
 <h2 id="s7">7　试验页（批量实验）</h2>
 <p>把「机动 × 车速 × 策略」定义成<b>可复现实验</b>并批量运行——离线全速（约 25× 实时），
@@ -671,7 +703,8 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>v0.11.x</td><td>七段工作流导航、试验页、分析页、幽灵车回放、⌘K 命令面板</td></tr>
 <tr><td>v0.12.0</td><td>时域 c_α(F_z) 载荷敏感度</td></tr>
 <tr><td>v0.13–0.14</td><td>单轮失效 ISO 26262 研究：故障注入（含自由脚轮机构 ODE）、容错重构策略、参数敏感性流水线、论文级报告</td></tr>
-<tr><td>v{VER}</td><td>手柄映射机制：六模式预设（前后轴/左右侧/逐轮/蟹行/全向）+ 点击绑定校准 + 死区/expo/反向</td></tr>
+<tr><td>v0.15.0</td><td>手柄映射机制：六模式预设（前后轴/左右侧/逐轮/蟹行/全向）+ 点击绑定校准 + 死区/expo/反向</td></tr>
+<tr><td>v{VER}</td><td>车辆页几何工作室：整车/主销·车轮/齿条硬点三张参数驱动·可拖拽建模示意图 + 派生量/红旗/转弯圆</td></tr>
 </table>
 <p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v{VER}</p>
 </body></html>"""
