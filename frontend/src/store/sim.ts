@@ -1,5 +1,10 @@
 import { create } from "zustand";
 import type { PathPlan, Scenario, SimStateMessage } from "@/types/sim";
+import {
+  GamepadConfig,
+  loadGamepadConfig,
+  saveGamepadConfig,
+} from "@/input/gamepadConfig";
 
 export type DistType = "ice_patch" | "split_mu" | "speed_bump" | "slope";
 
@@ -63,6 +68,7 @@ interface SimStore {
   // with the keyboard axes in KeyboardInput's single-writer loop.
   gamepadEnabled: boolean;
   gamepadId: string | null;
+  gamepadConfig: GamepadConfig;   // mapping presets + axis bindings (persisted)
   // Workflow page routing (in the store so any page can navigate, e.g.
   // "run batch → jump to analysis with these runs preselected").
   page: AppPage;
@@ -113,6 +119,7 @@ interface SimStore {
   setCruiseSpeed: (ms: number) => void;
   setGamepadEnabled: (b: boolean) => void;
   setGamepadId: (id: string | null) => void;
+  setGamepadConfig: (c: GamepadConfig) => void;
   setPage: (p: AppPage) => void;
   setAnalysisPreselect: (runIds: string[]) => void;
   setMeasureMode: (b: boolean) => void;
@@ -173,6 +180,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   cruiseSpeed: 5,       // m/s (≈ 18 km/h)
   gamepadEnabled: true,
   gamepadId: null,
+  gamepadConfig: loadGamepadConfig(),
   page: "run",
   analysisPreselect: [],
   measureMode: false,
@@ -244,6 +252,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   setCruiseSpeed: (ms) => set({ cruiseSpeed: Math.max(0, ms) }),
   setGamepadEnabled: (b) => set({ gamepadEnabled: b }),
   setGamepadId: (id) => set({ gamepadId: id }),
+  setGamepadConfig: (c) => { saveGamepadConfig(c); set({ gamepadConfig: c }); },
   setPage: (p) => set({ page: p }),
   setAnalysisPreselect: (runIds) => set({ analysisPreselect: runIds }),
   setMeasureMode: (b) => set({

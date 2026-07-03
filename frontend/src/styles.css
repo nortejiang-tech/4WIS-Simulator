@@ -2039,3 +2039,63 @@ html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden }
   padding: 7px 12px;
   border-top: 1px solid var(--border);
 }
+
+/* ---- Gamepad mapping & calibration panel ---- */
+.gp-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px }
+.gp-preset {
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 6px; padding: 4px 9px; font-size: 11px; cursor: pointer;
+}
+.gp-preset:hover { color: var(--text); border-color: var(--accent) }
+.gp-preset.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600 }
+
+.gp-chan-head {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--muted);
+  text-transform: uppercase; margin: 10px 0 4px; padding-bottom: 3px;
+  border-bottom: 1px solid var(--border);
+}
+.gp-chan { margin-bottom: 8px }
+.gp-chan-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px }
+.gp-chan-label { font-size: 12px; color: var(--text); flex: 1 }
+.gp-chan-axis { font-size: 10px; color: var(--muted); font-family: ui-monospace, monospace }
+.gp-learn {
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 5px; padding: 2px 8px; font-size: 10px; cursor: pointer;
+}
+.gp-learn:hover { border-color: var(--accent) }
+.gp-learn.arm { background: var(--warn); border-color: var(--warn); color: #1a1208; font-weight: 600 }
+.gp-sel {
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 5px; padding: 2px 6px; font-size: 11px;
+}
+.gp-chan-ctl { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted) }
+.gp-chan-ctl label { display: flex; align-items: center; gap: 4px; cursor: pointer }
+
+.gp-bar {
+  position: relative; height: 7px; background: var(--bg-2);
+  border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+}
+.gp-bar::before {
+  content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+  background: var(--border);
+}
+.gp-bar-fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 2px }
+
+.gp-glob { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 5px }
+.gp-glob span { min-width: 108px }
+.gp-glob input[type="range"] { flex: 1 }
+
+.gp-mon { display: flex; flex-direction: column; gap: 3px }
+.gp-mon-axis { display: flex; align-items: center; gap: 6px }
+.gp-mon-lab { font-size: 10px; color: var(--muted); width: 14px; font-family: ui-monospace, monospace }
+.gp-mon-axis .gp-bar { flex: 1 }
+.gp-mon-btns { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; min-height: 16px }
+.gp-btn-dot {
+  font-size: 10px; background: var(--accent); color: #fff; border-radius: 4px;
+  padding: 0 5px; font-family: ui-monospace, monospace;
+}
+.gp-reset {
+  margin-top: 10px; width: 100%; background: var(--bg-2); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 6px; padding: 5px 0; font-size: 11px; cursor: pointer;
+}
+.gp-reset:hover { color: var(--text); border-color: var(--accent) }

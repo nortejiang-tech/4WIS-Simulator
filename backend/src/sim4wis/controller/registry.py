@@ -15,6 +15,8 @@ from sim4wis.controller.crab import CrabStrategy
 from sim4wis.controller.fault_reconfig import FaultReconfigStrategy
 from sim4wis.controller.follow_trajectory import FollowTrajectoryStrategy
 from sim4wis.controller.ideal_ackermann import IdealAckermannStrategy
+from sim4wis.controller.manual_body import ManualBodyStrategy
+from sim4wis.controller.manual_wheel import ManualWheelStrategy
 from sim4wis.controller.rear_wheel_steer import RearWheelSteerStrategy
 from sim4wis.controller.user_js import UserJsStrategy
 from sim4wis.controller.user_python import HotReloadStrategy
@@ -30,6 +32,8 @@ _BUILTIN: dict[str, Callable[[VehicleParams], ControllerStrategy]] = {
     ZeroRadiusStrategy.name: ZeroRadiusStrategy,
     FollowTrajectoryStrategy.name: FollowTrajectoryStrategy,
     FaultReconfigStrategy.name: FaultReconfigStrategy,
+    ManualWheelStrategy.name: ManualWheelStrategy,
+    ManualBodyStrategy.name: ManualBodyStrategy,
     HotReloadStrategy.name: HotReloadStrategy,
     UserJsStrategy.name: UserJsStrategy,
 }

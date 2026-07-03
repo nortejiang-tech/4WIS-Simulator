@@ -10,18 +10,20 @@
  *   * Releasing returns the axis toward 0 with τ_return ~ 0.25 s (slightly
  *     slower so a tap leaves a tiny residual).
  *
- * Gamepad (Web Gamepad API, "standard" mapping):
+ * Gamepad (Web Gamepad API):
  *   * This component is the single writer of driver input — the gamepad is
- *     polled inside the same rAF loop and merged additively with the keyboard
- *     axes (so an idle stick doesn't cancel W/S and vice versa).
- *   * Steering = −axes[0] (left stick X; stick left = steer left = +1).
- *   * Throttle = RT − LT analog triggers (buttons 7/6); if the device has no
- *     analog triggers (some wheels), falls back to −axes[1] (left stick Y).
- *   * Deadzone 0.08 per axis; no extra smoothing (sticks are already analog).
+ *     polled inside the same rAF loop.
+ *   * The mapping is fully configurable (see input/gamepadConfig.ts): three
+ *     modes — assisted (sticks → throttle/steering → active strategy),
+ *     direct (per-wheel via a selectable grouping → manual_wheel strategy),
+ *     holonomic (translation + yaw → manual_body strategy). In assisted mode
+ *     the gamepad merges additively with the keyboard; in direct/holonomic the
+ *     steering channels come from the gamepad while W/S still add to throttle.
  */
 
 import { useEffect, useRef } from "react";
 import { resetSim, setDriver, setStrategy } from "@/api/ws";
+import { computeGamepadOutput, firstGamepad, GamepadConfig } from "@/input/gamepadConfig";
 import { useSimStore } from "@/store/sim";
 
 const PUSH_INTERVAL_MS = 20;     // 50 Hz to backend
@@ -36,32 +38,6 @@ const STEER_RETURN_RATE_MAX = 1.5 / TAU_RETURN;
 const HOTKEYS_STRATEGY: Record<string, number> = {
   Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4,
 };
-
-const GP_DEADZONE = 0.08;
-
-function deadzone(v: number): number {
-  if (Math.abs(v) < GP_DEADZONE) return 0;
-  // Rescale so the response is continuous at the deadzone edge.
-  const s = Math.sign(v);
-  return s * (Math.abs(v) - GP_DEADZONE) / (1 - GP_DEADZONE);
-}
-
-/** Read (throttle, steering) from the first connected gamepad, or null. */
-function readGamepad(): { throttle: number; steering: number } | null {
-  if (typeof navigator === "undefined" || !navigator.getGamepads) return null;
-  const gp = Array.from(navigator.getGamepads()).find((g) => g && g.connected);
-  if (!gp) return null;
-  const steering = deadzone(-(gp.axes[0] ?? 0));
-  // Prefer analog triggers (standard mapping: 6 = LT, 7 = RT).
-  const rt = gp.buttons[7]?.value ?? 0;
-  const lt = gp.buttons[6]?.value ?? 0;
-  let throttle = deadzone(rt - lt);
-  if (rt === 0 && lt === 0) {
-    // No trigger input — fall back to left stick Y (push forward = +throttle).
-    throttle = deadzone(-(gp.axes[1] ?? 0));
-  }
-  return { throttle, steering };
-}
 
 export default function KeyboardInput() {
   const pressed = useRef<Record<string, boolean>>({});
@@ -80,6 +56,7 @@ export default function KeyboardInput() {
   const cruiseSpeedRef = useRef(5);
   const vMaxRef = useRef(20);
   const gamepadEnabledRef = useRef(true);
+  const gamepadCfgRef = useRef<GamepadConfig>(useSimStore.getState().gamepadConfig);
   useEffect(() => useSimStore.subscribe((st) => {
     strategiesRef.current = st.strategies;
     holdSpeedRef.current = st.holdSpeed;
@@ -88,6 +65,7 @@ export default function KeyboardInput() {
     cruiseSpeedRef.current = st.cruiseSpeed;
     vMaxRef.current = st.state?.params.v_max ?? 20;
     gamepadEnabledRef.current = st.gamepadEnabled;
+    gamepadCfgRef.current = st.gamepadConfig;
     // A bump in zeroRequest = UI asked us to zero the persistent targets.
     if (st.zeroRequest !== zeroReqRef.current) {
       zeroReqRef.current = st.zeroRequest;
@@ -194,20 +172,30 @@ export default function KeyboardInput() {
         }
       }
 
-      // --- Gamepad (merged additively; idle stick leaves keyboard in charge) ---
-      let outThrottle = throttle.current;
-      let outSteering = steering.current;
-      if (gamepadEnabledRef.current) {
-        const gp = readGamepad();
-        if (gp) {
-          if (!cruiseOnRef.current) outThrottle = clamp(outThrottle + gp.throttle);
-          outSteering = clamp(outSteering + gp.steering);
-        }
-      }
+      // --- Gamepad (config-driven; see input/gamepadConfig.ts) ---
+      const cfg = gamepadCfgRef.current;
+      const gp = gamepadEnabledRef.current ? firstGamepad() : null;
+      const out = gp ? computeGamepadOutput(gp, cfg) : null;
 
-      // Throttle output rate to the backend
       if (now - lastPush.current >= PUSH_INTERVAL_MS) {
-        setDriver(outThrottle, outSteering);
+        if (out && cfg.mode === "direct") {
+          // Steering per-wheel from the gamepad; W/S still add to throttle.
+          const thr = cruiseOnRef.current ? throttle.current : clamp(throttle.current + out.throttle);
+          setDriver(thr, 0, { wheel_norm: out.wheelNorm });
+        } else if (out && cfg.mode === "holonomic") {
+          const b = out.body!;
+          // W/S nudge forward speed on top of the left-stick forward axis.
+          setDriver(0, 0, { vx_frac: clamp(b.vx + throttle.current), vy_frac: b.vy, yaw_frac: b.yaw });
+        } else {
+          // Assisted: gamepad merges additively with keyboard.
+          let outThrottle = throttle.current;
+          let outSteering = steering.current;
+          if (out) {
+            if (!cruiseOnRef.current) outThrottle = clamp(outThrottle + out.throttle);
+            outSteering = clamp(outSteering + (out.steering ?? 0));
+          }
+          setDriver(outThrottle, outSteering);
+        }
         lastPush.current = now;
       }
 
