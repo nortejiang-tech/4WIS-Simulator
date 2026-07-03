@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import argparse
 import base64
+import io
+import math
 import subprocess
 import sys
 import time
@@ -31,6 +33,25 @@ PORT = 8016
 BASE = f"http://127.0.0.1:{PORT}"
 FIG_DIR = ROOT / "docs" / "manual_figs"
 OUT_HTML = ROOT / "docs" / "user_manual.html"
+
+
+def frames_to_gif(frames_png: list[bytes], path: Path,
+                  width: int = 560, fps: int = 10, colors: int = 96) -> None:
+    """Assemble PNG frame bytes into a looping GIF with one shared palette
+    (consistent palette across frames → no inter-frame flicker, smaller file)."""
+    from PIL import Image
+
+    imgs: list = []
+    for b in frames_png:
+        im = Image.open(io.BytesIO(b)).convert("RGB")
+        if im.width > width:
+            h = round(im.height * width / im.width)
+            im = im.resize((width, h), Image.LANCZOS)
+        imgs.append(im)
+    base = imgs[len(imgs) // 2].quantize(colors=colors, method=Image.MEDIANCUT)
+    pframes = [im.quantize(palette=base, dither=Image.NONE) for im in imgs]
+    pframes[0].save(path, save_all=True, append_images=pframes[1:],
+                    duration=round(1000 / fps), loop=0, optimize=True, disposal=2)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -298,6 +319,78 @@ def capture() -> dict[str, bool]:
             shot("21_cmdk")
             page.keyboard.press("Escape")
 
+            # ── 动图（GIF）：手柄各模式 + 驾驶，真跑连拍合成 ────────────
+            rail("运行", settle=900)
+
+            def set_strat(name: str) -> None:
+                page.evaluate(
+                    "(n)=>fetch('/api/strategy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n})})",
+                    name)
+                page.wait_for_timeout(300)
+
+            def zoom(n: int) -> None:
+                sym = "+" if n > 0 else "−"
+                for _ in range(abs(n)):
+                    page.locator(".viewport-pane button", has_text=sym).first.click()
+                page.wait_for_timeout(200)
+
+            def grab_gif(name: str, setup, step, n: int = 26, interval: int = 100,
+                         zoom_in: int = 0, fps: int = 10) -> None:
+                setup()
+                if zoom_in:
+                    zoom(zoom_in)
+                page.wait_for_timeout(250)
+                frames = []
+                for i in range(n):
+                    step(i)
+                    page.wait_for_timeout(interval)
+                    frames.append(viewport_pane.screenshot(type="png"))
+                gp = FIG_DIR / f"{name}.gif"
+                frames_to_gif(frames, gp, fps=fps)
+                ok[name] = True
+                print(f"  ✓ {name}.gif ({gp.stat().st_size/1e6:.1f} MB)")
+                if zoom_in:
+                    zoom(-zoom_in)
+
+            def wn(vals) -> str:
+                return '{"throttle":0,"steering":0,"mode_params":{"wheel_norm":[%f,%f,%f,%f]}}' % tuple(vals)
+
+            # 1) 前后轴独立：前后轴反相扫角（车静止，看轮子独立摆）
+            grab_gif("gif_frontrear",
+                     lambda: (reset(), set_strat("manual_wheel")),
+                     lambda i: ws_driver(wn([(a := 0.6 * math.sin(2 * math.pi * i / 26)), a,
+                                             -0.6 * math.sin(2 * math.pi * i / 26),
+                                             -0.6 * math.sin(2 * math.pi * i / 26)])),
+                     zoom_in=3)
+
+            # 2) 逐轮直控：四轮各自相位，完全独立摆
+            grab_gif("gif_perwheel",
+                     lambda: (reset(), set_strat("manual_wheel")),
+                     lambda i: ws_driver(wn([0.55 * math.sin(2 * math.pi * i / 26 + ph)
+                                             for ph in (0, 1.57, 3.14, 4.71)])),
+                     zoom_in=3)
+
+            # 3) 蟹行：整车横移
+            grab_gif("gif_crab",
+                     lambda: (reset(), set_strat("crab")),
+                     lambda i: ws_driver('{"throttle":0.2,"steering":0.5}'),
+                     n=30, interval=100)
+
+            # 4) 全向车身：斜移 + 自转
+            grab_gif("gif_holonomic",
+                     lambda: (reset(), set_strat("manual_body")),
+                     lambda i: ws_driver('{"throttle":0,"steering":0,"mode_params":{"vx_frac":0.2,"vy_frac":0.2,"yaw_frac":0.16}}'),
+                     n=32, interval=100)
+
+            # 5) 驾驶：绕桩（正弦转向 + 油门）
+            grab_gif("gif_drive",
+                     lambda: (reset(), set_strat("ideal_ackermann"), ws_driver('{"throttle":0,"steering":0}')),
+                     lambda i: ws_driver('{"throttle":0.4,"steering":%f}' % (0.7 * math.sin(2 * math.pi * i / 16))),
+                     n=32, interval=100)
+
+            ws_driver('{"throttle":0,"steering":0}')
+            reset()
+
             browser.close()
     finally:
         backend.terminate()
@@ -321,8 +414,18 @@ def _img(name: str, caption: str = "") -> str:
     return f"<figure><img src='data:image/png;base64,{b64}' loading='lazy'/>{cap}</figure>"
 
 
+def _gif(name: str, caption: str = "") -> str:
+    p = FIG_DIR / f"{name}.gif"
+    if not p.exists():
+        return f"<p class='miss'>（动图 {name} 缺失——重跑 build_manual.py）</p>"
+    b64 = base64.b64encode(p.read_bytes()).decode()
+    cap = f"<figcaption>▶ {caption}（动图）</figcaption>" if caption else ""
+    return f"<figure class='gif'><img src='data:image/gif;base64,{b64}' loading='lazy'/>{cap}</figure>"
+
+
 def build_html() -> None:
     img = _img
+    gif = _gif
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <title>4WIS Simulator v{VER} 使用说明书（图文版）</title>
@@ -335,7 +438,9 @@ def build_html() -> None:
  figure {{ margin: 14px 0 22px; text-align: center; }}
  figure img {{ max-width: 100%; border: 1px solid #cbd5e0; border-radius: 10px;
               box-shadow: 0 3px 14px rgba(0,0,0,.09); }}
+ figure.gif img {{ border-color: #2b6cb0; box-shadow: 0 3px 16px rgba(43,108,176,.22); }}
  figcaption {{ font-size: 12.5px; color:#718096; margin-top: 6px; }}
+ figure.gif figcaption {{ color:#2b6cb0; font-weight: 600; }}
  table {{ border-collapse: collapse; width: 100%; font-size: 13px; margin: 12px 0; }}
  th, td {{ border: 1px solid #cbd5e0; padding: 6px 9px; text-align: left; }}
  th {{ background: #edf2f7; }}
@@ -397,6 +502,7 @@ def build_html() -> None:
 <p>左侧 2D/3D 视图 + 右侧四个功能 tab（驾驶/设计/验证/数据）。2D 俯视图显示车身、
 四轮实际转角、每轮转向中心线、整车瞬心与行驶轨迹；HUD 给出车速/横摆/位姿/四轮转角/μ/瞬心偏差。</p>
 {img("01_run_overview", "键盘 W+A 驾驶后的运行页：轨迹、四轮转角、HUD 实时量")}
+{gif("gif_drive", "键盘绕桩驾驶：正弦转向下四轮转角与轨迹的实时响应")}
 <h3>3.1 视图</h3>
 <p>右上 2D/3D 切换。3D 场景包含车身、可转向车轮、场景路面与轨迹带；相机可拖拽环绕。</p>
 {img("02_view3d", "3D 视图")}
@@ -424,6 +530,7 @@ def build_html() -> None:
 <tr><td>Python / JS 策略</td><td>自定义控制律热加载（设计 tab）</td></tr>
 </table>
 {img("06_crab_drive", "蟹行演示：四轮同角、车身不旋转的斜向平移轨迹")}
+{gif("gif_crab", "蟹行：四轮同角，整车不改航向地斜向平移")}
 <h3>3.4 驾驶输入</h3>
 {img("05_drive_panel", "驾驶输入面板：回读条、保持车速、定速巡航、回正速度")}
 <ul>
@@ -455,8 +562,11 @@ def build_html() -> None:
 </table>
 <p><b>效果演示</b>（下列截图为各模式注入摇杆输出后的真实车轮响应）：</p>
 {img("08_gp_frontrear", "前后轴独立：前轴 +17.5°、后轴 −17.5°（反相 → 最小转弯半径姿态）")}
+{gif("gif_frontrear", "前后轴独立：左右摇杆分别把前轴、后轴反相扫角，两轴完全解耦")}
 {img("09_gp_perwheel", "逐轮直控：四个车轮四个不同转角，完全独立")}
+{gif("gif_perwheel", "逐轮直控：四轮各自不同相位摆动，互不影响")}
 {img("10_gp_holonomic", "全向车身：斜向平移的同时自转——普通车做不到的完整平面自由度")}
+{gif("gif_holonomic", "全向车身：车身一边斜向平移、一边持续自转")}
 <h3>4.1 校准与绑定（换任何设备都能用）</h3>
 <ul>
 <li><b>绑定</b>：点某通道的「绑定」按钮 → 拨动你想用的摇杆/踏板 → 自动识别轴号。方向盘、
