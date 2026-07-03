@@ -4,8 +4,6 @@ import Viewport from "@/components/Viewport";
 import ControlPanel from "@/components/ControlPanel";
 import ChartPanel from "@/components/ChartPanel";
 import KeyboardInput from "@/components/KeyboardInput";
-import ParamsPanel from "@/components/ParamsPanel";
-import ProjectPanel from "@/components/ProjectPanel";
 import RecordingPanel from "@/components/RecordingPanel";
 import ScriptPanel from "@/components/ScriptPanel";
 import TrajectoryPanel from "@/components/TrajectoryPanel";
@@ -23,6 +21,7 @@ import LoadAnalysisPage from "@/components/LoadAnalysisPage";
 import ModelTheoryPage from "@/components/ModelTheoryPage";
 import ExperimentPage from "@/components/ExperimentPage";
 import AnalysisPage from "@/components/AnalysisPage";
+import VehicleGeometryStudio from "@/components/vehicle/VehicleGeometryStudio";
 import CommandPalette from "@/components/CommandPalette";
 import QuickStartCard from "@/components/QuickStartCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -257,19 +256,7 @@ export default function App() {
 
         {page === "vehicle" && (
           <ErrorBoundary label="车辆">
-            <div className="wf-page veh-grid">
-              <div className="veh-col">
-                <ParamsPanel />
-              </div>
-              <div className="veh-col">
-                <ProjectPanel />
-                <div className="wf-hintcard">
-                  <b>提示</b>：车辆预置（LS9 等 profile）与转向几何标定在
-                  <button className="wf-link" onClick={() => setPage("load")}>负载特性</button>
-                  页；此处参数保存进项目（YAML）。
-                </div>
-              </div>
-            </div>
+            <VehicleGeometryStudio />
           </ErrorBoundary>
         )}
 

@@ -5,6 +5,8 @@
 
 import type { ReactNode } from "react";
 
+import { MM, deg, kingpinGeom, linkageBase } from "@/vehicle/geometryModel";
+
 function Arrow() {
   return (
     <marker id="md-arrow" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
@@ -163,35 +165,51 @@ function LoadTransferDiagram() {
   );
 }
 
-// 6a — kingpin side view (caster trail)
+// 6a — kingpin side view (caster trail) — 由 geometryModel 计算，标注当前默认车真实值
 function KingpinSideDiagram() {
+  const k = kingpinGeom(null);                 // one math source (default LS9)
+  const gY = 250, contactX = 300, sc = 2600;   // px per metre (schematic, angle真实)
+  // kingpin axis tilted back by caster; ground intersection ahead by t_m.
+  const kpG = { x: contactX + k.mechTrail * sc, y: gY };
+  const H = 180;
+  const kpT = { x: kpG.x - Math.sin(k.caster) * H, y: gY - Math.cos(k.caster) * H };
   return (
     <Svg vb="0 0 560 320" label="主销几何侧视">
-      <line x1="60" y1="250" x2="520" y2="250" className="model-measure" />
-      <text x="64" y="270">地面</text>
-      <line x1="300" y1="60" x2="240" y2="250" className="model-axis-dash" />
-      <text x="305" y="70" className="model-accent">主销轴（后倾 ε）</text>
-      <circle cx="300" cy="250" r="4" className="model-dot" />
-      <text x="306" y="244">接地点</text>
-      <line x1="240" y1="250" x2="300" y2="250" className="model-wheel-axis" />
-      <text x="244" y="290" className="model-muted">机械拖距 t_m = R·tanε</text>
-      <ellipse cx="360" cy="250" rx="55" ry="14" className="model-wheel" />
+      <line x1="60" y1={gY} x2="520" y2={gY} className="model-measure" />
+      <text x="64" y="270">地面 · 车后 ← → 车前</text>
+      <line x1={kpG.x} y1={kpG.y} x2={kpT.x} y2={kpT.y} className="model-axis-dash" />
+      <text x={kpT.x - 8} y={kpT.y - 6} textAnchor="end" className="model-accent">主销轴 后倾 ε={deg(k.caster).toFixed(1)}°</text>
+      <ellipse cx={contactX} cy={gY} rx="55" ry="14" className="model-wheel" />
+      <circle cx={contactX} cy={gY} r="4" className="model-dot" />
+      <text x={contactX + 6} y={gY - 8}>接地点</text>
+      <line x1={contactX} y1={gY + 14} x2={kpG.x} y2={gY + 14} className="model-wheel-axis" />
+      <text x={(contactX + kpG.x) / 2} y={gY + 30} textAnchor="middle" className="model-muted">
+        机械拖距 t_m = R·tanε = {(k.mechTrail * MM).toFixed(0)} mm
+      </text>
     </Svg>
   );
 }
 
-// 6b — kingpin top view (scrub)
+// 6b — kingpin top/front view (scrub) — 由 geometryModel 计算
 function KingpinTopDiagram() {
+  const k = kingpinGeom(null);
+  const gY = 210, contactX = 300, sc = 2600;
+  const kpG = { x: contactX + k.scrub * sc, y: gY };
+  const H = 150;
+  const kpT = { x: kpG.x + Math.sin(k.kpi) * H, y: gY - Math.cos(k.kpi) * H };
   return (
-    <Svg vb="0 0 560 280" label="主销几何俯视">
-      <rect x="250" y="60" width="70" height="160" rx="8" className="model-wheel" />
-      <line x1="285" y1="20" x2="285" y2="260" className="model-axis-dash" />
-      <text x="292" y="34" className="model-accent">主销轴线（俯视）</text>
-      <line x1="350" y1="140" x2="285" y2="140" className="model-wheel-axis" markerEnd="url(#md-arrow)" />
-      <circle cx="350" cy="140" r="4" className="model-dot" />
-      <text x="356" y="136">接地中心</text>
-      <text x="300" y="160" className="model-muted">主销偏置 s（scrub）</text>
-      <text x="96" y="255" className="model-muted">Fy 经 (s+t_m)、Fx 经 s 产生主销力矩；t_p 只走 Mz</text>
+    <Svg vb="0 0 560 280" label="主销几何正视">
+      <line x1="60" y1={gY} x2="520" y2={gY} className="model-measure" />
+      <text x="64" y="232">地面 · 车内 ← → 车外</text>
+      <rect x={contactX - 18} y={gY - 150} width="36" height="150" rx="6" className="model-wheel" />
+      <line x1={kpG.x} y1={kpG.y} x2={kpT.x} y2={kpT.y} className="model-axis-dash" />
+      <text x={kpT.x + 6} y={kpT.y} className="model-accent">主销轴 内倾={deg(k.kpi).toFixed(1)}°</text>
+      <circle cx={contactX} cy={gY} r="4" className="model-dot" />
+      <line x1={contactX} y1={gY + 14} x2={kpG.x} y2={gY + 14} className="model-wheel-axis" />
+      <text x={(contactX + kpG.x) / 2} y={gY + 30} textAnchor="middle" className="model-muted">
+        主销偏置 s（scrub）= {(k.scrub * MM).toFixed(0)} mm
+      </text>
+      <text x="96" y="264" className="model-muted">Fy 经 (s+t_m)、Fx 经 s 产生主销力矩；t_p 只走 Mz</text>
     </Svg>
   );
 }
@@ -239,21 +257,31 @@ function BicycleDiagram() {
   );
 }
 
-// 6c — steering linkage (trapezoid)
+// 6c — steering linkage (real straight-ahead hardpoints from geometryModel)
 function LinkageDiagram() {
+  const base = linkageBase(null, 0);           // default front-left hardpoints
+  // project the wheel-local frame (X forward, Y left) into the schematic:
+  // screen x = 300 + Y·sc (left is +x here for readability), screen y = 150 − X·sc.
+  const sc = 420, ox = 300, oy = 150;
+  const P = (q: { x: number; y: number }) => ({ x: ox + q.y * sc, y: oy - q.x * sc });
+  const K = P({ x: 0, y: 0 });                 // kingpin
+  const O = P(base.outer0);                    // outer ball (steering arm)
+  const I = P(base.inner0);                    // inner ball (rack end)
+  const rackA = P({ x: base.inner0.x, y: base.inner0.y - base.limit - 0.03 });
+  const rackB = P({ x: base.inner0.x, y: base.inner0.y + base.limit + 0.03 });
+  const armMm = (base.armLength * MM).toFixed(0);
   return (
-    <Svg vb="0 0 600 280" label="齿条梯形机构">
-      <line x1="80" y1="200" x2="520" y2="200" className="model-chain-box" strokeWidth={6} />
-      <text x="84" y="225">齿条（沿轴平移）</text>
-      <circle cx="150" cy="80" r="6" className="model-dot" />
-      <text x="110" y="72">主销 K</text>
-      <line x1="150" y1="80" x2="240" y2="140" className="model-axis" />
-      <text x="150" y="120" className="model-accent">梯形臂 L_arm</text>
-      <line x1="240" y1="140" x2="330" y2="200" className="model-wheel-axis" />
-      <text x="270" y="165" className="model-accent">横拉杆</text>
-      <circle cx="240" cy="140" r="5" className="model-dot" />
-      <circle cx="330" cy="200" r="5" className="model-dot" />
-      <text x="120" y="260" className="model-muted">F_rack = τ_KP /(L_arm·η)，η = |sin(臂-杆)|·cos(杆-齿条)·η_rack</text>
+    <Svg vb="0 0 600 280" label="齿条梯形机构（真实硬点）">
+      <line x1={rackA.x} y1={rackA.y} x2={rackB.x} y2={rackB.y} className="model-chain-box" strokeWidth={6} />
+      <text x={Math.min(rackA.x, rackB.x)} y={Math.max(rackA.y, rackB.y) + 20}>齿条（沿轴平移）</text>
+      <line x1={K.x} y1={K.y} x2={O.x} y2={O.y} className="model-axis" />
+      <text x={(K.x + O.x) / 2 - 60} y={(K.y + O.y) / 2} className="model-accent">梯形臂 L_arm={armMm}mm</text>
+      <line x1={O.x} y1={O.y} x2={I.x} y2={I.y} className="model-wheel-axis" />
+      <text x={(O.x + I.x) / 2} y={(O.y + I.y) / 2 - 6} className="model-accent">横拉杆</text>
+      <circle cx={K.x} cy={K.y} r="6" className="model-dot" /><text x={K.x + 8} y={K.y - 6}>主销 K</text>
+      <circle cx={O.x} cy={O.y} r="5" className="model-dot" />
+      <circle cx={I.x} cy={I.y} r="5" className="model-dot" />
+      <text x="120" y="266" className="model-muted">F_rack = τ_KP /(L_arm·η)，η = |sin(臂-杆)|·cos(杆-齿条)·η_rack</text>
     </Svg>
   );
 }
