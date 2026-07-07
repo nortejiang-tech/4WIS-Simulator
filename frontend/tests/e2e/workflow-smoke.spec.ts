@@ -229,6 +229,32 @@ test("analysis run list failure does not masquerade as an empty library", async 
   await attachPageScreenshot(page, testInfo, "workflow-analysis-run-list-error");
 });
 
+test("experiment library failure does not masquerade as an empty library", async ({ page }, testInfo) => {
+  await page.route("**/api/experiments", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic experiment library failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /试验/ }).click();
+
+  const library = page
+    .locator("aside.wf-col")
+    .filter({ has: page.locator(".wf-col-head", { hasText: "实验库" }) });
+  await expect(library).toBeVisible();
+  await expect(library).toContainText("读取实验库失败：synthetic experiment library failure");
+  await expect(library.getByText("暂无已保存实验")).toHaveCount(0);
+  await expect(library.getByRole("button", { name: "刷新" })).toBeEnabled();
+  await expect(library.getByRole("button", { name: "＋ 新建" })).toBeEnabled();
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-experiment-library-error");
+});
+
 test("experiment batch start failure surfaces an error state with screenshot evidence", async ({ page }, testInfo) => {
   await page.route("**/api/batch", async (route) => {
     if (route.request().method() !== "POST") {

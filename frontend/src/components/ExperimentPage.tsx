@@ -62,6 +62,7 @@ export default function ExperimentPage() {
   const setAnalysisPreselect = useSimStore((s) => s.setAnalysisPreselect);
 
   const [exps, setExps] = useState<ExperimentListItem[]>([]);
+  const [expListError, setExpListError] = useState<string | null>(null);
   const [exp, setExp] = useState<ExperimentT>(() => defaultExperiment());
   const [pathTemplates, setPathTemplates] = useState<string[]>([]);
   const [stratSel, setStratSel] = useState<string[]>([]);
@@ -69,7 +70,17 @@ export default function ExperimentPage() {
   const [job, setJob] = useState<BatchStatus | null>(null);
   const pollRef = useRef<number | null>(null);
 
-  const refreshList = () => listExperiments().then(setExps).catch(() => setExps([]));
+  const refreshList = () => listExperiments()
+    .then((nextExps) => {
+      setExps(nextExps);
+      setExpListError(null);
+    })
+    .catch((err) => {
+      setExps([]);
+      const message = `读取实验库失败：${(err as Error).message}`;
+      setExpListError(message);
+      pushToast("error", message);
+    });
 
   useEffect(() => {
     refreshList();
@@ -159,7 +170,10 @@ export default function ExperimentPage() {
       <aside className="wf-col">
         <div className="wf-col-head">
           <span>实验库</span>
-          <button className="wf-btn" onClick={() => setExp(defaultExperiment())}>＋ 新建</button>
+          <span style={{ display: "flex", gap: 6 }}>
+            <button className="wf-btn" onClick={refreshList}>刷新</button>
+            <button className="wf-btn" onClick={() => setExp(defaultExperiment())}>＋ 新建</button>
+          </span>
         </div>
         <div className="wf-list">
           {exps.map((e) => (
@@ -173,7 +187,9 @@ export default function ExperimentPage() {
                       onClick={(ev) => { ev.stopPropagation(); remove(e.name); }}>✕</button>
             </div>
           ))}
-          {exps.length === 0 && <div className="wf-empty">暂无已保存实验</div>}
+          {expListError ? (
+            <div className="wf-empty" role="alert">{expListError}</div>
+          ) : exps.length === 0 && <div className="wf-empty">暂无已保存实验</div>}
         </div>
       </aside>
 
