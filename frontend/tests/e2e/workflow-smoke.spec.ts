@@ -397,6 +397,40 @@ test("scenario fault injection panel adds, toggles, and clears faults", async ({
   await attachPageScreenshot(page, testInfo, "workflow-scenario-faults");
 });
 
+test("script library workflow loads, starts, lays out markers, and stops a fixed script", async ({ page, request }, testInfo) => {
+  await request.post("/api/script/stop");
+  await request.post("/api/path/clear");
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "数据" }).click();
+
+  const scriptPanel = page.locator(".panel").filter({ hasText: "动作脚本" });
+  await expect(scriptPanel).toBeVisible();
+
+  await scriptPanel.locator("select").selectOption("double_lane_change");
+  await scriptPanel.getByRole("button", { name: "载入" }).click();
+  await expect(scriptPanel.locator("textarea")).toContainText("name: double_lane_change");
+  await expect(scriptPanel.locator("textarea")).toContainText("path_template: { name: double_lane_change");
+  await expect(scriptPanel).toContainText("已载入: double_lane_change");
+
+  await scriptPanel.getByRole("button", { name: "▶ 启动脚本" }).click();
+  await expect(scriptPanel).toContainText("运行中: double_lane_change (7 个动作)");
+  await expect(scriptPanel).toContainText("脚本名");
+  await expect(scriptPanel).toContainText("double_lane_change");
+
+  const pathResponse = await request.get("/api/path");
+  expect(pathResponse.ok()).toBeTruthy();
+  const pathBody = await pathResponse.json() as { name: string; points: unknown[]; cones: unknown[] };
+  expect(pathBody.name).toBe("double_lane_change");
+  expect(pathBody.points.length).toBeGreaterThan(5);
+  expect(pathBody.cones.length).toBeGreaterThan(0);
+
+  await scriptPanel.getByRole("button", { name: /停止脚本/ }).click();
+  await expect(scriptPanel).toContainText("已停止");
+
+  await attachPageScreenshot(page, testInfo, "workflow-script-library");
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
