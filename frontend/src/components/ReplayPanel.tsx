@@ -32,6 +32,10 @@ const WHEEL_LEN = 0.72;   // drawn wheel footprint [m]
 const WHEEL_WID = 0.27;
 const SPEEDS = [0.5, 1, 2, 4];
 
+function formatError(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 function sampleAt(ts: number[], vs: (number | null)[] | undefined, tq: number): number | null {
   if (!vs || ts.length === 0 || vs.length === 0) return null;
   const n = Math.min(ts.length, vs.length);
@@ -62,6 +66,7 @@ export default function ReplayPanel({ runs, colors, cache, version, onTime, onCl
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [dims, setDims] = useState<Dims>(DEFAULT_DIMS);
+  const [dimsWarning, setDimsWarning] = useState<string | null>(null);
   const tCurRef = useRef(0);
   tCurRef.current = tCur;
 
@@ -80,8 +85,12 @@ export default function ReplayPanel({ runs, colors, cache, version, onTime, onCl
           wheelbase: Number(ov.wheelbase) || DEFAULT_DIMS.wheelbase,
           track: Number(ov.track_front) || DEFAULT_DIMS.track,
         });
+        setDimsWarning(null);
       })
-      .catch(() => setDims(DEFAULT_DIMS));
+      .catch((e) => {
+        setDims(DEFAULT_DIMS);
+        setDimsWarning(`回放尺寸读取失败，使用默认 LS9 尺寸：${formatError(e)}`);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runs.map((r) => r.run_id).join(",")]);
 
@@ -219,6 +228,11 @@ export default function ReplayPanel({ runs, colors, cache, version, onTime, onCl
         <span>回放（幽灵车叠放 · 车轮显示实际转角）</span>
         <button className="wf-x" data-testid="replay-close" aria-label="关闭回放" onClick={onClose}>✕</button>
       </div>
+      {dimsWarning && (
+        <div className="small" role="alert" style={{ color: "var(--warn)", padding: "0 10px 6px" }}>
+          {dimsWarning}
+        </div>
+      )}
       <div ref={wrapRef} className="wf-chart-body replay-body">
         <canvas ref={canvasRef} data-testid="replay-canvas" />
       </div>

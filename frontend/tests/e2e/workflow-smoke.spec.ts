@@ -814,6 +814,45 @@ test("analysis replay controls scrub selected run data", async ({ page }) => {
   await expect(page.getByTestId("replay-close")).toBeVisible();
 });
 
+test("analysis replay metadata failure keeps replay usable with a visible fallback", async ({ page }, testInfo) => {
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+
+  await rail.getByRole("button", { name: /试验/ }).click();
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+
+  await page.getByRole("button", { name: /运行（1 runs）/ }).click();
+  await expect(page.getByText(/完成 1 runs/)).toBeVisible({ timeout: 30_000 });
+
+  await page.getByRole("button", { name: /去分析页对比这些 runs/ }).click();
+  await expect(page.getByText("KPI 对比")).toBeVisible();
+
+  await page.route("**/api/runs/*", async (route) => {
+    const url = new URL(route.request().url());
+    if (route.request().method() === "GET" && /^\/api\/runs\/[^/]+$/.test(url.pathname)) {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic replay metadata failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.getByRole("button", { name: /回放/ }).click();
+  await expect(page.getByText("回放（幽灵车叠放 · 车轮显示实际转角）")).toBeVisible();
+  await expect(page.getByText("回放尺寸读取失败，使用默认 LS9 尺寸：synthetic replay metadata failure")).toBeVisible();
+  await expect(page.getByTestId("replay-canvas")).toBeVisible();
+
+  const timeline = page.getByTestId("replay-timeline");
+  await expect.poll(async () => Number(await timeline.getAttribute("max"))).toBeGreaterThan(1);
+  await setRangeValue(timeline, "1");
+  await expect(page.getByTestId("replay-time")).toContainText(/^1\.00 /);
+
+  await attachPageScreenshot(page, testInfo, "workflow-replay-meta-error");
+});
+
 test("command palette filters and navigates workflow pages from the keyboard", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
