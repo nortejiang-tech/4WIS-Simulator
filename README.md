@@ -100,12 +100,14 @@ python scripts/pre_release_check.py
 ```
 
 该脚本会检查版本一致性、前端 lockfile、后端 pytest、smoke、前端 type-check 和生产构建。
+其中后端测试门禁还包括黄金实验 KPI 回归。
 
 常用单项命令：
 
 ```bash
 backend/.venv/bin/python -m pytest tests/        # 后端全量测试
 backend/.venv/bin/python scripts/smoke_test.py   # 从仓库根目录运行 smoke
+backend/.venv/bin/python scripts/check_golden_experiments.py
 cd frontend && npm run type-check
 cd frontend && npm run build
 ```
@@ -114,6 +116,7 @@ cd frontend && npm run build
 
 - 后端：`202 passed`
 - smoke：`32/32 通过`
+- 黄金实验：`step_steer_60kmh` 与 `iso3888_dlc_60kmh` KPI 回归通过
 - 前端：type-check 通过
 - 前端生产构建通过；Vite 对 3D/主包有大 chunk 警告，但不阻断发布
 
@@ -162,6 +165,7 @@ python scripts/build_portable.py --targets macos-arm64 windows-x64 --update
 - [CHANGELOG.md](CHANGELOG.md) - 版本演进和每次发布的真实功能边界。
 - [docs/user_manual.html](docs/user_manual.html) - 图文用户手册，含手柄 GIF、实验页、分析页、几何工作室。
 - [docs/validation_matrix.md](docs/validation_matrix.md) - 当前能力可信度、证据和边界。
+- [docs/v1_release_plan.md](docs/v1_release_plan.md) - v1.0 收敛路线和完成定义。
 - [docs/v1_platform_refactor_plan.md](docs/v1_platform_refactor_plan.md) - 平台化重构路线。
 - [docs/load_analysis_handoff.md](docs/load_analysis_handoff.md) - 转向负载分析页面和 API 交接说明。
 - [docs/reports/single_wheel_failure_safety_analysis.html](docs/reports/single_wheel_failure_safety_analysis.html) - 单轮失效功能安全研究报告。

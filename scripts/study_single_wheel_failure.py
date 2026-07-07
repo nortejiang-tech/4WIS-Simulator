@@ -18,7 +18,6 @@ v2 机构设定（2026-07-02 用户输入）：
 
 from __future__ import annotations
 
-import base64
 import json
 import math
 import sys
@@ -37,6 +36,7 @@ from sim4wis.experiment.schema import (
     Experiment, FaultSpec, Maneuver, ManeuverStep, SteerProfile,
 )
 from sim4wis.experiment.session import run_experiment
+from reporting import image_to_base64, write_json
 
 plt.rcParams["font.sans-serif"] = ["PingFang SC", "Hiragino Sans GB", "Arial Unicode MS", "SimHei"]
 plt.rcParams["axes.unicode_minus"] = False
@@ -363,7 +363,7 @@ def savefig(fig, name: str) -> str:
     path = FIG_DIR / f"{name}.png"
     fig.savefig(path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
-    return base64.b64encode(path.read_bytes()).decode()
+    return image_to_base64(path)
 
 
 def _draw_car(ax, deltas, colors_w, L=3.16, T=1.565):
@@ -1058,11 +1058,11 @@ def main() -> None:
     }
 
     print("§4 写报告 …")
-    (OUT_DIR / "single_wheel_failure_metrics.json").write_text(
-        json.dumps({"rows": rows, "sensitivity": curves["sensitivity"],
-                    "param_sensitivity": param_sens, "version": SIM_VERSION},
-                   ensure_ascii=False, indent=1, default=float),
-        encoding="utf-8")
+    write_json(
+        OUT_DIR / "single_wheel_failure_metrics.json",
+        {"rows": rows, "sensitivity": curves["sensitivity"],
+         "param_sensitivity": param_sens, "version": SIM_VERSION},
+    )
     html = build_html(rows, curves, param_sens, figs)
     out = OUT_DIR / "single_wheel_failure_safety_analysis.html"
     out.write_text(html, encoding="utf-8")

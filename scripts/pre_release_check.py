@@ -97,7 +97,11 @@ def git_dirty() -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--skip-tests", action="store_true", help="skip pytest and smoke_test")
+    parser.add_argument(
+        "--skip-tests",
+        action="store_true",
+        help="skip pytest, smoke_test, and golden experiment regression",
+    )
     parser.add_argument("--skip-build", action="store_true", help="skip frontend production build")
     parser.add_argument(
         "--strict-git",
@@ -124,6 +128,7 @@ def main() -> int:
         py = backend_python()
         failures += command([py, "-m", "pytest", "tests/"], BACKEND)
         failures += command([py, "scripts/smoke_test.py"], ROOT)
+        failures += command([py, "scripts/check_golden_experiments.py"], ROOT)
 
     failures += command([npm, "run", "type-check"], FRONTEND)
 
