@@ -28,9 +28,14 @@ export default function ProjectPanel() {
     fetchJSON<{ projects: string[] }>("/api/projects")
       .then((d) => {
         setProjects(d.projects);
+        setError(null);
         if (!selected && d.projects.length) setSelected(d.projects[0]);
       })
-      .catch(() => setProjects([]));
+      .catch((e) => {
+        setProjects([]);
+        setSelected("");
+        setError(`读取项目列表失败：${String(e?.message ?? e)}`);
+      });
   }, [selected]);
 
   useEffect(() => { refresh() }, [refresh]);
@@ -115,4 +120,3 @@ export default function ProjectPanel() {
     </Panel>
   );
 }
-

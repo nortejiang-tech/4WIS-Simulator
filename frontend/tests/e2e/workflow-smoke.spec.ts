@@ -287,6 +287,29 @@ test("vehicle parameter rejection keeps edits visible with screenshot evidence",
   await attachPageScreenshot(page, testInfo, "workflow-vehicle-param-error");
 });
 
+test("vehicle project list failure is visible and disables loading", async ({ page }, testInfo) => {
+  await page.route("**/api/projects", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic project list failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /车辆/ }).click();
+
+  const projectPanel = page.locator(".panel").filter({ hasText: "项目（YAML）" });
+  await expect(projectPanel).toBeVisible();
+  await expect(projectPanel).toContainText("读取项目列表失败：synthetic project list failure");
+  await expect(projectPanel.locator("select")).toHaveValue("");
+  await expect(projectPanel.getByRole("button", { name: "加载" })).toBeDisabled();
+  await expect(page.getByRole("img", { name: "整车俯视参数示意" })).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-vehicle-project-list-error");
+});
+
 test("vehicle project load failure stays local to the project panel", async ({ page }, testInfo) => {
   await page.route("**/api/projects", async (route) => {
     await route.fulfill({
