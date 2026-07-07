@@ -49,6 +49,20 @@ async function chartCursorX(locator: Locator) {
   return locator.evaluate((el) => Number((el as HTMLElement).dataset.chartCursorX));
 }
 
+async function chartXSpan(locator: Locator) {
+  return locator.evaluate((el) => Number((el as HTMLElement).dataset.chartXSpan));
+}
+
+async function dragChartSelection(locator: Locator, fromRatio: number, toRatio: number) {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error("chart overlay is not visible for drag zoom");
+  const y = box.y + box.height * 0.45;
+  await locator.page().mouse.move(box.x + box.width * fromRatio, y);
+  await locator.page().mouse.down();
+  await locator.page().mouse.move(box.x + box.width * toRatio, y, { steps: 8 });
+  await locator.page().mouse.up();
+}
+
 test("workflow rail pages render from the production app shell", async ({ page }) => {
   await page.goto("/");
 
@@ -114,8 +128,17 @@ test("experiment run can be handed to analysis with chart controls and screensho
   await expectCanvasHasDrawnPixels(rackCanvas);
 
   const rackChartBody = page.getByTestId("analysis-chart-rack_force_fl").locator(".wf-chart-body").first();
+  const rackChartOverlay = page.getByTestId("analysis-chart-rack_force_fl").locator(".u-over").first();
   await hoverInside(page.getByTestId("analysis-chart-rack_force_fl").locator(".u-over").first(), 0.5);
   await expect.poll(async () => chartCursorX(rackChartBody)).toBeGreaterThan(0);
+
+  const initialSpan = await chartXSpan(rackChartBody);
+  expect(initialSpan).toBeGreaterThan(1);
+  await dragChartSelection(rackChartOverlay, 0.2, 0.7);
+  await expect.poll(async () => chartXSpan(rackChartBody)).toBeLessThan(initialSpan * 0.75);
+
+  await rackChartOverlay.dblclick({ position: { x: 12, y: 12 } });
+  await expect.poll(async () => chartXSpan(rackChartBody)).toBeGreaterThan(initialSpan * 0.9);
 
   const downloadPromise = page.waitForEvent("download");
   await page.getByTestId("analysis-chart-png-rack_force_fl").click();

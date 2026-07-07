@@ -37,7 +37,8 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：引入 Playwright workflow smoke，覆盖生产 app shell 中运行页、试验页、分析页、车辆页、场景页、负载页、原理页的关键渲染，并纳入 `scripts/pre_release_check.py`。
 - 已完成：Playwright 现在会从试验页启动默认种子实验，等待 batch 完成，并通过“去分析页”链路验证已有 run 的 KPI 对比、通道叠图渲染、通道 chip 增删、下拉加图、hover cursor、PNG 导出和分析工作区截图 attachment。
 - 已完成：Playwright 现在覆盖车辆几何 SVG 拖拽点写入共享参数编辑缓冲、分析页回放时间轴 scrub、命令面板键盘导航、手柄配置编辑。
-- 下一批场景：更多关键页面截图、更多图表 zoom 交互。
+- 已完成：Playwright 覆盖分析页 uPlot 通道叠图的 drag-to-zoom 与双击复位，断言 X 轴可见窗口按交互收缩/恢复。
+- 下一批场景：更多关键页面截图。
 - 通过截图/DOM 断言减少手册截图和人工端到端验证的遗漏。
 
 ### P3: 研究报告流水线

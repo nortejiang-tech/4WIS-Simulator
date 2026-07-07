@@ -122,6 +122,40 @@ export function makeOptions(
   };
 }
 
+function getXBounds(plot: uPlot): [number, number] | null {
+  const xScale = plot.scales.x;
+  const scaleMin = Number(xScale.min);
+  const scaleMax = Number(xScale.max);
+  if (Number.isFinite(scaleMin) && Number.isFinite(scaleMax) && scaleMax > scaleMin) {
+    return [scaleMin, scaleMax];
+  }
+  const xs = plot.data[0] as ArrayLike<number | null | undefined> | undefined;
+  if (!xs || xs.length === 0) return null;
+  let min = Infinity;
+  let max = -Infinity;
+  for (let i = 0; i < xs.length; i++) {
+    const x = Number(xs[i]);
+    if (!Number.isFinite(x)) continue;
+    if (x < min) min = x;
+    if (x > max) max = x;
+  }
+  return Number.isFinite(min) && Number.isFinite(max) && max > min ? [min, max] : null;
+}
+
+function writeXScaleDiagnostics(el: HTMLElement, plot: uPlot) {
+  const bounds = getXBounds(plot);
+  if (!bounds) {
+    delete el.dataset.chartXMin;
+    delete el.dataset.chartXMax;
+    delete el.dataset.chartXSpan;
+    return;
+  }
+  const [min, max] = bounds;
+  el.dataset.chartXMin = String(min);
+  el.dataset.chartXMax = String(max);
+  el.dataset.chartXSpan = String(max - min);
+}
+
 /**
  * Imperative live chart hook: builds the uPlot instance once, resizes with
  * its container, and calls setData whenever `signal` changes.
@@ -133,10 +167,12 @@ export function useLiveChart(
   onCursor?: (plot: uPlot) => void,
   axisLabels?: AxisLabels,
   extras?: OptionsExtras,
+  onZoomReset?: () => void,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<uPlot | null>(null);
   const cursorRef = useRef<typeof onCursor>(onCursor);
+  const zoomResetRef = useRef<typeof onZoomReset>(onZoomReset);
   // Vertical markers are kept on a mutable ref so they can update without
   // tearing down uPlot (which would clobber zoom/pan state).
   const markersRef = useRef<VerticalMarker[]>(extras?.verticalMarkers ?? []);
@@ -146,6 +182,10 @@ export function useLiveChart(
   }, [onCursor]);
 
   useEffect(() => {
+    zoomResetRef.current = onZoomReset;
+  }, [onZoomReset]);
+
+  useEffect(() => {
     markersRef.current = extras?.verticalMarkers ?? [];
     if (plotRef.current) plotRef.current.redraw();
   }, [extras?.verticalMarkers]);
@@ -153,6 +193,7 @@ export function useLiveChart(
   useEffect(() => {
     if (!containerRef.current) return;
     const el = containerRef.current;
+    const updateScaleDiagnostics = (plot: uPlot) => writeXScaleDiagnostics(el, plot);
     const updateCursorDiagnostics = (plot: uPlot) => {
       const left = plot.cursor.left;
       if (typeof left !== "number" || !Number.isFinite(left) || left < 0) {
@@ -172,8 +213,14 @@ export function useLiveChart(
           cursorRef.current?.(plot);
         },
       ],
+      setScale: [
+        (plot) => {
+          updateScaleDiagnostics(plot);
+        },
+      ],
       draw: [
         (plot) => {
+          updateScaleDiagnostics(plot);
           const markers = markersRef.current;
           if (!markers || markers.length === 0) return;
           const ctx = plot.ctx;
@@ -208,12 +255,25 @@ export function useLiveChart(
       ],
     };
     plotRef.current = new uPlot(options, getData(), el);
+    const resetZoom = () => {
+      const plot = plotRef.current;
+      if (!plot) return;
+      plot.setScale("x", { min: null as any, max: null as any });
+      plot.setScale("y", { min: null as any, max: null as any });
+      updateScaleDiagnostics(plot);
+      zoomResetRef.current?.();
+    };
+    const over = plotRef.current.root.querySelector(".u-over") as HTMLElement | null;
+    over?.addEventListener("dblclick", resetZoom);
+    updateScaleDiagnostics(plotRef.current);
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0].contentRect;
       plotRef.current?.setSize({ width: cr.width, height: cr.height });
+      if (plotRef.current) updateScaleDiagnostics(plotRef.current);
     });
     ro.observe(el);
     return () => {
+      over?.removeEventListener("dblclick", resetZoom);
       ro.disconnect();
       plotRef.current?.destroy();
       plotRef.current = null;
@@ -223,6 +283,7 @@ export function useLiveChart(
 
   useEffect(() => {
     plotRef.current?.setData(getData());
+    if (plotRef.current && containerRef.current) writeXScaleDiagnostics(containerRef.current, plotRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signal]);
 

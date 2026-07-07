@@ -162,6 +162,7 @@ function ChartBoxInner(props: Required<Pick<ChartBoxProps, "title" | "filename" 
     handleCursor,
     axisLabels,
     { yScaleReferenceIndex, dragZoom: true, verticalMarkers },
+    () => setUserZoomed(false),
   );
 
   useEffect(() => {
