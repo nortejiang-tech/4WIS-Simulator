@@ -1,8 +1,8 @@
 /**
  * RecordingPanel — start/stop/export the backend recorder.
  *
- * Polls /api/recording/status every 1s while open. Exports CSV via a normal
- * GET (browser handles the download).
+ * Polls /api/recording/status every 1s while open. Exports CSV via an explicit
+ * fetch so backend errors stay visible in this panel.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -17,7 +17,7 @@ interface RecorderStatus {
   available_channels: string[];
 }
 
-import { fetchJSON } from "@/api/http";
+import { fetchBlob, fetchJSON } from "@/api/http";
 import Panel from "@/components/Panel";
 import { HELP } from "@/ui/help";
 
@@ -32,6 +32,7 @@ function duration(from: number | null, to: number | null): string {
 export default function RecordingPanel() {
   const [status, setStatus] = useState<RecorderStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const refresh = useCallback(() => {
     fetchJSON<RecorderStatus>("/api/recording/status")
@@ -60,9 +61,24 @@ export default function RecordingPanel() {
       setStatus(s);
     } catch (e: any) { setError(String(e?.message ?? e)) }
   };
-  const onExport = () => {
-    // Browser handles the download via Content-Disposition.
-    window.location.href = "/api/recording/export.csv";
+  const onExport = async () => {
+    setError(null);
+    setExporting(true);
+    try {
+      const { blob, filename } = await fetchBlob("/api/recording/export.csv", undefined, 15000);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename ?? `sim4wis_${Date.now()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (e: any) {
+      setError(`导出失败：${String(e?.message ?? e)}`);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const recording = status?.recording ?? false;
@@ -81,8 +97,8 @@ export default function RecordingPanel() {
             ● 开始录制
           </button>
         )}
-        <button data-testid="recording-export" onClick={onExport} disabled={samples === 0}>
-          导出 CSV
+        <button data-testid="recording-export" onClick={onExport} disabled={samples === 0 || exporting}>
+          {exporting ? "导出中..." : "导出 CSV"}
         </button>
       </div>
       <div className="params-list" style={{ marginTop: 6 }}>

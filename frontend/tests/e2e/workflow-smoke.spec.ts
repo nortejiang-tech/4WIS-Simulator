@@ -571,6 +571,37 @@ test("recording panel records samples and exports csv", async ({ page, request }
   await attachPageScreenshot(page, testInfo, "workflow-recording-export");
 });
 
+test("recording export failure stays visible in the recording panel", async ({ page, request }, testInfo) => {
+  await request.post("/api/recording/stop");
+
+  await page.route("**/api/recording/export.csv", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic recording export failure" }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "数据" }).click();
+
+  const recordingPanel = page.locator(".panel").filter({ hasText: "数据录制" });
+  await expect(recordingPanel).toBeVisible();
+
+  await recordingPanel.getByRole("button", { name: /开始录制/ }).click();
+  await expect.poll(async () => Number(await recordingPanel.getByTestId("recording-samples").textContent()))
+    .toBeGreaterThan(0);
+  await recordingPanel.getByRole("button", { name: /停止录制/ }).click();
+  await expect(recordingPanel.getByTestId("recording-export")).toBeEnabled();
+
+  await recordingPanel.getByTestId("recording-export").click();
+  await expect(recordingPanel).toContainText("导出失败：synthetic recording export failure");
+  await expect(recordingPanel.getByTestId("recording-export")).toBeEnabled();
+  await expect(recordingPanel.getByTestId("recording-status")).toContainText("空闲");
+
+  await attachPageScreenshot(page, testInfo, "workflow-recording-export-error");
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
