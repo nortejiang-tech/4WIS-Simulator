@@ -7,6 +7,7 @@ import { useSimStore } from "@/store/sim";
 import type { SimStateMessage } from "@/types/sim";
 import { fmtKmh } from "@/ui/units";
 import { muTextColor } from "./colors";
+import "@/components/CanvasHud.css";
 
 export default function Hud({ state }: { state: SimStateMessage }) {
   const pxm = useSimStore((s) => s.view2dPxm);

@@ -41,6 +41,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useSimStore } from "@/store/sim";
 import type { DisturbanceMsg } from "@/types/sim";
 import { fmtKmh } from "@/ui/units";
+import "./CanvasHud.css";
 
 // sim world (x fwd, y left, h up) → three.js (x, up, -y)
 function w2t(x: number, y: number, h = 0): [number, number, number] {

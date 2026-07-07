@@ -10,6 +10,7 @@
 import { lazy, Suspense, useState } from "react";
 
 import Canvas2D from "@/components/Canvas2D";
+import "./Viewport.css";
 
 // three.js is heavy (~1 MB) — only load it when the 3D view is opened.
 const Canvas3D = lazy(() => import("@/components/Canvas3D"));
