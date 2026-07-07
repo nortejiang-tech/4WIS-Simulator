@@ -31,6 +31,7 @@ import {
   startBatch,
 } from "@/api/experiments";
 import { useSimStore } from "@/store/sim";
+import "./WorkflowPage.css";
 
 const MODEL_OPTIONS = [
   { id: "kinematic", label: "运动学" },

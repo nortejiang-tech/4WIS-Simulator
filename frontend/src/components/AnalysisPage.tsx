@@ -22,6 +22,7 @@ import {
 import { exportPNG, useLiveChart } from "@/charts/uplotFactory";
 import ReplayPanel from "@/components/ReplayPanel";
 import { useSimStore } from "@/store/sim";
+import "./WorkflowPage.css";
 
 const PALETTE = ["#60a5fa", "#f59e0b", "#34d399", "#f87171", "#a78bfa", "#22d3ee"];
 const MAX_SELECT = PALETTE.length;

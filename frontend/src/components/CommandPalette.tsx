@@ -151,7 +151,7 @@ export default function CommandPalette() {
               </div>
             );
           })}
-          {filtered.length === 0 && <div className="wf-empty">无匹配命令</div>}
+          {filtered.length === 0 && <div className="cmdk-empty">无匹配命令</div>}
         </div>
         <div className="cmdk-hint">↑↓ 选择 · Enter 执行 · Esc 关闭 · ⌘K 唤起</div>
       </div>
