@@ -1730,6 +1730,18 @@ html, body, #root { margin: 0; height: 100%; width: 100%; overflow: hidden }
 }
 .app-body > .app-main { min-height: 0 }
 
+.page-loader {
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: var(--bg-0);
+}
+.page-loader span {
+  font-size: 12px;
+  letter-spacing: .08em;
+}
+
 .app-header .page-title {
   margin-left: 14px;
   padding-left: 14px;

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
 import Viewport from "@/components/Viewport";
 import ControlPanel from "@/components/ControlPanel";
@@ -17,11 +18,6 @@ import StrategyDesignerPanel from "@/components/StrategyDesignerPanel";
 import ScenarioPanel from "@/components/ScenarioPanel";
 import ExcitationPanel from "@/components/ExcitationPanel";
 import ScorePanel from "@/components/ScorePanel";
-import LoadAnalysisPage from "@/components/LoadAnalysisPage";
-import ModelTheoryPage from "@/components/ModelTheoryPage";
-import ExperimentPage from "@/components/ExperimentPage";
-import AnalysisPage from "@/components/AnalysisPage";
-import VehicleGeometryStudio from "@/components/vehicle/VehicleGeometryStudio";
 import CommandPalette from "@/components/CommandPalette";
 import QuickStartCard from "@/components/QuickStartCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -29,6 +25,12 @@ import Toasts from "@/components/Toasts";
 import { connectSimSocket, fetchPath, fetchScenario } from "@/api/ws";
 import { fetchJSON } from "@/api/http";
 import { AppPage, useSimStore } from "@/store/sim";
+
+const LoadAnalysisPage = lazy(() => import("@/components/LoadAnalysisPage"));
+const ModelTheoryPage = lazy(() => import("@/components/ModelTheoryPage"));
+const ExperimentPage = lazy(() => import("@/components/ExperimentPage"));
+const AnalysisPage = lazy(() => import("@/components/AnalysisPage"));
+const VehicleGeometryStudio = lazy(() => import("@/components/vehicle/VehicleGeometryStudio"));
 
 // Workbench sidebar tab groups (scene editing moved to the 场景 page).
 // All panels stay mounted (timers / WS subscriptions keep running across tab
@@ -52,11 +54,19 @@ const RAIL: { id: AppPage; icon: string; label: string; hint: string }[] = [
   { id: "model", icon: "📖", label: "原理", hint: "数学模型与理论简介" },
 ];
 
-function TabGroup({ id, tab, children }: { id: TabId; tab: TabId; children: React.ReactNode }) {
+function TabGroup({ id, tab, children }: { id: TabId; tab: TabId; children: ReactNode }) {
   return <div style={{ display: tab === id ? "contents" : "none" }}>{children}</div>;
 }
 
 const QUICKSTART_KEY = "4wis_quickstart_dismissed";
+
+function PageLoader() {
+  return (
+    <main className="page-loader" aria-live="polite">
+      <span className="mono">Loading</span>
+    </main>
+  );
+}
 
 export default function App() {
   const online = useSimStore((s) => s.online);
@@ -242,23 +252,25 @@ export default function App() {
           </main>
         )}
 
-        {page === "experiment" && (
-          <ErrorBoundary label="试验">
-            <ExperimentPage />
-          </ErrorBoundary>
-        )}
+        <Suspense fallback={<PageLoader />}>
+          {page === "experiment" && (
+            <ErrorBoundary label="试验">
+              <ExperimentPage />
+            </ErrorBoundary>
+          )}
 
-        {page === "analysis" && (
-          <ErrorBoundary label="分析">
-            <AnalysisPage />
-          </ErrorBoundary>
-        )}
+          {page === "analysis" && (
+            <ErrorBoundary label="分析">
+              <AnalysisPage />
+            </ErrorBoundary>
+          )}
 
-        {page === "vehicle" && (
-          <ErrorBoundary label="车辆">
-            <VehicleGeometryStudio />
-          </ErrorBoundary>
-        )}
+          {page === "vehicle" && (
+            <ErrorBoundary label="车辆">
+              <VehicleGeometryStudio />
+            </ErrorBoundary>
+          )}
+        </Suspense>
 
         {page === "scene" && (
           <main className="app-main">
@@ -280,17 +292,19 @@ export default function App() {
           </main>
         )}
 
-        {page === "load" && (
-          <ErrorBoundary label="负载特性">
-            <LoadAnalysisPage />
-          </ErrorBoundary>
-        )}
+        <Suspense fallback={<PageLoader />}>
+          {page === "load" && (
+            <ErrorBoundary label="负载特性">
+              <LoadAnalysisPage />
+            </ErrorBoundary>
+          )}
 
-        {page === "model" && (
-          <ErrorBoundary label="原理简介">
-            <ModelTheoryPage />
-          </ErrorBoundary>
-        )}
+          {page === "model" && (
+            <ErrorBoundary label="原理简介">
+              <ModelTheoryPage />
+            </ErrorBoundary>
+          )}
+        </Suspense>
       </div>
 
       {/* Listens to window-level keyboard events and pushes driver input */}
