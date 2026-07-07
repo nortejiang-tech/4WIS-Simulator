@@ -366,6 +366,37 @@ test("scenario disturbance editor places, edits, and clears a road disturbance",
   await attachPageScreenshot(page, testInfo, "workflow-scenario-disturbance");
 });
 
+test("scenario fault injection panel adds, toggles, and clears faults", async ({ page, request }, testInfo) => {
+  await request.delete("/api/faults");
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const faultPanel = page.locator(".panel").filter({ hasText: "故障注入" });
+  await expect(faultPanel).toBeVisible();
+  await expect(faultPanel).toContainText("暂无故障配置");
+
+  await faultPanel.locator("select").nth(0).selectOption("sensor_bias");
+  await faultPanel.locator("select").nth(1).selectOption("rl");
+  await faultPanel.locator('input[type="number"]').fill("0.07");
+  await faultPanel.getByRole("button", { name: "+ 添加" }).click();
+
+  await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
+  await expect(faultPanel.getByRole("button", { name: "停用" })).toBeVisible();
+
+  await faultPanel.getByRole("button", { name: "停用" }).click();
+  await expect(faultPanel.getByRole("button", { name: "启用" })).toBeVisible();
+
+  await faultPanel.getByRole("button", { name: "启用" }).click();
+  await expect(faultPanel.getByRole("button", { name: "停用" })).toBeVisible();
+
+  await faultPanel.getByRole("button", { name: "清空全部故障" }).click();
+  await expect(faultPanel).toContainText("暂无故障配置");
+
+  await attachPageScreenshot(page, testInfo, "workflow-scenario-faults");
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });

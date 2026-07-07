@@ -47,6 +47,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖负载页图表 canvas 绘制和图表原理说明弹窗，生成深层页面状态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页标准路径生成、跟踪策略切换和路径清除，生成场景路径 workflow screenshot attachment。
 - 已完成：Playwright 覆盖场景页路面扰动编辑的新建、选中编辑、参数应用和清空，生成扰动编辑 workflow screenshot attachment。
+- 已完成：Playwright 覆盖场景页故障注入面板的故障添加、停用/启用和清空，生成故障注入 workflow screenshot attachment。
 - 下一批场景：更多深层页面状态和更少见后端失败分支截图。
 - 通过截图/DOM 断言减少手册截图和人工端到端验证的遗漏。
 
