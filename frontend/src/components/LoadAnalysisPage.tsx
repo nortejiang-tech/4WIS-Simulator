@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { WHEEL_COLORS } from "@/components/canvas2d/colors";
 import { useSimStore } from "@/store/sim";
@@ -117,6 +117,7 @@ export default function LoadAnalysisPage() {
   // or isolated (bench, α=−δ). Toggle in the toolbar; touching it triggers
   // a full re-sweep via the dep-list below.
   const [bodyCoupling, setBodyCoupling] = useState<BodyCoupling>("vehicle");
+  const initialSweepAttempted = useRef(false);
 
   // 4-slot grid layout: dropdown selections per slot.
   const [slotCharts, setSlotCharts] = useState<[ChartId, ChartId, ChartId, ChartId]>(DEFAULT_SLOT_CHARTS);
@@ -133,16 +134,19 @@ export default function LoadAnalysisPage() {
 
   const doSweep = useCallback(() => runSweep(inputs), [runSweep, inputs]);
 
-  // First-load auto-sweep once params arrive.
+  // First-load auto-sweep once params arrive. If it fails, do not loop forever;
+  // leave the "重新计算" button enabled so the user can retry manually.
   useEffect(() => {
-    if (params && !result && !busy) void doSweep();
+    if (!params || result || busy || initialSweepAttempted.current) return;
+    initialSweepAttempted.current = true;
+    void doSweep();
   }, [params, result, busy, doSweep]);
 
   // Re-sweep on any sweep input change (debounced). Profile-speed changes don't
   // need a re-sweep — they're handled by row interpolation — but other inputs
   // (mode, mu, angle range, ...) do.
   useEffect(() => {
-    if (!params) return;
+    if (!params || !result || result.rows.length === 0) return;
     const handle = window.setTimeout(() => { void doSweep(); }, 350);
     return () => window.clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps

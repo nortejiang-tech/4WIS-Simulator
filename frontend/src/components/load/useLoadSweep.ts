@@ -70,6 +70,11 @@ export function useLoadSweep() {
       };
       setResult(await postJSON<LoadSweepResponse>("/api/load-analysis/sweep", body, 15000));
     } catch (e: any) {
+      setResult((prev) => prev ?? {
+        rows: [],
+        body_coupling: inputs.bodyCoupling,
+        summary: { warnings: [] },
+      });
       pushToast("error", `负载扫图失败：${e?.message ?? e}`);
     } finally {
       setBusy(false);

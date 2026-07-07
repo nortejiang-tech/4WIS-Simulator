@@ -45,6 +45,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖试验页 batch 启动失败异常态，断言错误 toast、运行矩阵仍可操作，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖车辆页参数应用被拒绝异常态，断言错误 toast、未应用编辑仍保留，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖负载页图表 canvas 绘制和图表原理说明弹窗，生成深层页面状态 screenshot attachment。
+- 已完成：Playwright 覆盖负载页扫图计算失败异常态，断言错误 toast、计算控件恢复可操作，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页标准路径生成、跟踪策略切换和路径清除，生成场景路径 workflow screenshot attachment。
 - 已完成：Playwright 覆盖场景页路面扰动编辑的新建、选中编辑、参数应用和清空，生成扰动编辑 workflow screenshot attachment。
 - 已完成：Playwright 覆盖场景页故障注入面板的故障添加、停用/启用和清空，生成故障注入 workflow screenshot attachment。

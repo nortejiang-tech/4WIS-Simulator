@@ -306,6 +306,41 @@ test("load analysis charts expose deeper explanation state with screenshot evide
   await attachPageScreenshot(page, testInfo, "workflow-load-explanation");
 });
 
+test("load analysis sweep failure surfaces an error and keeps controls usable", async ({ page }, testInfo) => {
+  let sweepAttempts = 0;
+  await page.route("**/api/load-analysis/sweep", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    sweepAttempts += 1;
+    if (sweepAttempts > 1) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ rows: [], body_coupling: "vehicle", summary: { warnings: [] } }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic load sweep failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /负载/ }).click();
+
+  await expect(page.getByText("实时四轮负载")).toBeVisible();
+  await expect(page.getByText("负载扫图失败：synthetic load sweep failure").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "重新计算" })).toBeEnabled();
+  await expect(page.locator(".load-chart-empty").first()).toContainText("等待计算");
+
+  await attachPageScreenshot(page, testInfo, "workflow-load-sweep-error");
+});
+
 test("scenario path workflow generates, follows, and clears a reference path", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
