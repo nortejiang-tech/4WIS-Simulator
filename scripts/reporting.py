@@ -76,6 +76,25 @@ def embedded_png_figure(base64_png: str, alt: str, attrs: Mapping[str, Any] | No
     return f"<figure><img{html_attrs(img_attrs)}/></figure>"
 
 
+def report_section(title: str, body: str, level: int = 2, attrs: Mapping[str, Any] | None = None) -> str:
+    """Render a report section with escaped heading text and raw body HTML."""
+    if level < 1 or level > 6:
+        raise ValueError("section heading level must be between 1 and 6")
+    return f"<h{level}{html_attrs(attrs)}>{escape(title)}</h{level}>\n{body.strip()}"
+
+
+def callout_box(body: str, class_name: str, attrs: Mapping[str, Any] | None = None) -> str:
+    """Render a reusable callout block for abstracts, key findings, or tool notes."""
+    merged_attrs = {"class": class_name, **(attrs or {})}
+    return f"<div{html_attrs(merged_attrs)}>{body.strip()}</div>"
+
+
+def meta_paragraph(body: str, attrs: Mapping[str, Any] | None = None) -> str:
+    """Render muted report metadata text."""
+    merged_attrs = {"class": "meta", **(attrs or {})}
+    return f"<p{html_attrs(merged_attrs)}>{body.strip()}</p>"
+
+
 @dataclass(frozen=True)
 class ReportDocument:
     """Reusable self-contained HTML report shell."""

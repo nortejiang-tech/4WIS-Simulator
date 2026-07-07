@@ -44,7 +44,8 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：`scripts/reporting.py` 抽出图片 base64 和 JSON 写入工具。
 - 已完成：`scripts/reporting.py` 扩展为小型 report kit，集中提供 HTML 属性转义、表格单元格、HTML table 与内嵌 PNG figure；单轮失效报告的指标表和图片嵌入已改为复用这些 helper。
 - 已完成：`scripts/reporting.py` 提供 `ReportDocument` 自包含 HTML 报告外壳；单轮失效报告已复用该骨架，重跑脚本后已确认生成报告内容无实质变化。
-- 下一步：把新的故障研究脚本接到同一套 report kit，并继续沉淀章节/摘要/图表说明组件，避免复制整页模板。
+- 已完成：`scripts/reporting.py` 提供章节、摘要/提示框和元信息 helper；单轮失效报告的摘要、关键结论、工具迭代记录和结论章节已迁移到这些复用组件，重跑脚本后确认指标/图片无变化。
+- 下一步：把后续新增的故障研究脚本接到同一套 report kit，继续减少整页模板复制。
 
 ### P4: 前端结构与性能
 

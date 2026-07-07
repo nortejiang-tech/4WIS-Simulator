@@ -33,7 +33,17 @@ from sim4wis.experiment.schema import (
     Experiment, FaultSpec, Maneuver, ManeuverStep, SteerProfile,
 )
 from sim4wis.experiment.session import run_experiment
-from reporting import ReportDocument, embedded_png_figure, html_cell, html_table, image_to_base64, write_json
+from reporting import (
+    ReportDocument,
+    callout_box,
+    embedded_png_figure,
+    html_cell,
+    html_table,
+    image_to_base64,
+    meta_paragraph,
+    report_section,
+    write_json,
+)
 
 plt = None
 patches = None
@@ -861,15 +871,10 @@ def build_html(rows, curves, param_sens, figs: dict[str, str]) -> str:
  code {{ background:#edf2f7; padding:1px 5px; border-radius:4px; font-size: 12px; }}
  .meta {{ color:#718096; font-size: 13px; }}
 """
-    body = f"""
-
-<h1>四轮独立转向系统单轮转向失效的 ISO 26262 功能安全可控性分析与容错控制策略设计<br>
-<span style="font-size:15px;color:#4a5568">v2 — 执行机构差异化失效建模（前轮自由脚轮 / 后轮自锁锁死）与整车参数敏感性研究</span></h1>
-<p class="meta">仿真平台：4WIS Simulator v{SIM_VERSION} · 车辆：LS9 默认参数（m=2900 kg，L=3.16 m）·
+    run_meta = meta_paragraph(f"""仿真平台：4WIS Simulator v{SIM_VERSION} · 车辆：LS9 默认参数（m=2900 kg，L=3.16 m）·
 模型：simplified_dynamic（RK4 + 半隐式轮速 + c_α(F_z) 载荷敏感线性胎）·
-复现：<code>python scripts/study_single_wheel_failure.py</code>（共 {n_runs} 个仿真 run）</p>
-
-<div class="abstract"><b>摘要</b> —
+复现：<code>python scripts/study_single_wheel_failure.py</code>（共 {n_runs} 个仿真 run）""")
+    abstract = callout_box(f"""<b>摘要</b> —
 本文第 2 版根据实际执行机构设定重构失效模型：<b>前轮转向执行器无自锁（逆效率 η≈0.6），断电失效呈自由脚轮
 状态</b>——转向自由度变为受主销力矩驱动的动力学（J·δ̈=−η·τ<sub>KP</sub>−c·δ̇）；<b>后轮执行器自锁
 （正效率 0.3、逆效率 0），失效锁死在当时位置</b>。仿真表明两类失效物理本质截然不同：前轮自由失效因脚轮自对准而<b>天然温和</b>（弯中断电经 ~4 Hz 衰减摆振、约 1 s 收敛到零侧偏力平衡；
@@ -882,8 +887,44 @@ ESP 级横摆 PI + 限幅减速</b>，前轮自由用<b>健康轮增益补偿</b
 干扰力∝c_α、航向积累∝1/I_z），而路面 μ 近乎平坦（力平衡型缓解两侧同缩）；自由脚轮失效的温和性对参数
 结构性稳健（残余 Δr 恒 ≈0.5°/s），几何抓手是小主销偏置而非主销后倾</b>——为机构选型与底盘参数设计
 给出功能安全侧的量化输入。研究过程同步迭代了仿真平台
-（自由脚轮失效模型、参数×故障×工况扫描流水线，§9）。
-</div>
+（自由脚轮失效模型、参数×故障×工况扫描流水线，§9）。""", "abstract")
+    mechanism_takeaway = callout_box(f"""前轮"无自锁+高逆效率"的失效形态<b>天然安全</b>——主销后倾就是被动安全机制，
+代价是正常工况需持续供电抵抗回正力矩；后轮"自锁+零逆效率"省电、断电保持，代价是把每次失效都
+<b>冻结成持续干扰源</b>，且最不利模式（跑飞后锁死）成为 ASIL D 源头。若后轮改用可反驱机构+常闭
+离合器（断电脱开→退化为自由脚轮），H1 可整体降级为 H3/H4 类温和失效——本报告的量化数据
+（C3 vs C2、TTLD {fmt(b["ttld_s"], 1)} s vs {fmt(ff_s["ttld_s"], 1)} s）正是这类机构决策所需的输入。""", "kbox")
+    matrix_takeaway = callout_box(f"""<b>矩阵结论</b>：未缓解 {n_c3_base}/{n_cases} 组合 C3——<b>全部来自后轮自锁失效</b>
+（跑飞后锁死 TTLD {fmt(b["ttld_s"], 1)} s）；前轮自由失效全部 ≤C2，印证"自由脚轮天然温和"。
+缓解后 {n_c3_mit}/{n_cases} 组合 C3（<b>清零</b>）：最恶性组合横摆扰动峰值
+{fmt(b["dyaw_peak_dps"], 1)}→{fmt(m["dyaw_peak_dps"], 1)}°/s、2 s 航向漂移
+{fmt(b["dpsi_2s_deg"], 1)}→{fmt(m["dpsi_2s_deg"], 1)}°。""", "kbox")
+    tool_iteration = callout_box("""<p>本研究的另一目的：<b>用实际工程分析迭代仿真工具</b>。两版研究写入平台的能力：</p>
+<table>
+<tr><th>版本</th><th>由分析需求倒逼的平台能力</th></tr>
+<tr><td>v0.10</td><td>实验底座：SimSession 无头会话（~25× 实时）、run 落盘、KPI 流水线、变体矩阵</td></tr>
+<tr><td>v0.13</td><td>定时故障注入进实验 schema（stuck 族）；fault_reconfig 容错策略——三次数据驱动
+迭代：纯运动学 ICR 投影被数据否决 → 镜像 P 环在后轮饱和自旋 → PI+限幅减速定型</td></tr>
+<tr><td>v0.14</td><td><b>自由脚轮失效模型</b>（free_caster 机构 ODE，复用平台实时主销力矩通道）；
+fault_reconfig free 模式（增益补偿）；<b>参数×故障×工况敏感性流水线</b>
+（vehicle overrides / scene μ 逐点自动配无故障参考）</td></tr>
+</table>
+<p>沉淀的可复用资产：任意"失效 × 机动 × 参数"矩阵已是配置问题而非编码问题；本报告任何 run 均可在
+前端「试验/分析」页交互复查与回放。</p>""", "toolbox")
+    conclusion = report_section("10　结论", """<p>(1) 执行机构特性（自锁性/逆效率）决定单轮失效的物理形态：前轮（无自锁，η_rev=0.6）失效为自由
+脚轮——主销后倾使其自对准、天然温和（全部工况 ≤C2）；后轮（自锁，η_rev=0）失效冻结为持续干扰，
+跑飞后锁死 @100 km/h 为 C3/ASIL D。(2) 差异化容错控制（后轮：同轴镜像+ESP 级横摆 PI+限幅减速；
+前轮：健康轮增益补偿）将全矩阵 C3 清零。(3) 参数敏感性给出底盘设计的功能安全输入：硬胎/低惯量平台需更快检测预算、小 scrub 有利失效
+温和性、失效工况不约束 caster、μ 对力平衡型缓解近乎中性；安全概念在全部扫描范围内保持 C2 稳健。(4) 机构选型量化论据：非自锁+高
+逆效率以正常能耗换失效温和性——后轮构型值得按本数据重估（可反驱+常闭离合器方案可将 ASIL D 危害
+整体降级）。(5) 平台同步获得自由脚轮失效模型与参数敏感性流水线（§9），后续任意失效研究可直接复用。</p>""")
+    footer_meta = meta_paragraph("本报告由 4WIS Simulator 自动生成 · 全部数据与图表来自实跑仿真")
+    body = f"""
+
+<h1>四轮独立转向系统单轮转向失效的 ISO 26262 功能安全可控性分析与容错控制策略设计<br>
+<span style="font-size:15px;color:#4a5568">v2 — 执行机构差异化失效建模（前轮自由脚轮 / 后轮自锁锁死）与整车参数敏感性研究</span></h1>
+{run_meta}
+
+{abstract}
 <p><b>关键词</b>：四轮独立转向；ISO 26262；可控性；自由脚轮；自锁机构；容错控制；参数敏感性</p>
 
 <h2>1　引言</h2>
@@ -960,11 +1001,7 @@ v_cap(t) = max(v_limit, v_detect − 3 m/s²·t)</p>
 <p class="eq">δ_FR = g·δ_FR<sup>alloc</sup>（g≈2，线性区内恢复前轴合力）＋ 同款横摆 PI ＋ 限速</p>
 {img("fig1", "机理")}
 <h3>5.3 机构选型的功能安全权衡（本设定的核心启示）</h3>
-<div class="kbox">前轮"无自锁+高逆效率"的失效形态<b>天然安全</b>——主销后倾就是被动安全机制，
-代价是正常工况需持续供电抵抗回正力矩；后轮"自锁+零逆效率"省电、断电保持，代价是把每次失效都
-<b>冻结成持续干扰源</b>，且最不利模式（跑飞后锁死）成为 ASIL D 源头。若后轮改用可反驱机构+常闭
-离合器（断电脱开→退化为自由脚轮），H1 可整体降级为 H3/H4 类温和失效——本报告的量化数据
-（C3 vs C2、TTLD {fmt(b["ttld_s"], 1)} s vs {fmt(ff_s["ttld_s"], 1)} s）正是这类机构决策所需的输入。</div>
+{mechanism_takeaway}
 
 <h2>6　主矩阵仿真结果</h2>
 {img("fig2", "后轮锁死时间历程")}
@@ -974,11 +1011,7 @@ v_cap(t) = max(v_limit, v_detect − 3 m/s²·t)</p>
 {matrix_table()}
 {img("fig5", "指标条形图")}
 {img("fig7", "C 分级矩阵")}
-<div class="kbox"><b>矩阵结论</b>：未缓解 {n_c3_base}/{n_cases} 组合 C3——<b>全部来自后轮自锁失效</b>
-（跑飞后锁死 TTLD {fmt(b["ttld_s"], 1)} s）；前轮自由失效全部 ≤C2，印证"自由脚轮天然温和"。
-缓解后 {n_c3_mit}/{n_cases} 组合 C3（<b>清零</b>）：最恶性组合横摆扰动峰值
-{fmt(b["dyaw_peak_dps"], 1)}→{fmt(m["dyaw_peak_dps"], 1)}°/s、2 s 航向漂移
-{fmt(b["dpsi_2s_deg"], 1)}→{fmt(m["dpsi_2s_deg"], 1)}°。</div>
+{matrix_takeaway}
 <h3>6.2 检测延时敏感性（FTTI 分解）</h3>
 {img("fig6", "检测延时")}
 {sens_table()}
@@ -1030,28 +1063,9 @@ v_cap(t) = max(v_limit, v_detect − 3 m/s²·t)</p>
 留作后续。⑤参数敏感性为 OAT 口径，交互效应（如 μ×质心）需 DOE 全因子补充。</p>
 
 <h2>9　仿真工具迭代记录（本研究倒逼的平台演进）</h2>
-<div class="toolbox">
-<p>本研究的另一目的：<b>用实际工程分析迭代仿真工具</b>。两版研究写入平台的能力：</p>
-<table>
-<tr><th>版本</th><th>由分析需求倒逼的平台能力</th></tr>
-<tr><td>v0.10</td><td>实验底座：SimSession 无头会话（~25× 实时）、run 落盘、KPI 流水线、变体矩阵</td></tr>
-<tr><td>v0.13</td><td>定时故障注入进实验 schema（stuck 族）；fault_reconfig 容错策略——三次数据驱动
-迭代：纯运动学 ICR 投影被数据否决 → 镜像 P 环在后轮饱和自旋 → PI+限幅减速定型</td></tr>
-<tr><td>v0.14</td><td><b>自由脚轮失效模型</b>（free_caster 机构 ODE，复用平台实时主销力矩通道）；
-fault_reconfig free 模式（增益补偿）；<b>参数×故障×工况敏感性流水线</b>
-（vehicle overrides / scene μ 逐点自动配无故障参考）</td></tr>
-</table>
-<p>沉淀的可复用资产：任意"失效 × 机动 × 参数"矩阵已是配置问题而非编码问题；本报告任何 run 均可在
-前端「试验/分析」页交互复查与回放。</p></div>
+{tool_iteration}
 
-<h2>10　结论</h2>
-<p>(1) 执行机构特性（自锁性/逆效率）决定单轮失效的物理形态：前轮（无自锁，η_rev=0.6）失效为自由
-脚轮——主销后倾使其自对准、天然温和（全部工况 ≤C2）；后轮（自锁，η_rev=0）失效冻结为持续干扰，
-跑飞后锁死 @100 km/h 为 C3/ASIL D。(2) 差异化容错控制（后轮：同轴镜像+ESP 级横摆 PI+限幅减速；
-前轮：健康轮增益补偿）将全矩阵 C3 清零。(3) 参数敏感性给出底盘设计的功能安全输入：硬胎/低惯量平台需更快检测预算、小 scrub 有利失效
-温和性、失效工况不约束 caster、μ 对力平衡型缓解近乎中性；安全概念在全部扫描范围内保持 C2 稳健。(4) 机构选型量化论据：非自锁+高
-逆效率以正常能耗换失效温和性——后轮构型值得按本数据重估（可反驱+常闭离合器方案可将 ASIL D 危害
-整体降级）。(5) 平台同步获得自由脚轮失效模型与参数敏感性流水线（§9），后续任意失效研究可直接复用。</p>
+{conclusion}
 
 <h2>参考文献</h2>
 <ol style="font-size:13px">
@@ -1066,7 +1080,7 @@ fault_reconfig free 模式（增益补偿）；<b>参数×故障×工况敏感�
 <p><code>python scripts/study_single_wheel_failure.py</code>（约 2 分钟，{n_runs} runs：主矩阵 +
 检测延时 + 参数敏感性含逐点无故障参考）。指标原始数据见
 <code>single_wheel_failure_metrics.json</code>。</p>
-<p class="meta">本报告由 4WIS Simulator 自动生成 · 全部数据与图表来自实跑仿真</p>
+{footer_meta}
 """
     return ReportDocument(title=title, styles=styles).render(body)
 

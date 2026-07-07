@@ -44,3 +44,32 @@ def test_report_document_write_uses_utf8(tmp_path: Path) -> None:
     doc.write(out, "<p>中文内容</p>")
 
     assert "中文内容" in out.read_text(encoding="utf-8")
+
+
+def test_report_section_escapes_heading_and_preserves_body() -> None:
+    reporting = load_reporting()
+
+    html = reporting.report_section('1 <unsafe> "标题"', "<p><b>raw</b></p>", level=3)
+
+    assert html == '<h3>1 &lt;unsafe&gt; &quot;标题&quot;</h3>\n<p><b>raw</b></p>'
+
+
+def test_report_section_rejects_invalid_heading_level() -> None:
+    reporting = load_reporting()
+
+    try:
+        reporting.report_section("bad", "<p>x</p>", level=7)
+    except ValueError as exc:
+        assert "between 1 and 6" in str(exc)
+    else:
+        raise AssertionError("expected invalid heading level to fail")
+
+
+def test_callout_and_meta_helpers_merge_safe_attributes() -> None:
+    reporting = load_reporting()
+
+    callout = reporting.callout_box("<b>重点</b>", "kbox", {"data-kind": 'A "quote"'})
+    meta = reporting.meta_paragraph("复现：<code>cmd</code>", {"id": "run-meta"})
+
+    assert callout == '<div class="kbox" data-kind="A &quot;quote&quot;"><b>重点</b></div>'
+    assert meta == '<p class="meta" id="run-meta">复现：<code>cmd</code></p>'
