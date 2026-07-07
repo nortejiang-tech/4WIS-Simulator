@@ -22,13 +22,13 @@
 | 轮胎与载荷敏感度 | L3 | `backend/tests/test_tire.py`, `backend/tests/test_time_domain_models.py`, `CHANGELOG.md` v0.12 记录 | `c_alpha(Fz)` 指数模型来自工程假设；缺同款轮胎实测曲线。 |
 | 主销/齿条负载分析 | L3 | `backend/tests/test_kingpin.py`, `backend/tests/test_rack_force.py`, `backend/tests/test_load_analysis.py`, `docs/load_analysis_handoff.md` | LS9 参数和机构效率仍是标定快照；负载页不等价于完整台架校准。 |
 | 实验批跑与 KPI | L2 | `backend/tests/test_experiment_batch.py`, `frontend/src/components/ExperimentPage.tsx`, `frontend/src/components/AnalysisPage.tsx` | KPI 足够用于内部比较；跨版本稳定性由黄金实验回归补充。 |
-| 黄金实验回归 | L2 | `scripts/check_golden_experiments.py`, `docs/golden_experiments.json` | 当前覆盖 step steer 与 ISO 3888 DLC；仍缺故障场景和外部基准对照。 |
-| run 回放与分析页 | L2 | `frontend/src/components/ReplayPanel.tsx`, `frontend/src/charts/uplotFactory.ts`, 手册截图 | 主要依赖人工端到端验证；缺浏览器自动化回归。 |
+| 黄金实验回归 | L2 | `scripts/check_golden_experiments.py`, `docs/golden_experiments.json` | 当前覆盖 step steer、ISO 3888 DLC 和 3 个单轮失效快速样本；仍缺外部基准对照。 |
+| run 回放与分析页 | L2 | `frontend/tests/e2e/workflow-smoke.spec.ts`, `frontend/src/components/ReplayPanel.tsx`, `frontend/src/charts/uplotFactory.ts` | 已有浏览器 smoke 覆盖实验到分析页链路；回放时间轴和更多通道交互仍需扩展。 |
 | 单轮失效安全研究 | L3 | `scripts/study_single_wheel_failure.py`, `docs/reports/single_wheel_failure_safety_analysis.html`, `backend/tests/test_fault_reconfig.py` | 可支撑内部机制研究，不应直接作为实车 ISO 26262 认证证据。 |
 | 手柄映射与直控模式 | L2 | `backend/tests/test_manual_strategies.py`, `frontend/src/input/gamepadConfig.ts`, 手册 GIF | 浏览器 Gamepad API 和设备轴序依赖具体硬件；需要真实设备回归。 |
 | 车辆几何工作室 | L2 | `frontend/src/vehicle/geometryModel.ts`, `frontend/src/components/vehicle/*`, `CHANGELOG.md` v0.16 记录 | 前端几何数学与后端部分共享概念但不是同一语言实现；需要加强跨端一致性测试。 |
 | 便携包发布 | L2 | `scripts/build_portable.py`, `dist_portable/`, GitHub Release assets | 依赖 python-build-standalone 和目标平台 wheel 可用性；发布前必须跑 `scripts/pre_release_check.py`。 |
-| 外部/实测对照接入 | L0 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md` | 只有协议和数据结构；尚无真实外部工具或实测数据，因此不能提升模型可信度等级。 |
+| 外部/实测对照接入 | L0 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md`, `scripts/check_reference_benchmarks.py`, `backend/tests/test_reference_benchmarks.py` | 有协议、数据结构和可运行 checker；尚无真实外部工具或实测数据，因此不能提升模型可信度等级。 |
 
 ## 当前最高风险
 
@@ -39,8 +39,8 @@
 
 ## 下一步提高建议
 
-1. 扩展黄金实验集：为单轮失效关键工况保存快速基准 KPI，并用容差做跨版本回归。
-2. 做外部基准对照：至少选 2-3 个公开车辆动力学工况或 CarSim/CarMaker 导出结果，形成 L3 证据包。
-3. 引入 Playwright：覆盖运行页、试验页、分析页、车辆几何工作室和手册关键截图，减少人工 UI 回归成本。
+1. 做外部基准对照：至少选 2-3 个公开车辆动力学工况或 CarSim/CarMaker 导出结果，形成 L3 证据包。
+2. 扩展 Playwright：覆盖车辆几何拖拽、回放时间轴、命令面板和关键截图，减少人工 UI 回归成本。
+3. 扩展 reference checker：接入真实数据后，把误差图表和 reviewer notes 纳入报告流水线。
 4. 抽象研究报告流水线：继续把单轮失效脚本中的图表、KPI、HTML 生成能力沉淀成复用模块。
 5. 接入实物验证数据：缩比 4WIS K&C 平台或台架数据进入后，将关键模型从 L3 推进到 L4。

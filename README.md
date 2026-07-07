@@ -100,7 +100,7 @@ backend/.venv/bin/python scripts/study_single_wheel_failure.py
 python scripts/pre_release_check.py
 ```
 
-该脚本会检查版本一致性、前端 lockfile、后端 pytest、smoke、黄金实验 KPI 回归、前端 type-check、生产构建和 Playwright 浏览器 smoke。
+该脚本会检查版本一致性、前端 lockfile、后端 pytest、smoke、黄金实验 KPI 回归、外部参考数据结构、前端 type-check、生产构建和 Playwright 浏览器 smoke。
 
 常用单项命令：
 
@@ -108,6 +108,7 @@ python scripts/pre_release_check.py
 backend/.venv/bin/python -m pytest tests/        # 后端全量测试
 backend/.venv/bin/python scripts/smoke_test.py   # 从仓库根目录运行 smoke
 backend/.venv/bin/python scripts/check_golden_experiments.py
+backend/.venv/bin/python scripts/check_reference_benchmarks.py
 cd frontend && npm run type-check
 cd frontend && npm run build
 cd frontend && npm run e2e
@@ -115,9 +116,10 @@ cd frontend && npm run e2e
 
 当前 `v0.16.0` 验证基线：
 
-- 后端：`202 passed`
+- 后端：`205 passed`
 - smoke：`32/32 通过`
-- 黄金实验：`step_steer_60kmh` 与 `iso3888_dlc_60kmh` KPI 回归通过
+- 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
+- 外部参考：`validation_data/` 当前无 benchmark；checker 明确提示外部证据仍缺失
 - 前端：type-check 通过
 - 浏览器 smoke：Playwright Chromium 通过
 - 前端生产构建通过；Vite 对 3D/主包有大 chunk 警告，但不阻断发布

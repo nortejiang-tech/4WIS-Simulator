@@ -66,8 +66,26 @@ validation_data/
 4. 实测对照必须记录传感器、采样率、滤波、同步方式和数据裁剪窗口。
 5. 更新 `docs/validation_matrix.md` 前，必须能复现对照脚本输出。
 
+## 自动检查
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py
+```
+
+脚本会校验每个 benchmark 子目录的 `manifest.json`、`reference.csv`、`sim4wis_experiment.yaml` 和 `notes.md`，并在数据齐全时运行 Sim4WIS 实验对比 `manifest.metrics` 中声明的指标。默认没有 benchmark 时不失败，但会明确输出外部验证证据仍缺失；需要强制要求数据时使用 `--require-data`。
+
+当前支持自动对照的指标包括：
+
+- `yaw_rate_peak_dps`
+- `vy_peak_kmh`
+- `speed_error_rms_kmh`
+- `pose_y_peak_abs_m`
+- `trajectory_error_rms_m`
+- `trajectory_error_peak_m`
+
 ## 当前状态
 
 - 已有内部黄金实验：`docs/golden_experiments.json`。
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
+- 已有参考数据结构 checker：`scripts/check_reference_benchmarks.py`。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。

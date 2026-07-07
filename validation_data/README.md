@@ -21,3 +21,28 @@ validation_data/
 - `notes.md` 记录人工判断、数据裁剪和已知问题。
 
 详细协议见 `docs/reference_benchmark_protocol.md`。
+
+## 可运行检查
+
+从仓库根目录运行：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py
+```
+
+默认情况下，如果没有任何 benchmark 子目录，脚本会通过并明确提示外部验证证据仍缺失。需要在发布或审查时强制要求至少一个对照数据集时，使用：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-data
+```
+
+当前 checker 支持以下自动对照指标：
+
+- `yaw_rate_peak_dps`
+- `vy_peak_kmh`
+- `speed_error_rms_kmh`
+- `pose_y_peak_abs_m`
+- `trajectory_error_rms_m`
+- `trajectory_error_peak_m`
+
+每个 `manifest.json` 的 `metrics` 项至少需要给出 `abs_tol`、`rel_tol` 或 `tolerance` 之一；也可以提供 `reference_value` 覆盖从 `reference.csv` 自动计算出的参考值。

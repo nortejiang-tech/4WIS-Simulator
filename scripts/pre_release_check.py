@@ -105,6 +105,11 @@ def main() -> int:
     parser.add_argument("--skip-build", action="store_true", help="skip frontend production build")
     parser.add_argument("--skip-e2e", action="store_true", help="skip Playwright browser smoke")
     parser.add_argument(
+        "--require-reference-data",
+        action="store_true",
+        help="fail if validation_data has no external/reference benchmarks",
+    )
+    parser.add_argument(
         "--strict-git",
         action="store_true",
         help="fail if the working tree is dirty",
@@ -130,6 +135,10 @@ def main() -> int:
         failures += command([py, "-m", "pytest", "tests/"], BACKEND)
         failures += command([py, "scripts/smoke_test.py"], ROOT)
         failures += command([py, "scripts/check_golden_experiments.py"], ROOT)
+        ref_cmd = [py, "scripts/check_reference_benchmarks.py"]
+        if args.require_reference_data:
+            ref_cmd.append("--require-data")
+        failures += command(ref_cmd, ROOT)
 
     failures += command([npm, "run", "type-check"], FRONTEND)
 
