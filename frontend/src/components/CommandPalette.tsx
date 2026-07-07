@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { resetSim, setModel, setStrategy } from "@/api/ws";
 import { AppPage, useSimStore } from "@/store/sim";
+import "./CommandPalette.css";
 
 interface Command {
   id: string;

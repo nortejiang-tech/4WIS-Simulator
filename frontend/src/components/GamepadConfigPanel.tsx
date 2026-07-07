@@ -21,6 +21,7 @@ import {
 } from "@/input/gamepadConfig";
 import { useSimStore } from "@/store/sim";
 import Panel from "@/components/Panel";
+import "./GamepadConfigPanel.css";
 
 interface Preset {
   key: string;

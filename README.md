@@ -124,7 +124,7 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 - 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
 - 前端：type-check 通过
 - 浏览器 smoke：Playwright Chromium `19 passed`，覆盖工作流渲染、试验到分析页交接、分析页通道切换/加图/hover cursor/drag-to-zoom/PNG 导出/截图证据、车辆几何拖拽、车辆页项目列表/加载失败异常态、数据录制开始/停止/CSV 导出、分析回放时间轴、场景路径/扰动/故障 workflow、脚本库/解析失败、命令面板导航、手柄配置编辑
-- 前端生产构建通过且无 Vite chunk warning；默认 `index` chunk 353.99 kB，低于 500 kB 入口预算；懒加载 3D vendor 最大 chunk `vendor-three-core` 666.67 kB，低于 700 kB 3D core 预算；全局 `index.css` 已降到 16.23 kB，车辆几何、工作流页面、负载页、模型页和共享 load 图表/控制样式拆为独立 CSS chunks
+- 前端生产构建通过且无 Vite chunk warning；默认 `index` chunk 353.99 kB，低于 500 kB 入口预算；懒加载 3D vendor 最大 chunk `vendor-three-core` 666.67 kB，低于 700 kB 3D core 预算；入口 `index.css` 为 16.23 kB / gzip 3.50 kB，车辆几何、工作流页面、负载页、模型页和共享 load 图表/控制样式拆为独立 CSS chunks，命令面板/手柄配置样式已收敛到组件私有 CSS
 
 首次运行 Playwright 前需要安装浏览器运行时：
 
