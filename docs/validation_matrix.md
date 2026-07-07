@@ -23,7 +23,7 @@
 | 主销/齿条负载分析 | L3 | `backend/tests/test_kingpin.py`, `backend/tests/test_rack_force.py`, `backend/tests/test_load_analysis.py`, `docs/load_analysis_handoff.md` | LS9 参数和机构效率仍是标定快照；负载页不等价于完整台架校准。 |
 | 实验批跑与 KPI | L2 | `backend/tests/test_experiment_batch.py`, `frontend/src/components/ExperimentPage.tsx`, `frontend/src/components/AnalysisPage.tsx` | KPI 足够用于内部比较；跨版本稳定性由黄金实验回归补充。 |
 | 黄金实验回归 | L2 | `scripts/check_golden_experiments.py`, `docs/golden_experiments.json` | 当前覆盖 step steer、ISO 3888 DLC 和 3 个单轮失效快速样本；仍缺外部基准对照。 |
-| run 回放与分析页 | L2 | `frontend/tests/e2e/workflow-smoke.spec.ts`, `frontend/src/components/ReplayPanel.tsx`, `frontend/src/charts/uplotFactory.ts` | 已有浏览器 smoke 覆盖实验到分析页链路和回放时间轴 scrub；更多通道交互和视觉截图仍需扩展。 |
+| run 回放与分析页 | L2 | `frontend/tests/e2e/workflow-smoke.spec.ts`, `frontend/src/components/ReplayPanel.tsx`, `frontend/src/charts/uplotFactory.ts` | 已有浏览器 smoke 覆盖实验到分析页链路、通道增删/加图、PNG 导出、工作区截图 attachment 和回放时间轴 scrub；更多 hover/zoom 图表交互仍需扩展。 |
 | 单轮失效安全研究 | L3 | `scripts/study_single_wheel_failure.py`, `docs/reports/single_wheel_failure_safety_analysis.html`, `backend/tests/test_fault_reconfig.py` | 可支撑内部机制研究，不应直接作为实车 ISO 26262 认证证据。 |
 | 手柄映射与直控模式 | L2 | `backend/tests/test_manual_strategies.py`, `frontend/src/input/gamepadConfig.ts`, `frontend/tests/e2e/workflow-smoke.spec.ts`, 手册 GIF | 配置 UI 和直控策略有自动化覆盖；浏览器 Gamepad API 和设备轴序仍依赖真实硬件回归。 |
 | 车辆几何工作室 | L2 | `frontend/src/vehicle/geometryModel.ts`, `frontend/src/components/vehicle/*`, `frontend/tests/e2e/workflow-smoke.spec.ts`, `CHANGELOG.md` v0.16 记录 | 已有浏览器 smoke 覆盖 SVG 拖拽点写入参数编辑缓冲；前端几何数学与后端部分共享概念但不是同一语言实现，仍需跨端一致性测试。 |
@@ -33,14 +33,14 @@
 ## 当前最高风险
 
 1. 外部对照不足：多数结论已通过内部一致性验证，但还缺 CarSim/CarMaker、公开基准或实测数据。
-2. 浏览器端自动化仍偏 smoke：车辆几何拖拽、回放时间轴、命令面板导航和手柄配置编辑已有覆盖，但关键截图、更多图表交互仍主要靠人工端到端验证。
+2. 浏览器端自动化仍偏 smoke：车辆几何拖拽、分析页截图/图表增删/PNG 导出、回放时间轴、命令面板导航和手柄配置编辑已有覆盖，但更多关键页面截图和 hover/zoom 图表交互仍主要靠人工端到端验证。
 3. 安全研究边界需要持续显式化：报告结论应始终标注参数假设、机构假设和不可外推范围。
 4. 发布资产一致性要机械化：版本号、lockfile、构建产物、手册和 release asset 需要同一套检查清单约束。
 
 ## 下一步提高建议
 
 1. 做外部基准对照：至少选 2-3 个公开车辆动力学工况或 CarSim/CarMaker 导出结果，形成 L3 证据包。
-2. 扩展 Playwright：继续覆盖关键截图和更多图表交互，减少人工 UI 回归成本。
+2. 扩展 Playwright：继续覆盖更多关键页面截图和图表 hover/zoom 交互，减少人工 UI 回归成本。
 3. 扩展 reference checker：接入真实数据后，把误差图表和 reviewer notes 纳入报告流水线。
 4. 抽象研究报告流水线：继续把单轮失效脚本中的章节结构、摘要、图表说明沉淀成复用模块。
 5. 接入实物验证数据：缩比 4WIS K&C 平台或台架数据进入后，将关键模型从 L3 推进到 L4。

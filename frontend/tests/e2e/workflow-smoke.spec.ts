@@ -21,6 +21,24 @@ async function setRangeValue(locator: Locator, value: string) {
   }, value);
 }
 
+async function expectCanvasHasDrawnPixels(locator: Locator) {
+  const stats = await locator.evaluate((el) => {
+    const canvas = el as HTMLCanvasElement;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return { width: canvas.width, height: canvas.height, ink: 0 };
+    const image = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let ink = 0;
+    for (let i = 3; i < image.length; i += 4) {
+      if (image[i] > 0) ink += 1;
+      if (ink > 200) break;
+    }
+    return { width: canvas.width, height: canvas.height, ink };
+  });
+  expect(stats.width).toBeGreaterThan(100);
+  expect(stats.height).toBeGreaterThan(100);
+  expect(stats.ink).toBeGreaterThan(200);
+}
+
 test("workflow rail pages render from the production app shell", async ({ page }) => {
   await page.goto("/");
 
@@ -52,7 +70,7 @@ test("workflow rail pages render from the production app shell", async ({ page }
   await expect(page.getByText("4WIS foundation model")).toBeVisible();
 });
 
-test("experiment run can be handed to analysis", async ({ page }) => {
+test("experiment run can be handed to analysis with chart controls and screenshot evidence", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
 
@@ -69,6 +87,29 @@ test("experiment run can be handed to analysis", async ({ page }) => {
   await expect(page.getByText("横摆角速度峰值 °/s")).toBeVisible();
   await expect(page.getByText("通道叠图")).toBeVisible();
   await expect(page.locator(".uplot").first()).toBeVisible();
+
+  await expectCanvasHasDrawnPixels(page.getByTestId("analysis-chart-vx").locator("canvas").first());
+  await expectCanvasHasDrawnPixels(page.getByTestId("analysis-trajectory-canvas"));
+
+  await page.getByTestId("analysis-chip-driver_steering").click();
+  await expect(page.getByTestId("analysis-chart-driver_steering")).toBeVisible();
+
+  await page.getByTestId("analysis-chip-vx").click();
+  await expect(page.getByTestId("analysis-chart-vx")).toHaveCount(0);
+
+  await page.getByLabel("分析通道选择").selectOption("rack_force_fl");
+  await page.getByRole("button", { name: /加图/ }).click();
+  await expect(page.getByTestId("analysis-chart-rack_force_fl")).toBeVisible();
+  await expectCanvasHasDrawnPixels(page.getByTestId("analysis-chart-rack_force_fl").locator("canvas").first());
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByTestId("analysis-chart-png-rack_force_fl").click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("rack_force_fl.png");
+
+  const screenshot = await page.getByTestId("analysis-workbench").screenshot();
+  expect(screenshot.length).toBeGreaterThan(10_000);
+  await testInfo.attach("analysis-workbench", { body: screenshot, contentType: "image/png" });
 });
 
 test("vehicle geometry drag updates the shared parameter edit buffer", async ({ page }) => {

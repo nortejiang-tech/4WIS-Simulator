@@ -205,7 +205,7 @@ export default function AnalysisPage() {
           </div>
         ) : (
           <>
-            <div className="wf-col-head">
+            <div className="wf-col-head" data-testid="analysis-workbench-head">
               <span>KPI 对比</span>
               <button className={`wf-btn ${replayOpen ? "primary" : ""}`}
                       onClick={() => setReplayOpen((v) => !v)}>
@@ -223,7 +223,7 @@ export default function AnalysisPage() {
                 onClose={() => { setReplayOpen(false); setReplayT(null); }}
               />
             )}
-            <div className="wf-kpi-wrap">
+            <div className="wf-kpi-wrap" data-testid="analysis-kpi-table">
               <table className="wf-kpi">
                 <thead>
                   <tr>
@@ -256,7 +256,7 @@ export default function AnalysisPage() {
             <div className="wf-col-head" style={{ marginTop: 12 }}>
               <span>通道叠图</span>
               <div style={{ display: "flex", gap: 6, alignItems: "center", marginLeft: "auto" }}>
-                <select className="wf-input" value={pickerCh} onChange={(e) => setPickerCh(e.target.value)}>
+                <select className="wf-input" aria-label="分析通道选择" value={pickerCh} onChange={(e) => setPickerCh(e.target.value)}>
                   {Object.keys(CHANNEL_LABELS).map((c) => (
                     <option key={c} value={c}>{CHANNEL_LABELS[c]}</option>
                   ))}
@@ -269,6 +269,7 @@ export default function AnalysisPage() {
             <div className="wf-chiprow">
               {PRESET_CHIPS.map((c) => (
                 <button key={c} className={`wf-chip ${charts.includes(c) ? "on" : ""}`}
+                        data-testid={`analysis-chip-${c}`}
                         onClick={() => setCharts((cur) =>
                           cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c])}>
                   {(CHANNEL_LABELS[c] ?? c).replace(/\s*\[.*\]$/, "")}
@@ -276,7 +277,7 @@ export default function AnalysisPage() {
               ))}
             </div>
 
-            <div className="wf-charts">
+            <div className="wf-charts" data-testid="analysis-workbench">
               <TrajectoryOverlay
                 runs={selectedRuns}
                 colors={selectedRuns.map((r) => colorOf(r.run_id) ?? "#888")}
@@ -344,11 +345,11 @@ function OverlayChart({ channel, runs, colors, cache, version, marker, onClose }
   );
 
   return (
-    <div className="wf-chart-card">
+    <div className="wf-chart-card" data-testid={`analysis-chart-${channel}`}>
       <div className="wf-chart-head">
         <span>{CHANNEL_LABELS[channel] ?? channel}</span>
-        <button className="wf-btn" onClick={() => exportPNG(plotRef.current, channel)}>PNG</button>
-        <button className="wf-x" onClick={onClose}>✕</button>
+        <button className="wf-btn" data-testid={`analysis-chart-png-${channel}`} onClick={() => exportPNG(plotRef.current, channel)}>PNG</button>
+        <button className="wf-x" aria-label={`关闭${CHANNEL_LABELS[channel] ?? channel}图表`} onClick={onClose}>✕</button>
       </div>
       <div ref={containerRef} className="wf-chart-body" />
     </div>
@@ -457,10 +458,10 @@ function TrajectoryOverlay({ runs, colors, cache, version }: {
   }, [runs, colors, cache, version]);
 
   return (
-    <div className="wf-chart-card">
+    <div className="wf-chart-card" data-testid="analysis-trajectory">
       <div className="wf-chart-head"><span>轨迹俯视（世界系，等比例）</span></div>
       <div ref={wrapRef} className="wf-chart-body">
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} data-testid="analysis-trajectory-canvas" />
       </div>
     </div>
   );
