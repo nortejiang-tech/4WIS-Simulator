@@ -26,6 +26,8 @@ tsconfig.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+frontend/test-results/
+frontend/playwright-report/
 
 # Packaged release artifacts
 dist_portable/

@@ -110,6 +110,7 @@ backend/.venv/bin/python scripts/smoke_test.py   # 从仓库根目录运行 smok
 backend/.venv/bin/python scripts/check_golden_experiments.py
 cd frontend && npm run type-check
 cd frontend && npm run build
+cd frontend && npm run e2e
 ```
 
 当前 `v0.16.0` 验证基线：
@@ -118,7 +119,15 @@ cd frontend && npm run build
 - smoke：`32/32 通过`
 - 黄金实验：`step_steer_60kmh` 与 `iso3888_dlc_60kmh` KPI 回归通过
 - 前端：type-check 通过
+- 浏览器 smoke：Playwright Chromium 通过
 - 前端生产构建通过；Vite 对 3D/主包有大 chunk 警告，但不阻断发布
+
+首次运行 Playwright 前需要安装浏览器运行时：
+
+```bash
+cd frontend
+npx playwright install chromium
+```
 
 ## 便携版打包
 

@@ -103,6 +103,7 @@ def main() -> int:
         help="skip pytest, smoke_test, and golden experiment regression",
     )
     parser.add_argument("--skip-build", action="store_true", help="skip frontend production build")
+    parser.add_argument("--skip-e2e", action="store_true", help="skip Playwright browser smoke")
     parser.add_argument(
         "--strict-git",
         action="store_true",
@@ -134,6 +135,9 @@ def main() -> int:
 
     if not args.skip_build:
         failures += command([npm, "run", "build"], FRONTEND)
+
+    if not args.skip_e2e:
+        failures += command([npm, "run", "e2e"], FRONTEND)
 
     if failures:
         log(f"failed with {failures} failing step(s)")
