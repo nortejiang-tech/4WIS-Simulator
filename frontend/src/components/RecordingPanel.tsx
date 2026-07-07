@@ -81,17 +81,21 @@ export default function RecordingPanel() {
             ● 开始录制
           </button>
         )}
-        <button onClick={onExport} disabled={samples === 0}>
+        <button data-testid="recording-export" onClick={onExport} disabled={samples === 0}>
           导出 CSV
         </button>
       </div>
       <div className="params-list" style={{ marginTop: 6 }}>
         <span>状态</span>
-        <span className="value" style={{ color: recording ? "var(--good)" : "var(--muted)" }}>
+        <span
+          className="value"
+          data-testid="recording-status"
+          style={{ color: recording ? "var(--good)" : "var(--muted)" }}
+        >
           {recording ? "录制中" : "空闲"}
         </span>
         <span>采样数</span>
-        <span className="value">{samples}</span>
+        <span className="value" data-testid="recording-samples">{samples}</span>
         <span>时长</span>
         <span className="value">{dur} s</span>
         <span>时段</span>
