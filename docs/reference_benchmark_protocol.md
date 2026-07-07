@@ -74,6 +74,14 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py
 
 脚本会校验每个 benchmark 子目录的 `manifest.json`、`reference.csv`、`sim4wis_experiment.yaml` 和 `notes.md`，并在数据齐全时运行 Sim4WIS 实验对比 `manifest.metrics` 中声明的指标。默认没有 benchmark 时不失败，但会明确输出外部验证证据仍缺失；需要强制要求数据时使用 `--require-data`。
 
+`--require-data` 只证明至少存在一个可复现 benchmark，解析参考也可以满足该门槛。需要防止把解析参考误报成独立外部/实测来源时，使用：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-independent-source
+```
+
+该模式只有在至少一个通过检查的 `external_tool`、`bench`、`scaled_vehicle` 或 `full_vehicle` benchmark 存在时才通过；当前两个 `analytic` benchmark 不满足该门槛。
+
 需要给评审人留存审查材料时，生成 Markdown review report：
 
 ```bash

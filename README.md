@@ -109,6 +109,7 @@ backend/.venv/bin/python -m pytest tests/        # 后端全量测试
 backend/.venv/bin/python scripts/smoke_test.py   # 从仓库根目录运行 smoke
 backend/.venv/bin/python scripts/check_golden_experiments.py
 backend/.venv/bin/python scripts/check_reference_benchmarks.py
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-independent-source  # 需要真实外部/实测来源时使用
 cd frontend && npm run type-check
 cd frontend && npm run build
 cd frontend && npm run e2e       # 先生产构建，再跑 Playwright，避免 stale dist
@@ -120,7 +121,7 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 - 后端：`210 passed`
 - smoke：`32/32 通过`
 - 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
-- 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；仍缺 CarSim/CarMaker、公开基准或实测数据
+- 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
 - 前端：type-check 通过
 - 浏览器 smoke：Playwright Chromium `19 passed`，覆盖工作流渲染、试验到分析页交接、分析页通道切换/加图/hover cursor/drag-to-zoom/PNG 导出/截图证据、车辆几何拖拽、车辆页项目列表/加载失败异常态、数据录制开始/停止/CSV 导出、分析回放时间轴、场景路径/扰动/故障 workflow、脚本库/解析失败、命令面板导航、手柄配置编辑
 - 前端生产构建通过；Vite 对 3D/主包有大 chunk 警告，但不阻断发布

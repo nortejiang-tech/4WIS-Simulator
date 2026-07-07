@@ -35,6 +35,10 @@ def test_reference_checker_allows_empty_root_by_default(tmp_path: Path) -> None:
     assert code == 1
     assert results == []
 
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert results == []
+
     report = tmp_path / "review.md"
     code, results = checker.check_reference_benchmarks(tmp_path, report_path=report)
     assert code == 0
@@ -147,8 +151,27 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
     assert all(metric.ok for metric in results[0].metrics)
     assert "Reviewer note: deterministic fixture" in results[0].reviewer_notes
 
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert len(results) == 1
+    assert results[0].source_type == "analytic"
+
+    manifest["source_type"] = "external_tool"
+    manifest["source_name"] = "independent checker fixture"
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 0
+    assert len(results) == 1
+    assert results[0].source_type == "external_tool"
+    assert results[0].has_independent_source
+
     text = report.read_text(encoding="utf-8")
     assert "## analytic_step_40kmh - PASS" in text
+    assert "Passing independent external/measured benchmarks: 0" in text
+    assert "No passing independent external-tool" in text
     assert "| `yaw_rate_peak_dps` |" in text
     assert "Reviewer note: deterministic fixture, not external evidence." in text
     assert "does not upgrade validation levels without human review" in text

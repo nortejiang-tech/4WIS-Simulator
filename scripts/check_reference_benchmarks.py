@@ -48,6 +48,7 @@ REQUIRED_MANIFEST_FIELDS = (
     "limitations",
 )
 ALLOWED_SOURCE_TYPES = {"analytic", "external_tool", "bench", "scaled_vehicle", "full_vehicle"}
+INDEPENDENT_SOURCE_TYPES = {"external_tool", "bench", "scaled_vehicle", "full_vehicle"}
 REQUIRED_CHANNELS = ("t", "vx", "vy", "yaw_rate", "pose_x", "pose_y", "driver_steering")
 
 
@@ -80,6 +81,10 @@ class BenchmarkResult:
     @property
     def ok(self) -> bool:
         return not self.failures
+
+    @property
+    def has_independent_source(self) -> bool:
+        return self.source_type in INDEPENDENT_SOURCE_TYPES
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -342,15 +347,22 @@ def _first_lines(text: str, max_lines: int = 8) -> str:
 def render_review_report(root: Path, results: list[BenchmarkResult]) -> str:
     """Render a reviewer-facing Markdown report from checked benchmark results."""
     ok_count = sum(1 for r in results if r.ok)
+    independent_count = sum(1 for r in results if r.ok and r.has_independent_source)
     lines = [
         "# Reference Benchmark Review Report",
         "",
         f"- Data root: `{root}`",
         f"- Benchmarks checked: {len(results)}",
         f"- Passing benchmarks: {ok_count}/{len(results)}",
+        f"- Passing independent external/measured benchmarks: {independent_count}",
         "- Evidence boundary: this report summarizes reproducibility checks only; it does not upgrade validation levels without human review.",
         "",
     ]
+    if independent_count == 0:
+        lines += [
+            "> No passing independent external-tool, bench, scaled-vehicle, or full-vehicle benchmark is present.",
+            "",
+        ]
     if not results:
         lines += [
             "## No Benchmark Data",
@@ -407,13 +419,14 @@ def write_review_report(path: Path, root: Path, results: list[BenchmarkResult]) 
 def check_reference_benchmarks(
     root: Path = DEFAULT_ROOT,
     require_data: bool = False,
+    require_independent_source: bool = False,
     report_path: Path | None = None,
 ) -> tuple[int, list[BenchmarkResult]]:
     benches = discover_benchmarks(root)
     if not benches:
         if report_path is not None:
             write_review_report(report_path, root, [])
-        if require_data:
+        if require_data or require_independent_source:
             print(f"{root}: no reference benchmarks found", file=sys.stderr)
             return 1, []
         print(f"{root}: no reference benchmarks found; external validation evidence remains absent")
@@ -430,16 +443,32 @@ def check_reference_benchmarks(
             print(f"  warning: {warning}")
         for failure in r.failures:
             print(f"  failure: {failure}", file=sys.stderr)
-    return (1 if failures else 0), results
+    independent_count = sum(1 for r in results if r.ok and r.has_independent_source)
+    if require_independent_source and independent_count == 0:
+        print(
+            f"{root}: no passing independent external-tool, bench, scaled-vehicle, or full-vehicle benchmark found",
+            file=sys.stderr,
+        )
+    return (1 if failures or (require_independent_source and independent_count == 0) else 0), results
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="validation_data root")
     parser.add_argument("--require-data", action="store_true", help="fail when no benchmark directories exist")
+    parser.add_argument(
+        "--require-independent-source",
+        action="store_true",
+        help="fail unless at least one passing external_tool/bench/scaled_vehicle/full_vehicle benchmark exists",
+    )
     parser.add_argument("--report", type=Path, help="write a reviewer-facing Markdown report")
     args = parser.parse_args()
-    code, _results = check_reference_benchmarks(args.root, args.require_data, args.report)
+    code, _results = check_reference_benchmarks(
+        args.root,
+        require_data=args.require_data,
+        require_independent_source=args.require_independent_source,
+        report_path=args.report,
+    )
     return code
 
 

@@ -29,11 +29,11 @@
 | 手柄映射与直控模式 | L2 | `backend/tests/test_manual_strategies.py`, `frontend/src/input/gamepadConfig.ts`, `frontend/tests/e2e/workflow-smoke.spec.ts`, 手册 GIF | 配置 UI 和直控策略有自动化覆盖；浏览器 Gamepad API 和设备轴序仍依赖真实硬件回归。 |
 | 车辆几何工作室 | L2 | `frontend/src/vehicle/geometryModel.ts`, `frontend/src/components/vehicle/*`, `frontend/tests/e2e/workflow-smoke.spec.ts`, `CHANGELOG.md` v0.16 记录 | 已有浏览器 smoke 覆盖 SVG 拖拽点写入参数编辑缓冲；前端几何数学与后端部分共享概念但不是同一语言实现，仍需跨端一致性测试。 |
 | 便携包发布 | L2 | `scripts/build_portable.py`, `dist_portable/`, GitHub Release assets | 依赖 python-build-standalone 和目标平台 wheel 可用性；发布前必须跑 `scripts/pre_release_check.py`。 |
-| 参考/外部/实测对照接入 | L3 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md`, `validation_data/analytic_steady_circle_30kmh/`, `validation_data/analytic_step_steer_30kmh/`, `scripts/check_reference_benchmarks.py`, `backend/tests/test_reference_benchmarks.py` | 已有两个解析 benchmark，`--require-data` 可通过；尚无真实外部工具或实测数据，因此不能提升到外部工具对照或 L4 实测等级。 |
+| 参考/外部/实测对照接入 | L3 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md`, `validation_data/analytic_steady_circle_30kmh/`, `validation_data/analytic_step_steer_30kmh/`, `scripts/check_reference_benchmarks.py`, `backend/tests/test_reference_benchmarks.py` | 已有两个解析 benchmark，`--require-data` 可通过；`--require-independent-source` 会继续失败直到接入通过检查的外部工具、台架、缩比车或实车 benchmark，因此当前不能提升到外部工具对照或 L4 实测等级。 |
 
 ## 当前最高风险
 
-1. 外部对照不足：已有稳态圆周和阶跃转向两个解析 benchmark，但多数结论仍缺 CarSim/CarMaker、公开基准或实测数据。
+1. 外部对照不足：已有稳态圆周和阶跃转向两个解析 benchmark，并有 `--require-independent-source` 防误报门禁；但多数结论仍缺 CarSim/CarMaker、公开基准或实测数据。
 2. 浏览器端自动化仍偏 smoke：关键 workflow 页截图、车辆几何拖拽、分析页截图/图表增删/hover cursor/drag-to-zoom/PNG 导出、负载页图表绘制/原理说明弹窗、场景页标准路径生成/跟踪/清除、路面扰动编辑新建/编辑/清空、故障注入添加/启停/清空、动作脚本库载入/启动/停止、数据录制开始/停止/CSV 导出、脚本解析失败异常态、run 数据读取失败异常态、试验页 batch 启动失败异常态、车辆页参数应用被拒绝异常态、车辆页项目列表读取失败异常态、车辆页项目 YAML 加载失败异常态、负载页扫图计算失败异常态、回放时间轴、命令面板导航和手柄配置编辑已有覆盖，但更多深层页面状态和更少见后端失败分支仍主要靠人工端到端验证。
 3. 安全研究边界需要持续显式化：报告结论应始终标注参数假设、机构假设和不可外推范围。
 4. 发布资产一致性要机械化：版本号、lockfile、构建产物、手册和 release asset 需要同一套检查清单约束。

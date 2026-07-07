@@ -110,6 +110,11 @@ def main() -> int:
         help="fail if validation_data has no external/reference benchmarks",
     )
     parser.add_argument(
+        "--require-independent-reference",
+        action="store_true",
+        help="fail unless validation_data has at least one passing external_tool/bench/scaled_vehicle/full_vehicle benchmark",
+    )
+    parser.add_argument(
         "--strict-git",
         action="store_true",
         help="fail if the working tree is dirty",
@@ -138,6 +143,8 @@ def main() -> int:
         ref_cmd = [py, "scripts/check_reference_benchmarks.py"]
         if args.require_reference_data:
             ref_cmd.append("--require-data")
+        if args.require_independent_reference:
+            ref_cmd.append("--require-independent-source")
         failures += command(ref_cmd, ROOT)
 
     failures += command([npm, "run", "type-check"], FRONTEND)

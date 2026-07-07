@@ -36,6 +36,12 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-data
 ```
 
+`--require-data` 只要求存在可复现 benchmark，解析参考也满足该条件。需要强制要求至少一个通过检查的独立外部工具、台架、缩比车或实车来源时，使用：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-independent-source
+```
+
 当前 checker 支持以下从 `reference.csv` 自动计算参考值的指标：
 
 - `yaw_rate_peak_dps`
