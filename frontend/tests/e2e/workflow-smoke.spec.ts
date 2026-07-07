@@ -306,6 +306,28 @@ test("load analysis charts expose deeper explanation state with screenshot evide
   await attachPageScreenshot(page, testInfo, "workflow-load-explanation");
 });
 
+test("scenario path workflow generates, follows, and clears a reference path", async ({ page }, testInfo) => {
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const trajectoryPanel = page.locator(".panel").filter({ hasText: "轨迹 / 路径" });
+  await expect(trajectoryPanel).toBeVisible();
+  await expect(trajectoryPanel).toContainText("无路径");
+
+  await trajectoryPanel.locator("select").first().selectOption("double_lane_change");
+  await trajectoryPanel.getByRole("button", { name: "生成" }).click();
+  await expect(trajectoryPanel).toContainText(/当前路径: double_lane_change · \d+ 点 · \d+ 桩/);
+
+  await trajectoryPanel.getByRole("button", { name: "跟踪此路径" }).click();
+  await expect(page.getByLabel("当前状态摘要")).toContainText("follow_trajectory");
+
+  await trajectoryPanel.getByRole("button", { name: "清除路径" }).click();
+  await expect(trajectoryPanel).toContainText("无路径");
+
+  await attachPageScreenshot(page, testInfo, "workflow-scenario-path");
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
