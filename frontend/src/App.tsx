@@ -11,6 +11,7 @@ import Toasts from "@/components/Toasts";
 import { connectSimSocket, fetchPath, fetchScenario } from "@/api/ws";
 import { fetchJSON } from "@/api/http";
 import { AppPage, useSimStore } from "@/store/sim";
+import "./App.css";
 
 const LoadAnalysisPage = lazy(() => import("@/components/LoadAnalysisPage"));
 const ModelTheoryPage = lazy(() => import("@/components/ModelTheoryPage"));
