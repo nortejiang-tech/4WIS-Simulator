@@ -1,0 +1,125 @@
+.panel {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel h2 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel-head .panel-toggle {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.panel-head .panel-toggle:hover {
+  background: transparent;
+}
+
+.panel-caret {
+  color: var(--muted);
+  font-size: 9px;
+  width: 10px;
+  flex-shrink: 0;
+}
+
+.panel-name {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-head .panel-toggle:hover .panel-name {
+  color: var(--text);
+}
+
+.panel-head .panel-help-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.panel-head .panel-help-btn:hover,
+.panel-head .panel-help-btn.on {
+  color: var(--accent, #58a6ff);
+  border-color: var(--accent, #58a6ff);
+  background: transparent;
+}
+
+.panel-help {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent, #58a6ff);
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.panel-help b,
+.panel-help strong {
+  color: var(--text);
+}
+
+.panel-help code {
+  background: var(--bg-0);
+  color: var(--accent, #58a6ff);
+  padding: 0 4px;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.panel-help ol,
+.panel-help ul {
+  margin: 5px 0 0;
+  padding-left: 18px;
+}
+
+.panel-help li {
+  margin-bottom: 3px;
+}
+
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

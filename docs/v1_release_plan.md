@@ -75,7 +75,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：负载页样式从全局 `styles.css` 拆到 `LoadAnalysisPage` 页面 CSS、`ChartBox`/解释弹窗/指标信息组件 CSS，以及模型页复用的 body-coupling 控件 CSS；全局 `index.css` 降到 27.92 kB，新增 `LoadAnalysisPage` CSS 10.26 kB 和共享 load 图表/控制 CSS 35.36 kB。
 - 已完成：模型原理页 `model-*` 样式从全局 `styles.css` 拆到 `ModelTheoryPage` 私有 CSS；当前全局 `index.css` 降到 21.56 kB，新增 `ModelTheoryPage` CSS 6.41 kB。
 - 已完成：试验/分析/车辆几何工作流共用的 `wf-*`、`veh-*`、`replay-*` 样式从全局 `styles.css` 拆到共享 `WorkflowPage` CSS；当前全局 `index.css` 降到 16.23 kB，新增 `WorkflowPage` CSS 5.42 kB。
-- 已完成：命令面板 `cmdk-*` 和手柄配置 `gp-*` 样式从全局 `styles.css` 拆到组件私有 CSS；这两个组件仍在入口依赖链，当前入口 `index.css` 为 16.23 kB / gzip 3.50 kB。
+- 已完成：命令面板 `cmdk-*`、手柄配置 `gp-*` 和 Panel 壳层 `panel-*` 样式从全局 `styles.css` 拆到组件私有 CSS；这些组件仍在入口依赖链，当前入口 `index.css` 为 16.23 kB / gzip 3.48 kB。
 - 下一步：继续按页面/组件收敛剩余大块全局样式，避免新增页面改动影响现有工具面板。
 
 ### P5: 实物验证接入

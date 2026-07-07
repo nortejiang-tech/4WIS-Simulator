@@ -8,6 +8,8 @@
 
 import { type ReactNode, useState } from "react";
 
+import "./Panel.css";
+
 interface PanelProps {
   title: string;
   help?: ReactNode;          // usage instructions, shown when ⓘ is toggled
