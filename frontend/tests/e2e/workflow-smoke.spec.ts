@@ -236,6 +236,47 @@ test("experiment batch start failure surfaces an error state with screenshot evi
   await attachPageScreenshot(page, testInfo, "workflow-experiment-batch-error");
 });
 
+test("run control backend failures stay visible in the control panels", async ({ page }, testInfo) => {
+  await page.route("**/api/model", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic model switch failure" }),
+    });
+  });
+  await page.route("**/api/scene/mu", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic road mu failure" }),
+    });
+  });
+
+  await page.goto("/");
+
+  const modelPanel = page.locator(".panel").filter({ hasText: "动力学模型" });
+  await expect(modelPanel).toBeVisible();
+  await modelPanel.getByRole("button", { name: "多体(14DOF)" }).click();
+  await expect(page.getByRole("alert")).toContainText("模型切换失败：synthetic model switch failure");
+  await expect(modelPanel.getByRole("button", { name: "多体(14DOF)" })).toBeEnabled();
+
+  const frictionPanel = page.locator(".panel").filter({ hasText: "路面摩擦" });
+  await expect(frictionPanel).toBeVisible();
+  await frictionPanel.locator("select").selectOption("雪面");
+  await expect(page.getByRole("alert").last()).toContainText("路面摩擦设置失败：synthetic road mu failure");
+  await expect(frictionPanel.locator("select")).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-run-control-error");
+});
+
 test("vehicle geometry drag updates the shared parameter edit buffer", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });

@@ -61,10 +61,18 @@ export default function ControlPanel() {
   const steerReturn = useSimStore((s) => s.steerReturn);
   const setSteerReturn = useSimStore((s) => s.setSteerReturn);
   const requestZero = useSimStore((s) => s.requestZero);
+  const pushToast = useSimStore((s) => s.pushToast);
   const modelType = useSimStore((s) => s.state?.model_type);
   const baseMu = useSimStore((s) => s.state?.scene?.base_mu ?? 0.85);
   const vMax = params?.v_max ?? 20;
   const [rwsMode, setRwsMode] = useState(DEFAULT_RWS_MODE);
+
+  const applyModel = (modelId: string) => {
+    setModel(modelId).catch((e) => pushToast("error", `模型切换失败：${e?.message ?? e}`));
+  };
+  const applySceneMu = (mu: number) => {
+    setSceneMu(mu).catch((e) => pushToast("error", `路面摩擦设置失败：${e?.message ?? e}`));
+  };
 
   // Pick a strategy; for 后轮转向 also push the current sub-mode so the backend
   // dispatches the right control law immediately.
@@ -85,7 +93,7 @@ export default function ControlPanel() {
             <button
               key={m.id}
               className={m.id === modelType ? "active" : ""}
-              onClick={() => setModel(m.id).catch(() => undefined)}
+              onClick={() => applyModel(m.id)}
             >
               {m.label}
             </button>
@@ -100,7 +108,7 @@ export default function ControlPanel() {
               <button
                 key={m.id}
                 className={m.id === modelType ? "active" : ""}
-                onClick={() => setModel(m.id).catch(() => undefined)}
+                onClick={() => applyModel(m.id)}
               >
                 {m.label}
               </button>
@@ -228,7 +236,7 @@ export default function ControlPanel() {
             value={SURFACE_PRESETS.find((s) => Math.abs(s.mu - baseMu) < 1e-6)?.label ?? ""}
             onChange={(e) => {
               const preset = SURFACE_PRESETS.find((s) => s.label === e.target.value);
-              if (preset) setSceneMu(preset.mu).catch(() => undefined);
+              if (preset) applySceneMu(preset.mu);
             }}
             style={{ flex: 1, background: "var(--bg-2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 6, padding: "6px 8px", fontSize: 12 }}
           >
@@ -242,7 +250,7 @@ export default function ControlPanel() {
         <input
           type="range" min={0.05} max={1.0} step={0.01}
           value={baseMu}
-          onChange={(e) => setSceneMu(Number(e.target.value)).catch(() => undefined)}
+          onChange={(e) => applySceneMu(Number(e.target.value))}
           style={{ width: "100%", marginTop: 6 }}
         />
         <div className="small" style={{ color: "var(--muted)" }}>
