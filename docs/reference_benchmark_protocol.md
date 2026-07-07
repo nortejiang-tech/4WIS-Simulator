@@ -74,6 +74,14 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py
 
 脚本会校验每个 benchmark 子目录的 `manifest.json`、`reference.csv`、`sim4wis_experiment.yaml` 和 `notes.md`，并在数据齐全时运行 Sim4WIS 实验对比 `manifest.metrics` 中声明的指标。默认没有 benchmark 时不失败，但会明确输出外部验证证据仍缺失；需要强制要求数据时使用 `--require-data`。
 
+需要给评审人留存审查材料时，生成 Markdown review report：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md
+```
+
+报告会汇总每个 benchmark 的来源、limitations、warnings/failures、每项指标的 Sim/Reference/Delta/Tolerance 和 `notes.md` 摘要。该报告只是复现性与人工评审材料，不能自动提升 `docs/validation_matrix.md` 的可信度等级。
+
 当前支持自动对照的指标包括：
 
 - `yaw_rate_peak_dps`
@@ -87,5 +95,5 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py
 
 - 已有内部黄金实验：`docs/golden_experiments.json`。
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
-- 已有参考数据结构 checker：`scripts/check_reference_benchmarks.py`。
+- 已有参考数据结构 checker 与 reviewer report 输出：`scripts/check_reference_benchmarks.py`。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。

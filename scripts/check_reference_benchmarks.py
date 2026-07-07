@@ -52,9 +52,28 @@ REQUIRED_CHANNELS = ("t", "vx", "vy", "yaw_rate", "pose_x", "pose_y", "driver_st
 
 
 @dataclass
+class MetricComparison:
+    name: str
+    sim_value: float
+    reference_value: float
+    delta: float
+    tolerance: float
+
+    @property
+    def ok(self) -> bool:
+        return math.isfinite(self.delta) and self.delta <= self.tolerance
+
+
+@dataclass
 class BenchmarkResult:
     benchmark_id: str
     checked_metrics: int = 0
+    source_type: str = ""
+    source_name: str = ""
+    source_version: str = ""
+    limitations: list[str] = field(default_factory=list)
+    reviewer_notes: str = ""
+    metrics: list[MetricComparison] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
 
@@ -74,6 +93,10 @@ def _load_json(path: Path) -> dict[str, Any]:
 def _load_experiment(path: Path) -> Experiment:
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     return Experiment.model_validate(raw)
+
+
+def _load_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8").strip()
 
 
 def _load_reference_csv(path: Path) -> dict[str, np.ndarray]:
@@ -226,9 +249,19 @@ def check_benchmark(path: Path) -> BenchmarkResult:
         return result
     benchmark_id = str(manifest.get("benchmark_id", path.name))
     result.benchmark_id = benchmark_id
+    result.source_type = str(manifest.get("source_type", ""))
+    result.source_name = str(manifest.get("source_name", ""))
+    result.source_version = str(manifest.get("source_version", ""))
+    limitations = manifest.get("limitations", [])
+    if isinstance(limitations, list):
+        result.limitations = [str(item) for item in limitations]
     if benchmark_id != path.name:
         result.failures.append(f"{path.name}: manifest benchmark_id {benchmark_id!r} must match directory name")
     _validate_manifest_shape(manifest_path, manifest, result)
+
+    notes_path = path / "notes.md"
+    if notes_path.is_file():
+        result.reviewer_notes = _load_text(notes_path)
 
     try:
         ref = _load_reference_csv(path / "reference.csv")
@@ -272,6 +305,14 @@ def check_benchmark(path: Path) -> BenchmarkResult:
             continue
         allowed = _allowed_delta(want, raw_spec)
         delta = abs(got - want)
+        comparison = MetricComparison(
+            name=metric_name,
+            sim_value=got,
+            reference_value=want,
+            delta=delta,
+            tolerance=allowed,
+        )
+        result.metrics.append(comparison)
         if not math.isfinite(delta) or delta > allowed:
             result.failures.append(
                 f"{path.name}.{metric_name}: sim {got:.6g}, reference {want:.6g}, "
@@ -287,9 +328,91 @@ def discover_benchmarks(root: Path) -> list[Path]:
     return sorted(p for p in root.iterdir() if p.is_dir() and not p.name.startswith("."))
 
 
-def check_reference_benchmarks(root: Path = DEFAULT_ROOT, require_data: bool = False) -> tuple[int, list[BenchmarkResult]]:
+def _fmt_float(value: float) -> str:
+    if not math.isfinite(value):
+        return str(value)
+    return f"{value:.6g}"
+
+
+def _first_lines(text: str, max_lines: int = 8) -> str:
+    lines = [line.rstrip() for line in text.strip().splitlines()]
+    return "\n".join(lines[:max_lines])
+
+
+def render_review_report(root: Path, results: list[BenchmarkResult]) -> str:
+    """Render a reviewer-facing Markdown report from checked benchmark results."""
+    ok_count = sum(1 for r in results if r.ok)
+    lines = [
+        "# Reference Benchmark Review Report",
+        "",
+        f"- Data root: `{root}`",
+        f"- Benchmarks checked: {len(results)}",
+        f"- Passing benchmarks: {ok_count}/{len(results)}",
+        "- Evidence boundary: this report summarizes reproducibility checks only; it does not upgrade validation levels without human review.",
+        "",
+    ]
+    if not results:
+        lines += [
+            "## No Benchmark Data",
+            "",
+            "No reference benchmark directories were found. External validation evidence remains absent.",
+            "",
+        ]
+        return "\n".join(lines)
+
+    for result in results:
+        status = "PASS" if result.ok else "FAIL"
+        lines += [
+            f"## {result.benchmark_id} - {status}",
+            "",
+            f"- Source: {result.source_type or 'unknown'} / {result.source_name or 'unknown'} / {result.source_version or 'unknown'}",
+            f"- Checked metrics: {result.checked_metrics}",
+        ]
+        if result.limitations:
+            lines.append(f"- Limitations: {'; '.join(result.limitations)}")
+        if result.warnings:
+            lines.append(f"- Warnings: {'; '.join(result.warnings)}")
+        if result.failures:
+            lines.append(f"- Failures: {'; '.join(result.failures)}")
+        lines += [
+            "",
+            "| Metric | Sim | Reference | Delta | Tolerance | Status |",
+            "|---|---:|---:|---:|---:|---|",
+        ]
+        if result.metrics:
+            for metric in result.metrics:
+                lines.append(
+                    f"| `{metric.name}` | {_fmt_float(metric.sim_value)} | "
+                    f"{_fmt_float(metric.reference_value)} | {_fmt_float(metric.delta)} | "
+                    f"{_fmt_float(metric.tolerance)} | {'PASS' if metric.ok else 'FAIL'} |"
+                )
+        else:
+            lines.append("| _none_ |  |  |  |  |  |")
+        lines += ["", "### Reviewer Notes", ""]
+        if result.reviewer_notes:
+            lines.append("```markdown")
+            lines.append(_first_lines(result.reviewer_notes))
+            lines.append("```")
+        else:
+            lines.append("_No notes.md content available._")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def write_review_report(path: Path, root: Path, results: list[BenchmarkResult]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(render_review_report(root, results), encoding="utf-8")
+
+
+def check_reference_benchmarks(
+    root: Path = DEFAULT_ROOT,
+    require_data: bool = False,
+    report_path: Path | None = None,
+) -> tuple[int, list[BenchmarkResult]]:
     benches = discover_benchmarks(root)
     if not benches:
+        if report_path is not None:
+            write_review_report(report_path, root, [])
         if require_data:
             print(f"{root}: no reference benchmarks found", file=sys.stderr)
             return 1, []
@@ -297,6 +420,8 @@ def check_reference_benchmarks(root: Path = DEFAULT_ROOT, require_data: bool = F
         return 0, []
 
     results = [check_benchmark(path) for path in benches]
+    if report_path is not None:
+        write_review_report(report_path, root, results)
     failures = sum(len(r.failures) for r in results)
     for r in results:
         status = "ok" if r.ok else "failed"
@@ -312,8 +437,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="validation_data root")
     parser.add_argument("--require-data", action="store_true", help="fail when no benchmark directories exist")
+    parser.add_argument("--report", type=Path, help="write a reviewer-facing Markdown report")
     args = parser.parse_args()
-    code, _results = check_reference_benchmarks(args.root, args.require_data)
+    code, _results = check_reference_benchmarks(args.root, args.require_data, args.report)
     return code
 
 

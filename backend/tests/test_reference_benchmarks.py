@@ -35,6 +35,14 @@ def test_reference_checker_allows_empty_root_by_default(tmp_path: Path) -> None:
     assert code == 1
     assert results == []
 
+    report = tmp_path / "review.md"
+    code, results = checker.check_reference_benchmarks(tmp_path, report_path=report)
+    assert code == 0
+    assert results == []
+    text = report.read_text(encoding="utf-8")
+    assert "No reference benchmark directories were found" in text
+    assert "External validation evidence remains absent" in text
+
 
 def test_reference_checker_reports_malformed_benchmark(tmp_path: Path) -> None:
     checker = load_checker()
@@ -123,11 +131,24 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    (bench / "notes.md").write_text("# analytic_step_40kmh\n\nTest fixture.\n", encoding="utf-8")
+    (bench / "notes.md").write_text(
+        "# analytic_step_40kmh\n\nReviewer note: deterministic fixture, not external evidence.\n",
+        encoding="utf-8",
+    )
+    report = tmp_path / "reference_review.md"
 
-    code, results = checker.check_reference_benchmarks(tmp_path, require_data=True)
+    code, results = checker.check_reference_benchmarks(tmp_path, require_data=True, report_path=report)
 
     assert code == 0
     assert len(results) == 1
     assert results[0].checked_metrics == 3
     assert results[0].failures == []
+    assert len(results[0].metrics) == 3
+    assert all(metric.ok for metric in results[0].metrics)
+    assert "Reviewer note: deterministic fixture" in results[0].reviewer_notes
+
+    text = report.read_text(encoding="utf-8")
+    assert "## analytic_step_40kmh - PASS" in text
+    assert "| `yaw_rate_peak_dps` |" in text
+    assert "Reviewer note: deterministic fixture, not external evidence." in text
+    assert "does not upgrade validation levels without human review" in text

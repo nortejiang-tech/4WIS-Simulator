@@ -26,6 +26,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 
 - 已完成：建立 `docs/reference_benchmark_protocol.md` 与 `validation_data/` 数据接入结构，明确外部/实测证据不能用内部测试替代。
 - 已完成：`scripts/check_reference_benchmarks.py` 可校验 benchmark 目录、manifest、CSV 最小通道、实验 YAML，并在有数据时运行 Sim4WIS 对比指标；默认空目录只提示外部证据缺失，`--require-data` 可强制失败。
+- 已完成：reference checker 可用 `--report` 生成 reviewer-facing Markdown，汇总来源、limitations、warnings/failures、指标误差表和 `notes.md` 摘要；报告明确不自动提升可信度等级。
 - 选 2-3 个公开或可导出的参考工况：稳态圆周、阶跃转向、双移线。
 - 对每个工况保存参考来源、车辆参数映射、目标指标和误差解释。
 - 优先对照 `yaw_rate_peak_dps`、稳态横摆增益、速度跟踪 RMS、侧偏角峰值、轨迹横向偏差。

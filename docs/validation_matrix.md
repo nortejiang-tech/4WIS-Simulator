@@ -28,7 +28,7 @@
 | 手柄映射与直控模式 | L2 | `backend/tests/test_manual_strategies.py`, `frontend/src/input/gamepadConfig.ts`, `frontend/tests/e2e/workflow-smoke.spec.ts`, 手册 GIF | 配置 UI 和直控策略有自动化覆盖；浏览器 Gamepad API 和设备轴序仍依赖真实硬件回归。 |
 | 车辆几何工作室 | L2 | `frontend/src/vehicle/geometryModel.ts`, `frontend/src/components/vehicle/*`, `frontend/tests/e2e/workflow-smoke.spec.ts`, `CHANGELOG.md` v0.16 记录 | 已有浏览器 smoke 覆盖 SVG 拖拽点写入参数编辑缓冲；前端几何数学与后端部分共享概念但不是同一语言实现，仍需跨端一致性测试。 |
 | 便携包发布 | L2 | `scripts/build_portable.py`, `dist_portable/`, GitHub Release assets | 依赖 python-build-standalone 和目标平台 wheel 可用性；发布前必须跑 `scripts/pre_release_check.py`。 |
-| 外部/实测对照接入 | L0 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md`, `scripts/check_reference_benchmarks.py`, `backend/tests/test_reference_benchmarks.py` | 有协议、数据结构和可运行 checker；尚无真实外部工具或实测数据，因此不能提升模型可信度等级。 |
+| 外部/实测对照接入 | L0 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md`, `scripts/check_reference_benchmarks.py`, `backend/tests/test_reference_benchmarks.py` | 有协议、数据结构、可运行 checker 和 reviewer report 输出；尚无真实外部工具或实测数据，因此不能提升模型可信度等级。 |
 
 ## 当前最高风险
 
@@ -41,6 +41,6 @@
 
 1. 做外部基准对照：至少选 2-3 个公开车辆动力学工况或 CarSim/CarMaker 导出结果，形成 L3 证据包。
 2. 扩展 Playwright：继续覆盖更多关键页面截图和图表 zoom 交互，减少人工 UI 回归成本。
-3. 扩展 reference checker：接入真实数据后，把误差图表和 reviewer notes 纳入报告流水线。
+3. 接入真实 reference 数据：checker 已能汇总误差表和 reviewer notes；下一步是放入真实外部/实测 benchmark，并由人工审查误差解释。
 4. 抽象研究报告流水线：后续新增故障研究脚本应复用 `scripts/reporting.py` 的文档外壳、章节、callout、表格和图片组件，避免复制整页模板。
 5. 接入实物验证数据：缩比 4WIS K&C 平台或台架数据进入后，将关键模型从 L3 推进到 L4。

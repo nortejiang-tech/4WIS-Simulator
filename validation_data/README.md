@@ -46,3 +46,11 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-data
 - `trajectory_error_peak_m`
 
 每个 `manifest.json` 的 `metrics` 项至少需要给出 `abs_tol`、`rel_tol` 或 `tolerance` 之一；也可以提供 `reference_value` 覆盖从 `reference.csv` 自动计算出的参考值。
+
+需要生成给评审人看的 Markdown 摘要时：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md
+```
+
+该报告会包含指标误差表和 `notes.md` 摘要，但不会自动把任何能力提升到 L3/L4；可信度等级仍需人工审查真实来源、限制和误差解释。
