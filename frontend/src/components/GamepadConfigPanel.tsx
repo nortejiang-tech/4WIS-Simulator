@@ -142,6 +142,7 @@ export default function GamepadConfigPanel() {
       <div className="gp-presets">
         {PRESETS.map((p) => (
           <button key={p.key} className={`gp-preset ${activePreset?.key === p.key ? "on" : ""}`}
+                  data-testid={`gp-preset-${p.key}`}
                   title={p.hint} onClick={() => pickPreset(p)}>
             {p.label}
           </button>
@@ -159,7 +160,7 @@ export default function GamepadConfigPanel() {
         const val = gp ? readAxis(gp, b, cfg.deadzone, cfg.sensitivity) : 0;
         const armed = learning === ch.key;
         return (
-          <div key={ch.key} className="gp-chan">
+          <div key={ch.key} className="gp-chan" data-testid={`gp-channel-${ch.key}`}>
             <div className="gp-chan-top">
               <span className="gp-chan-label">{ch.label}</span>
               <span className="gp-chan-axis">{b.axis < 0 ? "未绑定" : `轴 ${b.axis}`}</span>
@@ -187,7 +188,7 @@ export default function GamepadConfigPanel() {
       <div className="gp-chan">
         <div className="gp-chan-top">
           <span className="gp-chan-label">来源</span>
-          <select className="gp-sel" value={cfg.throttle.source}
+          <select className="gp-sel" aria-label="油门来源" value={cfg.throttle.source}
             onChange={(e) => setCfg({ ...cfg, throttle: { ...cfg.throttle, source: e.target.value as "triggers" | "axis" } })}>
             <option value="triggers">扳机 RT/LT</option>
             <option value="axis">摇杆轴</option>
@@ -233,12 +234,12 @@ export default function GamepadConfigPanel() {
       <div className="gp-chan-head">全局</div>
       <div className="gp-glob">
         <span>死区 {cfg.deadzone.toFixed(2)}</span>
-        <input type="range" min={0} max={0.35} step={0.01} value={cfg.deadzone}
+        <input type="range" aria-label="手柄死区" min={0} max={0.35} step={0.01} value={cfg.deadzone}
           onChange={(e) => setCfg({ ...cfg, deadzone: Number(e.target.value) })} />
       </div>
       <div className="gp-glob">
         <span>转向灵敏度 {cfg.sensitivity.toFixed(2)}×</span>
-        <input type="range" min={0.2} max={1.5} step={0.05} value={cfg.sensitivity}
+        <input type="range" aria-label="手柄转向灵敏度" min={0.2} max={1.5} step={0.05} value={cfg.sensitivity}
           onChange={(e) => setCfg({ ...cfg, sensitivity: Number(e.target.value) })} />
       </div>
 
@@ -261,7 +262,7 @@ export default function GamepadConfigPanel() {
         </div>
       )}
 
-      <button className="gp-reset" onClick={() => setCfg({ ...defaultGamepadConfig(), mode: cfg.mode, grouping: cfg.grouping })}>
+      <button className="gp-reset" data-testid="gp-reset" onClick={() => setCfg({ ...defaultGamepadConfig(), mode: cfg.mode, grouping: cfg.grouping })}>
         恢复默认绑定
       </button>
     </Panel>

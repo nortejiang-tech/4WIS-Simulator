@@ -11,6 +11,16 @@ async function dragBy(locator: Locator, dx: number, dy: number) {
   await locator.page().mouse.up();
 }
 
+async function setRangeValue(locator: Locator, value: string) {
+  await locator.evaluate((el, nextValue) => {
+    const input = el as HTMLInputElement;
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+    setter?.call(input, nextValue);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }, value);
+}
+
 test("workflow rail pages render from the production app shell", async ({ page }) => {
   await page.goto("/");
 
@@ -98,14 +108,7 @@ test("analysis replay controls scrub selected run data", async ({ page }) => {
 
   const timeline = page.getByTestId("replay-timeline");
   await expect.poll(async () => Number(await timeline.getAttribute("max"))).toBeGreaterThan(1);
-
-  await timeline.evaluate((el) => {
-    const input = el as HTMLInputElement;
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-    setter?.call(input, "1");
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  await setRangeValue(timeline, "1");
 
   await expect(page.getByTestId("replay-time")).toContainText(/^1\.00 /);
   await expect(page.getByTestId("replay-close")).toBeVisible();
@@ -128,4 +131,28 @@ test("command palette filters and navigates workflow pages from the keyboard", a
   await expect(palette).toBeHidden();
   await expect(rail.getByRole("button", { name: /分析/ })).toHaveClass(/active/);
   await expect(page.getByText(/Run 库/)).toBeVisible();
+});
+
+test("gamepad mapping panel edits persist without a physical controller", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByText("手柄映射与校准")).toBeVisible();
+  await page.getByLabel("启用手柄输入").check();
+  await expect(page.getByLabel("启用手柄输入")).toBeChecked();
+
+  await page.getByTestId("gp-preset-per_wheel").click();
+  await expect(page.getByTestId("gp-preset-per_wheel")).toHaveClass(/on/);
+  await expect(page.getByTestId("gp-channel-fl")).toContainText("FL 左前");
+  await expect(page.getByTestId("gp-channel-rr")).toContainText("RR 右后");
+  await expect(page.getByText(/已接管策略.*manual_wheel/)).toBeVisible();
+
+  await page.getByLabel("油门来源").selectOption("axis");
+  await expect(page.getByRole("button", { name: /绑定（当前轴 1）/ })).toBeVisible();
+
+  await setRangeValue(page.getByLabel("手柄死区"), "0.2");
+  await expect(page.getByText("死区 0.20")).toBeVisible();
+
+  await page.getByTestId("gp-reset").click();
+  await expect(page.getByText("死区 0.08")).toBeVisible();
+  await expect(page.getByTestId("gp-preset-per_wheel")).toHaveClass(/on/);
 });
