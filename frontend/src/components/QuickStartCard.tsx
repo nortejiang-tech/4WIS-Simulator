@@ -1,3 +1,5 @@
+import "./QuickStartCard.css";
+
 interface Step {
   n: number;
   title: string;
