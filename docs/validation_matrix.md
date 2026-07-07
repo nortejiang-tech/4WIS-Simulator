@@ -23,7 +23,7 @@
 | 主销/齿条负载分析 | L3 | `backend/tests/test_kingpin.py`, `backend/tests/test_rack_force.py`, `backend/tests/test_load_analysis.py`, `docs/load_analysis_handoff.md` | LS9 参数和机构效率仍是标定快照；负载页不等价于完整台架校准。 |
 | 实验批跑与 KPI | L2 | `backend/tests/test_experiment_batch.py`, `frontend/src/components/ExperimentPage.tsx`, `frontend/src/components/AnalysisPage.tsx` | KPI 足够用于内部比较；跨版本稳定性由黄金实验回归补充。 |
 | 黄金实验回归 | L2 | `scripts/check_golden_experiments.py`, `docs/golden_experiments.json` | 当前覆盖 step steer、ISO 3888 DLC 和 3 个单轮失效快速样本；仍缺外部基准对照。 |
-| run 回放与分析页 | L2 | `frontend/tests/e2e/workflow-smoke.spec.ts`, `frontend/src/components/ReplayPanel.tsx`, `frontend/src/charts/uplotFactory.ts` | 已有浏览器 smoke 覆盖实验到分析页链路、通道增删/加图、hover cursor、drag-to-zoom/双击复位、PNG 导出、工作区与关键 workflow 页截图 attachment、回放时间轴 scrub，以及分析页 run 数据读取失败异常态；仍需扩展更深页面状态和更多后端失败分支截图。 |
+| run 回放与分析页 | L2 | `frontend/tests/e2e/workflow-smoke.spec.ts`, `frontend/src/components/ReplayPanel.tsx`, `frontend/src/charts/uplotFactory.ts` | 已有浏览器 smoke 覆盖实验到分析页链路、通道增删/加图、hover cursor、drag-to-zoom/双击复位、PNG 导出、工作区与关键 workflow 页截图 attachment、回放时间轴 scrub，以及分析页 run 数据读取失败、试验页 batch 启动失败异常态；仍需扩展更深页面状态、参数校验异常态和更多少见后端失败分支截图。 |
 | 单轮失效安全研究 | L3 | `scripts/study_single_wheel_failure.py`, `docs/reports/single_wheel_failure_safety_analysis.html`, `backend/tests/test_fault_reconfig.py` | 可支撑内部机制研究，不应直接作为实车 ISO 26262 认证证据。 |
 | 手柄映射与直控模式 | L2 | `backend/tests/test_manual_strategies.py`, `frontend/src/input/gamepadConfig.ts`, `frontend/tests/e2e/workflow-smoke.spec.ts`, 手册 GIF | 配置 UI 和直控策略有自动化覆盖；浏览器 Gamepad API 和设备轴序仍依赖真实硬件回归。 |
 | 车辆几何工作室 | L2 | `frontend/src/vehicle/geometryModel.ts`, `frontend/src/components/vehicle/*`, `frontend/tests/e2e/workflow-smoke.spec.ts`, `CHANGELOG.md` v0.16 记录 | 已有浏览器 smoke 覆盖 SVG 拖拽点写入参数编辑缓冲；前端几何数学与后端部分共享概念但不是同一语言实现，仍需跨端一致性测试。 |
@@ -33,7 +33,7 @@
 ## 当前最高风险
 
 1. 外部对照不足：已有稳态圆周和阶跃转向两个解析 benchmark，但多数结论仍缺 CarSim/CarMaker、公开基准或实测数据。
-2. 浏览器端自动化仍偏 smoke：关键 workflow 页截图、车辆几何拖拽、分析页截图/图表增删/hover cursor/drag-to-zoom/PNG 导出、run 数据读取失败异常态、回放时间轴、命令面板导航和手柄配置编辑已有覆盖，但更深页面状态、更多后端失败分支和参数校验异常态仍主要靠人工端到端验证。
+2. 浏览器端自动化仍偏 smoke：关键 workflow 页截图、车辆几何拖拽、分析页截图/图表增删/hover cursor/drag-to-zoom/PNG 导出、run 数据读取失败异常态、试验页 batch 启动失败异常态、回放时间轴、命令面板导航和手柄配置编辑已有覆盖，但更深页面状态、参数校验异常态和更多少见后端失败分支仍主要靠人工端到端验证。
 3. 安全研究边界需要持续显式化：报告结论应始终标注参数假设、机构假设和不可外推范围。
 4. 发布资产一致性要机械化：版本号、lockfile、构建产物、手册和 release asset 需要同一套检查清单约束。
 

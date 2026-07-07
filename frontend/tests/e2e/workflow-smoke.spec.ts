@@ -208,6 +208,34 @@ test("analysis data load failure surfaces an error state with screenshot evidenc
   await attachPageScreenshot(page, testInfo, "workflow-analysis-data-error");
 });
 
+test("experiment batch start failure surfaces an error state with screenshot evidence", async ({ page }, testInfo) => {
+  await page.route("**/api/batch", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 422,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic batch validation failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /试验/ }).click();
+
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+  await page.getByRole("button", { name: /运行（1 runs）/ }).click();
+
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("启动失败：synthetic batch validation failure");
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+  await expect(page.getByRole("button", { name: /运行（1 runs）/ })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-experiment-batch-error");
+});
+
 test("vehicle geometry drag updates the shared parameter edit buffer", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
