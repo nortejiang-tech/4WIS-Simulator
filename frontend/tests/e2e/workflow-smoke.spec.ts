@@ -107,6 +107,33 @@ test("workflow rail pages render from the production app shell", async ({ page }
   await attachPageScreenshot(page, testInfo, "workflow-theory");
 });
 
+test("model theory demo failure stays visible without blanking the page", async ({ page }, testInfo) => {
+  await page.route("**/api/model/demo/tire-curve", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic tire demo failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /原理/ }).click();
+
+  await expect(page.getByText("4WIS foundation model")).toBeVisible();
+  const alert = page.getByText("轮胎演示计算失败：synthetic tire demo failure").first();
+  await alert.scrollIntoViewIfNeeded();
+  await expect(alert).toBeVisible();
+  await expect(page.getByText("轮胎 Fy 随侧偏角 α（峰值 = μ·Fz）")).toBeVisible();
+  await expect(page.getByText("等待计算").first()).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-model-demo-error");
+});
+
 test("experiment run can be handed to analysis with chart controls and screenshot evidence", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });

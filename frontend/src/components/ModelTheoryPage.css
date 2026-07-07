@@ -361,6 +361,15 @@
 .model-demo-slider { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .model-demo-slider input[type="range"] { width: 160px; }
 .model-demo-slider b { color: var(--text); font-variant-numeric: tabular-nums; min-width: 56px; }
+.model-demo-error {
+  color: var(--bad);
+  background: rgba(239, 68, 68, .08);
+  border: 1px solid rgba(239, 68, 68, .3);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 7px 9px;
+}
 .model-demo .load-chart-panel { background: var(--bg-2); }
 
 @media (max-width: 1100px) {

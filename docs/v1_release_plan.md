@@ -55,6 +55,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖车辆页项目 YAML 加载失败异常态，断言错误停留在项目面板、加载按钮恢复可操作、车辆几何图仍可见，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖负载页图表 canvas 绘制和图表原理说明弹窗，生成深层页面状态 screenshot attachment。
 - 已完成：Playwright 覆盖负载页扫图计算失败异常态，断言错误 toast、计算控件恢复可操作，并生成异常态 screenshot attachment。
+- 已完成：Playwright 覆盖原理页交互 demo 后端计算失败异常态，断言错误留在对应 demo 区域、页面主体不空白，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页标准路径生成、跟踪策略切换和路径清除，生成场景路径 workflow screenshot attachment。
 - 已完成：Playwright 覆盖场景页路径模板读取失败异常态，断言错误停留在轨迹/路径面板、生成按钮禁用、刷新模板和手动绘制仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页场景列表读取失败异常态，断言错误停留在场景路况面板、刷新按钮仍可用，并生成异常态 screenshot attachment。

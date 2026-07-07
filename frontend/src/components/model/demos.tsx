@@ -37,6 +37,19 @@ function useDebounced<T>(value: T, ms: number): T {
   return v;
 }
 
+function formatError(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
+function DemoError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <div className="model-demo-error" role="alert">
+      {message}
+    </div>
+  );
+}
+
 // ---- Demo 1: bicycle slip gain vs speed --------------------------------------
 
 interface GainResp { points: { speed_kmh: number; slip_gain: number; delta_sat_deg: number }[] }
@@ -45,6 +58,7 @@ function BicycleGainDemo() {
   const [refDelta, setRefDelta] = useState(1);
   const d = useDebounced(refDelta, 250);
   const [resp, setResp] = useState<GainResp | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const reqId = useRef(0);
 
   useEffect(() => {
@@ -52,7 +66,17 @@ function BicycleGainDemo() {
     postJSON<GainResp>("/api/model/demo/bicycle-gain", {
       speeds_kmh: Array.from({ length: 21 }, (_, i) => i * 10),
       ref_delta_deg: d,
-    }, 10000).then((r) => { if (id === reqId.current) setResp(r); }).catch(() => {});
+    }, 10000)
+      .then((r) => {
+        if (id !== reqId.current) return;
+        setResp(r);
+        setError(null);
+      })
+      .catch((e) => {
+        if (id !== reqId.current) return;
+        setResp(null);
+        setError(`bicycle 增益演示计算失败：${formatError(e)}`);
+      });
   }, [d]);
 
   const data = useMemo((): uPlot.AlignedData => {
@@ -69,6 +93,7 @@ function BicycleGainDemo() {
       <div className="model-demo-controls">
         <Slider label="参考转角 δ" value={refDelta} min={0.5} max={5} step={0.5} unit="°" onChange={setRefDelta} />
       </div>
+      <DemoError message={error} />
       <ChartBox title="bicycle 滑移增益 / 饱和转角 vs 车速" filename="demo_bicycle_gain"
         series={series} data={data} signal={`${resp?.points.length ?? 0}:${d}`}
         xLabel="v" xUnit="km/h" xAxisLabel="车速 v (km/h)" yAxisLabel="增益 / δ_sat(°)" />
@@ -86,13 +111,24 @@ function TireCurveDemo() {
   const fzD = useDebounced(fzKn, 250);
   const muD = useDebounced(mu, 250);
   const [resp, setResp] = useState<TireResp | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const reqId = useRef(0);
 
   useEffect(() => {
     const id = ++reqId.current;
     postJSON<TireResp>("/api/model/demo/tire-curve", {
       fz: fzD * 1000, mu: muD, alpha_max_deg: 15, points: 81,
-    }, 10000).then((r) => { if (id === reqId.current) setResp(r); }).catch(() => {});
+    }, 10000)
+      .then((r) => {
+        if (id !== reqId.current) return;
+        setResp(r);
+        setError(null);
+      })
+      .catch((e) => {
+        if (id !== reqId.current) return;
+        setResp(null);
+        setError(`轮胎演示计算失败：${formatError(e)}`);
+      });
   }, [fzD, muD]);
 
   const data = useMemo((): uPlot.AlignedData => {
@@ -112,6 +148,7 @@ function TireCurveDemo() {
         <Slider label="垂载 Fz" value={fzKn} min={2} max={12} step={0.5} unit=" kN" onChange={setFzKn} />
         <Slider label="附着 μ" value={mu} min={0.3} max={1.1} step={0.05} unit="" onChange={setMu} />
       </div>
+      <DemoError message={error} />
       <ChartBox title="轮胎 Fy 随侧偏角 α（峰值 = μ·Fz）" filename="demo_tire_curve"
         series={series} data={data} signal={`${resp?.curve.length ?? 0}:${fzD}:${muD}`}
         valueUnit="N" xLabel="α" xUnit="°" xAxisLabel="侧偏角 α (°)" yAxisLabel="Fy (N)" />
@@ -130,13 +167,24 @@ function KingpinBreakdownDemo() {
   const [coupling, setCoupling] = useState<"vehicle" | "isolated">("vehicle");
   const d = useDebounced(speed, 250);
   const [resp, setResp] = useState<KpResp | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const reqId = useRef(0);
 
   useEffect(() => {
     const id = ++reqId.current;
     postJSON<KpResp>("/api/model/demo/kingpin-breakdown", {
       speed_kmh: d, angle_max_deg: 20, points: 61, body_coupling: coupling,
-    }, 10000).then((r) => { if (id === reqId.current) setResp(r); }).catch(() => {});
+    }, 10000)
+      .then((r) => {
+        if (id !== reqId.current) return;
+        setResp(r);
+        setError(null);
+      })
+      .catch((e) => {
+        if (id !== reqId.current) return;
+        setResp(null);
+        setError(`主销演示计算失败：${formatError(e)}`);
+      });
   }, [d, coupling]);
 
   const data = useMemo((): uPlot.AlignedData => {
@@ -173,6 +221,7 @@ function KingpinBreakdownDemo() {
           </div>
         </div>
       </div>
+      <DemoError message={error} />
       <ChartBox title={`主销力矩四项分解 vs δ（FL · ${coupling === "vehicle" ? "整车装载" : "单轮台架"}）`}
         filename={`demo_kingpin_breakdown_${coupling}`}
         series={series} data={data} signal={`${resp?.curve.length ?? 0}:${d}:${coupling}`}
