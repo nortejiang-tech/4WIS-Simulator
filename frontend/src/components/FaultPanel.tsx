@@ -52,6 +52,10 @@ const VALUE_HINT: Record<FaultType, string | null> = {
 const FAULT_TYPES = Object.keys(FAULT_LABELS) as FaultType[];
 const WHEEL_NAMES: WheelName[] = ["fl", "fr", "rl", "rr"];
 
+function formatError(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 export default function FaultPanel() {
   const pushToast = useSimStore((s) => s.pushToast);
   const faultActive = useSimStore((s) => s.state?.fault_active ?? false);
@@ -61,11 +65,20 @@ export default function FaultPanel() {
   const [newWheel, setNewWheel] = useState<WheelName>("fl");
   const [newValue, setNewValue] = useState<number>(0.0);
   const [busy, setBusy] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
 
   const refresh = () =>
     fetchJSON<{ faults: FaultEntry[] }>("/api/faults")
-      .then((r) => setFaults(r.faults))
-      .catch((e) => pushToast("error", `读取故障失败：${e?.message ?? e}`));
+      .then((r) => {
+        setFaults(r.faults);
+        setListError(null);
+      })
+      .catch((e) => {
+        const message = `读取故障失败：${formatError(e)}`;
+        setFaults([]);
+        setListError(message);
+        pushToast("error", message);
+      });
 
   useEffect(() => { refresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -79,8 +92,9 @@ export default function FaultPanel() {
         active: true,
       });
       setFaults((prev) => [...prev, f]);
-    } catch (e: any) {
-      pushToast("error", `添加故障失败：${e?.message ?? e}`);
+      setListError(null);
+    } catch (e) {
+      pushToast("error", `添加故障失败：${formatError(e)}`);
     } finally {
       setBusy(false);
     }
@@ -90,8 +104,8 @@ export default function FaultPanel() {
     try {
       const updated = await patchJSON<FaultEntry>(`/api/faults/${id}`, { active });
       setFaults((prev) => prev.map((f) => (f.id === id ? updated : f)));
-    } catch (e: any) {
-      pushToast("error", `切换状态失败：${e?.message ?? e}`);
+    } catch (e) {
+      pushToast("error", `切换状态失败：${formatError(e)}`);
     }
   };
 
@@ -99,8 +113,8 @@ export default function FaultPanel() {
     try {
       await deleteJSON(`/api/faults/${id}`);
       setFaults((prev) => prev.filter((f) => f.id !== id));
-    } catch (e: any) {
-      pushToast("error", `删除故障失败：${e?.message ?? e}`);
+    } catch (e) {
+      pushToast("error", `删除故障失败：${formatError(e)}`);
     }
   };
 
@@ -108,8 +122,9 @@ export default function FaultPanel() {
     try {
       await deleteJSON("/api/faults");
       setFaults([]);
-    } catch (e: any) {
-      pushToast("error", `清除失败：${e?.message ?? e}`);
+      setListError(null);
+    } catch (e) {
+      pushToast("error", `清除失败：${formatError(e)}`);
     }
   };
 
@@ -153,10 +168,13 @@ export default function FaultPanel() {
           />
         )}
         <button onClick={add} disabled={busy}>+ 添加</button>
+        <button onClick={refresh} disabled={busy}>刷新故障</button>
       </div>
 
       {/* Fault list */}
-      {faults.length === 0 ? (
+      {listError ? (
+        <div className="small" role="alert" style={{ color: "var(--bad)" }}>{listError}</div>
+      ) : faults.length === 0 ? (
         <div className="small" style={{ color: "var(--muted)" }}>暂无故障配置</div>
       ) : (
         <>

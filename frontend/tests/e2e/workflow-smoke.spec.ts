@@ -625,6 +625,34 @@ test("scenario fault injection panel adds, toggles, and clears faults", async ({
   await attachPageScreenshot(page, testInfo, "workflow-scenario-faults");
 });
 
+test("fault list failure does not masquerade as an empty fault configuration", async ({ page, request }, testInfo) => {
+  await request.delete("/api/faults");
+  await page.route("**/api/faults", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic fault list failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const faultPanel = page.locator(".panel").filter({ hasText: "故障注入" });
+  await expect(faultPanel).toBeVisible();
+  await expect(faultPanel).toContainText("读取故障失败：synthetic fault list failure");
+  await expect(faultPanel.getByText("暂无故障配置")).toHaveCount(0);
+  await expect(faultPanel.getByRole("button", { name: "+ 添加" })).toBeEnabled();
+  await expect(faultPanel.getByRole("button", { name: "刷新故障" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-fault-list-error");
+});
+
 test("script library workflow loads, starts, lays out markers, and stops a fixed script", async ({ page, request }, testInfo) => {
   await request.post("/api/script/stop");
   await request.post("/api/path/clear");
