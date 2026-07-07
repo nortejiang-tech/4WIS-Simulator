@@ -153,10 +153,24 @@ export function useLiveChart(
   useEffect(() => {
     if (!containerRef.current) return;
     const el = containerRef.current;
+    const updateCursorDiagnostics = (plot: uPlot) => {
+      const left = plot.cursor.left;
+      if (typeof left !== "number" || !Number.isFinite(left) || left < 0) {
+        delete el.dataset.chartCursorLeft;
+        delete el.dataset.chartCursorX;
+        return;
+      }
+      const x = plot.posToVal(left, "x");
+      el.dataset.chartCursorLeft = String(left);
+      if (Number.isFinite(x)) el.dataset.chartCursorX = String(x);
+    };
     const options = makeOptions(el.clientWidth, el.clientHeight, series, axisLabels, extras);
     options.hooks = {
       setCursor: [
-        (plot) => cursorRef.current?.(plot),
+        (plot) => {
+          updateCursorDiagnostics(plot);
+          cursorRef.current?.(plot);
+        },
       ],
       draw: [
         (plot) => {

@@ -11,6 +11,12 @@ async function dragBy(locator: Locator, dx: number, dy: number) {
   await locator.page().mouse.up();
 }
 
+async function hoverInside(locator: Locator, xRatio: number, yRatio = 0.5) {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error("target is not visible for hovering");
+  await locator.hover({ position: { x: box.width * xRatio, y: box.height * yRatio } });
+}
+
 async function setRangeValue(locator: Locator, value: string) {
   await locator.evaluate((el, nextValue) => {
     const input = el as HTMLInputElement;
@@ -37,6 +43,10 @@ async function expectCanvasHasDrawnPixels(locator: Locator) {
   expect(stats.width).toBeGreaterThan(100);
   expect(stats.height).toBeGreaterThan(100);
   expect(stats.ink).toBeGreaterThan(200);
+}
+
+async function chartCursorX(locator: Locator) {
+  return locator.evaluate((el) => Number((el as HTMLElement).dataset.chartCursorX));
 }
 
 test("workflow rail pages render from the production app shell", async ({ page }) => {
@@ -100,7 +110,12 @@ test("experiment run can be handed to analysis with chart controls and screensho
   await page.getByLabel("分析通道选择").selectOption("rack_force_fl");
   await page.getByRole("button", { name: /加图/ }).click();
   await expect(page.getByTestId("analysis-chart-rack_force_fl")).toBeVisible();
-  await expectCanvasHasDrawnPixels(page.getByTestId("analysis-chart-rack_force_fl").locator("canvas").first());
+  const rackCanvas = page.getByTestId("analysis-chart-rack_force_fl").locator("canvas").first();
+  await expectCanvasHasDrawnPixels(rackCanvas);
+
+  const rackChartBody = page.getByTestId("analysis-chart-rack_force_fl").locator(".wf-chart-body").first();
+  await hoverInside(page.getByTestId("analysis-chart-rack_force_fl").locator(".u-over").first(), 0.5);
+  await expect.poll(async () => chartCursorX(rackChartBody)).toBeGreaterThan(0);
 
   const downloadPromise = page.waitForEvent("download");
   await page.getByTestId("analysis-chart-png-rack_force_fl").click();
