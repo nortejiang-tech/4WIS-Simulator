@@ -1,54 +1,36 @@
 # 4WIS Simulator
 
-四轮独立转向（4-Wheel Independent Steering）仿真工具。当前版本以 `docs/vehicle_model_refactor_plan.md` 中的整车底座重构为主线，面向四轮独立转向预研项目的运动学、动力学和协同控制策略研究。
+四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前版本是 `v0.16.0`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到便携版发布的闭环。
 
-跨平台运行（Windows / macOS / Linux），前后端分离架构。默认车辆标定为智己 LS9。
+项目仍定位为内部预研和工程分析工具，不是经过实车标定或认证的安全结论工具。模型可信度和边界见 [docs/validation_matrix.md](docs/validation_matrix.md)。
 
-## 功能一览
+## 当前能力
 
-- 三档模型：运动学 / 简化动力学 / 多体动力学（14 DOF，含侧倾、俯仰、悬架、bump-steer）
-- 轮胎模型：线性 + 摩擦圆 / Pacejka（简化 Magic Formula）
-- 控制策略：传统/理想阿克曼、后轮转向、蟹行、零半径、轨迹跟踪，可插 FMU/MATLAB
-- 2D + 3D 可视化：可切换且保持视角；3D 车身随侧倾/俯仰倾斜；深色/浅色主题
-- 每轮转向中心：整车瞬心在各轮垂线上的投影点 + 偏差实时显示与曲线记录
-- 轨迹编辑：标准工况一键生成，或画布点击放航点
-- 路面与扰动：基础 μ 预设 + 微调、对开路面、冰面、减速带、斜坡；GUI 放置/拖动/编辑扰动
-- 参数编辑：车辆几何、质量惯量、悬架几何、弹簧阻尼、轮胎、伺服全部界面可调，带物理边界校验，随项目保存
-- 录制 / 对比：CSV 导出、A/B 双跑轨迹 + 曲线对比
-- 输入：键盘、YAML 动作脚本
-- 便携一键启动包：内嵌 Python，双击即用
+- 实时仿真：运动学、简化动力学、多体动力学三档模型，支持 2D/3D 视图、路面扰动、坡道、减速带、split-μ、bump-steer。
+- 控制策略：阿克曼、理想阿克曼、后轮转向、蟹行、零半径、轨迹跟踪、故障重构、手动逐轮和全向车身控制。
+- 实验系统：YAML 实验定义、无头批跑、策略/车速/参数变体矩阵、run 落盘、KPI 后端化。
+- 分析系统：run 库、KPI 对比、通道叠图、轨迹叠图、幽灵车回放、命令面板。
+- 车辆建模：车辆参数页、项目保存加载、三张可拖拽几何工作室图（整车、主销/车轮、前桥齿条硬点）。
+- 输入系统：键盘、YAML 动作脚本、Web Gamepad API，支持前后轴/左右侧/逐轮/蟹行/全向等手柄映射预设和实时校准。
+- 安全研究：单轮转向失效注入、自由脚轮/锁死机构差异、容错重构策略、参数敏感性流水线、自包含 HTML 报告。
+- 发布交付：macOS / Windows 便携包、图文用户手册、GitHub Release 资产。
 
-## 架构概览
+## 目录结构
 
 ```text
 4WIS Simulator/
-├── backend/        Python 仿真后端（FastAPI + WebSocket）
-├── frontend/       Web 前端（React + TypeScript + Vite）
-├── scripts/        启动脚本和工具
-├── projects/       用户项目文件（YAML）
-└── docs/           设计文档
+├── backend/              Python 仿真后端（FastAPI + WebSocket）
+├── frontend/             React + TypeScript + Vite 前端
+├── docs/                 设计、手册、可信度矩阵、研究报告
+├── experiments/          可复现实验定义
+├── projects/             车辆/场景项目文件
+├── runs/                 实验运行结果资产
+├── scripts/              启动、smoke、手册、发布检查、便携打包脚本
+├── scripts_lib/          YAML 动作脚本库
+└── vehicle_profiles/     车辆标定快照
 ```
 
-### 技术栈
-
-| 层 | 技术 |
-|----|------|
-| 前端 | React 18 · TypeScript · Vite · Konva（2D）· Three.js / R3F（3D）· uPlot（曲线）· Zustand |
-| 后端 | Python 3.10+ · FastAPI · WebSocket · NumPy · pydantic v2 · PyYAML |
-| 通信 | WebSocket（实时状态推送）· REST（项目/参数管理） |
-
-### 仿真核心扩展点
-
-- `VehicleModel`：抽象基类，已实现 `KinematicModel`、`SimplifiedDynamicModel`、`MultiBodyModel`
-- `ControllerStrategy`：抽象基类，内置阿克曼、理想阿克曼、后轮转向、蟹行、零半径、轨迹跟踪
-- 控制策略对外接口：Python 插件目录、FMU、MATLAB Engine、外部 socket
-
 ## 快速开始
-
-### 前置依赖
-
-- Python 3.10+
-- Node.js 18+
 
 ### 一键启动
 
@@ -56,13 +38,15 @@
 python scripts/start.py
 ```
 
-### 手动启动
+启动后浏览器打开 `http://127.0.0.1:8010/`。
+
+### 开发模式
 
 后端：
 
 ```bash
 cd backend
-pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 uvicorn sim4wis.main:app --reload --port 8010
 ```
 
@@ -74,61 +58,114 @@ npm install
 npm run dev
 ```
 
-浏览器打开 `http://localhost:5173`
+浏览器打开 `http://127.0.0.1:5173/`。如果前端需要代理到非默认后端端口，设置 `SIM4WIS_BACKEND_HTTP` 和 `SIM4WIS_BACKEND_WS`。
 
-### 便携版
+## 主要工作流
+
+### 实时驾驶与场景验证
+
+1. 打开「运行」页，选择模型和策略。
+2. 在「场景」页配置路面、轨迹、扰动和故障。
+3. 用键盘、手柄或 YAML 脚本输入。
+4. 观察 2D/3D 视图、瞬心、轮胎状态、曲线和评分面板。
+
+### 实验批跑与分析
+
+1. 在「试验」页载入或编辑 `experiments/*.yaml`。
+2. 设置策略、车速或车辆参数变体矩阵。
+3. 批量运行后跳转「分析」页。
+4. 对比 KPI、通道曲线、轨迹和幽灵车回放。
+
+### 车辆几何建模
+
+1. 在「车辆」页打开几何工作室。
+2. 拖拽整车、主销/车轮、前桥齿条硬点图上的控制点。
+3. 检查派生量、红旗提示、转弯圆和阿克曼误差。
+4. 点击「应用」后把编辑缓冲提交到仿真参数。
+
+### 安全研究复现
+
+```bash
+backend/.venv/bin/python scripts/study_single_wheel_failure.py
+```
+
+输出位于 `docs/reports/`，包括 `single_wheel_failure_safety_analysis.html` 和指标 JSON。该报告用于内部机制研究，不应直接作为实车 ISO 26262 认证证据。
+
+## 验证
+
+发布前建议跑完整检查：
+
+```bash
+python scripts/pre_release_check.py
+```
+
+该脚本会检查版本一致性、前端 lockfile、后端 pytest、smoke、前端 type-check 和生产构建。
+
+常用单项命令：
+
+```bash
+backend/.venv/bin/python -m pytest tests/        # 后端全量测试
+backend/.venv/bin/python scripts/smoke_test.py   # 从仓库根目录运行 smoke
+cd frontend && npm run type-check
+cd frontend && npm run build
+```
+
+当前 `v0.16.0` 验证基线：
+
+- 后端：`202 passed`
+- smoke：`32/32 通过`
+- 前端：type-check 通过
+- 前端生产构建通过；Vite 对 3D/主包有大 chunk 警告，但不阻断发布
+
+## 便携版打包
+
+先构建前端：
+
+```bash
+cd frontend
+npm run build
+```
+
+再生成便携包：
 
 ```bash
 python scripts/build_portable.py --targets macos-arm64 windows-x64
 ```
 
-生成的便携包位于 `dist_portable/`，解压后双击 `start.command`（Mac）或 `start.bat`（Windows）即可运行。
-
-## 当前进度
-
-### Phase 1 - 已完成
-
-- 工程骨架
-- 仿真核心与基础控制策略
-- WebSocket 状态推送
-- 2D 可视化
-- 键盘输入 + 实时曲线 + 参数面板
-- YAML 项目保存/加载
-
-### Phase 2 - 已完成
-
-- 数据录制 + CSV 导出
-- μ 类路面扰动 + 可视化
-- YAML 动作序列脚本
-- SimplifiedDynamicModel
-- 悬架几何 → 真实转向阻力矩
-- SpeedBump / Slope 扰动
-- Simulink FMU 适配器
-- MATLAB Engine 适配器
-- 集成测试与完整文档
-
-### Phase 3 - 已完成
-
-- 3D 可视化
-- 轨迹编辑器 + pure-pursuit 跟踪策略
-- 多体动力学模型（14 DOF）
-- 集成测试改进、LS9 标定、便携打包
-
-## 验证
+已有 runtime/vendor 时可用快速同步：
 
 ```bash
-python3 scripts/smoke_test.py
-cd backend && python3 -m pytest tests/
+python scripts/build_portable.py --targets macos-arm64 windows-x64 --update
 ```
 
-详细说明见：
+输出在 `dist_portable/`。发布到 GitHub Release 时优先使用 ASCII 文件名。
 
-- [docs/user_guide.md](docs/user_guide.md)
-- [docs/design.md](docs/design.md)
-- [docs/vehicle_model_refactor_plan.md](docs/vehicle_model_refactor_plan.md)
-- [docs/tire_model.md](docs/tire_model.md)
-- [docs/fmu_integration.md](docs/fmu_integration.md)
-- [docs/disturbances.md](docs/disturbances.md)
-- [docs/scripting.md](docs/scripting.md)
-- [docs/phase3_review.md](docs/phase3_review.md)
-- [CHANGELOG.md](CHANGELOG.md)
+## 版本与发布约定
+
+版本号至少需要同步：
+
+- `backend/src/sim4wis/__init__.py`
+- `backend/pyproject.toml`
+- `frontend/package.json`
+- `frontend/package-lock.json`
+
+推荐发布顺序：
+
+1. 更新版本号和 CHANGELOG。
+2. 运行 `python scripts/pre_release_check.py`。
+3. 构建便携包。
+4. 生成或刷新 `docs/user_manual.html`。
+5. 上传 macOS/Windows 便携包、quickstart、用户手册和关键研究报告到 GitHub Release。
+
+## 重要文档
+
+- [CHANGELOG.md](CHANGELOG.md) - 版本演进和每次发布的真实功能边界。
+- [docs/user_manual.html](docs/user_manual.html) - 图文用户手册，含手柄 GIF、实验页、分析页、几何工作室。
+- [docs/validation_matrix.md](docs/validation_matrix.md) - 当前能力可信度、证据和边界。
+- [docs/v1_platform_refactor_plan.md](docs/v1_platform_refactor_plan.md) - 平台化重构路线。
+- [docs/load_analysis_handoff.md](docs/load_analysis_handoff.md) - 转向负载分析页面和 API 交接说明。
+- [docs/reports/single_wheel_failure_safety_analysis.html](docs/reports/single_wheel_failure_safety_analysis.html) - 单轮失效功能安全研究报告。
+- [docs/vehicle_model_refactor_plan.md](docs/vehicle_model_refactor_plan.md) - 整车模型重构主线。
+- [docs/tire_model.md](docs/tire_model.md) - 轮胎模型说明。
+- [docs/fmu_integration.md](docs/fmu_integration.md) - FMU 集成说明。
+- [docs/scripting.md](docs/scripting.md) - YAML 动作脚本说明。
