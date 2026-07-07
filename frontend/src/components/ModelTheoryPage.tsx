@@ -8,6 +8,7 @@ import {
 import { CHAPTERS, type Chapter } from "./model/modelChapters";
 import { DIAGRAMS } from "./model/diagrams";
 import { DEMOS } from "./model/demos";
+import "./ModelTheoryPage.css";
 
 const coreNames = CORE_PARAMETER_GROUPS.flatMap((g) => g.fields.map(([, label]) => label));
 const advancedNames = ADVANCED_PARAMETER_GROUPS.flatMap((g) => g.fields.map(([, label]) => label));
