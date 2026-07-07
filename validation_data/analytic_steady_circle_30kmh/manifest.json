@@ -1,0 +1,85 @@
+{
+  "benchmark_id": "analytic_steady_circle_30kmh",
+  "source_type": "analytic",
+  "source_name": "closed-form ideal Ackermann steady circle",
+  "source_version": "sim4wis-analytic-v1",
+  "vehicle_mapping": {
+    "params_source": "VehicleParams defaults",
+    "model": "kinematic",
+    "strategy": "ideal_ackermann",
+    "speed_kmh": 30.0,
+    "driver_steering_normalized": 0.05,
+    "curvature_formula": "kappa = ideal_ackermann._max_curvature(VehicleParams()) * driver_steering",
+    "yaw_rate_formula": "yaw_rate = vx * kappa",
+    "trajectory_formula": "pose_x = sin(yaw_rate * t) / kappa; pose_y = (1 - cos(yaw_rate * t)) / kappa"
+  },
+  "channels": {
+    "t": {
+      "unit": "s",
+      "coordinate_frame": "experiment time"
+    },
+    "vx": {
+      "unit": "m/s",
+      "coordinate_frame": "body x"
+    },
+    "vy": {
+      "unit": "m/s",
+      "coordinate_frame": "body y"
+    },
+    "yaw_rate": {
+      "unit": "rad/s",
+      "coordinate_frame": "body yaw about world z, CCW positive"
+    },
+    "pose_x": {
+      "unit": "m",
+      "coordinate_frame": "world x"
+    },
+    "pose_y": {
+      "unit": "m",
+      "coordinate_frame": "world y"
+    },
+    "driver_steering": {
+      "unit": "normalized",
+      "convention": "sim4wis driver steering, +left"
+    },
+    "pose_psi": {
+      "unit": "rad",
+      "coordinate_frame": "world yaw, CCW positive"
+    }
+  },
+  "metrics": {
+    "yaw_rate_peak_dps": {
+      "abs_tol": 0.001,
+      "reason": "Kinematic ideal Ackermann should match the analytic yaw-rate formula to numerical precision."
+    },
+    "vy_peak_kmh": {
+      "reference_value": 0.0,
+      "abs_tol": 0.001,
+      "reason": "Ideal Ackermann target has zero body-frame lateral velocity at the body origin."
+    },
+    "speed_error_rms_kmh": {
+      "reference_value": 0.0,
+      "abs_tol": 0.001,
+      "reason": "Kinematic model accepts the target wheel speed without actuator or tyre lag."
+    },
+    "pose_y_peak_abs_m": {
+      "abs_tol": 0.05,
+      "reason": "Continuous closed-form trajectory compared with forward-Euler pose integration; centimetre-level discretisation error is expected."
+    },
+    "trajectory_error_rms_m": {
+      "reference_value": 0.0,
+      "abs_tol": 0.02,
+      "reason": "Allows the known continuous-vs-discrete integration RMS difference at dt=0.005 s."
+    },
+    "trajectory_error_peak_m": {
+      "reference_value": 0.0,
+      "abs_tol": 0.03,
+      "reason": "Allows the known continuous-vs-discrete integration peak difference at dt=0.005 s."
+    }
+  },
+  "limitations": [
+    "Analytic reference covers kinematic ideal-Ackermann geometry only.",
+    "It does not validate tyre forces, actuator lag, load transfer, suspension compliance, or measured vehicle behaviour.",
+    "It is L3 analytic-reference evidence, not external-tool or L4 measured evidence."
+  ]
+}

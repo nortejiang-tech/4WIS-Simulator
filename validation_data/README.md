@@ -1,6 +1,6 @@
 # validation_data
 
-该目录用于保存外部参考模型、台架、缩比车或实车验证数据。当前仓库只放协议和示例结构，不放未经说明的数据。
+该目录用于保存解析参考、外部参考模型、台架、缩比车或实车验证数据。当前仓库已包含一个解析参考 benchmark；不得把未经说明的数据放入这里，也不得把解析数据包装成外部工具或实测证据。
 
 目录结构：
 
@@ -54,3 +54,7 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/rep
 ```
 
 该报告会包含指标误差表和 `notes.md` 摘要，但不会自动把任何能力提升到 L3/L4；可信度等级仍需人工审查真实来源、限制和误差解释。
+
+## 当前 benchmark
+
+- `analytic_steady_circle_30kmh/`：解析稳态圆周参考，覆盖 kinematic ideal-Ackermann 在 30 km/h、归一化转向 0.05 下的横摆率、侧向速度、速度误差、横向位移和轨迹误差。该数据只构成解析 L3 参考证据，不是外部工具或实测证据。

@@ -96,4 +96,5 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/rep
 - 已有内部黄金实验：`docs/golden_experiments.json`。
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
 - 已有参考数据结构 checker 与 reviewer report 输出：`scripts/check_reference_benchmarks.py`。
+- 已有首个解析参考 benchmark：`validation_data/analytic_steady_circle_30kmh/`。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。
