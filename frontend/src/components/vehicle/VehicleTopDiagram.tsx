@@ -116,12 +116,16 @@ export default function VehicleTopDiagram() {
 
         {/* draggable handles */}
         <Handle cx={cg.X} cy={cg.Y} svgRef={svgRef} label="拖动改质心前后位置"
+          testId="vg-handle-cg-x"
           onDrag={(vb) => setValue("cg_to_front", clampA(g.L / 2 - invX(vb.y)))} />
         <Handle cx={P(g.L / 2, g.tf / 2).X} cy={P(g.L / 2, g.tf / 2).Y} svgRef={svgRef} r={5} label="拖动改前轮距"
+          testId="vg-handle-track-front"
           onDrag={(vb) => setValue("track_front", Math.max(0.6, Math.min(2.4, 2 * Math.abs(invY(vb.x)))))} />
         <Handle cx={P(-g.L / 2, g.tr / 2).X} cy={P(-g.L / 2, g.tr / 2).Y} svgRef={svgRef} r={5} label="拖动改后轮距"
+          testId="vg-handle-track-rear"
           onDrag={(vb) => setValue("track_rear", Math.max(0.6, Math.min(2.4, 2 * Math.abs(invY(vb.x)))))} />
         <Handle cx={P(g.L / 2, 0).X} cy={P(g.L / 2, 0).Y} svgRef={svgRef} r={5} label="拖动改轴距"
+          testId="vg-handle-wheelbase"
           onDrag={(vb) => setValue("wheelbase", Math.max(1.8, Math.min(4.2, 2 * Math.max(invX(vb.y), 0.9))))} />
       </svg>
 
@@ -141,6 +145,7 @@ export default function VehicleTopDiagram() {
         <circle cx={cgSide.X} cy={cgSide.Y} r="7" className="vg-cg" />
         <text x={cgSide.X} y={cgSide.Y - 11} textAnchor="middle" className="vg-t-accent">CG</text>
         <Handle cx={cgSide.X} cy={cgSide.Y} svgRef={sideRef} label="拖动改质心高度"
+          testId="vg-handle-cg-height"
           onDrag={(vb) => setValue("cg_height", Math.max(0.2, Math.min(1.1, (groundY - vb.y) / ss)))} />
       </svg>
 

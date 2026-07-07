@@ -42,6 +42,8 @@ export default function ParamsPanel() {
             <span className="small" style={{ color: "var(--muted)", width: 130 }}>{label}</span>
             <input
               type="number"
+              aria-label={label}
+              data-param-key={k}
               step={step}
               value={displayNumber(value(k) * scale)}
               onChange={(e) => setValue(k, Number(e.target.value) / scale)}
@@ -58,7 +60,7 @@ export default function ParamsPanel() {
       <>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
           <span className="small" style={{ color: "var(--muted)", width: 110 }}>轮胎模型</span>
-          <select value={tireModel} onChange={(e) => setTireModel(e.target.value)} style={selectStyle}>
+          <select aria-label="轮胎模型" value={tireModel} onChange={(e) => setTireModel(e.target.value)} style={selectStyle}>
             <option value="linear">线性 + 摩擦圆</option>
             <option value="pacejka">Pacejka (Magic Formula)</option>
           </select>

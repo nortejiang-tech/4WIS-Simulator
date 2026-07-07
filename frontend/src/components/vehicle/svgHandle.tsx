@@ -23,13 +23,14 @@ export function useVbPointer(svgRef: RefObject<SVGSVGElement>) {
 }
 
 export function Handle({
-  cx, cy, r = 6, svgRef, onDrag, label, className = "",
+  cx, cy, r = 6, svgRef, onDrag, label, className = "", testId,
 }: {
   cx: number; cy: number; r?: number;
   svgRef: RefObject<SVGSVGElement>;
   onDrag: (vb: { x: number; y: number }) => void;
   label?: string;
   className?: string;
+  testId?: string;
 }) {
   const toVb = useVbPointer(svgRef);
   const [active, setActive] = useState(false);
@@ -54,6 +55,8 @@ export function Handle({
   return (
     <g className={`vg-handle ${active ? "active" : ""} ${className}`}>
       <circle cx={cx} cy={cy} r={r + 8} className="vg-handle-hit"
+        data-testid={testId}
+        aria-label={label}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} />
       <circle cx={cx} cy={cy} r={r} className="vg-handle-dot" />
       {label && <title>{label}</title>}

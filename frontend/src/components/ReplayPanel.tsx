@@ -217,13 +217,14 @@ export default function ReplayPanel({ runs, colors, cache, version, onTime, onCl
     <div className="wf-chart-card replay-card">
       <div className="wf-chart-head">
         <span>回放（幽灵车叠放 · 车轮显示实际转角）</span>
-        <button className="wf-x" onClick={onClose}>✕</button>
+        <button className="wf-x" data-testid="replay-close" aria-label="关闭回放" onClick={onClose}>✕</button>
       </div>
       <div ref={wrapRef} className="wf-chart-body replay-body">
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} data-testid="replay-canvas" />
       </div>
       <div className="replay-controls">
         <button className="wf-btn" style={{ width: 54 }}
+                data-testid="replay-play-toggle"
                 onClick={() => {
                   if (!playing && tCur >= tMax - 1e-6) setTCur(0);
                   setPlaying(!playing);
@@ -231,13 +232,17 @@ export default function ReplayPanel({ runs, colors, cache, version, onTime, onCl
           {playing ? "⏸ 暂停" : "▶ 播放"}
         </button>
         <select className="wf-input" style={{ width: 66 }} value={speed}
+                data-testid="replay-speed"
+                aria-label="回放速度"
                 onChange={(e) => setSpeed(Number(e.target.value))}>
           {SPEEDS.map((s) => <option key={s} value={s}>{s}×</option>)}
         </select>
         <input type="range" min={0} max={tMax} step={0.02} value={tCur}
+               data-testid="replay-timeline"
+               aria-label="回放时间"
                style={{ flex: 1 }}
                onChange={(e) => { setPlaying(false); setTCur(Number(e.target.value)); }} />
-        <span className="mono replay-time">{tCur.toFixed(2)} / {tMax.toFixed(1)} s</span>
+        <span className="mono replay-time" data-testid="replay-time">{tCur.toFixed(2)} / {tMax.toFixed(1)} s</span>
       </div>
     </div>
   );
