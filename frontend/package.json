@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "e2e": "playwright test"
+    "e2e": "npm run build && npm run e2e:prod --",
+    "e2e:prod": "playwright test"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",

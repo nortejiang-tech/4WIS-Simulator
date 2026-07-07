@@ -146,7 +146,7 @@ def main() -> int:
         failures += command([npm, "run", "build"], FRONTEND)
 
     if not args.skip_e2e:
-        failures += command([npm, "run", "e2e"], FRONTEND)
+        failures += command([npm, "run", "e2e:prod"], FRONTEND)
 
     if failures:
         log(f"failed with {failures} failing step(s)")
