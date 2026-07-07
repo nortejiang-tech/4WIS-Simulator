@@ -9,6 +9,7 @@
 import { type ReactNode, useState } from "react";
 
 import "./Panel.css";
+import "./PanelContent.css";
 
 interface PanelProps {
   title: string;

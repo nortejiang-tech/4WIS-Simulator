@@ -78,7 +78,8 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：命令面板 `cmdk-*`、手柄配置 `gp-*`、Panel 壳层 `panel-*` 和快速开始卡片 `quickstart-*` 样式从全局 `styles.css` 拆到组件私有 CSS；这些组件仍在入口依赖链，当前入口 `index.css` 为 16.23 kB / gzip 3.48 kB。
 - 已完成：App 壳层、顶部栏、工作流 rail、运行页侧栏和页面加载态样式从全局 `styles.css` 拆到 `App.css`；当前入口 `index.css` 为 15.68 kB / gzip 3.40 kB。
 - 已完成：视口切换、Canvas 容器/加载态和 2D/3D 共用 HUD 样式从全局 `styles.css` 拆到 `Viewport.css` 与共享 `CanvasHud.css`；当前入口 `index.css` 为 15.68 kB / gzip 3.41 kB。
-- 下一步：继续按页面/组件收敛剩余大块全局样式，避免新增页面改动影响现有工具面板。
+- 已完成：Panel 内容共享控件（图表块、策略按钮、读数、按钮行、参数列表等）从全局 `styles.css` 拆到 `PanelContent.css`；全局 `styles.css` 仅保留主题 token、reset 和 `mono`/`small` 工具类，当前入口 `index.css` 为 15.68 kB / gzip 3.41 kB。
+- 下一步：后续新增样式默认放在页面/组件私有 CSS；若继续压缩全局面，只评估 `mono`/`small` 这类工具类是否需要替换为局部样式或设计 token。
 
 ### P5: 实物验证接入
 

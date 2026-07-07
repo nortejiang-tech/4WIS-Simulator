@@ -1,0 +1,142 @@
+.chart-item {
+  padding-top: 4px;
+}
+
+.chart-item + .chart-item {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.strategy-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.strategy-buttons button {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: background .15s, border-color .15s;
+}
+
+.strategy-buttons button:hover {
+  background: #2a3a52;
+}
+
+.strategy-buttons button.active {
+  background: rgba(59,130,246,0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.driver-readout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.driver-readout .value {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.bar {
+  height: 6px;
+  background: var(--bg-2);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bar .fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-row button {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-row button:hover {
+  background: #2a3a52;
+}
+
+.btn-row button.warn {
+  color: var(--warn);
+  border-color: rgba(251,191,36,0.4);
+}
+
+.chart-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chart-block h3 {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.chart-container {
+  width: 100%;
+  height: 110px;
+  background: var(--bg-2);
+  border-radius: 4px;
+}
+
+.keyhint {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.keyhint kbd {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--text);
+}
+
+.params-list {
+  font-size: 11px;
+  color: var(--muted);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+}
+
+.params-list .value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text);
+  text-align: right;
+}
