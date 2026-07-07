@@ -10,6 +10,7 @@ import { VehicleParamsProvider, useVehicleParams } from "@/components/vehicle/Ve
 import VehicleTopDiagram from "@/components/vehicle/VehicleTopDiagram";
 import WheelKingpinDiagram from "@/components/vehicle/WheelKingpinDiagram";
 import AxleRackDiagram from "@/components/vehicle/AxleRackDiagram";
+import "./VehicleGeometryStudio.css";
 
 function DirtyBar() {
   const { dirty, busy, apply, reload } = useVehicleParams();
