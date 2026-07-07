@@ -328,6 +328,44 @@ test("scenario path workflow generates, follows, and clears a reference path", a
   await attachPageScreenshot(page, testInfo, "workflow-scenario-path");
 });
 
+test("scenario disturbance editor places, edits, and clears a road disturbance", async ({ page, request }, testInfo) => {
+  await request.post("/api/scene/clear");
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const disturbancePanel = page.locator(".panel").filter({ hasText: "路面扰动编辑" });
+  await expect(disturbancePanel).toBeVisible();
+  await expect(disturbancePanel).toContainText("无扰动");
+
+  await disturbancePanel.locator("select").selectOption("speed_bump");
+  await disturbancePanel.getByRole("button", { name: "放置" }).click();
+  await expect(disturbancePanel).toContainText("放置中");
+
+  const canvas = page.locator(".canvas-container canvas").first();
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("2D canvas is not visible for disturbance placement");
+  await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.48);
+
+  await expect(disturbancePanel).toContainText("减速带");
+  await expect(disturbancePanel).toContainText("编辑");
+
+  const fields = disturbancePanel.locator('input[type="number"]');
+  await expect(fields).toHaveCount(7);
+  await fields.nth(5).fill("0.18");
+  await fields.nth(6).fill("220000");
+  await disturbancePanel.getByRole("button", { name: "应用修改" }).click();
+  await expect(page.getByText(/已更新 speed_bump_/)).toBeVisible();
+
+  await disturbancePanel.getByRole("button", { name: "清空全部" }).click();
+  await expect(page.getByText("已清空 1 个扰动")).toBeVisible();
+  await expect(disturbancePanel).toContainText("无扰动");
+
+  await attachPageScreenshot(page, testInfo, "workflow-scenario-disturbance");
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
