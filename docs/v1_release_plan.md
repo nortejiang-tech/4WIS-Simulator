@@ -58,6 +58,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖负载页扫图计算失败异常态，断言错误 toast、计算控件恢复可操作，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖原理页交互 demo 后端计算失败异常态，断言错误留在对应 demo 区域、页面主体不空白，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页标准路径生成、跟踪策略切换和路径清除，生成场景路径 workflow screenshot attachment。
+- 已完成：Playwright 覆盖 App 顶层 path_version 触发的参考路径刷新失败异常态，断言错误 toast 可见且场景路径工具仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页路径模板读取失败异常态，断言错误停留在轨迹/路径面板、生成按钮禁用、刷新模板和手动绘制仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页场景列表读取失败异常态，断言错误停留在场景路况面板、刷新按钮仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页路面扰动编辑的新建、选中编辑、参数应用和清空，生成扰动编辑 workflow screenshot attachment。
@@ -84,7 +85,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 
 - 已完成：对试验页、分析页、车辆几何工作室、负载页、模型原理页做动态 import；主 JS chunk 从约 1018 kB 降到约 609 kB。
 - 已完成：运行页非默认侧栏组改为首次打开时懒加载、之后保持挂载；实时曲线/uPlot、设计、验证、数据、场景编辑面板不再进入默认首屏主包。主 JS chunk 进一步降到约 502 kB。
-- 已完成：`Canvas3D`/Three.js 依赖拆成懒加载 3D vendor chunks；构建期预算插件把默认入口 chunk 限在 500 kB 内、`vendor-three-core` 限在 700 kB 内。当前构建默认 `index` chunk 354.78 kB，最大 3D vendor chunk `vendor-three-core` 666.67 kB，生产构建无 chunk warning。
+- 已完成：`Canvas3D`/Three.js 依赖拆成懒加载 3D vendor chunks；构建期预算插件把默认入口 chunk 限在 500 kB 内、`vendor-three-core` 限在 700 kB 内。当前构建默认 `index` chunk 354.92 kB，最大 3D vendor chunk `vendor-three-core` 666.67 kB，生产构建无 chunk warning。
 - 已完成：车辆几何工作室 `vg-*` 样式从全局 `styles.css` 拆到页面私有 CSS，随懒加载车辆页生成 `VehicleGeometryStudio` CSS chunk；全局 `index` CSS 从 47.98 kB 降到 44.06 kB。
 - 已完成：负载页样式从全局 `styles.css` 拆到 `LoadAnalysisPage` 页面 CSS、`ChartBox`/解释弹窗/指标信息组件 CSS，以及模型页复用的 body-coupling 控件 CSS；全局 `index.css` 降到 27.92 kB，新增 `LoadAnalysisPage` CSS 10.26 kB 和共享 load 图表/控制 CSS 35.36 kB。
 - 已完成：模型原理页 `model-*` 样式从全局 `styles.css` 拆到 `ModelTheoryPage` 私有 CSS；当前全局 `index.css` 降到 21.56 kB，新增 `ModelTheoryPage` CSS 6.41 kB。

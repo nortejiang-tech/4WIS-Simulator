@@ -61,6 +61,10 @@ function TabGroup({ id, tab, children }: { id: TabId; tab: TabId; children: Reac
 
 const QUICKSTART_KEY = "4wis_quickstart_dismissed";
 
+function formatError(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 function PageLoader() {
   return (
     <main className="page-loader" aria-live="polite">
@@ -94,6 +98,7 @@ export default function App() {
   const setTheme = useSimStore((s) => s.setTheme);
   const page = useSimStore((s) => s.page);
   const setPage = useSimStore((s) => s.setPage);
+  const pushToast = useSimStore((s) => s.pushToast);
   const [tab, setTab] = useState<TabId>("drive");
   const [visitedTabs, setVisitedTabs] = useState<TabId[]>(["drive"]);
   const [version, setVersion] = useState<string | null>(null);
@@ -145,13 +150,17 @@ export default function App() {
 
   // Re-fetch the reference path whenever the backend bumps path_version.
   useEffect(() => {
-    if (pathVersion >= 0) fetchPath().catch(() => undefined);
-  }, [pathVersion]);
+    if (pathVersion >= 0) {
+      fetchPath().catch((e) => pushToast("error", `刷新参考路径失败：${formatError(e)}`));
+    }
+  }, [pathVersion, pushToast]);
 
   // Re-fetch the scenario geometry whenever the backend bumps scenario_version.
   useEffect(() => {
-    if (scenarioVersion >= 0) fetchScenario().catch(() => undefined);
-  }, [scenarioVersion]);
+    if (scenarioVersion >= 0) {
+      fetchScenario().catch((e) => pushToast("error", `刷新场景几何失败：${formatError(e)}`));
+    }
+  }, [scenarioVersion, pushToast]);
 
   return (
     <div className="app-shell">

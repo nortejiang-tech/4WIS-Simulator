@@ -582,6 +582,42 @@ test("scenario path workflow generates, follows, and clears a reference path", a
   await attachPageScreenshot(page, testInfo, "workflow-scenario-path");
 });
 
+test("path version refresh failure surfaces a toast without blocking scenario tools", async ({ page }, testInfo) => {
+  let failPathRefresh = false;
+  await page.route("**/api/path", async (route) => {
+    if (route.request().method() === "GET" && failPathRefresh) {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic path refresh failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const trajectoryPanel = page.locator(".panel").filter({ hasText: "轨迹 / 路径" });
+  await expect(trajectoryPanel).toBeVisible();
+
+  await trajectoryPanel.locator("select").first().selectOption("double_lane_change");
+  await trajectoryPanel.getByRole("button", { name: "生成" }).click();
+  await expect(trajectoryPanel).toContainText(/当前路径: double_lane_change · \d+ 点 · \d+ 桩/);
+
+  failPathRefresh = true;
+  await trajectoryPanel.getByRole("button", { name: "清除路径" }).click();
+  await expect(page.getByTestId("toast-error")).toContainText(
+    "刷新参考路径失败：synthetic path refresh failure",
+  );
+  await expect(trajectoryPanel.getByRole("button", { name: "生成" })).toBeEnabled();
+  await expect(trajectoryPanel.getByRole("button", { name: "手动绘制" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-path-refresh-error");
+});
+
 test("path template failure stays visible in the trajectory panel", async ({ page }, testInfo) => {
   await page.route("**/api/path/templates", async (route) => {
     await route.fulfill({
