@@ -88,7 +88,7 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-indepen
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md
 ```
 
-报告会汇总每个 benchmark 的来源、limitations、warnings/failures、每项指标的 Sim/Reference/Delta/Tolerance 和 `notes.md` 摘要。该报告只是复现性与人工评审材料，不能自动提升 `docs/validation_matrix.md` 的可信度等级。
+报告会汇总每个 benchmark 的来源、limitations、warnings/failures、每项指标的 Sim/Reference/Delta/Tolerance 和 `notes.md` 摘要。仓库当前留存的审查件为 `docs/reports/reference_benchmark_review.md`；该报告只是复现性与人工评审材料，不能自动提升 `docs/validation_matrix.md` 的可信度等级。
 
 当前支持从 `reference.csv` 自动计算参考值的指标包括：
 
@@ -107,4 +107,5 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/rep
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
 - 已有参考数据结构 checker 与 reviewer report 输出：`scripts/check_reference_benchmarks.py`。
 - 已有两个解析参考 benchmark：`validation_data/analytic_steady_circle_30kmh/` 和 `validation_data/analytic_step_steer_30kmh/`。
+- 已有当前审查报告：`docs/reports/reference_benchmark_review.md`，记录 2/2 解析 benchmark 通过、独立外部/实测 benchmark 为 0。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。

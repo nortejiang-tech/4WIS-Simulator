@@ -109,6 +109,7 @@ backend/.venv/bin/python -m pytest tests/        # 后端全量测试
 backend/.venv/bin/python scripts/smoke_test.py   # 从仓库根目录运行 smoke
 backend/.venv/bin/python scripts/check_golden_experiments.py
 backend/.venv/bin/python scripts/check_reference_benchmarks.py
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-independent-source  # 需要真实外部/实测来源时使用
 cd frontend && npm run type-check
 cd frontend && npm run build
@@ -121,7 +122,7 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 - 后端：`210 passed`
 - smoke：`32/32 通过`
 - 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
-- 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
+- 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`docs/reports/reference_benchmark_review.md` 已生成当前 reviewer-facing 审查材料；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
 - 前端：type-check 通过
 - 浏览器 smoke：Playwright Chromium `19 passed`，覆盖工作流渲染、试验到分析页交接、分析页通道切换/加图/hover cursor/drag-to-zoom/PNG 导出/截图证据、车辆几何拖拽、车辆页项目列表/加载失败异常态、数据录制开始/停止/CSV 导出、分析回放时间轴、场景路径/扰动/故障 workflow、脚本库/解析失败、命令面板导航、手柄配置编辑
 - 前端生产构建通过且无 Vite chunk warning；默认 `index` chunk 353.99 kB，低于 500 kB 入口预算；懒加载 3D vendor 最大 chunk `vendor-three-core` 666.67 kB，低于 700 kB 3D core 预算；入口 `index.css` 为 15.68 kB / gzip 3.41 kB，车辆几何、工作流页面、负载页、模型页和共享 load 图表/控制样式拆为独立 CSS chunks，App 壳层、视口/HUD、命令面板、手柄配置、Panel 壳层、Panel 内容控件和快速开始卡片样式已收敛到组件私有 CSS
@@ -180,6 +181,7 @@ python scripts/build_portable.py --targets macos-arm64 windows-x64 --update
 - [docs/validation_matrix.md](docs/validation_matrix.md) - 当前能力可信度、证据和边界。
 - [docs/v1_release_plan.md](docs/v1_release_plan.md) - v1.0 收敛路线和完成定义。
 - [docs/reference_benchmark_protocol.md](docs/reference_benchmark_protocol.md) - 外部工具/实测数据对照协议。
+- [docs/reports/reference_benchmark_review.md](docs/reports/reference_benchmark_review.md) - 当前参考 benchmark 审查报告，明确解析参考通过但独立外部/实测来源为 0。
 - [docs/golden_baseline_changelog.md](docs/golden_baseline_changelog.md) - 黄金实验基线更新说明模板和变更记录。
 - [docs/v1_platform_refactor_plan.md](docs/v1_platform_refactor_plan.md) - 平台化重构路线。
 - [docs/load_analysis_handoff.md](docs/load_analysis_handoff.md) - 转向负载分析页面和 API 交接说明。

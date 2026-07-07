@@ -30,6 +30,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：reference checker 新增 `--require-independent-source`，可在审查时强制要求至少一个通过检查的 `external_tool`、`bench`、`scaled_vehicle` 或 `full_vehicle` benchmark，避免解析参考被误当成独立外部/实测来源。
 - 已完成：接入解析参考 benchmark `validation_data/analytic_steady_circle_30kmh/`，覆盖 kinematic ideal-Ackermann 稳态圆周，对照横摆率、侧向速度、速度误差、横向位移和轨迹误差 6 个指标。
 - 已完成：接入第二个解析参考 benchmark `validation_data/analytic_step_steer_30kmh/`，覆盖 kinematic ideal-Ackermann 30 km/h 阶跃转向，对照横摆峰值、横摆增益、上升/稳定时间、侧向速度、速度误差、横向位移和轨迹误差 9 个指标。
+- 已完成：生成并纳入 `docs/reports/reference_benchmark_review.md`，作为当前 reviewer-facing 审查件；报告明确当前通过项都是解析参考，独立外部/实测 benchmark 数量仍为 0。
 - 继续补齐公开或可导出的参考工况：ISO 3888 双移线，以及至少一个外部工具或实测来源。
 - 对每个新增工况保存参考来源、车辆参数映射、目标指标和误差解释。
 - 优先对照 `yaw_rate_peak_dps`、稳态横摆增益、速度跟踪 RMS、侧偏角峰值、轨迹横向偏差。
