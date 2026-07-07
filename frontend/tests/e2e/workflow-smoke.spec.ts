@@ -431,6 +431,25 @@ test("script library workflow loads, starts, lays out markers, and stops a fixed
   await attachPageScreenshot(page, testInfo, "workflow-script-library");
 });
 
+test("script parse failure stays visible in the script panel", async ({ page, request }, testInfo) => {
+  await request.post("/api/script/stop");
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "数据" }).click();
+
+  const scriptPanel = page.locator(".panel").filter({ hasText: "动作脚本" });
+  await expect(scriptPanel).toBeVisible();
+
+  await scriptPanel.locator("textarea").fill("script:\n  name: broken\n  actions: [");
+  await scriptPanel.getByRole("button", { name: "▶ 启动脚本" }).click();
+
+  await expect(scriptPanel).toContainText("script parse error");
+  await expect(scriptPanel.getByRole("button", { name: "▶ 启动脚本" })).toBeEnabled();
+  await expect(scriptPanel.locator("textarea")).toContainText("actions: [");
+
+  await attachPageScreenshot(page, testInfo, "workflow-script-parse-error");
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
