@@ -33,12 +33,17 @@ const TEMPLATE_LABELS: Record<string, string> = {
   parking: "停车入位",
 };
 
+function formatError(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 export default function TrajectoryPanel() {
   const [templates, setTemplates] = useState<string[]>([]);
   const [selected, setSelected] = useState("slalom");
   const [cruiseKmh, setCruiseKmh] = useState(20);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
 
   const path = useSimStore((s) => s.path);
   const editMode = useSimStore((s) => s.editMode);
@@ -46,10 +51,23 @@ export default function TrajectoryPanel() {
   const setEditMode = useSimStore((s) => s.setEditMode);
   const clearDraft = useSimStore((s) => s.clearDraft);
 
-  useEffect(() => {
+  const refreshTemplates = () => {
     fetchJSON<{ templates: string[] }>("/api/path/templates")
-      .then((d) => setTemplates(d.templates ?? []))
-      .catch(() => setTemplates([]));
+      .then((d) => {
+        const nextTemplates = d.templates ?? [];
+        setTemplates(nextTemplates);
+        setTemplatesError(null);
+        setSelected((current) => nextTemplates.includes(current) ? current : nextTemplates[0] ?? "");
+      })
+      .catch((e) => {
+        setTemplates([]);
+        setSelected("");
+        setTemplatesError(`读取路径模板失败：${formatError(e)}`);
+      });
+  };
+
+  useEffect(() => {
+    refreshTemplates();
   }, []);
 
   const wrap = async (fn: () => Promise<void>) => {
@@ -57,8 +75,8 @@ export default function TrajectoryPanel() {
     setError(null);
     try {
       await fn();
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
+    } catch (e) {
+      setError(formatError(e));
     } finally {
       setBusy(false);
     }
@@ -88,14 +106,16 @@ export default function TrajectoryPanel() {
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          disabled={busy}
+          disabled={busy || templates.length === 0}
           style={selectStyle}
         >
+          {templates.length === 0 && <option value="">（无模板）</option>}
           {templates.map((t) => (
             <option key={t} value={t}>{TEMPLATE_LABELS[t] ?? t}</option>
           ))}
         </select>
-        <button onClick={onGenerate} disabled={busy}>生成</button>
+        <button onClick={onGenerate} disabled={busy || templates.length === 0}>生成</button>
+        <button onClick={refreshTemplates} disabled={busy}>刷新模板</button>
       </div>
 
       <div style={{ display: "flex", gap: 6, marginTop: 6, alignItems: "center" }}>
@@ -140,9 +160,13 @@ export default function TrajectoryPanel() {
       </div>
 
       {error && (
-        <div className="small" style={{ color: "var(--bad)", marginTop: 4 }}>{error}</div>
+        <div className="small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>{error}</div>
+      )}
+      {templatesError && (
+        <div className="small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>
+          {templatesError}
+        </div>
       )}
     </Panel>
   );
 }
-

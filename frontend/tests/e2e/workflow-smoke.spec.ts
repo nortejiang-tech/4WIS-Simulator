@@ -509,6 +509,30 @@ test("scenario path workflow generates, follows, and clears a reference path", a
   await attachPageScreenshot(page, testInfo, "workflow-scenario-path");
 });
 
+test("path template failure stays visible in the trajectory panel", async ({ page }, testInfo) => {
+  await page.route("**/api/path/templates", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic path template failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const trajectoryPanel = page.locator(".panel").filter({ hasText: "轨迹 / 路径" });
+  await expect(trajectoryPanel).toBeVisible();
+  await expect(trajectoryPanel).toContainText("读取路径模板失败：synthetic path template failure");
+  await expect(trajectoryPanel.locator("select")).toBeDisabled();
+  await expect(trajectoryPanel.getByRole("button", { name: "生成" })).toBeDisabled();
+  await expect(trajectoryPanel.getByRole("button", { name: "刷新模板" })).toBeEnabled();
+  await expect(trajectoryPanel.getByRole("button", { name: "手动绘制" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-path-template-error");
+});
+
 test("scenario list failure stays visible in the scenario panel", async ({ page }, testInfo) => {
   await page.route("**/api/scenarios", async (route) => {
     await route.fulfill({
