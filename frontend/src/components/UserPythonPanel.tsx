@@ -30,18 +30,28 @@ const STATUS_LABEL: Record<string, string> = {
   no_file: "文件不存在",
 };
 
+function formatError(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 export default function UserPythonPanel() {
   const activeStrategy = useSimStore((s) => s.state?.strategy);
   const pushToast = useSimStore((s) => s.pushToast);
 
   const [status, setStatus] = useState<StatusResp | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refresh = () =>
     fetchJSON<StatusResp>("/api/user_python/status")
-      .then(setStatus)
-      .catch(() => {/* silent */});
+      .then((nextStatus) => {
+        setStatus(nextStatus);
+        setStatusError(null);
+      })
+      .catch((e) => {
+        setStatusError(`读取 Python 策略状态失败：${formatError(e)}`);
+      });
 
   useEffect(() => {
     refresh();
@@ -62,8 +72,8 @@ export default function UserPythonPanel() {
     }
   };
 
-  const color = STATUS_COLOR[status?.status ?? "no_file"];
-  const label = STATUS_LABEL[status?.status ?? "no_file"];
+  const color = statusError && !status ? "#ef4444" : STATUS_COLOR[status?.status ?? "no_file"];
+  const label = statusError && !status ? "状态未知" : STATUS_LABEL[status?.status ?? "no_file"];
   const isActive = activeStrategy === "user_python";
 
   return (
@@ -84,6 +94,19 @@ export default function UserPythonPanel() {
         </>
       }
     >
+
+      {statusError && (
+        <div className="small" role="alert" style={{
+          color: "var(--bad)",
+          background: "rgba(239,68,68,0.08)",
+          border: "1px solid rgba(239,68,68,0.28)",
+          borderRadius: 4,
+          padding: "4px 6px",
+          marginBottom: 6,
+        }}>
+          {statusError}
+        </div>
+      )}
 
       {status && (
         <>

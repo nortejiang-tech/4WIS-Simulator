@@ -374,6 +374,29 @@ test("run control backend failures stay visible in the control panels", async ({
   await attachPageScreenshot(page, testInfo, "workflow-run-control-error");
 });
 
+test("user python status failure stays visible in the design panel", async ({ page }, testInfo) => {
+  await page.route("**/api/user_python/status", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic user python status failure" }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "设计" }).click();
+
+  const panel = page.locator(".panel").filter({ hasText: "Python 策略插件" });
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText("状态未知");
+  await expect(panel.getByRole("alert")).toContainText(
+    "读取 Python 策略状态失败：synthetic user python status failure",
+  );
+  await expect(panel.getByText("文件不存在")).toHaveCount(0);
+
+  await attachPageScreenshot(page, testInfo, "workflow-user-python-status-error");
+});
+
 test("vehicle geometry drag updates the shared parameter edit buffer", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
