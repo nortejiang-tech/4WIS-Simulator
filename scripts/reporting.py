@@ -76,6 +76,29 @@ def embedded_png_figure(base64_png: str, alt: str, attrs: Mapping[str, Any] | No
     return f"<figure><img{html_attrs(img_attrs)}/></figure>"
 
 
+@dataclass(frozen=True)
+class ReportDocument:
+    """Reusable self-contained HTML report shell."""
+    title: str
+    styles: str
+    lang: str = "zh-CN"
+
+    def render(self, body: str) -> str:
+        styles = self.styles.strip("\n")
+        body_html = body.strip("\n")
+        return (
+            "<!DOCTYPE html>\n"
+            f"<html{html_attrs({'lang': self.lang})}><head><meta charset=\"utf-8\">\n"
+            f"<title>{escape(self.title)}</title>\n"
+            f"<style>\n{styles}\n</style></head><body>\n\n"
+            f"{body_html}\n"
+            "</body></html>"
+        )
+
+    def write(self, path: Path, body: str) -> None:
+        path.write_text(self.render(body), encoding="utf-8")
+
+
 def write_json(path: Path, data: Any) -> None:
     """Write stable UTF-8 JSON for report sidecar metrics."""
     path.write_text(

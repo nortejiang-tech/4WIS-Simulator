@@ -116,7 +116,7 @@ cd frontend && npm run e2e
 
 当前 `v0.16.0` 验证基线：
 
-- 后端：`205 passed`
+- 后端：`207 passed`
 - smoke：`32/32 通过`
 - 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
 - 外部参考：`validation_data/` 当前无 benchmark；checker 明确提示外部证据仍缺失

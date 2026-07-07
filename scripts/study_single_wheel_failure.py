@@ -33,7 +33,7 @@ from sim4wis.experiment.schema import (
     Experiment, FaultSpec, Maneuver, ManeuverStep, SteerProfile,
 )
 from sim4wis.experiment.session import run_experiment
-from reporting import embedded_png_figure, html_cell, html_table, image_to_base64, write_json
+from reporting import ReportDocument, embedded_png_figure, html_cell, html_table, image_to_base64, write_json
 
 plt = None
 patches = None
@@ -843,10 +843,8 @@ def build_html(rows, curves, param_sens, figs: dict[str, str]) -> str:
     n_param_runs = sum(2 * len(d["points"]) for d in param_sens["A"].values()) * 2
     n_runs = 3 + n_cases * 2 + len(sens) + n_param_runs
 
-    html = f"""<!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="utf-8">
-<title>四轮独立转向单轮失效的 ISO 26262 可控性分析与容错控制（v2：机构差异化 + 参数敏感性）</title>
-<style>
+    title = "四轮独立转向单轮失效的 ISO 26262 可控性分析与容错控制（v2：机构差异化 + 参数敏感性）"
+    styles = f"""
  body {{ font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
         max-width: 990px; margin: 0 auto; padding: 40px 24px; color:#1a202c; line-height:1.75; }}
  h1 {{ font-size: 24px; border-bottom: 3px solid #1f77b4; padding-bottom: 10px; }}
@@ -862,7 +860,8 @@ def build_html(rows, curves, param_sens, figs: dict[str, str]) -> str:
  .eq {{ background:#f7fafc; padding:8px 18px; margin:10px 0; font-family:STIX,serif; }}
  code {{ background:#edf2f7; padding:1px 5px; border-radius:4px; font-size: 12px; }}
  .meta {{ color:#718096; font-size: 13px; }}
-</style></head><body>
+"""
+    body = f"""
 
 <h1>四轮独立转向系统单轮转向失效的 ISO 26262 功能安全可控性分析与容错控制策略设计<br>
 <span style="font-size:15px;color:#4a5568">v2 — 执行机构差异化失效建模（前轮自由脚轮 / 后轮自锁锁死）与整车参数敏感性研究</span></h1>
@@ -1068,8 +1067,8 @@ fault_reconfig free 模式（增益补偿）；<b>参数×故障×工况敏感�
 检测延时 + 参数敏感性含逐点无故障参考）。指标原始数据见
 <code>single_wheel_failure_metrics.json</code>。</p>
 <p class="meta">本报告由 4WIS Simulator 自动生成 · 全部数据与图表来自实跑仿真</p>
-</body></html>"""
-    return html
+"""
+    return ReportDocument(title=title, styles=styles).render(body)
 
 
 # ─── main ────────────────────────────────────────────────────────────────────
