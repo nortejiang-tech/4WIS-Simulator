@@ -208,6 +208,27 @@ test("analysis data load failure surfaces an error state with screenshot evidenc
   await attachPageScreenshot(page, testInfo, "workflow-analysis-data-error");
 });
 
+test("analysis run list failure does not masquerade as an empty library", async ({ page }, testInfo) => {
+  await page.route("**/api/runs", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic run list failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /分析/ }).click();
+
+  await expect(page.getByText("Run 库（0）")).toBeVisible();
+  await expect(page.getByText("读取 run 列表失败：synthetic run list failure").first()).toBeVisible();
+  await expect(page.getByText("还没有 run — 到「试验」页跑一个批量")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "刷新" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-analysis-run-list-error");
+});
+
 test("experiment batch start failure surfaces an error state with screenshot evidence", async ({ page }, testInfo) => {
   await page.route("**/api/batch", async (route) => {
     if (route.request().method() !== "POST") {

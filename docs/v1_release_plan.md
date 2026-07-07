@@ -43,6 +43,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 现在覆盖车辆几何 SVG 拖拽点写入共享参数编辑缓冲、分析页回放时间轴 scrub、命令面板键盘导航、手柄配置编辑。
 - 已完成：Playwright 覆盖分析页 uPlot 通道叠图的 drag-to-zoom 与双击复位，断言 X 轴可见窗口按交互收缩/恢复。
 - 已完成：Playwright 为运行、试验、空分析、车辆、场景、负载、原理页生成 workflow screenshot attachment，并对截图非空做基本断言。
+- 已完成：Playwright 覆盖分析页 run 列表读取失败异常态，断言错误不会伪装成空 run 库、刷新按钮仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖分析页 run 数据读取失败异常态，断言错误 toast、保留 KPI 表可读，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖试验页 batch 启动失败异常态，断言错误 toast、运行矩阵仍可操作，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖运行页模型切换和路面 μ 设置失败异常态，断言错误 toast、控制面板保持可操作，并生成异常态 screenshot attachment。

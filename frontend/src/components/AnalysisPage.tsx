@@ -78,12 +78,23 @@ export default function AnalysisPage() {
   const [selected, setSelected] = useState<string[]>([]);   // run ids, palette order
   const [charts, setCharts] = useState<string[]>(["vx", "yaw_rate"]);
   const [pickerCh, setPickerCh] = useState("rack_force_fl");
+  const [runListError, setRunListError] = useState<string | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
   const [replayOpen, setReplayOpen] = useState(false);
   const [replayT, setReplayT] = useState<number | null>(null);
   const cache = useRef<Map<string, RunCache>>(new Map());
 
-  const refresh = () => listRuns().then(setRuns).catch(() => setRuns([]));
+  const refresh = () => listRuns()
+    .then((nextRuns) => {
+      setRuns(nextRuns);
+      setRunListError(null);
+    })
+    .catch((err) => {
+      setRuns([]);
+      const message = `读取 run 列表失败：${(err as Error).message}`;
+      setRunListError(message);
+      pushToast("error", message);
+    });
   useEffect(() => { refresh(); }, []);
 
   // Apply preselection handed over from the experiment page (once).
@@ -189,7 +200,9 @@ export default function AnalysisPage() {
               </div>
             );
           })}
-          {runs.length === 0 && (
+          {runListError ? (
+            <div className="wf-empty" role="alert">{runListError}</div>
+          ) : runs.length === 0 && (
             <div className="wf-empty">还没有 run — 到「试验」页跑一个批量</div>
           )}
         </div>
