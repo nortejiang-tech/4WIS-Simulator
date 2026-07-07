@@ -803,6 +803,30 @@ test("script library failure does not masquerade as an empty script library", as
   await attachPageScreenshot(page, testInfo, "workflow-script-library-error");
 });
 
+test("script status failure stays visible without blocking script editing", async ({ page, request }, testInfo) => {
+  await request.post("/api/script/stop");
+  await page.route("**/api/script/status", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic script status failure" }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "数据" }).click();
+
+  const scriptPanel = page.locator(".panel").filter({ hasText: "动作脚本" });
+  await expect(scriptPanel).toBeVisible();
+  await expect(scriptPanel.getByRole("alert")).toContainText(
+    "读取脚本状态失败：synthetic script status failure",
+  );
+  await expect(scriptPanel.getByRole("button", { name: "刷新库" })).toBeEnabled();
+  await expect(scriptPanel.locator("textarea")).toBeEditable();
+
+  await attachPageScreenshot(page, testInfo, "workflow-script-status-error");
+});
+
 test("recording panel records samples and exports csv", async ({ page, request }, testInfo) => {
   await request.post("/api/recording/stop");
 

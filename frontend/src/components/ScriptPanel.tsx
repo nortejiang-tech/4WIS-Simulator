@@ -41,6 +41,7 @@ export default function ScriptPanel() {
   const [selected, setSelected] = useState<string>("");
   const [scriptYaml, setScriptYaml] = useState<string>(DEFAULT_TEMPLATE);
   const [status, setStatus] = useState<ScriptStatus | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,8 +68,13 @@ export default function ScriptPanel() {
   // Poll status while panel is mounted
   const pollStatus = useCallback(() => {
     fetchJSON<ScriptStatus>("/api/script/status")
-      .then(setStatus)
-      .catch(() => {});
+      .then((nextStatus) => {
+        setStatus(nextStatus);
+        setStatusError(null);
+      })
+      .catch((e) => {
+        setStatusError(`读取脚本状态失败：${formatError(e)}`);
+      });
   }, []);
   useEffect(() => {
     pollStatus();
@@ -163,6 +169,15 @@ export default function ScriptPanel() {
           <span className="value">#{status.current_action_idx}</span>
           <span>已运行</span>
           <span className="value">{status.t_in_script.toFixed(1)} s</span>
+        </div>
+      )}
+      {statusError && (
+        <div
+          className="small"
+          role="alert"
+          style={{ color: "var(--bad)", marginTop: 4 }}
+        >
+          {statusError}
         </div>
       )}
       {(info || error) && (
