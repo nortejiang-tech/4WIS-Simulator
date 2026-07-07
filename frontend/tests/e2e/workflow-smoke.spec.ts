@@ -110,3 +110,22 @@ test("analysis replay controls scrub selected run data", async ({ page }) => {
   await expect(page.getByTestId("replay-time")).toContainText(/^1\.00 /);
   await expect(page.getByTestId("replay-close")).toBeVisible();
 });
+
+test("command palette filters and navigates workflow pages from the keyboard", async ({ page }) => {
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+
+  await page.keyboard.press("Control+K");
+  const palette = page.getByRole("dialog", { name: "命令面板" });
+  await expect(palette).toBeVisible();
+
+  const search = page.getByLabel("命令搜索");
+  await expect(search).toBeFocused();
+  await search.fill("analysis");
+  await expect(page.getByRole("button", { name: /去 分析/ })).toBeVisible();
+
+  await page.keyboard.press("Enter");
+  await expect(palette).toBeHidden();
+  await expect(rail.getByRole("button", { name: /分析/ })).toHaveClass(/active/);
+  await expect(page.getByText(/Run 库/)).toBeVisible();
+});

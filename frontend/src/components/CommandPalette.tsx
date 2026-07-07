@@ -123,11 +123,12 @@ export default function CommandPalette() {
 
   let lastGroup = "";
   return (
-    <div className="cmdk-overlay" onMouseDown={() => setOpen(false)}>
+    <div className="cmdk-overlay" data-testid="command-palette" role="dialog" aria-label="命令面板" onMouseDown={() => setOpen(false)}>
       <div className="cmdk-panel" onMouseDown={(e) => e.stopPropagation()}>
         <input
           ref={inputRef}
           className="cmdk-input"
+          aria-label="命令搜索"
           placeholder="输入命令…（页面 / 策略 / 模型 / 主题）"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setIdx(0); }}

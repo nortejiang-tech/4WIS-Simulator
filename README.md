@@ -121,7 +121,7 @@ cd frontend && npm run e2e
 - 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
 - 外部参考：`validation_data/` 当前无 benchmark；checker 明确提示外部证据仍缺失
 - 前端：type-check 通过
-- 浏览器 smoke：Playwright Chromium `4 passed`，覆盖工作流渲染、试验到分析页交接、车辆几何拖拽、分析回放时间轴
+- 浏览器 smoke：Playwright Chromium `5 passed`，覆盖工作流渲染、试验到分析页交接、车辆几何拖拽、分析回放时间轴、命令面板导航
 - 前端生产构建通过；Vite 对 3D/主包有大 chunk 警告，但不阻断发布
 
 首次运行 Playwright 前需要安装浏览器运行时：
