@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { renderInlineMath } from "./latex";
 import type { ExplanationContent } from "./ChartBox";
+import "./MetricInfo.css";
+import "./LoadExplanation.css";
 
 interface Props {
   explanation: ExplanationContent;

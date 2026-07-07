@@ -8,6 +8,7 @@ import type uPlot from "uplot";
 import { postJSON } from "@/api/http";
 import type { SeriesSpec } from "@/charts/uplotFactory";
 import { ChartBox } from "@/components/load/ChartBox";
+import "@/components/load/BodyCouplingControl.css";
 
 export type DemoKey = "bicycleGain" | "tireCurve" | "kingpinBreakdown";
 

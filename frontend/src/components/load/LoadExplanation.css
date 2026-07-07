@@ -1,0 +1,106 @@
+.load-explanation-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+}
+
+.load-explanation-modal {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-width: 720px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+.load-explanation-modal header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.08), rgba(96, 165, 250, 0));
+}
+
+.load-explanation-modal header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.load-explanation-modal header button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.load-explanation-modal header button:hover { color: var(--text); border-color: var(--accent); }
+
+.load-explanation-body {
+  padding: 16px 20px 24px;
+  overflow-y: auto;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.load-explanation-body section { margin-bottom: 20px; }
+.load-explanation-body section:last-child { margin-bottom: 0; }
+
+.load-explanation-body h4 {
+  font-size: 14px;
+  color: #93c5fd;
+  margin: 0 0 8px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.load-explanation-text { color: var(--text); }
+.load-explanation-text p { margin-bottom: 8px; }
+.load-explanation-text p:last-child { margin-bottom: 0; }
+.load-explanation-text strong { color: #f0c530; font-weight: 600; }
+.load-explanation-text ul { margin: 6px 0 8px 20px; }
+.load-explanation-text li { margin-bottom: 4px; }
+
+.load-explanation-text pre {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #c5d6e6;
+  overflow-x: auto;
+  margin: 8px 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.load-explanation-figure {
+  margin: 10px 0;
+}
+
+.load-explanation-figure .explain-svg {
+  width: 100%;
+  max-width: 420px;
+  display: block;
+  margin: 0 auto;
+  height: auto;
+  border-radius: 6px;
+}

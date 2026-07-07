@@ -4,6 +4,8 @@ import type uPlot from "uplot";
 import { exportCSV, exportPNG, useLiveChart, type AxisLabels, type SeriesSpec, type VerticalMarker } from "@/charts/uplotFactory";
 import { fmt, interpolateAt, type NumericSeries } from "./types";
 import { renderInlineMath } from "./latex";
+import "./ChartBox.css";
+import "./LoadExplanation.css";
 
 interface ChartBoxProps {
   title: string;

@@ -1,0 +1,214 @@
+.load-chart-panel {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-1);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.load-chart-head {
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(180px, .9fr) auto;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px 0 10px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .2px;
+  text-transform: none;
+}
+
+.load-chart-head > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.load-chart-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.load-chart-title > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.load-chart-cursor {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  justify-self: end;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.load-chart-head span:last-child {
+  display: flex;
+  gap: 4px;
+}
+
+.load-chart-head button {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 3px 7px;
+}
+
+.load-chart-head button:hover:not(:disabled) { border-color: var(--accent); }
+.load-chart-head button:disabled { opacity: .5; cursor: not-allowed; }
+
+.load-chart-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.load-chart-flags {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.load-chart-zoom-reset {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  border-radius: 4px;
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+  cursor: pointer;
+}
+
+.load-chart-zoom-reset:hover { background: rgba(248, 113, 113, 0.2); }
+
+.load-chart-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 12px 6px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.load-chart-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text);
+}
+
+.load-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: opacity .15s;
+}
+
+.load-chart-legend-item:hover { background: rgba(96, 165, 250, 0.1); }
+.load-chart-legend-item.off { opacity: 0.4; }
+
+.load-chart-legend-item input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.load-chart-legend .legend-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 0;
+  border-top-width: 2px;
+  border-bottom: 0;
+  border-left: 0;
+  border-right: 0;
+  border-top-style: solid;
+}
+
+.load-chart-zoom-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.load-chart-zoom-toggle input { accent-color: var(--accent); }
+
+.load-chart-help-btn {
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.load-chart-help-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(96, 165, 250, 0.1);
+}
+
+.load-chart {
+  width: 100%;
+  height: 220px;
+  background: var(--bg-2);
+  position: relative;
+}
+
+.load-chart-host {
+  width: 100%;
+  height: 100%;
+}
+
+.load-chart-panel.priority .load-chart {
+  height: 260px;
+}
+
+.load-chart .u-cursor-x {
+  border-right: 1px solid rgba(226, 232, 240, .85) !important;
+}
+
+.load-chart-empty {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .load-chart-head {
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    padding: 7px 8px;
+  }
+  .load-chart-cursor {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+    max-width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.45;
+  }
+}

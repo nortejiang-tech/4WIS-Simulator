@@ -7,6 +7,7 @@ import {
   MODE_OPTIONS,
   type BodyCoupling,
 } from "./types";
+import "./BodyCouplingControl.css";
 
 interface Props {
   wheelIndex: number;

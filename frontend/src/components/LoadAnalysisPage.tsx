@@ -25,6 +25,7 @@ import {
   type LoadRow,
 } from "./load/types";
 import { useLoadSweep } from "./load/useLoadSweep";
+import "./LoadAnalysisPage.css";
 
 const NUMERIC_INTERP_KEYS: (keyof InterpolatedRow)[] = [
   "torque_steer", "torque_steer_ideal",
