@@ -509,6 +509,29 @@ test("scenario path workflow generates, follows, and clears a reference path", a
   await attachPageScreenshot(page, testInfo, "workflow-scenario-path");
 });
 
+test("scenario list failure stays visible in the scenario panel", async ({ page }, testInfo) => {
+  await page.route("**/api/scenarios", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic scenario list failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const scenarioPanel = page.locator(".panel").filter({ hasText: "场景路况" });
+  await expect(scenarioPanel).toBeVisible();
+  await expect(scenarioPanel).toContainText("读取场景列表失败：synthetic scenario list failure");
+  await expect(scenarioPanel.locator(".strategy-buttons button")).toHaveCount(0);
+  await expect(scenarioPanel.getByRole("button", { name: "刷新场景" })).toBeEnabled();
+  await expect(scenarioPanel.getByRole("button", { name: "清除场景" })).toBeDisabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-scenario-list-error");
+});
+
 test("scenario disturbance editor places, edits, and clears a road disturbance", async ({ page, request }, testInfo) => {
   await request.post("/api/scene/clear");
 
