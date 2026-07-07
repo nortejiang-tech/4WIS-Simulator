@@ -287,6 +287,41 @@ test("vehicle parameter rejection keeps edits visible with screenshot evidence",
   await attachPageScreenshot(page, testInfo, "workflow-vehicle-param-error");
 });
 
+test("vehicle project load failure stays local to the project panel", async ({ page }, testInfo) => {
+  await page.route("**/api/projects", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ projects: ["synthetic_failure.yaml"] }),
+    });
+  });
+  await page.route("**/api/projects/*/load", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic project load failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /车辆/ }).click();
+
+  const projectPanel = page.locator(".panel").filter({ hasText: "项目（YAML）" });
+  await expect(projectPanel).toBeVisible();
+  await expect(projectPanel.locator("select")).toHaveValue("synthetic_failure.yaml");
+
+  await projectPanel.getByRole("button", { name: "加载" }).click();
+  await expect(projectPanel).toContainText("synthetic project load failure");
+  await expect(projectPanel.getByRole("button", { name: "加载" })).toBeEnabled();
+  await expect(page.getByRole("img", { name: "整车俯视参数示意" })).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-vehicle-project-load-error");
+});
+
 test("load analysis charts expose deeper explanation state with screenshot evidence", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
