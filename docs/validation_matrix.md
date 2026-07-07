@@ -28,6 +28,7 @@
 | 手柄映射与直控模式 | L2 | `backend/tests/test_manual_strategies.py`, `frontend/src/input/gamepadConfig.ts`, 手册 GIF | 浏览器 Gamepad API 和设备轴序依赖具体硬件；需要真实设备回归。 |
 | 车辆几何工作室 | L2 | `frontend/src/vehicle/geometryModel.ts`, `frontend/src/components/vehicle/*`, `CHANGELOG.md` v0.16 记录 | 前端几何数学与后端部分共享概念但不是同一语言实现；需要加强跨端一致性测试。 |
 | 便携包发布 | L2 | `scripts/build_portable.py`, `dist_portable/`, GitHub Release assets | 依赖 python-build-standalone 和目标平台 wheel 可用性；发布前必须跑 `scripts/pre_release_check.py`。 |
+| 外部/实测对照接入 | L0 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md` | 只有协议和数据结构；尚无真实外部工具或实测数据，因此不能提升模型可信度等级。 |
 
 ## 当前最高风险
 

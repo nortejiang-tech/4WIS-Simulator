@@ -175,6 +175,7 @@ python scripts/build_portable.py --targets macos-arm64 windows-x64 --update
 - [docs/user_manual.html](docs/user_manual.html) - 图文用户手册，含手柄 GIF、实验页、分析页、几何工作室。
 - [docs/validation_matrix.md](docs/validation_matrix.md) - 当前能力可信度、证据和边界。
 - [docs/v1_release_plan.md](docs/v1_release_plan.md) - v1.0 收敛路线和完成定义。
+- [docs/reference_benchmark_protocol.md](docs/reference_benchmark_protocol.md) - 外部工具/实测数据对照协议。
 - [docs/v1_platform_refactor_plan.md](docs/v1_platform_refactor_plan.md) - 平台化重构路线。
 - [docs/load_analysis_handoff.md](docs/load_analysis_handoff.md) - 转向负载分析页面和 API 交接说明。
 - [docs/reports/single_wheel_failure_safety_analysis.html](docs/reports/single_wheel_failure_safety_analysis.html) - 单轮失效功能安全研究报告。
