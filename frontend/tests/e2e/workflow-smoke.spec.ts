@@ -287,6 +287,25 @@ test("vehicle parameter rejection keeps edits visible with screenshot evidence",
   await attachPageScreenshot(page, testInfo, "workflow-vehicle-param-error");
 });
 
+test("load analysis charts expose deeper explanation state with screenshot evidence", async ({ page }, testInfo) => {
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /负载/ }).click();
+
+  await expect(page.getByText("实时四轮负载")).toBeVisible();
+  await expect(page.locator(".load-chart-panel").first()).toBeVisible();
+
+  const firstChartCanvas = page.locator(".load-chart-host canvas").first();
+  await expect(firstChartCanvas).toBeVisible({ timeout: 20_000 });
+  await expectCanvasHasDrawnPixels(firstChartCanvas);
+
+  await page.locator(".load-chart-help-btn").first().click();
+  await expect(page.locator(".load-explanation-modal")).toBeVisible();
+  await expect(page.locator(".load-explanation-modal h3")).not.toHaveText("");
+
+  await attachPageScreenshot(page, testInfo, "workflow-load-explanation");
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
