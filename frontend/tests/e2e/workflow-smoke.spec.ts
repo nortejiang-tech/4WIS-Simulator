@@ -255,6 +255,29 @@ test("experiment library failure does not masquerade as an empty library", async
   await attachPageScreenshot(page, testInfo, "workflow-experiment-library-error");
 });
 
+test("experiment maneuver template failure stays visible without blocking editing", async ({ page }, testInfo) => {
+  await page.route("**/api/maneuver-templates", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic maneuver template failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /试验/ }).click();
+
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+  await expect(page.getByText("读取机动模板失败：synthetic maneuver template failure").first()).toBeVisible();
+  const pathSelect = page.getByLabel("参考路径");
+  await expect(pathSelect).toBeEnabled();
+  await expect(pathSelect.locator("option")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /运行（1 runs）/ })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-experiment-maneuver-template-error");
+});
+
 test("experiment batch start failure surfaces an error state with screenshot evidence", async ({ page }, testInfo) => {
   await page.route("**/api/batch", async (route) => {
     if (route.request().method() !== "POST") {

@@ -65,6 +65,7 @@ export default function ExperimentPage() {
   const [expListError, setExpListError] = useState<string | null>(null);
   const [exp, setExp] = useState<ExperimentT>(() => defaultExperiment());
   const [pathTemplates, setPathTemplates] = useState<string[]>([]);
+  const [pathTemplateError, setPathTemplateError] = useState<string | null>(null);
   const [stratSel, setStratSel] = useState<string[]>([]);
   const [speedsText, setSpeedsText] = useState("");
   const [job, setJob] = useState<BatchStatus | null>(null);
@@ -84,7 +85,17 @@ export default function ExperimentPage() {
 
   useEffect(() => {
     refreshList();
-    maneuverTemplates().then((d) => setPathTemplates(d.path_templates)).catch(() => undefined);
+    maneuverTemplates()
+      .then((d) => {
+        setPathTemplates(d.path_templates);
+        setPathTemplateError(null);
+      })
+      .catch((err) => {
+        setPathTemplates([]);
+        const message = `读取机动模板失败：${(err as Error).message}`;
+        setPathTemplateError(message);
+        pushToast("error", message);
+      });
     return () => { if (pollRef.current != null) window.clearInterval(pollRef.current); };
   }, []);
 
@@ -241,6 +252,11 @@ export default function ExperimentPage() {
               <option value="">（无）</option>
               {pathTemplates.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
+            {pathTemplateError && (
+              <span className="small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>
+                {pathTemplateError}
+              </span>
+            )}
           </label>
           <label className="wf-field">
             <span>记录频率 Hz</span>

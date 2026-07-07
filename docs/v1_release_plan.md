@@ -46,6 +46,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 为运行、试验、空分析、车辆、场景、负载、原理页生成 workflow screenshot attachment，并对截图非空做基本断言。
 - 已完成：Playwright 覆盖分析页 run 列表读取失败异常态，断言错误不会伪装成空 run 库、刷新按钮仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖试验页实验库读取失败异常态，断言错误不会伪装成空实验库、刷新/新建按钮仍可用，并生成异常态 screenshot attachment。
+- 已完成：Playwright 覆盖试验页机动模板读取失败异常态，断言参考路径模板错误可见、参考路径选择器仍可用、运行矩阵不被阻塞，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖分析页 run 数据读取失败异常态，断言错误 toast、保留 KPI 表可读，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖试验页 batch 启动失败异常态，断言错误 toast、运行矩阵仍可操作，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖运行页模型切换和路面 μ 设置失败异常态，断言错误 toast、控制面板保持可操作，并生成异常态 screenshot attachment。
