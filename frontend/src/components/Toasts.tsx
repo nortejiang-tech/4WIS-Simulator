@@ -12,6 +12,8 @@ export default function Toasts() {
 
   return (
     <div
+      aria-live="polite"
+      data-testid="toast-stack"
       style={{
         position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)",
         display: "flex", flexDirection: "column", gap: 6, zIndex: 1000,
@@ -21,6 +23,8 @@ export default function Toasts() {
       {toasts.map((t) => (
         <div
           key={t.id}
+          role={t.kind === "error" ? "alert" : "status"}
+          data-testid={`toast-${t.kind}`}
           onClick={() => dismiss(t.id)}
           style={{
             padding: "8px 14px", borderRadius: 8, fontSize: 13, cursor: "pointer",

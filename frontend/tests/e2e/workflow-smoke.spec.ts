@@ -163,6 +163,51 @@ test("experiment run can be handed to analysis with chart controls and screensho
   await testInfo.attach("analysis-workbench", { body: screenshot, contentType: "image/png" });
 });
 
+test("analysis data load failure surfaces an error state with screenshot evidence", async ({ page }, testInfo) => {
+  const runId = "synthetic-run-for-error-state";
+  await page.route("**/api/runs", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        runs: [{
+          run_id: runId,
+          label: "synthetic error run",
+          created_at: "2026-07-07T00:00:00",
+          duration_s: 8,
+          n_samples: 400,
+          strategy: "ideal_ackermann",
+          model_type: "kinematic",
+          experiment_name: "error_state_fixture",
+          kpis: { yaw_rate_peak_dps: 1.23 },
+          job_id: null,
+        }],
+      }),
+    });
+  });
+  await page.route(`**/api/runs/${runId}/data**`, async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic channel load failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /分析/ }).click();
+
+  await expect(page.getByText("Run 库（1）")).toBeVisible();
+  await page.getByText("synthetic error run").click();
+
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("读取 run 数据失败：synthetic channel load failure");
+  await expect(page.getByText("KPI 对比")).toBeVisible();
+  await expect(page.getByTestId("analysis-kpi-table")).toContainText("横摆角速度峰值 °/s");
+  await expect(page.getByTestId("analysis-kpi-table")).toContainText("1.23");
+
+  await attachPageScreenshot(page, testInfo, "workflow-analysis-data-error");
+});
+
 test("vehicle geometry drag updates the shared parameter edit buffer", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
