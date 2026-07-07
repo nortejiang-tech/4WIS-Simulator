@@ -13,6 +13,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Route and sidebar lazy loading keep the default workbench chunk near 500 kB.
+    // Canvas3D is a known opt-in Three.js chunk and should stay visible if it
+    // grows beyond this threshold.
+    chunkSizeWarningLimit: 650,
+  },
   server: {
     port: 5173,
     proxy: {

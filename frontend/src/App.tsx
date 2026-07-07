@@ -3,21 +3,7 @@ import type { ReactNode } from "react";
 
 import Viewport from "@/components/Viewport";
 import ControlPanel from "@/components/ControlPanel";
-import ChartPanel from "@/components/ChartPanel";
 import KeyboardInput from "@/components/KeyboardInput";
-import RecordingPanel from "@/components/RecordingPanel";
-import ScriptPanel from "@/components/ScriptPanel";
-import TrajectoryPanel from "@/components/TrajectoryPanel";
-import MeasurePanel from "@/components/MeasurePanel";
-import DisturbancePanel from "@/components/DisturbancePanel";
-import ComparePanel from "@/components/ComparePanel";
-import FaultPanel from "@/components/FaultPanel";
-import UserPythonPanel from "@/components/UserPythonPanel";
-import JsStrategyPanel from "@/components/JsStrategyPanel";
-import StrategyDesignerPanel from "@/components/StrategyDesignerPanel";
-import ScenarioPanel from "@/components/ScenarioPanel";
-import ExcitationPanel from "@/components/ExcitationPanel";
-import ScorePanel from "@/components/ScorePanel";
 import CommandPalette from "@/components/CommandPalette";
 import QuickStartCard from "@/components/QuickStartCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -31,10 +17,24 @@ const ModelTheoryPage = lazy(() => import("@/components/ModelTheoryPage"));
 const ExperimentPage = lazy(() => import("@/components/ExperimentPage"));
 const AnalysisPage = lazy(() => import("@/components/AnalysisPage"));
 const VehicleGeometryStudio = lazy(() => import("@/components/vehicle/VehicleGeometryStudio"));
+const ChartPanel = lazy(() => import("@/components/ChartPanel"));
+const RecordingPanel = lazy(() => import("@/components/RecordingPanel"));
+const ScriptPanel = lazy(() => import("@/components/ScriptPanel"));
+const TrajectoryPanel = lazy(() => import("@/components/TrajectoryPanel"));
+const MeasurePanel = lazy(() => import("@/components/MeasurePanel"));
+const DisturbancePanel = lazy(() => import("@/components/DisturbancePanel"));
+const ComparePanel = lazy(() => import("@/components/ComparePanel"));
+const FaultPanel = lazy(() => import("@/components/FaultPanel"));
+const UserPythonPanel = lazy(() => import("@/components/UserPythonPanel"));
+const JsStrategyPanel = lazy(() => import("@/components/JsStrategyPanel"));
+const StrategyDesignerPanel = lazy(() => import("@/components/StrategyDesignerPanel"));
+const ScenarioPanel = lazy(() => import("@/components/ScenarioPanel"));
+const ExcitationPanel = lazy(() => import("@/components/ExcitationPanel"));
+const ScorePanel = lazy(() => import("@/components/ScorePanel"));
 
 // Workbench sidebar tab groups (scene editing moved to the 场景 page).
-// All panels stay mounted (timers / WS subscriptions keep running across tab
-// switches); inactive groups are hidden via CSS, not unmounted.
+// Non-default groups load the first time they are opened, then stay mounted
+// (timers / WS subscriptions keep running across later tab switches).
 const TABS = [
   { id: "drive", label: "驾驶", hint: "策略 / 模型 / 油门 / 路面 / 仿真控制" },
   { id: "design", label: "设计", hint: "策略设计器 / Python·JS 策略" },
@@ -68,6 +68,19 @@ function PageLoader() {
   );
 }
 
+function PanelLoader({ label }: { label: string }) {
+  return (
+    <div className="panel" aria-live="polite">
+      <div className="panel-head">
+        <span className="panel-name">{label}</span>
+        <span className="small mono" style={{ color: "var(--muted)", marginLeft: "auto" }}>
+          Loading
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const online = useSimStore((s) => s.online);
   const strategy = useSimStore((s) => s.state?.strategy ?? "—");
@@ -81,6 +94,7 @@ export default function App() {
   const page = useSimStore((s) => s.page);
   const setPage = useSimStore((s) => s.setPage);
   const [tab, setTab] = useState<TabId>("drive");
+  const [visitedTabs, setVisitedTabs] = useState<TabId[]>(["drive"]);
   const [version, setVersion] = useState<string | null>(null);
   const [quickStart, setQuickStart] = useState(
     () => localStorage.getItem(QUICKSTART_KEY) !== "1",
@@ -96,6 +110,13 @@ export default function App() {
       /* ignore storage failures (private mode) */
     }
   };
+
+  const activateTab = (next: TabId) => {
+    setVisitedTabs((cur) => (cur.includes(next) ? cur : [...cur, next]));
+    setTab(next);
+  };
+
+  const tabVisited = (id: TabId) => visitedTabs.includes(id);
 
   // Apply theme to the document root (drives the CSS variables).
   useEffect(() => {
@@ -204,7 +225,7 @@ export default function App() {
               {quickStart && (
                 <QuickStartCard
                   onClose={dismissQuickStart}
-                  onGoTab={(t) => setTab(t as TabId)}
+                  onGoTab={(t) => activateTab(t as TabId)}
                   onGoPage={(p) => setPage(p === "sim" ? "run" : (p as AppPage))}
                 />
               )}
@@ -219,7 +240,7 @@ export default function App() {
                     aria-selected={tab === t.id}
                     className={`side-tab ${tab === t.id ? "active" : ""}`}
                     title={t.hint}
-                    onClick={() => setTab(t.id)}
+                    onClick={() => activateTab(t.id)}
                   >
                     {t.label}
                   </button>
@@ -231,20 +252,32 @@ export default function App() {
                     <ControlPanel />
                   </TabGroup>
                   <TabGroup id="design" tab={tab}>
-                    <StrategyDesignerPanel />
-                    <UserPythonPanel />
-                    <JsStrategyPanel />
+                    {tabVisited("design") && (
+                      <Suspense fallback={<PanelLoader label="设计工具" />}>
+                        <StrategyDesignerPanel />
+                        <UserPythonPanel />
+                        <JsStrategyPanel />
+                      </Suspense>
+                    )}
                   </TabGroup>
                   <TabGroup id="validate" tab={tab}>
-                    <ExcitationPanel />
-                    <ScorePanel />
-                    <ComparePanel />
+                    {tabVisited("validate") && (
+                      <Suspense fallback={<PanelLoader label="验证工具" />}>
+                        <ExcitationPanel />
+                        <ScorePanel />
+                        <ComparePanel />
+                      </Suspense>
+                    )}
                   </TabGroup>
                   <TabGroup id="data" tab={tab}>
-                    <MeasurePanel />
-                    <RecordingPanel />
-                    <ScriptPanel />
-                    <ChartPanel />
+                    {tabVisited("data") && (
+                      <Suspense fallback={<PanelLoader label="数据工具" />}>
+                        <MeasurePanel />
+                        <RecordingPanel />
+                        <ScriptPanel />
+                        <ChartPanel />
+                      </Suspense>
+                    )}
                   </TabGroup>
                 </ErrorBoundary>
               </div>
@@ -282,10 +315,12 @@ export default function App() {
             <aside className="side-pane">
               <div className="side-scroll" style={{ paddingTop: 8 }}>
                 <ErrorBoundary label="场景编辑">
-                  <ScenarioPanel />
-                  <TrajectoryPanel />
-                  <DisturbancePanel />
-                  <FaultPanel />
+                  <Suspense fallback={<PanelLoader label="场景工具" />}>
+                    <ScenarioPanel />
+                    <TrajectoryPanel />
+                    <DisturbancePanel />
+                    <FaultPanel />
+                  </Suspense>
                 </ErrorBoundary>
               </div>
             </aside>

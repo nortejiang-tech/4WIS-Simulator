@@ -26,9 +26,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "backend" / "src"))
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 
 from sim4wis import __version__ as SIM_VERSION
@@ -36,11 +33,10 @@ from sim4wis.experiment.schema import (
     Experiment, FaultSpec, Maneuver, ManeuverStep, SteerProfile,
 )
 from sim4wis.experiment.session import run_experiment
-from reporting import image_to_base64, write_json
+from reporting import embedded_png_figure, html_cell, html_table, image_to_base64, write_json
 
-plt.rcParams["font.sans-serif"] = ["PingFang SC", "Hiragino Sans GB", "Arial Unicode MS", "SimHei"]
-plt.rcParams["axes.unicode_minus"] = False
-plt.rcParams["figure.dpi"] = 110
+plt = None
+patches = None
 
 OUT_DIR = ROOT / "docs" / "reports"
 FIG_DIR = OUT_DIR / "figs_single_wheel"
@@ -359,7 +355,27 @@ def run_param_sensitivity() -> dict:
 
 # ─── 图 ─────────────────────────────────────────────────────────────────────
 
+def ensure_matplotlib() -> None:
+    """Load plotting dependencies only when building the full HTML report."""
+    global plt, patches
+    if plt is not None and patches is not None:
+        return
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.patches as mpl_patches
+    import matplotlib.pyplot as mpl_pyplot
+
+    mpl_pyplot.rcParams["font.sans-serif"] = [
+        "PingFang SC", "Hiragino Sans GB", "Arial Unicode MS", "SimHei"
+    ]
+    mpl_pyplot.rcParams["axes.unicode_minus"] = False
+    mpl_pyplot.rcParams["figure.dpi"] = 110
+    plt = mpl_pyplot
+    patches = mpl_patches
+
+
 def savefig(fig, name: str) -> str:
+    ensure_matplotlib()
     path = FIG_DIR / f"{name}.png"
     fig.savefig(path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -391,6 +407,7 @@ def _draw_car(ax, deltas, colors_w, L=3.16, T=1.565):
 
 def fig_mechanism() -> str:
     """图1：两类机构的失效形态与对应安全机制。"""
+    ensure_matplotlib()
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.8))
     d = math.radians(10)
 
@@ -411,8 +428,8 @@ def fig_mechanism() -> str:
     wheels = _draw_car(axes[1], [math.radians(3), 0, 0, 0],
                        ["#ff9f1c", "#1f77b4", "#1f77b4", "#1f77b4"])
     x, y = wheels[0]
-    arc = matplotlib.patches.Arc((x, y), 1.5, 1.5, angle=0, theta1=-35, theta2=35,
-                                 color="#ff9f1c", lw=2)
+    arc = patches.Arc((x, y), 1.5, 1.5, angle=0, theta1=-35, theta2=35,
+                      color="#ff9f1c", lw=2)
     axes[1].add_patch(arc)
     axes[1].annotate("", xy=(x + 0.75 * math.cos(math.radians(38)),
                              y + 0.75 * math.sin(math.radians(38))),
@@ -429,6 +446,7 @@ def fig_mechanism() -> str:
 
 def fig_timehistory(curves) -> str:
     """图2：最恶性组合（直行 100 · RL 跑飞锁死 +4°）时间历程。"""
+    ensure_matplotlib()
     ref = curves["ref:straight100"]
     base = curves["base:straight100:2:stuck_value"]
     mit = curves["mit:straight100:2:stuck_value"]
@@ -471,6 +489,7 @@ def fig_timehistory(curves) -> str:
 
 def fig_free_front(curves) -> str:
     """图3：前轮自由脚轮失效的两个标志性行为。"""
+    ensure_matplotlib()
     fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.2))
     # 左：弯中失效——δ_FL 松脱到脚轮平衡（α→0）
     base = curves["base:curve60:0:free_caster"]
@@ -517,6 +536,7 @@ def fig_free_front(curves) -> str:
 
 def fig_trajectories(curves) -> str:
     """图4：三工况轨迹俯视（前自由/后锁死 × 缓解）。"""
+    ensure_matplotlib()
     fig, axes = plt.subplots(1, 3, figsize=(13.5, 4.3))
     for ax, scn in zip(axes, ("straight100", "curve60", "dlc60")):
         ref = curves[f"ref:{scn}"]
@@ -544,6 +564,7 @@ def fig_trajectories(curves) -> str:
 
 
 def fig_metric_bars(rows) -> str:
+    ensure_matplotlib()
     fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.6))
     labels, xt_base, xt_mit, yaw_base, yaw_mit = [], [], [], [], []
     seen = []
@@ -582,6 +603,7 @@ def fig_metric_bars(rows) -> str:
 
 
 def fig_sensitivity(curves) -> str:
+    ensure_matplotlib()
     sens = curves["sensitivity"]
     td = [s["detect_delay"] for s in sens]
     fig, ax1 = plt.subplots(figsize=(7.2, 4.2))
@@ -604,6 +626,7 @@ def fig_sensitivity(curves) -> str:
 
 
 def fig_c_matrix(rows) -> str:
+    ensure_matplotlib()
     keys = []
     for r in rows:
         k = (r["scenario"], r["wheel"], r["fault"])
@@ -638,6 +661,7 @@ def fig_c_matrix(rows) -> str:
 
 def fig_tornado(param_sens) -> str:
     """图8：参数敏感性龙卷风图（锚 A：后轮锁死缓解后 xtrack@2.5s）。"""
+    ensure_matplotlib()
     items = []
     for key, d in param_sens["A"].items():
         vals = [p["xtrack_2_5s"] for p in d["points"]]
@@ -667,6 +691,7 @@ def fig_tornado(param_sens) -> str:
 
 def fig_param_curves(param_sens) -> str:
     """图9：关键参数曲线。"""
+    ensure_matplotlib()
     fig, axes = plt.subplots(1, 3, figsize=(13, 4.0))
 
     d = param_sens["A"]["c_alpha"]
@@ -713,6 +738,7 @@ def fig_param_curves(param_sens) -> str:
 
 
 def fig_actuator_cost(curves) -> str:
+    ensure_matplotlib()
     mit = curves["mit:straight100:2:stuck_value"]
     t = np.asarray(mit.t) - 9.0
     fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.0))
@@ -746,45 +772,58 @@ def build_html(rows, curves, param_sens, figs: dict[str, str]) -> str:
     sens = curves["sensitivity"]
 
     def matrix_table() -> str:
-        head = ("<tr><th>工况</th><th>失效轮</th><th>失效形态</th><th>缓解</th>"
-                "<th>Δψ@2s [°]</th><th>横向偏差@1.2s [m]</th><th>横向偏差@2.5s [m]</th>"
-                "<th>TTLD [s]</th><th>Δr峰值 [°/s]</th><th>Δa_y峰值 [m/s²]</th>"
-                "<th>β峰值 [°]</th><th>C 级</th></tr>")
-        body = ""
+        headers = [
+            "工况", "失效轮", "失效形态", "缓解", "Δψ@2s [°]",
+            "横向偏差@1.2s [m]", "横向偏差@2.5s [m]", "TTLD [s]",
+            "Δr峰值 [°/s]", "Δa_y峰值 [m/s²]", "β峰值 [°]", "C 级",
+        ]
+        table_rows = []
         for r in rows:
             cc = r["c_class"]
-            body += (f"<tr><td>{SCN_LABELS[r['scenario']]}</td>"
-                     f"<td>{WHEEL_NAMES[r['wheel']]}</td><td>{FAULT_NAMES[r['fault']]}</td>"
-                     f"<td>{'—' if r['mitigation'] == 'baseline' else '开'}</td>"
-                     f"<td>{fmt(r['dpsi_2s_deg'])}</td><td>{fmt(r['xtrack_react'])}</td>"
-                     f"<td>{fmt(r['xtrack_2_5s'])}</td><td>{fmt(r['ttld_s'], 1)}</td>"
-                     f"<td>{fmt(r['dyaw_peak_dps'], 1)}</td><td>{fmt(r['ay_peak'], 1)}</td>"
-                     f"<td>{fmt(r['beta_peak_deg'], 1)}</td>"
-                     f"<td style='color:{C_COLORS[cc]};font-weight:700'>{cc}</td></tr>")
-        return f"<table>{head}{body}</table>"
+            table_rows.append([
+                SCN_LABELS[r["scenario"]],
+                WHEEL_NAMES[r["wheel"]],
+                FAULT_NAMES[r["fault"]],
+                "—" if r["mitigation"] == "baseline" else "开",
+                fmt(r["dpsi_2s_deg"]),
+                fmt(r["xtrack_react"]),
+                fmt(r["xtrack_2_5s"]),
+                fmt(r["ttld_s"], 1),
+                fmt(r["dyaw_peak_dps"], 1),
+                fmt(r["ay_peak"], 1),
+                fmt(r["beta_peak_deg"], 1),
+                html_cell(cc, {"style": f"color:{C_COLORS[cc]};font-weight:700"}),
+            ])
+        return html_table(headers, table_rows)
 
     def sens_table() -> str:
-        head = ("<tr><th>τ_d [s]</th><th>偏差@1.2s [m]</th><th>偏差@2.5s [m]</th>"
-                "<th>Δr峰值 [°/s]</th><th>TTLD [s]</th><th>C 级</th></tr>")
-        body = "".join(
-            f"<tr><td>{s['detect_delay']:.2f}</td><td>{fmt(s['xtrack_react'])}</td>"
-            f"<td>{fmt(s['xtrack_2_5s'])}</td><td>{fmt(s['dyaw_peak_dps'], 1)}</td>"
-            f"<td>{fmt(s['ttld_s'], 1)}</td>"
-            f"<td style='color:{C_COLORS[s['c_class']]};font-weight:700'>{s['c_class']}</td></tr>"
-            for s in sens)
-        return f"<table>{head}{body}</table>"
+        return html_table(
+            ["τ_d [s]", "偏差@1.2s [m]", "偏差@2.5s [m]", "Δr峰值 [°/s]", "TTLD [s]", "C 级"],
+            [
+                [
+                    f"{s['detect_delay']:.2f}",
+                    fmt(s["xtrack_react"]),
+                    fmt(s["xtrack_2_5s"]),
+                    fmt(s["dyaw_peak_dps"], 1),
+                    fmt(s["ttld_s"], 1),
+                    html_cell(s["c_class"], {"style": f"color:{C_COLORS[s['c_class']]};font-weight:700"}),
+                ]
+                for s in sens
+            ],
+        )
 
     def param_table(anchor: str, metric: str, metric_label: str) -> str:
-        head = f"<tr><th>参数</th><th>取值</th><th>{metric_label}</th><th>C 级</th></tr>"
-        body = ""
+        table_rows = []
         for key, d in param_sens[anchor].items():
-            for j, p in enumerate(d["points"]):
-                first = f"<td rowspan={len(d['points'])}>{d['label']} [{d['unit']}]</td>" if j == 0 else ""
+            for p in d["points"]:
                 mark = " <b>*</b>" if abs(p["value"] - d["base"]) < 1e-9 else ""
-                body += (f"<tr>{first}<td>{p['value']:g}{mark}</td>"
-                         f"<td>{fmt(p[metric])}</td>"
-                         f"<td style='color:{C_COLORS[p['c_class']]};font-weight:700'>{p['c_class']}</td></tr>")
-        return f"<table>{head}{body}</table><p class='meta'>* = LS9 基准值</p>"
+                table_rows.append([
+                    f"{d['label']} [{d['unit']}]",
+                    html_cell(f"{p['value']:g}{mark}", raw=True),
+                    fmt(p[metric]),
+                    html_cell(p["c_class"], {"style": f"color:{C_COLORS[p['c_class']]};font-weight:700"}),
+                ])
+        return html_table(["参数", "取值", metric_label, "C 级"], table_rows) + "<p class='meta'>* = LS9 基准值</p>"
 
     b = next(r for r in rows if r["scenario"] == "straight100" and r["wheel"] == 2
              and r["mitigation"] == "baseline")
@@ -796,8 +835,7 @@ def build_html(rows, curves, param_sens, figs: dict[str, str]) -> str:
                 and r["mitigation"] == "baseline")
 
     def img(key, alt):
-        return (f'<figure><img src="data:image/png;base64,{figs[key]}" alt="{alt}" '
-                f'style="max-width:100%"/></figure>')
+        return embedded_png_figure(figs[key], alt)
 
     n_cases = len(rows) // 2
     n_c3_base = sum(1 for r in rows if r["mitigation"] == "baseline" and r["c_class"] == "C3")

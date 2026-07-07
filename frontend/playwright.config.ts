@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  timeout: 30_000,
+  timeout: 45_000,
   expect: {
     timeout: 10_000,
   },
@@ -14,9 +14,17 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "../backend/.venv/bin/python -m uvicorn sim4wis.main:app --host 127.0.0.1 --port 8010",
+    command: [
+      "rm -rf test-results/e2e-data",
+      "mkdir -p test-results/e2e-data/experiments test-results/e2e-data/runs",
+      [
+        "SIM4WIS_EXPERIMENTS_DIR=test-results/e2e-data/experiments",
+        "SIM4WIS_RUNS_DIR=test-results/e2e-data/runs",
+        "../backend/.venv/bin/python -m uvicorn sim4wis.main:app --host 127.0.0.1 --port 8010",
+      ].join(" "),
+    ].join(" && "),
     url: "http://127.0.0.1:8010/health",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 30_000,
   },
   projects: [

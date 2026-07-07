@@ -19,8 +19,8 @@ v1.0 只有在以下门槛都满足时才应发布：
 
 - 已完成：`docs/validation_matrix.md` 建立 L0-L4 可信度口径。
 - 已完成：`scripts/check_golden_experiments.py` + `docs/golden_experiments.json` 覆盖 step steer 和 ISO 3888 DLC。
-- 下一步：把单轮失效关键场景压缩成 2-3 个快速黄金样本，避免完整 170-run 报告成为唯一回归证据。
-- 下一步：给黄金实验基线更新建立 CHANGELOG 模板，说明指标变化是模型修正、参数修正还是数值漂移。
+- 已完成：把单轮失效关键场景压缩成 3 个快速黄金样本，覆盖后轮跑飞锁死未缓解 C3、同工况缓解后 C2、前轮自由脚轮弯中 C2，避免完整 170-run 报告成为唯一回归证据。
+- 已完成：`docs/golden_baseline_changelog.md` 建立黄金实验基线更新模板，要求说明指标变化是模型修正、参数修正、数值漂移还是实验定义变化。
 
 ### P1: 外部对照
 
@@ -33,21 +33,21 @@ v1.0 只有在以下门槛都满足时才应发布：
 ### P2: 浏览器自动化
 
 - 已完成：引入 Playwright workflow smoke，覆盖生产 app shell 中运行页、试验页、分析页、车辆页、场景页、负载页、原理页的关键渲染，并纳入 `scripts/pre_release_check.py`。
-- 下一步：试验页加载种子实验、分析页打开已有 run。
+- 已完成：Playwright 现在会从试验页启动默认种子实验，等待 batch 完成，并通过“去分析页”链路验证已有 run 的 KPI 对比和通道叠图渲染。
 - 第二批场景：拖拽车辆几何控制点、触发实验批跑、回放时间轴、命令面板导航。
 - 通过截图/DOM 断言减少手册截图和人工端到端验证的遗漏。
 
 ### P3: 研究报告流水线
 
 - 已完成：`scripts/reporting.py` 抽出图片 base64 和 JSON 写入工具。
-- 下一步：把 HTML 章节拼接、图表索引、指标表格渲染继续抽成小型 report kit。
+- 已完成：`scripts/reporting.py` 扩展为小型 report kit，集中提供 HTML 属性转义、表格单元格、HTML table 与内嵌 PNG figure；单轮失效报告的指标表和图片嵌入已改为复用这些 helper。
 - 下一步：让新的故障研究脚本复用同一套报告骨架，避免每个研究复制一份 HTML 模板。
 
 ### P4: 前端结构与性能
 
 - 已完成：对试验页、分析页、车辆几何工作室、负载页、模型原理页做动态 import；主 JS chunk 从约 1018 kB 降到约 609 kB。
-- 下一步：继续评估 `Canvas3D` 和图表库的手动分包边界，避免运行页首屏承担非必要页面成本。
-- 给 Vite chunk warning 建立门槛：允许已知 3D 包偏大，但主 bundle 不应持续增长。
+- 已完成：运行页非默认侧栏组改为首次打开时懒加载、之后保持挂载；实时曲线/uPlot、设计、验证、数据、场景编辑面板不再进入默认首屏主包。主 JS chunk 进一步降到约 502 kB。
+- 已完成：Vite chunk warning 门槛设为 650 kB；允许默认主包在 650 kB 以下，已知 `Canvas3D`/Three.js opt-in chunk 仍保持 warning 可见。
 - 把全局样式按页面/组件逐步收敛，避免新增页面改动影响现有工具面板。
 
 ### P5: 实物验证接入

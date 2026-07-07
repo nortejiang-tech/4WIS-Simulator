@@ -90,6 +90,7 @@ backend/.venv/bin/python scripts/study_single_wheel_failure.py
 ```
 
 输出位于 `docs/reports/`，包括 `single_wheel_failure_safety_analysis.html` 和指标 JSON。该报告用于内部机制研究，不应直接作为实车 ISO 26262 认证证据。
+报告脚本依赖 backend dev 环境中的 `matplotlib`；首次复现前请确保已安装 `backend[dev]`。
 
 ## 验证
 
@@ -99,8 +100,7 @@ backend/.venv/bin/python scripts/study_single_wheel_failure.py
 python scripts/pre_release_check.py
 ```
 
-该脚本会检查版本一致性、前端 lockfile、后端 pytest、smoke、前端 type-check 和生产构建。
-其中后端测试门禁还包括黄金实验 KPI 回归。
+该脚本会检查版本一致性、前端 lockfile、后端 pytest、smoke、黄金实验 KPI 回归、前端 type-check、生产构建和 Playwright 浏览器 smoke。
 
 常用单项命令：
 
@@ -176,6 +176,7 @@ python scripts/build_portable.py --targets macos-arm64 windows-x64 --update
 - [docs/validation_matrix.md](docs/validation_matrix.md) - 当前能力可信度、证据和边界。
 - [docs/v1_release_plan.md](docs/v1_release_plan.md) - v1.0 收敛路线和完成定义。
 - [docs/reference_benchmark_protocol.md](docs/reference_benchmark_protocol.md) - 外部工具/实测数据对照协议。
+- [docs/golden_baseline_changelog.md](docs/golden_baseline_changelog.md) - 黄金实验基线更新说明模板和变更记录。
 - [docs/v1_platform_refactor_plan.md](docs/v1_platform_refactor_plan.md) - 平台化重构路线。
 - [docs/load_analysis_handoff.md](docs/load_analysis_handoff.md) - 转向负载分析页面和 API 交接说明。
 - [docs/reports/single_wheel_failure_safety_analysis.html](docs/reports/single_wheel_failure_safety_analysis.html) - 单轮失效功能安全研究报告。
