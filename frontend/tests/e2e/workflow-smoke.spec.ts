@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
 async function dragBy(locator: Locator, dx: number, dy: number) {
   const box = await locator.boundingBox();
@@ -45,6 +45,12 @@ async function expectCanvasHasDrawnPixels(locator: Locator) {
   expect(stats.ink).toBeGreaterThan(200);
 }
 
+async function attachPageScreenshot(page: Page, testInfo: TestInfo, name: string) {
+  const screenshot = await page.screenshot({ fullPage: true });
+  expect(screenshot.length).toBeGreaterThan(10_000);
+  await testInfo.attach(name, { body: screenshot, contentType: "image/png" });
+}
+
 async function chartCursorX(locator: Locator) {
   return locator.evaluate((el) => Number((el as HTMLElement).dataset.chartCursorX));
 }
@@ -63,7 +69,7 @@ async function dragChartSelection(locator: Locator, fromRatio: number, toRatio: 
   await locator.page().mouse.up();
 }
 
-test("workflow rail pages render from the production app shell", async ({ page }) => {
+test("workflow rail pages render from the production app shell", async ({ page }, testInfo) => {
   await page.goto("/");
 
   await expect(page.locator(".brand")).toHaveText("4WIS");
@@ -71,27 +77,34 @@ test("workflow rail pages render from the production app shell", async ({ page }
   const rail = page.getByRole("navigation", { name: "工作流" });
   await expect(rail).toBeVisible();
   await expect(rail.getByRole("button", { name: /运行/ })).toHaveClass(/active/);
+  await attachPageScreenshot(page, testInfo, "workflow-run");
 
   await rail.getByRole("button", { name: /试验/ }).click();
   await expect(page.getByText("运行矩阵")).toBeVisible();
+  await attachPageScreenshot(page, testInfo, "workflow-experiment");
 
   await rail.getByRole("button", { name: /分析/ }).click();
   await expect(page.getByText("还没有 run — 到「试验」页跑一个批量")).toBeVisible();
   await expect(page.getByText(/从左侧选择 1.*6 个 run/)).toBeVisible();
+  await attachPageScreenshot(page, testInfo, "workflow-analysis-empty");
 
   await rail.getByRole("button", { name: /车辆/ }).click();
   await expect(page.getByText("车辆 / 悬架参数").first()).toBeVisible();
   await expect(page.getByRole("img", { name: "整车俯视参数示意" })).toBeVisible();
+  await attachPageScreenshot(page, testInfo, "workflow-vehicle");
 
   await rail.getByRole("button", { name: /场景/ }).click();
   await expect(page.getByText("场景").first()).toBeVisible();
   await expect(page.getByText("轨迹 / 路径").first()).toBeVisible();
+  await attachPageScreenshot(page, testInfo, "workflow-scenario");
 
   await rail.getByRole("button", { name: /负载/ }).click();
   await expect(page.getByText("实时四轮负载")).toBeVisible();
+  await attachPageScreenshot(page, testInfo, "workflow-load");
 
   await rail.getByRole("button", { name: /原理/ }).click();
   await expect(page.getByText("4WIS foundation model")).toBeVisible();
+  await attachPageScreenshot(page, testInfo, "workflow-theory");
 });
 
 test("experiment run can be handed to analysis with chart controls and screenshot evidence", async ({ page }, testInfo) => {
