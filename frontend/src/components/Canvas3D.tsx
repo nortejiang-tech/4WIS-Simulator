@@ -17,7 +17,25 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Grid, OrbitControls } from "@react-three/drei";
-import * as THREE from "three";
+import {
+  BufferAttribute,
+  BufferGeometry,
+  CylinderGeometry,
+  DoubleSide,
+  ExtrudeGeometry,
+  Float32BufferAttribute,
+  Group,
+  Line,
+  LineBasicMaterial,
+  Mesh,
+  MeshStandardMaterial,
+  Object3D,
+  Shape,
+  ShapeGeometry,
+  SphereGeometry,
+  Vector2,
+  Vector3,
+} from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { useSimStore } from "@/store/sim";
@@ -46,12 +64,12 @@ function muHex(mu: number): number {
 }
 
 function Vehicle({ geom }: { geom: Geom }) {
-  const root = useRef<THREE.Group>(null);
-  const sprung = useRef<THREE.Group>(null);  // body shell — heaves + rolls + pitches
+  const root = useRef<Group>(null);
+  const sprung = useRef<Group>(null);  // body shell — heaves + rolls + pitches
   // Per-wheel steer groups + spin meshes.
-  const steerRefs = useRef<(THREE.Group | null)[]>([null, null, null, null]);
-  const spinRefs = useRef<(THREE.Group | null)[]>([null, null, null, null]);
-  const tireMats = useRef<(THREE.MeshStandardMaterial | null)[]>([null, null, null, null]);
+  const steerRefs = useRef<(Group | null)[]>([null, null, null, null]);
+  const spinRefs = useRef<(Group | null)[]>([null, null, null, null]);
+  const tireMats = useRef<(MeshStandardMaterial | null)[]>([null, null, null, null]);
   const spin = useRef<number[]>([0, 0, 0, 0]);
 
   const { L, tF, tR, tireR } = geom;
@@ -158,8 +176,8 @@ function bodyToWorld(px: number, py: number, psi: number, bx: number, by: number
 }
 
 function IcrMarkers() {
-  const actual = useRef<THREE.Mesh>(null);
-  const target = useRef<THREE.Mesh>(null);
+  const actual = useRef<Mesh>(null);
+  const target = useRef<Mesh>(null);
 
   useFrame(() => {
     const st = useSimStore.getState().state;
@@ -205,23 +223,23 @@ function IcrMarkers() {
 // ---------- Trajectory trail ----------
 
 function Trajectory() {
-  const ref = useRef<THREE.Line>(null);
+  const ref = useRef<Line>(null);
   const geom = useMemo(() => {
-    const g = new THREE.BufferGeometry();
+    const g = new BufferGeometry();
     const positions = new Float32Array(TRAJ_MAX * 3);
-    g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    g.setAttribute("position", new BufferAttribute(positions, 3));
     g.setDrawRange(0, 0);
     return g;
   }, []);
   const mat = useMemo(
-    () => new THREE.LineBasicMaterial({ color: "#22d3ee", transparent: true, opacity: 0.8 }),
+    () => new LineBasicMaterial({ color: "#22d3ee", transparent: true, opacity: 0.8 }),
     [],
   );
 
   useFrame(() => {
     const traj = useSimStore.getState().trajectory;
     const n = Math.min(traj.length / 2, TRAJ_MAX);
-    const pos = geom.getAttribute("position") as THREE.BufferAttribute;
+    const pos = geom.getAttribute("position") as BufferAttribute;
     const arr = pos.array as Float32Array;
     const start = Math.max(0, traj.length / 2 - TRAJ_MAX) * 2;
     for (let i = 0; i < n; i++) {
@@ -235,7 +253,7 @@ function Trajectory() {
     geom.setDrawRange(0, n);
   });
 
-  return <primitive object={new THREE.Line(geom, mat)} ref={ref} />;
+  return <primitive object={new Line(geom, mat)} ref={ref} />;
 }
 
 // ---------- A/B comparison overlay ----------
@@ -245,12 +263,12 @@ function RunOverlay({ sig }: { sig: string }) {
     const { A, B } = useSimStore.getState().savedRuns;
     const make = (traj: number[] | undefined, color: number) => {
       if (!traj || traj.length < 4) return null;
-      const pts: THREE.Vector3[] = [];
-      for (let i = 0; i < traj.length; i += 2) pts.push(new THREE.Vector3(traj[i], 0.04, -traj[i + 1]));
-      const g = new THREE.BufferGeometry().setFromPoints(pts);
-      return new THREE.Line(g, new THREE.LineBasicMaterial({ color }));
+      const pts: Vector3[] = [];
+      for (let i = 0; i < traj.length; i += 2) pts.push(new Vector3(traj[i], 0.04, -traj[i + 1]));
+      const g = new BufferGeometry().setFromPoints(pts);
+      return new Line(g, new LineBasicMaterial({ color }));
     };
-    return [make(A?.trajectory, 0x34d399), make(B?.trajectory, 0xfb923c)].filter(Boolean) as THREE.Line[];
+    return [make(A?.trajectory, 0x34d399), make(B?.trajectory, 0xfb923c)].filter(Boolean) as Line[];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig]);
   return <>{lines.map((l, i) => <primitive key={i} object={l} />)}</>;
@@ -269,11 +287,11 @@ function ReferencePath({ pathSig }: { pathSig: string }) {
 
   const line = useMemo(() => {
     if (data.points.length < 2) return null;
-    const pts = data.points.map(([x, y]) => new THREE.Vector3(x, 0.05, -y));
+    const pts = data.points.map(([x, y]) => new Vector3(x, 0.05, -y));
     if (data.closed && pts.length > 2) pts.push(pts[0].clone());
-    const g = new THREE.BufferGeometry().setFromPoints(pts);
-    const m = new THREE.LineBasicMaterial({ color: "#f472b6" });
-    return new THREE.Line(g, m);
+    const g = new BufferGeometry().setFromPoints(pts);
+    const m = new LineBasicMaterial({ color: "#f472b6" });
+    return new Line(g, m);
   }, [data]);
 
   return (
@@ -291,7 +309,7 @@ function ReferencePath({ pathSig }: { pathSig: string }) {
 
 // ---------- Static scenario (roads / markings / lights) ----------
 
-function ribbonGeometry(points: [number, number][], width: number, h: number): THREE.BufferGeometry {
+function ribbonGeometry(points: [number, number][], width: number, h: number): BufferGeometry {
   const hw = width / 2;
   const pos: number[] = [];
   for (let i = 0; i < points.length - 1; i++) {
@@ -304,18 +322,18 @@ function ribbonGeometry(points: [number, number][], width: number, h: number): T
     const bL = w(x2 + nx, y2 + ny), bR = w(x2 - nx, y2 - ny);
     pos.push(...aL, ...aR, ...bL, ...aR, ...bR, ...bL);
   }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  const g = new BufferGeometry();
+  g.setAttribute("position", new Float32BufferAttribute(pos, 3));
   g.computeVertexNormals();
   return g;
 }
 
-function surfaceMesh(points: [number, number][], color: string, h: number): THREE.Mesh {
-  const shape = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)));
-  const geom = new THREE.ShapeGeometry(shape);
+function surfaceMesh(points: [number, number][], color: string, h: number): Mesh {
+  const shape = new Shape(points.map(([x, y]) => new Vector2(x, y)));
+  const geom = new ShapeGeometry(shape);
   geom.rotateX(-Math.PI / 2);   // lay flat: shape (x,y)→three (x,0,-y)
-  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.95, metalness: 0.0 });
-  const mesh = new THREE.Mesh(geom, mat);
+  const mat = new MeshStandardMaterial({ color, roughness: 0.95, metalness: 0.0 });
+  const mesh = new Mesh(geom, mat);
   mesh.position.y = h;
   mesh.receiveShadow = true;
   return mesh;
@@ -324,17 +342,17 @@ function surfaceMesh(points: [number, number][], color: string, h: number): THRE
 // Extruded building/landmark — footprint rises along +y. Height is a
 // deterministic pseudo-random function of the centroid so a town gets a varied,
 // crowded roofline without any per-building data.
-function buildingMesh(points: [number, number][], color: string, landmark: boolean): THREE.Mesh {
-  const shape = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)));
+function buildingMesh(points: [number, number][], color: string, landmark: boolean): Mesh {
+  const shape = new Shape(points.map(([x, y]) => new Vector2(x, y)));
   let cx = 0, cy = 0;
   for (const [x, y] of points) { cx += x; cy += y; }
   cx /= points.length; cy /= points.length;
   const r = Math.abs(Math.sin(cx * 12.9898 + cy * 78.233) * 43758.5453) % 1;
   const height = landmark ? 24 + r * 10 : 7 + r * 9;
-  const geom = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
+  const geom = new ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
   geom.rotateX(-Math.PI / 2);   // shape (x,y,z)→three (x,z,-y): extrude rises +y from ground
-  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.9, metalness: 0.0 });
-  const mesh = new THREE.Mesh(geom, mat);
+  const mat = new MeshStandardMaterial({ color, roughness: 0.9, metalness: 0.0 });
+  const mesh = new Mesh(geom, mat);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
@@ -343,10 +361,10 @@ function buildingMesh(points: [number, number][], color: string, landmark: boole
 const TL3D: Record<string, number> = { red: 0xef4444, yellow: 0xfacc15, green: 0x22c55e };
 
 function Scenario3D({ sig }: { sig: string }) {
-  const objects = useMemo<THREE.Object3D[]>(() => {
+  const objects = useMemo<Object3D[]>(() => {
     const sc = useSimStore.getState().scenario;
     if (!sc) return [];
-    const out: THREE.Object3D[] = [];
+    const out: Object3D[] = [];
     const kindH: Record<string, number> = {
       grass: 0.0, water: -0.06, road: 0.01, plaza: 0.012, sidewalk: 0.02, paint: 0.05,
     };
@@ -361,24 +379,24 @@ function Scenario3D({ sig }: { sig: string }) {
     sc.lines.forEach((ln) => {
       if (ln.points.length >= 2) {
         const geom = ribbonGeometry(ln.points, Math.max(0.12, ln.width), 0.06);
-        const mat = new THREE.MeshStandardMaterial({ color: ln.color, roughness: 0.8 });
-        out.push(new THREE.Mesh(geom, mat));
+        const mat = new MeshStandardMaterial({ color: ln.color, roughness: 0.8 });
+        out.push(new Mesh(geom, mat));
       }
     });
     sc.markers.forEach((m) => {
       if (m.type === "traffic_light") {
-        const g = new THREE.Group();
+        const g = new Group();
         const [px, , pz] = w2t(m.x, m.y, 0);
-        const pole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.08, 0.08, 3.0, 8),
-          new THREE.MeshStandardMaterial({ color: "#2b2f36" }),
+        const pole = new Mesh(
+          new CylinderGeometry(0.08, 0.08, 3.0, 8),
+          new MeshStandardMaterial({ color: "#2b2f36" }),
         );
         pole.position.set(px, 1.5, pz);
         g.add(pole);
         const state = (m.meta?.state as string) || "red";
-        const lamp = new THREE.Mesh(
-          new THREE.SphereGeometry(0.32, 12, 12),
-          new THREE.MeshStandardMaterial({
+        const lamp = new Mesh(
+          new SphereGeometry(0.32, 12, 12),
+          new MeshStandardMaterial({
             color: TL3D[state] ?? 0xef4444,
             emissive: TL3D[state] ?? 0xef4444,
             emissiveIntensity: 0.7,
@@ -437,11 +455,11 @@ function DisturbanceMesh({ d }: { d: DisturbanceMsg }) {
         {/* left half = +Y world = -Z three */}
         <mesh position={[0, 0.015, -wid / 4]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[len, wid / 2]} />
-          <meshStandardMaterial color={muColor(d.mu_left)} transparent opacity={0.4} side={THREE.DoubleSide} />
+          <meshStandardMaterial color={muColor(d.mu_left)} transparent opacity={0.4} side={DoubleSide} />
         </mesh>
         <mesh position={[0, 0.015, wid / 4]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[len, wid / 2]} />
-          <meshStandardMaterial color={muColor(d.mu_right)} transparent opacity={0.4} side={THREE.DoubleSide} />
+          <meshStandardMaterial color={muColor(d.mu_right)} transparent opacity={0.4} side={DoubleSide} />
         </mesh>
       </group>
     );
@@ -451,7 +469,7 @@ function DisturbanceMesh({ d }: { d: DisturbanceMsg }) {
     <group position={[cx, cy, cz]} rotation={[0, d.heading, 0]}>
       <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[len, wid]} />
-        <meshStandardMaterial color={muColor(d.mu)} transparent opacity={0.45} side={THREE.DoubleSide} />
+        <meshStandardMaterial color={muColor(d.mu)} transparent opacity={0.45} side={DoubleSide} />
       </mesh>
     </group>
   );

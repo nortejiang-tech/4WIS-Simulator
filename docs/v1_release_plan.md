@@ -70,7 +70,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 
 - 已完成：对试验页、分析页、车辆几何工作室、负载页、模型原理页做动态 import；主 JS chunk 从约 1018 kB 降到约 609 kB。
 - 已完成：运行页非默认侧栏组改为首次打开时懒加载、之后保持挂载；实时曲线/uPlot、设计、验证、数据、场景编辑面板不再进入默认首屏主包。主 JS chunk 进一步降到约 502 kB。
-- 已完成：Vite chunk warning 门槛设为 650 kB；允许默认主包在 650 kB 以下，已知 `Canvas3D`/Three.js opt-in chunk 仍保持 warning 可见。
+- 已完成：`Canvas3D`/Three.js 依赖拆成懒加载 3D vendor chunks；构建期预算插件把默认入口 chunk 限在 500 kB 内、`vendor-three-core` 限在 700 kB 内。当前构建默认 `index` chunk 353.79 kB，最大 3D vendor chunk `vendor-three-core` 666.67 kB，生产构建无 chunk warning。
 - 把全局样式按页面/组件逐步收敛，避免新增页面改动影响现有工具面板。
 
 ### P5: 实物验证接入
