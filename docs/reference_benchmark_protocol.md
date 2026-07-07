@@ -82,7 +82,7 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/rep
 
 报告会汇总每个 benchmark 的来源、limitations、warnings/failures、每项指标的 Sim/Reference/Delta/Tolerance 和 `notes.md` 摘要。该报告只是复现性与人工评审材料，不能自动提升 `docs/validation_matrix.md` 的可信度等级。
 
-当前支持自动对照的指标包括：
+当前支持从 `reference.csv` 自动计算参考值的指标包括：
 
 - `yaw_rate_peak_dps`
 - `vy_peak_kmh`
@@ -91,10 +91,12 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/rep
 - `trajectory_error_rms_m`
 - `trajectory_error_peak_m`
 
+`manifest.metrics` 也可以为 Sim4WIS KPI 提供显式 `reference_value`；只要该指标名存在于 `compute_kpis` 输出中，checker 会直接比较仿真 KPI 与 manifest 参考值。
+
 ## 当前状态
 
 - 已有内部黄金实验：`docs/golden_experiments.json`。
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
 - 已有参考数据结构 checker 与 reviewer report 输出：`scripts/check_reference_benchmarks.py`。
-- 已有首个解析参考 benchmark：`validation_data/analytic_steady_circle_30kmh/`。
+- 已有两个解析参考 benchmark：`validation_data/analytic_steady_circle_30kmh/` 和 `validation_data/analytic_step_steer_30kmh/`。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。

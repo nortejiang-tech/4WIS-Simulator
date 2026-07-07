@@ -27,8 +27,9 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：建立 `docs/reference_benchmark_protocol.md` 与 `validation_data/` 数据接入结构，明确外部/实测证据不能用内部测试替代。
 - 已完成：`scripts/check_reference_benchmarks.py` 可校验 benchmark 目录、manifest、CSV 最小通道、实验 YAML，并在有数据时运行 Sim4WIS 对比指标；默认空目录只提示外部证据缺失，`--require-data` 可强制失败。
 - 已完成：reference checker 可用 `--report` 生成 reviewer-facing Markdown，汇总来源、limitations、warnings/failures、指标误差表和 `notes.md` 摘要；报告明确不自动提升可信度等级。
-- 已完成：接入首个解析参考 benchmark `validation_data/analytic_steady_circle_30kmh/`，覆盖 kinematic ideal-Ackermann 稳态圆周，对照横摆率、侧向速度、速度误差、横向位移和轨迹误差 6 个指标。
-- 继续补齐 2-3 个公开或可导出的参考工况：阶跃转向、双移线，以及至少一个外部工具或实测来源。
+- 已完成：接入解析参考 benchmark `validation_data/analytic_steady_circle_30kmh/`，覆盖 kinematic ideal-Ackermann 稳态圆周，对照横摆率、侧向速度、速度误差、横向位移和轨迹误差 6 个指标。
+- 已完成：接入第二个解析参考 benchmark `validation_data/analytic_step_steer_30kmh/`，覆盖 kinematic ideal-Ackermann 30 km/h 阶跃转向，对照横摆峰值、横摆增益、上升/稳定时间、侧向速度、速度误差、横向位移和轨迹误差 9 个指标。
+- 继续补齐公开或可导出的参考工况：ISO 3888 双移线，以及至少一个外部工具或实测来源。
 - 对每个新增工况保存参考来源、车辆参数映射、目标指标和误差解释。
 - 优先对照 `yaw_rate_peak_dps`、稳态横摆增益、速度跟踪 RMS、侧偏角峰值、轨迹横向偏差。
 - 目标是把运动学/轮胎/简化动力学关键能力从内部 L2/L3 推进到更强的 L3 参考证据；L4 仍必须等待台架、缩比车或实车数据。

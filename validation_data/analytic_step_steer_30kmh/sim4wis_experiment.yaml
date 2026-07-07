@@ -1,0 +1,29 @@
+name: analytic_step_steer_30kmh
+description: Analytic step-steer reference for kinematic ideal Ackermann at 30 km/h.
+vehicle:
+  profile: null
+  overrides: {}
+model_type: kinematic
+strategy: ideal_ackermann
+mode_params: {}
+scene: null
+path: null
+maneuver:
+  name: step_steer
+  steps:
+  - name: 30 km/h steering step
+    duration: 8.0
+    steer:
+      kind: step
+      amplitude: 0.05
+      freq_hz: 0.5
+      f0_hz: 0.1
+      f1_hz: 2.0
+      t_step: 1.0
+      start: 0.0
+    speed_kmh: 30.0
+    speed_ramp_s: 0.0
+    mode_params: {}
+dt: 0.005
+record_hz: 50.0
+kpis: []

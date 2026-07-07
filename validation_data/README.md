@@ -1,6 +1,6 @@
 # validation_data
 
-该目录用于保存解析参考、外部参考模型、台架、缩比车或实车验证数据。当前仓库已包含一个解析参考 benchmark；不得把未经说明的数据放入这里，也不得把解析数据包装成外部工具或实测证据。
+该目录用于保存解析参考、外部参考模型、台架、缩比车或实车验证数据。当前仓库已包含两个解析参考 benchmark；不得把未经说明的数据放入这里，也不得把解析数据包装成外部工具或实测证据。
 
 目录结构：
 
@@ -36,7 +36,7 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-data
 ```
 
-当前 checker 支持以下自动对照指标：
+当前 checker 支持以下从 `reference.csv` 自动计算参考值的指标：
 
 - `yaw_rate_peak_dps`
 - `vy_peak_kmh`
@@ -45,7 +45,7 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-data
 - `trajectory_error_rms_m`
 - `trajectory_error_peak_m`
 
-每个 `manifest.json` 的 `metrics` 项至少需要给出 `abs_tol`、`rel_tol` 或 `tolerance` 之一；也可以提供 `reference_value` 覆盖从 `reference.csv` 自动计算出的参考值。
+每个 `manifest.json` 的 `metrics` 项至少需要给出 `abs_tol`、`rel_tol` 或 `tolerance` 之一；也可以提供 `reference_value` 覆盖从 `reference.csv` 自动计算出的参考值。对 Sim4WIS 已输出的 KPI，checker 会按同名 KPI 与 manifest 的 `reference_value` 直接比较。
 
 需要生成给评审人看的 Markdown 摘要时：
 
@@ -58,3 +58,4 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/rep
 ## 当前 benchmark
 
 - `analytic_steady_circle_30kmh/`：解析稳态圆周参考，覆盖 kinematic ideal-Ackermann 在 30 km/h、归一化转向 0.05 下的横摆率、侧向速度、速度误差、横向位移和轨迹误差。该数据只构成解析 L3 参考证据，不是外部工具或实测证据。
+- `analytic_step_steer_30kmh/`：解析阶跃转向参考，覆盖 kinematic ideal-Ackermann 在 30 km/h、1.0 s 归一化转向阶跃 0.05 下的横摆峰值、横摆增益、上升/稳定时间、侧向速度、速度误差、横向位移和轨迹误差。该数据只构成解析 L3 参考证据，不是外部工具或实测证据。
