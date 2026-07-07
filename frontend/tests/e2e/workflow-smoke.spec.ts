@@ -254,6 +254,39 @@ test("vehicle geometry drag updates the shared parameter edit buffer", async ({ 
   await expect(page.locator(".vg-dirtybar").getByRole("button", { name: "应用" })).toBeEnabled();
 });
 
+test("vehicle parameter rejection keeps edits visible with screenshot evidence", async ({ page }, testInfo) => {
+  await page.route("**/api/params", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 422,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic parameter bounds failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /车辆/ }).click();
+  await expect(page.getByRole("img", { name: "整车俯视参数示意" })).toBeVisible();
+
+  const wheelbaseInput = page.getByLabel("轴距 L (mm)");
+  const before = Number(await wheelbaseInput.inputValue());
+  await wheelbaseInput.fill(String(before + 10));
+  await expect(page.getByText("有未应用的几何改动")).toBeVisible();
+
+  await page.getByRole("button", { name: "应用参数" }).click();
+
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("参数被拒绝：synthetic parameter bounds failure");
+  await expect(page.getByText("有未应用的几何改动")).toBeVisible();
+  await expect(page.getByRole("button", { name: "应用参数" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-vehicle-param-error");
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });

@@ -43,7 +43,8 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 为运行、试验、空分析、车辆、场景、负载、原理页生成 workflow screenshot attachment，并对截图非空做基本断言。
 - 已完成：Playwright 覆盖分析页 run 数据读取失败异常态，断言错误 toast、保留 KPI 表可读，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖试验页 batch 启动失败异常态，断言错误 toast、运行矩阵仍可操作，并生成异常态 screenshot attachment。
-- 下一批场景：更深页面状态、参数校验异常态和更多少见后端失败分支截图。
+- 已完成：Playwright 覆盖车辆页参数应用被拒绝异常态，断言错误 toast、未应用编辑仍保留，并生成异常态 screenshot attachment。
+- 下一批场景：更深页面状态和更多少见后端失败分支截图。
 - 通过截图/DOM 断言减少手册截图和人工端到端验证的遗漏。
 
 ### P3: 研究报告流水线
