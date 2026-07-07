@@ -32,6 +32,10 @@ const DEFAULT_TEMPLATE = `script:
     - { t: 5.0, action: brake,        duration: 2.0 }
 `;
 
+function formatError(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 export default function ScriptPanel() {
   const [library, setLibrary] = useState<string[]>([]);
   const [selected, setSelected] = useState<string>("");
@@ -40,15 +44,25 @@ export default function ScriptPanel() {
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load library on mount
-  useEffect(() => {
+  const refreshLibrary = useCallback(() => {
+    setInfo(null);
     fetchJSON<{ scripts: string[] }>("/api/script/library")
       .then((d) => {
         setLibrary(d.scripts);
-        if (d.scripts.length) setSelected(d.scripts[0]);
+        setError(null);
+        setSelected(d.scripts.length ? d.scripts[0] : "");
       })
-      .catch(() => setLibrary([]));
+      .catch((e) => {
+        setLibrary([]);
+        setSelected("");
+        setError(`读取脚本库失败：${formatError(e)}`);
+      });
   }, []);
+
+  // Load library on mount
+  useEffect(() => {
+    refreshLibrary();
+  }, [refreshLibrary]);
 
   // Poll status while panel is mounted
   const pollStatus = useCallback(() => {
@@ -71,7 +85,7 @@ export default function ScriptPanel() {
       );
       setScriptYaml(r.yaml);
       setInfo(`已载入: ${r.name}`);
-    } catch (e: any) { setError(String(e?.message ?? e)) }
+    } catch (e) { setError(formatError(e)) }
   };
 
   const onStart = async () => {
@@ -85,7 +99,7 @@ export default function ScriptPanel() {
       );
       await fetchJSON("/api/script/start", { method: "POST" });
       setInfo(`运行中: ${loadResp.script_name} (${loadResp.actions} 个动作)`);
-    } catch (e: any) { setError(String(e?.message ?? e)) }
+    } catch (e) { setError(formatError(e)) }
   };
 
   const onStop = async () => {
@@ -93,7 +107,7 @@ export default function ScriptPanel() {
     try {
       await fetchJSON("/api/script/stop", { method: "POST" });
       setInfo("已停止");
-    } catch (e: any) { setError(String(e?.message ?? e)) }
+    } catch (e) { setError(formatError(e)) }
   };
 
   const running = status?.running ?? false;
@@ -112,6 +126,7 @@ export default function ScriptPanel() {
           {library.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <button onClick={loadFromLibrary} disabled={!selected || running}>载入</button>
+        <button onClick={refreshLibrary} disabled={running}>刷新库</button>
       </div>
 
       <textarea
@@ -151,7 +166,11 @@ export default function ScriptPanel() {
         </div>
       )}
       {(info || error) && (
-        <div className="small" style={{ color: error ? "var(--bad)" : "var(--good)", marginTop: 4 }}>
+        <div
+          className="small"
+          role={error ? "alert" : "status"}
+          style={{ color: error ? "var(--bad)" : "var(--good)", marginTop: 4 }}
+        >
           {error ?? info}
         </div>
       )}

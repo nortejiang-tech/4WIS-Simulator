@@ -654,6 +654,30 @@ test("script parse failure stays visible in the script panel", async ({ page, re
   await attachPageScreenshot(page, testInfo, "workflow-script-parse-error");
 });
 
+test("script library failure does not masquerade as an empty script library", async ({ page, request }, testInfo) => {
+  await request.post("/api/script/stop");
+  await page.route("**/api/script/library", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic script library failure" }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "数据" }).click();
+
+  const scriptPanel = page.locator(".panel").filter({ hasText: "动作脚本" });
+  await expect(scriptPanel).toBeVisible();
+  await expect(scriptPanel).toContainText("读取脚本库失败：synthetic script library failure");
+  await expect(scriptPanel.locator("select")).toBeDisabled();
+  await expect(scriptPanel.getByRole("button", { name: "载入" })).toBeDisabled();
+  await expect(scriptPanel.getByRole("button", { name: "刷新库" })).toBeEnabled();
+  await expect(scriptPanel.locator("textarea")).toContainText("name: my_script");
+
+  await attachPageScreenshot(page, testInfo, "workflow-script-library-error");
+});
+
 test("recording panel records samples and exports csv", async ({ page, request }, testInfo) => {
   await request.post("/api/recording/stop");
 
