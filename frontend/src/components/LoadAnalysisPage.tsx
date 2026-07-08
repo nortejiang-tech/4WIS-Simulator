@@ -17,6 +17,7 @@ import { LoadKpis } from "./load/LoadKpis";
 import { LoadLivePanel } from "./load/LoadLivePanel";
 import { LoadParamsEditor } from "./load/LoadParamsEditor";
 import { ProfileToolbar } from "./load/ProfileToolbar";
+import { SensitivityPanel } from "./load/SensitivityPanel";
 import {
   deg,
   equilibriumAt,
@@ -303,6 +304,16 @@ export default function LoadAnalysisPage() {
             minEfficiency={summary.min_geometry_efficiency}
             maxUtilization={summary.max_friction_utilization}
             profileEquilibrium={profileEquilibrium}
+          />
+
+          <SensitivityPanel
+            params={params}
+            wheelIndex={wheelIndex}
+            profileSpeedMs={effectiveProfileSpeedMs}
+            mu={mu}
+            angleMaxDeg={angleMaxDeg}
+            angleSteps={angleSteps}
+            signal={chartSignal}
           />
 
           <LoadLivePanel

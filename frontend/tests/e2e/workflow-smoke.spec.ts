@@ -672,6 +672,35 @@ test("load analysis profile action failures stay visible without blocking the to
   await attachPageScreenshot(page, testInfo, "workflow-load-profile-action-errors");
 });
 
+test("load analysis sensitivity failure surfaces a toast without blanking load charts", async ({ page }, testInfo) => {
+  await page.route("**/api/load-analysis/sensitivity", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic sensitivity failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /负载/ }).click();
+
+  await expect(page.getByText("实时四轮负载")).toBeVisible();
+  await expect(page.getByText(/δ_eq 敏感度/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("敏感度扫描失败：synthetic sensitivity failure").first()).toBeVisible();
+  await expect(page.locator(".load-sensitivity").getByRole("button", { name: "扫描" })).toBeEnabled();
+
+  const firstChartCanvas = page.locator(".load-chart-host canvas").first();
+  await expect(firstChartCanvas).toBeVisible({ timeout: 20_000 });
+  await expectCanvasHasDrawnPixels(firstChartCanvas);
+
+  await attachPageScreenshot(page, testInfo, "workflow-load-sensitivity-error");
+});
+
 test("scenario path workflow generates, follows, and clears a reference path", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
