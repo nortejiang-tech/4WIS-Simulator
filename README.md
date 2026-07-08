@@ -124,7 +124,7 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 - 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
 - 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`docs/reports/reference_benchmark_review.md` 已生成当前 reviewer-facing 审查材料；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
 - 前端：type-check 通过
-- 浏览器 smoke：Playwright Chromium `39 passed`，覆盖工作流渲染、试验到分析页交接、分析页通道切换/加图/hover cursor/drag-to-zoom/PNG 导出/截图证据、分析页 run 列表/数据读取失败异常态、试验页实验库/机动模板读取失败异常态、原理页 demo 计算失败异常态、车辆几何拖拽、车辆页项目列表/加载失败异常态、运行页模型/路面控制失败异常态、Python 策略状态读取失败异常态、数据录制开始/停止/CSV 导出/导出失败异常态、分析回放时间轴、回放 meta 读取失败 fallback、场景路径/扰动/故障 workflow、路径/场景版本刷新失败异常态、场景列表/路径模板/故障列表读取失败异常态、脚本库读取/解析/状态读取失败异常态、负载页车型库/参数读取失败、车型载入/保存/应用失败和敏感度扫描失败异常态、命令面板导航/模型切换失败异常态、手柄配置编辑
+- 浏览器 smoke：Playwright Chromium `40 passed`，覆盖工作流渲染、试验到分析页交接、分析页通道切换/加图/hover cursor/drag-to-zoom/PNG 导出/截图证据、分析页 run 列表/数据读取失败异常态、试验页实验库/机动模板读取失败异常态、原理页 demo 计算失败异常态、车辆几何拖拽、车辆页项目列表/加载失败异常态、运行页模型/路面控制失败异常态、Python 策略状态读取失败异常态、数据录制开始/停止/CSV 导出/导出失败异常态、分析回放时间轴、回放 meta 读取失败 fallback、场景路径/扰动/故障 workflow、路径/场景版本刷新失败异常态、场景列表/加载/清除失败、路径模板/故障列表读取失败异常态、脚本库读取/解析/状态读取失败异常态、负载页车型库/参数读取失败、车型载入/保存/应用失败和敏感度扫描失败异常态、命令面板导航/模型切换失败异常态、手柄配置编辑
 - 前端生产构建通过且无 Vite chunk warning；默认 `index` chunk 354.92 kB，低于 500 kB 入口预算；懒加载 3D vendor 最大 chunk `vendor-three-core` 666.67 kB，低于 700 kB 3D core 预算；入口 `index.css` 为 15.68 kB / gzip 3.41 kB，车辆几何、工作流页面、负载页、模型页和共享 load 图表/控制样式拆为独立 CSS chunks，App 壳层、视口/HUD、命令面板、手柄配置、Panel 壳层、Panel 内容控件和快速开始卡片样式已收敛到组件私有 CSS
 
 首次运行 Playwright 前需要安装浏览器运行时：

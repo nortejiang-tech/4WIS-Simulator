@@ -66,6 +66,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖 App 顶层 scenario_version 触发的场景几何刷新失败异常态，断言错误 toast 可见且场景面板工具仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页路径模板读取失败异常态，断言错误停留在轨迹/路径面板、生成按钮禁用、刷新模板和手动绘制仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页场景列表读取失败异常态，断言错误停留在场景路况面板、刷新按钮仍可用，并生成异常态 screenshot attachment。
+- 已完成：Playwright 覆盖场景页加载场景和清除场景失败异常态，断言失败后当前场景状态不被误写、场景按钮和清除/刷新入口恢复可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页路面扰动编辑的新建、选中编辑、参数应用和清空，生成扰动编辑 workflow screenshot attachment。
 - 已完成：Playwright 覆盖场景页故障注入面板的故障添加、停用/启用和清空，生成故障注入 workflow screenshot attachment。
 - 已完成：Playwright 覆盖场景页故障列表读取失败异常态，断言错误不会伪装成空故障配置、刷新故障和添加入口仍可用，并生成异常态 screenshot attachment。

@@ -804,6 +804,57 @@ test("scenario list failure stays visible in the scenario panel", async ({ page 
   await attachPageScreenshot(page, testInfo, "workflow-scenario-list-error");
 });
 
+test("scenario load and clear failures keep the scenario panel recoverable", async ({ page }, testInfo) => {
+  let failLoad = true;
+  await page.route("**/api/scenarios/*/load", async (route) => {
+    if (route.request().method() !== "POST" || !failLoad) {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic scenario load failure" }),
+    });
+  });
+
+  await page.route("**/api/scenario/clear", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic scenario clear failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const scenarioPanel = page.locator(".panel").filter({ hasText: "场景路况" });
+  await expect(scenarioPanel).toBeVisible();
+
+  await scenarioPanel.getByRole("button", { name: "广场" }).click();
+  await expect(page.getByText("加载场景失败：synthetic scenario load failure").first()).toBeVisible();
+  await expect(scenarioPanel).toContainText("当前：无（空网格）");
+  await expect(scenarioPanel.getByRole("button", { name: "广场" })).toBeEnabled();
+
+  failLoad = false;
+  await scenarioPanel.getByRole("button", { name: "广场" }).click();
+  await expect(scenarioPanel).toContainText("当前：广场");
+
+  await scenarioPanel.getByRole("button", { name: "清除场景" }).click();
+  await expect(page.getByText("清除场景失败：synthetic scenario clear failure").first()).toBeVisible();
+  await expect(scenarioPanel).toContainText("当前：广场");
+  await expect(scenarioPanel.getByRole("button", { name: "清除场景" })).toBeEnabled();
+  await expect(scenarioPanel.getByRole("button", { name: "刷新场景" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-scenario-load-clear-errors");
+});
+
 test("scenario version refresh failure surfaces a toast without blocking scenario tools", async ({ page }, testInfo) => {
   let failScenarioRefresh = false;
   await page.route("**/api/scenario", async (route) => {
