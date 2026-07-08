@@ -112,6 +112,14 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --check-report do
 
 `manifest.metrics` 也可以为 Sim4WIS KPI 提供显式 `reference_value`；只要该指标名存在于 `compute_kpis` 输出中，checker 会直接比较仿真 KPI 与 manifest 参考值。
 
+归一化 `reference.csv` 和实验 YAML 就绪后，可以先生成待审 `manifest.metrics` 候选片段：
+
+```bash
+backend/.venv/bin/python scripts/suggest_reference_metrics.py validation_data/.incoming/carmaker_iso3888_dlc_60kmh
+```
+
+该脚本只计算 checker 已支持指标的候选 `reference_value`，并故意把 `abs_tol` 和 `reason` 留成 `TODO`；必须由 reviewer 按外部来源精度、测量噪声和验收目的替换后，benchmark 才能通过正式 checker。
+
 ## 独立数据接入脚手架
 
 接入 CarSim/CarMaker、台架、缩比车或实车数据时，先生成待补齐模板：
@@ -142,7 +150,13 @@ backend/.venv/bin/python scripts/normalize_reference_csv.py \
   --crop-start-s 1.5 --crop-end-s 9.5 --zero-time
 ```
 
-该脚本只负责列名映射、单位换算、可复现时间窗裁剪、时间归零、数值合法性和时间单调性检查；它不会创建或修改 `manifest.json`，不会选择指标容差，也不会让 benchmark 自动具备独立证据资格。使用 `--crop-start-s` / `--crop-end-s` 时，应把原始时间窗记录到 `manifest.provenance.crop_window_s` 或 `notes.md`。`manifest.provenance`、`manifest.channels`、`vehicle_mapping`、`metrics` 和 `notes.md` 仍必须由接入者按真实来源补齐并复核。
+该脚本只负责列名映射、单位换算、可复现时间窗裁剪、时间归零、数值合法性和时间单调性检查；它不会创建或修改 `manifest.json`，不会选择指标容差，也不会让 benchmark 自动具备独立证据资格。使用 `--crop-start-s` / `--crop-end-s` 时，应把原始时间窗记录到 `manifest.provenance.crop_window_s` 或 `notes.md`。`manifest.provenance`、`manifest.channels`、`vehicle_mapping`、`metrics` 和 `notes.md` 仍必须由接入者按真实来源补齐并复核。需要候选指标片段时运行：
+
+```bash
+backend/.venv/bin/python scripts/suggest_reference_metrics.py validation_data/.incoming/carmaker_iso3888_dlc_60kmh
+```
+
+`suggest_reference_metrics.py` 输出的 `metrics` 片段保留了 `TODO` 容差和理由，不能直接作为通过门禁的证据。
 
 同时必须把原始导出或测量/报告文件放在同一个 incoming benchmark 目录内，并填写 `manifest.source_artifacts`。示例：
 
