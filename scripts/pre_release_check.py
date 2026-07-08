@@ -115,6 +115,17 @@ def main() -> int:
         help="fail unless validation_data has at least one passing external_tool/bench/scaled_vehicle/full_vehicle benchmark",
     )
     parser.add_argument(
+        "--check-incoming-audit",
+        action="store_true",
+        help="fail if any benchmark under incoming is not ready for promotion",
+    )
+    parser.add_argument(
+        "--incoming-root",
+        type=Path,
+        default=(ROOT / "validation_data" / ".incoming"),
+        help="incoming benchmark root for promotion-readiness audit",
+    )
+    parser.add_argument(
         "--strict-git",
         action="store_true",
         help="fail if the working tree is dirty",
@@ -164,6 +175,17 @@ def main() -> int:
             ],
             ROOT,
         )
+        if args.check_incoming_audit:
+            failures += command(
+                [
+                    py,
+                    "scripts/check_reference_benchmarks.py",
+                    "--incoming-audit",
+                    "--incoming-root",
+                    str(args.incoming_root),
+                ],
+                ROOT,
+            )
         failures += command(
             [
                 py,
