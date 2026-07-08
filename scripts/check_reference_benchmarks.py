@@ -96,6 +96,7 @@ class BenchmarkResult:
     source_type: str = ""
     source_name: str = ""
     source_version: str = ""
+    provenance: dict[str, Any] = field(default_factory=dict)
     limitations: list[str] = field(default_factory=list)
     source_artifacts: list[SourceArtifact] = field(default_factory=list)
     reviewer_notes: str = ""
@@ -442,6 +443,9 @@ def check_benchmark(path: Path) -> BenchmarkResult:
     result.source_type = str(manifest.get("source_type", ""))
     result.source_name = str(manifest.get("source_name", ""))
     result.source_version = str(manifest.get("source_version", ""))
+    provenance = manifest.get("provenance")
+    if isinstance(provenance, dict):
+        result.provenance = provenance
     limitations = manifest.get("limitations", [])
     if isinstance(limitations, list):
         result.limitations = [str(item) for item in limitations]
@@ -544,6 +548,12 @@ def _md_cell(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
 
+def _md_value(value: Any) -> str:
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return str(value)
+
+
 def render_review_report(root: Path, results: list[BenchmarkResult]) -> str:
     """Render a reviewer-facing Markdown report from checked benchmark results."""
     ok_count = sum(1 for r in results if r.ok)
@@ -586,6 +596,18 @@ def render_review_report(root: Path, results: list[BenchmarkResult]) -> str:
             lines.append(f"- Warnings: {'; '.join(result.warnings)}")
         if result.failures:
             lines.append(f"- Failures: {'; '.join(result.failures)}")
+        if result.provenance:
+            lines += [
+                "",
+                "### Source Provenance",
+                "",
+                "| Field | Value |",
+                "|---|---|",
+            ]
+            for field_name in sorted(result.provenance):
+                lines.append(
+                    f"| `{_md_cell(field_name)}` | {_md_cell(_md_value(result.provenance[field_name]))} |"
+                )
         if result.source_artifacts:
             lines += [
                 "",

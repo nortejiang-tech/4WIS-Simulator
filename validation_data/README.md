@@ -81,7 +81,7 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-indepen
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md
 ```
 
-该报告会包含指标误差表、通过校验的 source artifacts/SHA-256 和 `notes.md` 摘要，但不会自动把任何能力提升到 L3/L4；可信度等级仍需人工审查真实来源、限制和误差解释。
+该报告会包含指标误差表、通过校验的 provenance、source artifacts/SHA-256 和 `notes.md` 摘要，但不会自动把任何能力提升到 L3/L4；可信度等级仍需人工审查真实来源、限制和误差解释。
 
 ## 当前 benchmark
 

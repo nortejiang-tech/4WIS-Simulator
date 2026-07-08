@@ -328,6 +328,9 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
     assert "## analytic_step_40kmh - PASS" in text
     assert "Passing independent external/measured benchmarks: 1" in text
     assert "No passing independent external-tool" not in text
+    assert "### Source Provenance" in text
+    assert "| `solver_step_s` | 0.001 |" in text
+    assert "| `vehicle_parameter_source` | fixture vehicle parameters |" in text
     assert "### Source Artifacts" in text
     assert "`raw/fixture_export.csv`" in text
     assert source_artifacts[0]["sha256"] in text
