@@ -56,7 +56,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖设计页 Python 策略手动重载失败异常态，断言先通过真实策略切换激活面板、失败 toast 可见且重载按钮恢复可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖车辆页参数应用被拒绝异常态，断言错误 toast、未应用编辑仍保留，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖车辆页项目列表读取失败异常态，断言错误停留在项目面板、加载按钮禁用、车辆几何图仍可见，并生成异常态 screenshot attachment。
-- 已完成：Playwright 覆盖车辆页项目 YAML 加载失败异常态，断言错误停留在项目面板、加载按钮恢复可操作、车辆几何图仍可见，并生成异常态 screenshot attachment。
+- 已完成：Playwright 覆盖车辆页项目 YAML 加载和保存失败异常态，断言错误停留在项目面板、输入不丢、按钮恢复可操作、车辆几何图仍可见，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖负载页图表 canvas 绘制和图表原理说明弹窗，生成深层页面状态 screenshot attachment。
 - 已完成：Playwright 覆盖负载页扫图计算失败异常态，断言错误 toast、计算控件恢复可操作，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖负载页车型库读取失败异常态，断言错误 toast、页面主体不空白且参数/计算控件仍可用，并生成异常态 screenshot attachment。

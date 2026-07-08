@@ -643,6 +643,38 @@ test("vehicle project load failure stays local to the project panel", async ({ p
   await attachPageScreenshot(page, testInfo, "workflow-vehicle-project-load-error");
 });
 
+test("vehicle project save failure keeps the save form recoverable", async ({ page }, testInfo) => {
+  await page.route("**/api/projects/*", async (route) => {
+    if (route.request().method() !== "POST" || route.request().url().endsWith("/load")) {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic project save failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /车辆/ }).click();
+
+  const projectPanel = page.locator(".panel").filter({ hasText: "项目（YAML）" });
+  await expect(projectPanel).toBeVisible();
+  await expect(page.getByRole("img", { name: "整车俯视参数示意" })).toBeVisible();
+
+  const saveName = projectPanel.getByPlaceholder("新项目名");
+  await saveName.fill("synthetic_project_save_failure");
+  await projectPanel.getByRole("button", { name: "保存当前" }).click();
+
+  await expect(projectPanel).toContainText("synthetic project save failure");
+  await expect(saveName).toHaveValue("synthetic_project_save_failure");
+  await expect(projectPanel.getByRole("button", { name: "保存当前" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-vehicle-project-save-error");
+});
+
 test("load analysis charts expose deeper explanation state with screenshot evidence", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
