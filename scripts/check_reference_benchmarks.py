@@ -69,6 +69,13 @@ class MetricComparison:
 
 
 @dataclass
+class SourceArtifact:
+    path: str
+    role: str
+    sha256: str
+
+
+@dataclass
 class BenchmarkResult:
     benchmark_id: str
     checked_metrics: int = 0
@@ -76,6 +83,7 @@ class BenchmarkResult:
     source_name: str = ""
     source_version: str = ""
     limitations: list[str] = field(default_factory=list)
+    source_artifacts: list[SourceArtifact] = field(default_factory=list)
     reviewer_notes: str = ""
     metrics: list[MetricComparison] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -319,6 +327,10 @@ def _validate_source_artifacts(path: Path, manifest: dict[str, Any], result: Ben
             result.failures.append(
                 f"{path.name}: {prefix}.sha256 mismatch for {rel_path!r}: expected {expected_sha}, got {actual_sha}"
             )
+            continue
+        result.source_artifacts.append(
+            SourceArtifact(path=normalized_rel_path, role=str(role).strip(), sha256=expected_sha)
+        )
 
 
 def _validate_csv_channels(path: Path, ref: dict[str, np.ndarray], result: BenchmarkResult) -> None:
@@ -460,6 +472,10 @@ def _display_path(path: Path) -> str:
         return str(resolved)
 
 
+def _md_cell(value: str) -> str:
+    return value.replace("|", "\\|").replace("\n", " ")
+
+
 def render_review_report(root: Path, results: list[BenchmarkResult]) -> str:
     """Render a reviewer-facing Markdown report from checked benchmark results."""
     ok_count = sum(1 for r in results if r.ok)
@@ -502,6 +518,18 @@ def render_review_report(root: Path, results: list[BenchmarkResult]) -> str:
             lines.append(f"- Warnings: {'; '.join(result.warnings)}")
         if result.failures:
             lines.append(f"- Failures: {'; '.join(result.failures)}")
+        if result.source_artifacts:
+            lines += [
+                "",
+                "### Source Artifacts",
+                "",
+                "| Path | Role | SHA-256 |",
+                "|---|---|---|",
+            ]
+            for artifact in result.source_artifacts:
+                lines.append(
+                    f"| `{_md_cell(artifact.path)}` | {_md_cell(artifact.role)} | `{artifact.sha256}` |"
+                )
         lines += [
             "",
             "| Metric | Sim | Reference | Delta | Tolerance | Status |",

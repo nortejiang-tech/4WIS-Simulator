@@ -90,7 +90,7 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-indepen
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md
 ```
 
-报告会汇总每个 benchmark 的来源、limitations、warnings/failures、每项指标的 Sim/Reference/Delta/Tolerance 和 `notes.md` 摘要。仓库当前留存的审查件为 `docs/reports/reference_benchmark_review.md`；该报告只是复现性与人工评审材料，不能自动提升 `docs/validation_matrix.md` 的可信度等级。
+报告会汇总每个 benchmark 的来源、limitations、warnings/failures、通过校验的 source artifacts 及 SHA-256、每项指标的 Sim/Reference/Delta/Tolerance 和 `notes.md` 摘要。仓库当前留存的审查件为 `docs/reports/reference_benchmark_review.md`；该报告只是复现性与人工评审材料，不能自动提升 `docs/validation_matrix.md` 的可信度等级。
 
 pre-release 会校验已提交的 review report 是否与当前 benchmark 数据一致；单独检查时运行：
 

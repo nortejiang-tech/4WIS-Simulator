@@ -207,6 +207,9 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
     assert len(results) == 1
     assert results[0].source_type == "external_tool"
     assert results[0].has_independent_source
+    assert results[0].source_artifacts[0].path == "raw/fixture_export.csv"
+    assert results[0].source_artifacts[0].role == "raw external fixture export"
+    assert results[0].source_artifacts[0].sha256 == source_artifacts[0]["sha256"]
 
     manifest["source_artifacts"] = [{**source_artifacts[0], "sha256": "0" * 64}]
     (bench / "manifest.json").write_text(
@@ -257,6 +260,9 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
     assert "## analytic_step_40kmh - PASS" in text
     assert "Passing independent external/measured benchmarks: 1" in text
     assert "No passing independent external-tool" not in text
+    assert "### Source Artifacts" in text
+    assert "`raw/fixture_export.csv`" in text
+    assert source_artifacts[0]["sha256"] in text
     assert "| `yaw_rate_peak_dps` |" in text
     assert "Reviewer note: deterministic fixture, not external evidence." in text
     assert "does not upgrade validation levels without human review" in text
