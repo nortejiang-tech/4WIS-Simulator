@@ -135,6 +135,11 @@ def main() -> int:
         action="store_true",
         help="fail unless current-version macOS and Windows portable zip files exist",
     )
+    parser.add_argument(
+        "--strict-v1",
+        action="store_true",
+        help="require strict-v1 readiness checks to pass",
+    )
     args = parser.parse_args()
 
     failures = 0
@@ -175,6 +180,11 @@ def main() -> int:
             ],
             ROOT,
         )
+        if args.strict_v1:
+            readiness_cmd = [py, "scripts/check_v1_readiness.py", "--strict-v1"]
+            if args.require_portable_zips:
+                readiness_cmd.append("--require-portable-zips")
+            failures += command(readiness_cmd, ROOT)
         if args.check_incoming_audit:
             failures += command(
                 [
