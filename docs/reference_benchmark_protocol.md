@@ -123,6 +123,25 @@ backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso388
 
 默认输出到 `validation_data/.incoming/<benchmark_id>/`。`.incoming` 不会被正式 `validation_data/` 扫描当作证据；模板中的 `manifest.metrics` 为空、`reference.csv` 只有表头，因此即使直接扫描 `.incoming` 也会失败。只有在真实样本、车辆参数映射、指标容差、采样/滤波/同步说明和 `notes.md` 都补齐，并清理所有 `TODO` / `TBD` / placeholder 文本后，才运行：
 
+外部工具或台架导出的原始 CSV 可以先归一到标准 `reference.csv` 通道：
+
+```bash
+backend/.venv/bin/python scripts/normalize_reference_csv.py \
+  --input raw_export.csv \
+  --output validation_data/.incoming/carmaker_iso3888_dlc_60kmh/reference.csv \
+  --map t=Time_ms --unit t=ms \
+  --map vx=Vx_kmh --unit vx=km/h \
+  --map vy=Vy_kmh --unit vy=km/h \
+  --map yaw_rate=YawRate_deg_s --unit yaw_rate=deg/s \
+  --map pose_x=X_mm --unit pose_x=mm \
+  --map pose_y=Y_mm --unit pose_y=mm \
+  --map driver_steering=Steer_deg --unit driver_steering=deg
+```
+
+该脚本只负责列名映射、单位换算、数值合法性和时间单调性检查；它不会创建或修改 `manifest.json`，不会选择指标容差，也不会让 benchmark 自动具备独立证据资格。`manifest.channels`、`vehicle_mapping`、`metrics` 和 `notes.md` 仍必须由接入者按真实来源补齐并复核。
+
+完成补齐后运行：
+
 ```bash
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --root validation_data/.incoming --require-independent-source
 ```
@@ -141,7 +160,7 @@ backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888
 - 已有内部黄金实验：`docs/golden_experiments.json`。
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
 - 已有参考数据结构 checker 与 reviewer report 输出：`scripts/check_reference_benchmarks.py`。
-- 已有独立 reference 接入脚手架与 promotion 门禁：`scripts/scaffold_reference_benchmark.py` 默认输出到 `validation_data/.incoming/`，`scripts/promote_reference_benchmark.py` 只允许通过检查的独立来源进入正式 `validation_data/`。
+- 已有独立 reference 接入脚手架、原始 CSV 归一工具与 promotion 门禁：`scripts/scaffold_reference_benchmark.py` 默认输出到 `validation_data/.incoming/`，`scripts/normalize_reference_csv.py` 只生成标准 `reference.csv`，`scripts/promote_reference_benchmark.py` 只允许通过检查的独立来源进入正式 `validation_data/`。
 - 已有两个解析参考 benchmark：`validation_data/analytic_steady_circle_30kmh/` 和 `validation_data/analytic_step_steer_30kmh/`。
 - 已有当前审查报告：`docs/reports/reference_benchmark_review.md`，记录 2/2 解析 benchmark 通过、独立外部/实测 benchmark 为 0。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。

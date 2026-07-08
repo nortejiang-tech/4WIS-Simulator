@@ -22,6 +22,27 @@ validation_data/
 
 详细协议见 `docs/reference_benchmark_protocol.md`。
 
+## 独立数据接入
+
+新的 CarSim/CarMaker、台架、缩比车或实车数据应先进入 `validation_data/.incoming/<benchmark_id>/`，不要直接放进正式 `validation_data/<benchmark_id>/`。可用脚手架创建待补齐目录：
+
+```bash
+backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso3888_dlc_60kmh --source-type external_tool --source-name CarMaker --source-version 14.0 --template iso3888_dlc_60kmh
+```
+
+如果原始数据来自外部 CSV 导出，可用归一工具生成标准 `reference.csv`：
+
+```bash
+backend/.venv/bin/python scripts/normalize_reference_csv.py --input raw_export.csv --output validation_data/.incoming/carmaker_iso3888_dlc_60kmh/reference.csv --map t=Time_ms --unit t=ms --map vx=Vx_kmh --unit vx=km/h --map vy=Vy_kmh --unit vy=km/h --map yaw_rate=YawRate_deg_s --unit yaw_rate=deg/s --map pose_x=X_mm --unit pose_x=mm --map pose_y=Y_mm --unit pose_y=mm --map driver_steering=Steer_deg --unit driver_steering=deg
+```
+
+`normalize_reference_csv.py` 只做列映射、单位换算和基础数值检查；`manifest.json`、指标容差、车辆参数映射、采样/滤波说明和 `notes.md` 仍必须按真实来源人工补齐。补齐并清理占位符后，先 `--dry-run` promotion，再移动到正式目录：
+
+```bash
+backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh --dry-run
+backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh
+```
+
 ## 可运行检查
 
 从仓库根目录运行：

@@ -113,6 +113,7 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/rep
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --check-report docs/reports/reference_benchmark_review.md
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-independent-source  # 需要真实外部/实测来源时使用
 backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso3888_dlc_60kmh --source-type external_tool --source-name CarMaker --source-version 14.0 --template iso3888_dlc_60kmh
+backend/.venv/bin/python scripts/normalize_reference_csv.py --input raw_export.csv --output validation_data/.incoming/carmaker_iso3888_dlc_60kmh/reference.csv --map t=Time_ms --unit t=ms --map vx=Vx_kmh --unit vx=km/h --map vy=Vy_kmh --unit vy=km/h --map yaw_rate=YawRate_deg_s --unit yaw_rate=deg/s --map pose_x=X_mm --unit pose_x=mm --map pose_y=Y_mm --unit pose_y=mm --map driver_steering=Steer_deg --unit driver_steering=deg
 backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh --dry-run  # incoming 数据补齐后先检查
 backend/.venv/bin/python scripts/check_release_assets.py
 backend/.venv/bin/python scripts/check_release_assets.py --require-portable-zips  # 发布收尾时使用
@@ -130,7 +131,7 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 - smoke：`32/32 通过`
 - 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
 - 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`docs/reports/reference_benchmark_review.md` 已生成当前 reviewer-facing 审查材料，pre-release 会用 `--check-report` 防止该报告与 benchmark 数据漂移；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
-- 独立 reference 接入：`scripts/scaffold_reference_benchmark.py` 默认把 CarSim/CarMaker、台架、缩比车或实车 benchmark 模板生成到 `validation_data/.incoming/`，不会被正式 checker 误当成证据；补齐真实数据、metrics、notes 并清理占位符后，用 `scripts/promote_reference_benchmark.py` 校验并移入正式 `validation_data/<benchmark_id>/`
+- 独立 reference 接入：`scripts/scaffold_reference_benchmark.py` 默认把 CarSim/CarMaker、台架、缩比车或实车 benchmark 模板生成到 `validation_data/.incoming/`，不会被正式 checker 误当成证据；`scripts/normalize_reference_csv.py` 可把外部导出的原始 CSV 列和单位归一到标准 `reference.csv`，但不会生成 manifest、metrics 或来源结论；补齐真实数据、metrics、notes 并清理占位符后，用 `scripts/promote_reference_benchmark.py` 校验并移入正式 `validation_data/<benchmark_id>/`
 - 交付材料：`scripts/check_release_assets.py` 默认检查 README、`docs/user_manual.html`、30 个手册截图/GIF、关键研究报告和打包脚本；发布收尾可加 `--require-portable-zips` 检查当前版本 macOS/Windows 便携 zip
 - v1 readiness：`docs/reports/v1_readiness.md` 当前结论为 `NOT READY`，唯一 strict blocker 是缺少通过检查的 `external_tool`、`bench`、`scaled_vehicle` 或 `full_vehicle` benchmark；pre-release 会检查该报告是否与当前证据一致
 - 前端：type-check 通过
