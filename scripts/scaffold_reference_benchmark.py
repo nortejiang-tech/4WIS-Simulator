@@ -25,6 +25,7 @@ DEFAULT_OUTPUT_ROOT = ROOT / "validation_data" / ".incoming"
 INDEPENDENT_SOURCE_TYPES = ("external_tool", "bench", "scaled_vehicle", "full_vehicle")
 TEMPLATE_NAMES = ("steady_circle_30kmh", "step_steer_60kmh", "iso3888_dlc_60kmh", "single_wheel_failure_straight100")
 CSV_COLUMNS = ("t", "vx", "vy", "yaw_rate", "pose_x", "pose_y", "driver_steering")
+INTAKE_CHECKLIST_FILE = "intake_checklist.json"
 
 
 @dataclass(frozen=True)
@@ -243,7 +244,54 @@ Template: `{template}`
 ## Reviewer Notes
 
 TODO: Summarize source provenance, preprocessing, anomalies, and whether this should count as L3 external-tool evidence or L4 measured evidence.
+
+This directory also carries `intake_checklist.json`, which is a machine-readable
+mirror of this checklist for audit tooling.
 """
+
+
+def intake_checklist_template(
+    benchmark_id: str,
+    source_type: str,
+    source_name: str,
+    source_version: str,
+    template: str,
+) -> dict[str, Any]:
+    return {
+        "benchmark_id": benchmark_id,
+        "source_type": source_type,
+        "source_name": source_name,
+        "source_version": source_version,
+        "template": template,
+        "status": "incoming_scaffold",
+        "items": [
+            {"id": "reference_csv", "done": False, "description": "replace reference.csv with real exported or measured samples"},
+            {"id": "source_artifact", "done": False, "description": "save raw export/log/report files and fill manifest.source_artifacts"},
+            {
+                "id": "provenance",
+                "done": False,
+                "description": "complete manifest.provenance (solver/export details or sensor/filter/sync details)",
+            },
+            {
+                "id": "vehicle_mapping",
+                "done": False,
+                "description": "complete manifest.vehicle_mapping for parameter conversion to VehicleParams",
+            },
+            {"id": "metrics", "done": False, "description": "complete manifest.metrics with reviewed targets and tolerances"},
+            {
+                "id": "limitations_notes",
+                "done": False,
+                "description": "document limitations, preprocessing, and crop/sync assumptions in notes.md",
+            },
+            {"id": "incoming_audit", "done": False, "description": "run check_reference_benchmarks --incoming-audit"},
+            {"id": "promotion_dry_run", "done": False, "description": "run promote_reference_benchmark --dry-run"},
+            {
+                "id": "promotion",
+                "done": False,
+                "description": "run promote_reference_benchmark without --dry-run when ready",
+            },
+        ],
+    }
 
 
 def scaffold_reference_benchmark(
@@ -269,6 +317,7 @@ def scaffold_reference_benchmark(
     reference_path = path / "reference.csv"
     experiment_path = path / "sim4wis_experiment.yaml"
     notes_path = path / "notes.md"
+    checklist_path = path / INTAKE_CHECKLIST_FILE
 
     manifest_path.write_text(
         json.dumps(
@@ -287,7 +336,19 @@ def scaffold_reference_benchmark(
         encoding="utf-8",
     )
     notes_path.write_text(notes_template(benchmark_id, source_type, template), encoding="utf-8")
-    return ScaffoldResult(path=path, files=(manifest_path, reference_path, experiment_path, notes_path))
+    checklist_path.write_text(
+        json.dumps(
+            intake_checklist_template(benchmark_id, source_type, source_name, source_version, template),
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return ScaffoldResult(
+        path=path,
+        files=(manifest_path, reference_path, experiment_path, notes_path, checklist_path),
+    )
 
 
 def main() -> int:

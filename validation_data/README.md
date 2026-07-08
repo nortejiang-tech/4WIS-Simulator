@@ -10,6 +10,7 @@ validation_data/
     ├── manifest.json
     ├── reference.csv
     ├── sim4wis_experiment.yaml
+    ├── intake_checklist.json
     └── notes.md
 ```
 
@@ -30,6 +31,8 @@ validation_data/
 ```bash
 backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso3888_dlc_60kmh --source-type external_tool --source-name CarMaker --source-version 14.0 --template iso3888_dlc_60kmh
 ```
+
+脚手架会生成 `intake_checklist.json`（同 `notes.md` 的待办项对应），用于接入队列的状态跟踪和自动化审计。
 
 如果原始数据来自外部 CSV 导出，可用归一工具生成标准 `reference.csv`：
 

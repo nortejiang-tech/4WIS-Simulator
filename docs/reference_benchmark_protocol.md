@@ -28,7 +28,8 @@ validation_data/
     ├── manifest.json
     ├── reference.csv
     ├── sim4wis_experiment.yaml
-    └── notes.md
+    ├── notes.md
+    └── intake_checklist.json（仅 incoming）
 ```
 
 `manifest.json` 必须说明：
@@ -133,6 +134,8 @@ backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso388
 ```
 
 默认输出到 `validation_data/.incoming/<benchmark_id>/`。`.incoming` 不会被正式 `validation_data/` 扫描当作证据；模板中的 `manifest.metrics` 为空、`reference.csv` 只有表头，因此即使直接扫描 `.incoming` 也会失败。只有在真实样本、车辆参数映射、指标容差、采样/滤波/同步说明和 `notes.md` 都补齐，并清理所有 `TODO` / `TBD` / placeholder 文本后，才运行：
+
+`intake_checklist.json` 会同步记录接入待办项，便于人工和脚本共同追踪状态。
 
 外部工具或台架导出的原始 CSV 可以先归一到标准 `reference.csv` 通道：
 

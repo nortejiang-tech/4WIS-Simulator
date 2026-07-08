@@ -41,6 +41,7 @@ def test_scaffold_creates_incoming_template_without_active_evidence(tmp_path: Pa
         "reference.csv",
         "sim4wis_experiment.yaml",
         "notes.md",
+        "intake_checklist.json",
     }
     manifest = json.loads((result.path / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["source_type"] == "external_tool"
@@ -50,6 +51,13 @@ def test_scaffold_creates_incoming_template_without_active_evidence(tmp_path: Pa
     assert (result.path / "reference.csv").read_text(encoding="utf-8").splitlines()[0] == (
         "t,vx,vy,yaw_rate,pose_x,pose_y,driver_steering"
     )
+    checklist = json.loads(
+        (result.path / "intake_checklist.json").read_text(encoding="utf-8")
+    )
+    assert checklist["benchmark_id"] == "carmaker_iso3888_dlc_60kmh"
+    assert checklist["source_type"] == "external_tool"
+    assert len(checklist["items"]) >= 8
+    assert checklist["items"][0]["id"] == "reference_csv"
 
     code, results = checker.check_reference_benchmarks(validation_root, require_independent_source=True)
     assert code == 1
