@@ -256,6 +256,52 @@ test("analysis run list failure does not masquerade as an empty library", async 
   await attachPageScreenshot(page, testInfo, "workflow-analysis-run-list-error");
 });
 
+test("analysis run delete failure keeps the selected run visible", async ({ page, request }, testInfo) => {
+  const beforeRunsResp = await request.get("/api/runs");
+  const beforeRuns = await beforeRunsResp.json() as { runs?: { run_id: string }[] };
+  const existingRunIds = new Set((beforeRuns.runs ?? []).map((run) => run.run_id));
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+
+  await rail.getByRole("button", { name: /试验/ }).click();
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+  await page.getByRole("button", { name: /运行（1 runs）/ }).click();
+  await expect(page.getByText(/完成 1 runs/)).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("button", { name: /去分析页对比这些 runs/ }).click();
+
+  await expect(page.getByText("KPI 对比")).toBeVisible();
+  const selectedRun = page.locator(".wf-list-item.active").first();
+  await expect(selectedRun).toBeVisible();
+  await expect(page.getByTestId("analysis-chart-vx")).toBeVisible();
+
+  await page.route("**/api/runs/**", async (route) => {
+    if (route.request().method() !== "DELETE") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic run delete failure" }),
+    });
+  });
+
+  await selectedRun.locator("button[title='删除此 run']").click();
+  await expect(page.getByText("删除失败：synthetic run delete failure").first()).toBeVisible();
+  await expect(selectedRun).toBeVisible();
+  await expect(page.getByText("KPI 对比")).toBeVisible();
+  await expect(page.getByTestId("analysis-chart-vx")).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-analysis-run-delete-error");
+
+  await page.unroute("**/api/runs/**");
+  const runsResp = await request.get("/api/runs");
+  const runs = await runsResp.json() as { runs?: { run_id: string }[] };
+  const createdRuns = (runs.runs ?? []).filter((run) => !existingRunIds.has(run.run_id));
+  await Promise.all(createdRuns.map((run) => request.delete(`/api/runs/${run.run_id}`)));
+});
+
 test("experiment library failure does not masquerade as an empty library", async ({ page }, testInfo) => {
   await page.route("**/api/experiments", async (route) => {
     await route.fulfill({
