@@ -119,10 +119,16 @@ def main() -> int:
         action="store_true",
         help="fail if the working tree is dirty",
     )
+    parser.add_argument(
+        "--require-portable-zips",
+        action="store_true",
+        help="fail unless current-version macOS and Windows portable zip files exist",
+    )
     args = parser.parse_args()
 
     failures = 0
     failures += check_versions()
+    py = backend_python()
 
     if git_dirty():
         msg = "working tree has uncommitted changes"
@@ -134,9 +140,12 @@ def main() -> int:
 
     npm = "npm.cmd" if sys.platform.startswith("win") else "npm"
     failures += command([npm, "ci", "--dry-run", "--ignore-scripts"], FRONTEND)
+    release_cmd = [py, "scripts/check_release_assets.py"]
+    if args.require_portable_zips:
+        release_cmd.append("--require-portable-zips")
+    failures += command(release_cmd, ROOT)
 
     if not args.skip_tests:
-        py = backend_python()
         failures += command([py, "-m", "pytest", "tests/"], BACKEND)
         failures += command([py, "scripts/smoke_test.py"], ROOT)
         failures += command([py, "scripts/check_golden_experiments.py"], ROOT)

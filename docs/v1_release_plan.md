@@ -13,6 +13,12 @@ v1.0 只有在以下门槛都满足时才应发布：
 5. **发布机械化**：`scripts/pre_release_check.py` 通过；版本号、lockfile、测试、smoke、黄金实验、前端构建同一门禁。
 6. **交付材料齐全**：README、用户手册、quickstart、便携包、关键研究报告和 GitHub Release assets 同步。
 
+### 交付材料门禁
+
+- 已完成：新增 `scripts/check_release_assets.py`，默认只读检查 README 当前版本、`docs/user_manual.html` 当前版本标记、30 个手册截图/GIF、关键研究报告和手册/便携打包脚本。
+- 已完成：`scripts/pre_release_check.py` 已接入交付材料清单检查；发布收尾时可加 `--require-portable-zips`，强制当前版本 macOS/Windows 便携 zip 存在且非空。
+- 边界：该检查不自动生成手册、不重新打包、不上传 GitHub Release；这些仍是人工确认的发布步骤。
+
 ## 优先级路线
 
 ### P0: 可信回归底座
