@@ -109,11 +109,32 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --check-report do
 
 `manifest.metrics` 也可以为 Sim4WIS KPI 提供显式 `reference_value`；只要该指标名存在于 `compute_kpis` 输出中，checker 会直接比较仿真 KPI 与 manifest 参考值。
 
+## 独立数据接入脚手架
+
+接入 CarSim/CarMaker、台架、缩比车或实车数据时，先生成待补齐模板：
+
+```bash
+backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso3888_dlc_60kmh \
+  --source-type external_tool \
+  --source-name CarMaker \
+  --source-version 14.0 \
+  --template iso3888_dlc_60kmh
+```
+
+默认输出到 `validation_data/.incoming/<benchmark_id>/`。`.incoming` 不会被正式 `validation_data/` 扫描当作证据；模板中的 `manifest.metrics` 为空、`reference.csv` 只有表头，因此即使直接扫描 `.incoming` 也会失败。只有在真实样本、车辆参数映射、指标容差、采样/滤波/同步说明和 `notes.md` 都补齐，并通过：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --root validation_data/.incoming --require-independent-source
+```
+
+之后，才把该目录移动到 `validation_data/<benchmark_id>/`，再重新生成 `docs/reports/reference_benchmark_review.md` 和 `docs/reports/v1_readiness.md`。
+
 ## 当前状态
 
 - 已有内部黄金实验：`docs/golden_experiments.json`。
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
 - 已有参考数据结构 checker 与 reviewer report 输出：`scripts/check_reference_benchmarks.py`。
+- 已有独立 reference 接入脚手架：`scripts/scaffold_reference_benchmark.py`，默认输出到 `validation_data/.incoming/`，不会伪造通过证据。
 - 已有两个解析参考 benchmark：`validation_data/analytic_steady_circle_30kmh/` 和 `validation_data/analytic_step_steer_30kmh/`。
 - 已有当前审查报告：`docs/reports/reference_benchmark_review.md`，记录 2/2 解析 benchmark 通过、独立外部/实测 benchmark 为 0。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。
