@@ -1582,6 +1582,80 @@ test("recording export failure stays visible in the recording panel", async ({ p
   await attachPageScreenshot(page, testInfo, "workflow-recording-export-error");
 });
 
+test("recording status failure stays visible without disabling controls", async ({ page, request }, testInfo) => {
+  await request.post("/api/recording/stop");
+
+  await page.route("**/api/recording/status", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic recording status failure" }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "数据" }).click();
+
+  const recordingPanel = page.locator(".panel").filter({ hasText: "数据录制" });
+  await expect(recordingPanel).toBeVisible();
+  await expect(recordingPanel).toContainText("synthetic recording status failure");
+  await expect(recordingPanel.getByRole("button", { name: /开始录制/ })).toBeEnabled();
+  await expect(recordingPanel.getByTestId("recording-export")).toBeDisabled();
+  await expect(recordingPanel.getByTestId("recording-status")).toContainText("空闲");
+
+  await attachPageScreenshot(page, testInfo, "workflow-recording-status-error");
+});
+
+test("recording start and stop failures keep recording controls recoverable", async ({ page, request }, testInfo) => {
+  await request.post("/api/recording/stop");
+
+  await page.route("**/api/recording/start", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic recording start failure" }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "数据" }).click();
+
+  const recordingPanel = page.locator(".panel").filter({ hasText: "数据录制" });
+  await expect(recordingPanel).toBeVisible();
+  await expect(recordingPanel.getByTestId("recording-status")).toContainText("空闲");
+
+  await recordingPanel.getByRole("button", { name: /开始录制/ }).click();
+  await expect(recordingPanel).toContainText("synthetic recording start failure");
+  await expect(recordingPanel.getByRole("button", { name: /开始录制/ })).toBeEnabled();
+  await expect(recordingPanel.getByTestId("recording-status")).toContainText("空闲");
+
+  await page.unroute("**/api/recording/start");
+  await recordingPanel.getByRole("button", { name: /开始录制/ }).click();
+  await expect(recordingPanel.getByTestId("recording-status")).toContainText("录制中");
+  await expect.poll(async () => Number(await recordingPanel.getByTestId("recording-samples").textContent()))
+    .toBeGreaterThan(0);
+
+  await page.route("**/api/recording/stop", async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic recording stop failure" }),
+    });
+  });
+
+  await recordingPanel.getByRole("button", { name: /停止录制/ }).click();
+  await expect(recordingPanel).toContainText("synthetic recording stop failure");
+  await expect(recordingPanel.getByTestId("recording-status")).toContainText("录制中");
+  await expect(recordingPanel.getByRole("button", { name: /停止录制/ })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-recording-control-errors");
+
+  await page.unroute("**/api/recording/stop");
+  await recordingPanel.getByRole("button", { name: /停止录制/ }).click();
+  await expect(recordingPanel.getByTestId("recording-status")).toContainText("空闲");
+  await expect(recordingPanel.getByTestId("recording-export")).toBeEnabled();
+});
+
 test("analysis replay controls scrub selected run data", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
