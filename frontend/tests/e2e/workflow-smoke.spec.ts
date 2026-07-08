@@ -586,6 +586,33 @@ test("load analysis profile list failure surfaces an error without blanking the 
   await attachPageScreenshot(page, testInfo, "workflow-load-profile-list-error");
 });
 
+test("load analysis params failure leaves a visible empty state", async ({ page }, testInfo) => {
+  await page.route("**/api/params", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic load params failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /负载/ }).click();
+
+  await expect(page.getByText("实时四轮负载")).toBeVisible();
+  await expect(page.getByText("读取参数失败：synthetic load params failure").first()).toBeVisible();
+  await expect(page.locator(".load-param-pane")).toContainText("读取中...");
+  await expect(page.getByRole("button", { name: "重新计算" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "重置 LS9" })).toBeEnabled();
+  await expect(page.locator(".load-chart-panel").first()).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-load-params-error");
+});
+
 test("scenario path workflow generates, follows, and clears a reference path", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
