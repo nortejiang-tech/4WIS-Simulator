@@ -41,11 +41,12 @@ backend/.venv/bin/python scripts/normalize_reference_csv.py --input raw_export.c
 
 ```bash
 backend/.venv/bin/python scripts/suggest_reference_metrics.py validation_data/.incoming/carmaker_iso3888_dlc_60kmh
+backend/.venv/bin/python scripts/suggest_reference_artifacts.py validation_data/.incoming/carmaker_iso3888_dlc_60kmh raw_source_export.csv --role "raw source export for CarMaker normalization"
 backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh --dry-run
 backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh
 ```
 
-`suggest_reference_metrics.py` 只生成可粘贴的 `manifest.metrics` 候选片段，并把容差和理由保留为 `TODO`；这些值必须经人工审查替换后才可能通过 checker。
+`suggest_reference_metrics.py` 只生成可粘贴的 `manifest.metrics` 候选片段，并把容差和理由保留为 `TODO`；这些值必须经人工审查替换后才可能通过 checker。`suggest_reference_artifacts.py` 生成可复用的 `manifest.source_artifacts` 清单片段（`path`、`role`、`sha256`），用于把原始/导出/测量/报告文件的来源链路先行标准化，再交由 checker/promotion 做复核。
 
 ## 可运行检查
 

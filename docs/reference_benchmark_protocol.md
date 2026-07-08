@@ -158,6 +158,14 @@ backend/.venv/bin/python scripts/suggest_reference_metrics.py validation_data/.i
 
 `suggest_reference_metrics.py` 输出的 `metrics` 片段保留了 `TODO` 容差和理由，不能直接作为通过门禁的证据。
 
+原始来源文件清单也建议用同一套命令生成，避免重复手填 `sha256`：
+
+```bash
+backend/.venv/bin/python scripts/suggest_reference_artifacts.py validation_data/.incoming/carmaker_iso3888_dlc_60kmh raw_source_export.csv --role "raw CarMaker CSV export before Sim4WIS normalization"
+```
+
+该脚本会校验文件路径是否在 benchmark 目录内、是否为文件、是否为原始/导出/测量来源而非生成件，并把路径按 `as_posix` 形式、角色和校验值输出成 `source_artifacts` JSON 片段。该片段仍必须由接入者确认并替换占位符后写入 `manifest.json`。
+
 同时必须把原始导出或测量/报告文件放在同一个 incoming benchmark 目录内，并填写 `manifest.source_artifacts`。示例：
 
 ```json

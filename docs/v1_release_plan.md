@@ -50,6 +50,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：独立来源 benchmark 必须在 `manifest.provenance` 中登记外部工具求解/导出口径或实测传感器/滤波/同步口径；checker 会拒绝缺失或未复核的必填 provenance 字段。
 - 已完成：`scripts/normalize_reference_csv.py` 支持按转换后的秒级时间窗裁剪并将保留窗口时间归零，便于把外部工具或实测日志的预处理步骤写成可复现命令；裁剪口径仍必须写入 provenance 或 reviewer notes。
 - 已完成：新增 `scripts/suggest_reference_metrics.py`，可从 normalized `reference.csv` 和 `sim4wis_experiment.yaml` 生成待审 `manifest.metrics` 候选片段；输出保留容差/理由 TODO，必须人工审查后才可能通过 checker。
+- 已完成：新增 `scripts/suggest_reference_artifacts.py`，可为 `manifest.source_artifacts` 一次性生成带 `path`、`role`、`sha256` 的可复用片段；校验路径约束（目录内文件、非生成件）与重复计算逻辑与 checker 对齐，减少误填风险。
 - 继续补齐公开或可导出的参考工况：ISO 3888 双移线，以及至少一个外部工具或实测来源。
 - 对每个新增工况保存参考来源、车辆参数映射、目标指标和误差解释。
 - 优先对照 `yaw_rate_peak_dps`、稳态横摆增益、速度跟踪 RMS、侧偏角峰值、轨迹横向偏差。
