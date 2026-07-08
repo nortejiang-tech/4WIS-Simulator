@@ -74,6 +74,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖动作脚本解析失败异常态，断言错误保留在脚本面板且原 YAML 仍可编辑，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖运行页数据录制面板的开始录制、采样数增长、停止录制和 CSV 导出，生成录制 workflow screenshot attachment。
 - 已完成：Playwright 覆盖运行页数据录制 CSV 导出失败异常态，断言错误停留在录制面板、导出按钮恢复可用，并生成异常态 screenshot attachment。
+- 已完成：Playwright 覆盖命令面板模型切换失败异常态，断言错误 toast 可见、命令面板关闭且工作流导航仍可用。
 - 下一批场景：更多深层页面状态和更少见后端失败分支截图。
 - 通过截图/DOM 断言减少手册截图和人工端到端验证的遗漏。
 

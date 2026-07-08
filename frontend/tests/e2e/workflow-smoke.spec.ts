@@ -1147,6 +1147,34 @@ test("command palette filters and navigates workflow pages from the keyboard", a
   await expect(page.getByText(/Run 库/)).toBeVisible();
 });
 
+test("command palette model switch failure surfaces a toast and closes cleanly", async ({ page }) => {
+  await page.route("**/api/model", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic command palette model failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/");
+  await page.keyboard.press("Control+K");
+  const palette = page.getByRole("dialog", { name: "命令面板" });
+  await expect(palette).toBeVisible();
+
+  const search = page.getByLabel("命令搜索");
+  await search.fill("multibody");
+  await expect(page.getByRole("button", { name: "切换模型：多体(14DOF)" })).toBeVisible();
+
+  await page.keyboard.press("Enter");
+  await expect(palette).toBeHidden();
+  await expect(page.getByText("切换失败：synthetic command palette model failure").first()).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "工作流" })).toBeVisible();
+});
+
 test("gamepad mapping panel edits persist without a physical controller", async ({ page }) => {
   await page.goto("/");
 
