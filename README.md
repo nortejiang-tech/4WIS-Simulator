@@ -130,7 +130,7 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 - smoke：`32/32 通过`
 - 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
 - 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`docs/reports/reference_benchmark_review.md` 已生成当前 reviewer-facing 审查材料，pre-release 会用 `--check-report` 防止该报告与 benchmark 数据漂移；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
-- 独立 reference 接入：`scripts/scaffold_reference_benchmark.py` 默认把 CarSim/CarMaker、台架、缩比车或实车 benchmark 模板生成到 `validation_data/.incoming/`，不会被正式 checker 误当成证据；补齐真实数据、metrics、notes 后用 `scripts/promote_reference_benchmark.py` 校验并移入正式 `validation_data/<benchmark_id>/`
+- 独立 reference 接入：`scripts/scaffold_reference_benchmark.py` 默认把 CarSim/CarMaker、台架、缩比车或实车 benchmark 模板生成到 `validation_data/.incoming/`，不会被正式 checker 误当成证据；补齐真实数据、metrics、notes 并清理占位符后，用 `scripts/promote_reference_benchmark.py` 校验并移入正式 `validation_data/<benchmark_id>/`
 - 交付材料：`scripts/check_release_assets.py` 默认检查 README、`docs/user_manual.html`、30 个手册截图/GIF、关键研究报告和打包脚本；发布收尾可加 `--require-portable-zips` 检查当前版本 macOS/Windows 便携 zip
 - v1 readiness：`docs/reports/v1_readiness.md` 当前结论为 `NOT READY`，唯一 strict blocker 是缺少通过检查的 `external_tool`、`bench`、`scaled_vehicle` 或 `full_vehicle` benchmark；pre-release 会检查该报告是否与当前证据一致
 - 前端：type-check 通过

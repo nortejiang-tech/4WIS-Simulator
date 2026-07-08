@@ -202,3 +202,22 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
     assert "| `yaw_rate_peak_dps` |" in text
     assert "Reviewer note: deterministic fixture, not external evidence." in text
     assert "does not upgrade validation levels without human review" in text
+
+    manifest["vehicle_mapping"] = {"status": "TODO"}
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path)
+    assert code == 1
+    assert any("manifest contains unresolved placeholder" in failure for failure in results[0].failures)
+
+    manifest["vehicle_mapping"] = {"note": "same defaults for checker fixture"}
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (bench / "notes.md").write_text("# analytic_step_40kmh\n\nTODO: describe provenance.\n", encoding="utf-8")
+    code, results = checker.check_reference_benchmarks(tmp_path)
+    assert code == 1
+    assert any("notes.md contains unresolved placeholder" in failure for failure in results[0].failures)

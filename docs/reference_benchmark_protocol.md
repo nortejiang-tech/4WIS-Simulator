@@ -121,7 +121,7 @@ backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso388
   --template iso3888_dlc_60kmh
 ```
 
-默认输出到 `validation_data/.incoming/<benchmark_id>/`。`.incoming` 不会被正式 `validation_data/` 扫描当作证据；模板中的 `manifest.metrics` 为空、`reference.csv` 只有表头，因此即使直接扫描 `.incoming` 也会失败。只有在真实样本、车辆参数映射、指标容差、采样/滤波/同步说明和 `notes.md` 都补齐，并通过：
+默认输出到 `validation_data/.incoming/<benchmark_id>/`。`.incoming` 不会被正式 `validation_data/` 扫描当作证据；模板中的 `manifest.metrics` 为空、`reference.csv` 只有表头，因此即使直接扫描 `.incoming` 也会失败。只有在真实样本、车辆参数映射、指标容差、采样/滤波/同步说明和 `notes.md` 都补齐，并清理所有 `TODO` / `TBD` / placeholder 文本后，才运行：
 
 ```bash
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --root validation_data/.incoming --require-independent-source
@@ -134,7 +134,7 @@ backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888
 backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh
 ```
 
-`scripts/promote_reference_benchmark.py` 会拒绝未通过 checker 的模板、非独立来源和已存在的目标目录。promotion 成功后，再重新生成 `docs/reports/reference_benchmark_review.md` 和 `docs/reports/v1_readiness.md`。
+`scripts/check_reference_benchmarks.py` 会拒绝 manifest 或 notes 中残留的占位符；`scripts/promote_reference_benchmark.py` 会拒绝未通过 checker 的模板、非独立来源和已存在的目标目录。promotion 成功后，再重新生成 `docs/reports/reference_benchmark_review.md` 和 `docs/reports/v1_readiness.md`。
 
 ## 当前状态
 

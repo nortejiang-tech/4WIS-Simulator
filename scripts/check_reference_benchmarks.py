@@ -50,6 +50,7 @@ REQUIRED_MANIFEST_FIELDS = (
 ALLOWED_SOURCE_TYPES = {"analytic", "external_tool", "bench", "scaled_vehicle", "full_vehicle"}
 INDEPENDENT_SOURCE_TYPES = {"external_tool", "bench", "scaled_vehicle", "full_vehicle"}
 REQUIRED_CHANNELS = ("t", "vx", "vy", "yaw_rate", "pose_x", "pose_y", "driver_steering")
+UNRESOLVED_PLACEHOLDER_TOKENS = ("TODO", "TBD", "PLACEHOLDER", "FILL_ME", "待补", "待定")
 
 
 @dataclass
@@ -215,6 +216,38 @@ def _validate_manifest_shape(path: Path, manifest: dict[str, Any], result: Bench
             result.warnings.append(f"{path.name}: channels.{ch} has no coordinate_frame/frame/convention note")
 
 
+def _find_unresolved_placeholders(value: Any, prefix: str = "") -> list[str]:
+    hits: list[str] = []
+    if isinstance(value, dict):
+        for key, item in value.items():
+            child = f"{prefix}.{key}" if prefix else str(key)
+            hits.extend(_find_unresolved_placeholders(item, child))
+        return hits
+    if isinstance(value, list):
+        for idx, item in enumerate(value):
+            child = f"{prefix}[{idx}]"
+            hits.extend(_find_unresolved_placeholders(item, child))
+        return hits
+    if isinstance(value, str):
+        upper = value.upper()
+        if any(token in upper for token in UNRESOLVED_PLACEHOLDER_TOKENS[:4]) or any(
+            token in value for token in UNRESOLVED_PLACEHOLDER_TOKENS[4:]
+        ):
+            hits.append(prefix or "<root>")
+    return hits
+
+
+def _validate_no_placeholders(path: Path, manifest: dict[str, Any], notes: str, result: BenchmarkResult) -> None:
+    manifest_hits = _find_unresolved_placeholders(manifest)
+    if manifest_hits:
+        result.failures.append(
+            f"{path.name}: manifest contains unresolved placeholder(s): {', '.join(manifest_hits[:8])}"
+        )
+    note_hits = _find_unresolved_placeholders(notes, "notes.md")
+    if note_hits:
+        result.failures.append(f"{path.name}: notes.md contains unresolved placeholder(s)")
+
+
 def _validate_csv_channels(path: Path, ref: dict[str, np.ndarray], result: BenchmarkResult) -> None:
     for ch in REQUIRED_CHANNELS:
         if ch not in ref:
@@ -267,6 +300,7 @@ def check_benchmark(path: Path) -> BenchmarkResult:
     notes_path = path / "notes.md"
     if notes_path.is_file():
         result.reviewer_notes = _load_text(notes_path)
+    _validate_no_placeholders(path, manifest, result.reviewer_notes, result)
 
     try:
         ref = _load_reference_csv(path / "reference.csv")
