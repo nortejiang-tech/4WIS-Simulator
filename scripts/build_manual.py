@@ -704,7 +704,7 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>v0.12.0</td><td>时域 c_α(F_z) 载荷敏感度</td></tr>
 <tr><td>v0.13–0.14</td><td>单轮失效 ISO 26262 研究：故障注入（含自由脚轮机构 ODE）、容错重构策略、参数敏感性流水线、论文级报告</td></tr>
 <tr><td>v0.15.0</td><td>手柄映射机制：六模式预设（前后轴/左右侧/逐轮/蟹行/全向）+ 点击绑定校准 + 死区/expo/反向</td></tr>
-<tr><td>v{VER}</td><td>车辆页几何工作室：整车/主销·车轮/齿条硬点三张参数驱动·可拖拽建模示意图 + 派生量/红旗/转弯圆</td></tr>
+<tr><td>v{VER}</td><td>V1 候选收敛：黄金实验、reference 审查、v1 readiness、Playwright smoke、研究报告和便携发布门禁闭环；独立外部/实测 reference 保持为 v1 严格阻塞项</td></tr>
 </table>
 <p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v{VER}</p>
 </body></html>"""

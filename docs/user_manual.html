@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
-<title>4WIS Simulator v0.16.0 使用说明书（图文版）</title>
+<title>4WIS Simulator v0.99.0 使用说明书（图文版）</title>
 <style>
  body { font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
         max-width: 1020px; margin: 0 auto; padding: 36px 22px; color:#1a202c; line-height:1.8; }
@@ -26,7 +26,7 @@
  .meta { color:#718096; font-size: 13px; }
 </style></head><body>
 
-<h1>4WIS Simulator 使用说明书 <span style="font-size:15px;color:#718096">v0.16.0 · 图文版</span></h1>
+<h1>4WIS Simulator 使用说明书 <span style="font-size:15px;color:#718096">v0.99.0 · 图文版</span></h1>
 <p class="meta">四轮独立转向（4WIS）仿真平台 —— 交互驾驶 · 批量实验 · 结果分析 · 负载选型 · 功能安全研究。
 本说明书全部截图由 <code>python scripts/build_manual.py</code> 从当前版本实跑生成。</p>
 
@@ -44,7 +44,7 @@
 <a href="#s11">11 快捷键与命令面板</a> ·
 <a href="#s12">12 工程工作流配方</a> ·
 <a href="#s13">13 FAQ</a> ·
-<a href="#s14">14 版本纪要 v0.9→v0.16.0</a></div>
+<a href="#s14">14 版本纪要 v0.9→v0.99.0</a></div>
 
 <h2 id="s1">1　安装启动</h2>
 <p><b>便携版（推荐）</b>：解压对应平台的 zip → macOS 双击 <code>start.command</code>（首次被 Gatekeeper
@@ -250,7 +250,7 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>分析页 run 从哪来？</td><td>试验页跑的批量实验（含安全研究脚本产生的）都会落盘到 runs/。</td></tr>
 </table>
 
-<h2 id="s14">14　版本纪要 v0.9 → v0.16.0</h2>
+<h2 id="s14">14　版本纪要 v0.9 → v0.99.0</h2>
 <table>
 <tr><th>版本</th><th>要点</th></tr>
 <tr><td>v0.9.0</td><td>时域/负载页物理口径统一（阻力/升力/toe/camber）；轮速积分半隐式化修复中低速潜伏失稳；手柄初版</td></tr>
@@ -259,7 +259,7 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>v0.12.0</td><td>时域 c_α(F_z) 载荷敏感度</td></tr>
 <tr><td>v0.13–0.14</td><td>单轮失效 ISO 26262 研究：故障注入（含自由脚轮机构 ODE）、容错重构策略、参数敏感性流水线、论文级报告</td></tr>
 <tr><td>v0.15.0</td><td>手柄映射机制：六模式预设（前后轴/左右侧/逐轮/蟹行/全向）+ 点击绑定校准 + 死区/expo/反向</td></tr>
-<tr><td>v0.16.0</td><td>车辆页几何工作室：整车/主销·车轮/齿条硬点三张参数驱动·可拖拽建模示意图 + 派生量/红旗/转弯圆</td></tr>
+<tr><td>v0.99.0</td><td>V1 候选收敛：黄金实验、reference 审查、v1 readiness、Playwright smoke、研究报告和便携发布门禁闭环；独立外部/实测 reference 保持为 v1 严格阻塞项</td></tr>
 </table>
-<p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v0.16.0</p>
+<p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v0.99.0</p>
 </body></html>

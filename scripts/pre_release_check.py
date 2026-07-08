@@ -180,11 +180,6 @@ def main() -> int:
             ],
             ROOT,
         )
-        if args.strict_v1:
-            readiness_cmd = [py, "scripts/check_v1_readiness.py", "--strict-v1"]
-            if args.require_portable_zips:
-                readiness_cmd.append("--require-portable-zips")
-            failures += command(readiness_cmd, ROOT)
         if args.check_incoming_audit:
             failures += command(
                 [
@@ -205,6 +200,12 @@ def main() -> int:
             ],
             ROOT,
         )
+
+    if args.strict_v1:
+        readiness_cmd = [py, "scripts/check_v1_readiness.py", "--strict-v1"]
+        if args.require_portable_zips:
+            readiness_cmd.append("--require-portable-zips")
+        failures += command(readiness_cmd, ROOT)
 
     failures += command([npm, "run", "type-check"], FRONTEND)
 

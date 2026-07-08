@@ -2,6 +2,38 @@
 
 本项目版本约定：阶段即次版本（Phase 1 = 0.1，Phase 2 = 0.2，Phase 3 = 0.3，改进轮 = 0.4 起）。
 
+## 0.99.0 — 2026-07-08（V1 候选收敛：除独立外部/实测 reference 外全量门禁）
+
+### 背景
+
+本版本把 v1.0 前的工程、验证、报告和发布链路收敛到候选状态。真实外部工具、
+台架、缩比车或实车 reference 数据暂时无法提供，因此不声称严格 v1.0；该缺口仍
+由 `independent_reference` gate 明确阻塞。
+
+### 新增 (Added)
+
+- `scripts/check_v1_readiness.py` 汇总黄金实验、验证矩阵、reference benchmark、
+  incoming intake、Playwright smoke、研究报告流水线、交付材料和实物验证接口状态；
+  `docs/reports/v1_readiness.md` 留存当前机器可读结论。
+- reference benchmark intake 闭环：`.incoming` 审核、promotion gate、原始 artifact
+  SHA-256 校验、provenance 必填校验、metrics/artifacts 候选片段生成、CSV 归一化和
+  `intake_checklist.json` 结构化待办清单。
+- `scripts/pre_release_check.py` 接入 release asset 检查、reference report freshness、
+  v1 readiness freshness、可选 incoming audit、可选 strict-v1 和 portable zip 检查。
+
+### 变更 (Changed)
+
+- 前端主入口、3D vendor、页面 CSS 和全局样式已按 v1 候选预算拆分，生产构建无
+  chunk warning；Playwright workflow smoke 覆盖 50 个关键和异常路径场景。
+- 单轮失效研究报告继续作为内部机制研究交付物，报告流水线、metrics JSON 和自包含
+  HTML 保持可复现。
+
+### 已知边界
+
+- `backend/.venv/bin/python scripts/check_v1_readiness.py --strict-v1 --require-portable-zips`
+  仍会失败，直到接入至少一个通过检查的 `external_tool`、`bench`、`scaled_vehicle`
+  或 `full_vehicle` benchmark。
+
 ## 0.16.0 — 2026-07-03（车辆页几何工作室：三张参数驱动·可拖拽建模示意图）
 
 ### 背景

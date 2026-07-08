@@ -21,7 +21,7 @@
 
 <h1>四轮独立转向系统单轮转向失效的 ISO 26262 功能安全可控性分析与容错控制策略设计<br>
 <span style="font-size:15px;color:#4a5568">v2 — 执行机构差异化失效建模（前轮自由脚轮 / 后轮自锁锁死）与整车参数敏感性研究</span></h1>
-<p class="meta">仿真平台：4WIS Simulator v0.16.0 · 车辆：LS9 默认参数（m=2900 kg，L=3.16 m）·
+<p class="meta">仿真平台：4WIS Simulator v0.99.0 · 车辆：LS9 默认参数（m=2900 kg，L=3.16 m）·
 模型：simplified_dynamic（RK4 + 半隐式轮速 + c_α(F_z) 载荷敏感线性胎）·
 复现：<code>python scripts/study_single_wheel_failure.py</code>（共 152 个仿真 run）</p>
 
@@ -172,7 +172,7 @@ v_cap(t) = max(v_limit, v_detect − 3 m/s²·t)</p>
 <li>ISO 3888-2:2011, Passenger cars — Test track for a severe lane-change manoeuvre.</li>
 <li>Pacejka, H. B. <i>Tire and Vehicle Dynamics</i>, 3rd ed., 2012.</li>
 <li>Reimpell, J. et al. <i>The Automotive Chassis</i>, 2nd ed., 2001（主销力矩口径）.</li>
-<li>4WIS Simulator v0.16.0：docs/v1_platform_refactor_plan.md 与 CHANGELOG（平台演进）.</li>
+<li>4WIS Simulator v0.99.0：docs/v1_platform_refactor_plan.md 与 CHANGELOG（平台演进）.</li>
 </ol>
 
 <h2>附录 A　复现</h2>
