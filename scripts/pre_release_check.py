@@ -164,6 +164,15 @@ def main() -> int:
             ],
             ROOT,
         )
+        failures += command(
+            [
+                py,
+                "scripts/check_v1_readiness.py",
+                "--check-report",
+                "docs/reports/v1_readiness.md",
+            ],
+            ROOT,
+        )
 
     failures += command([npm, "run", "type-check"], FRONTEND)
 

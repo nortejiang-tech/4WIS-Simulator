@@ -19,6 +19,13 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：`scripts/pre_release_check.py` 已接入交付材料清单检查；发布收尾时可加 `--require-portable-zips`，强制当前版本 macOS/Windows 便携 zip 存在且非空。
 - 边界：该检查不自动生成手册、不重新打包、不上传 GitHub Release；这些仍是人工确认的发布步骤。
 
+### v1 readiness 门禁
+
+- 已完成：新增 `scripts/check_v1_readiness.py`，把黄金实验、验证矩阵、参考 benchmark、Playwright 覆盖、研究报告流水线、交付材料和实物验证数据接口汇总为机器可读状态。
+- 已完成：生成 `docs/reports/v1_readiness.md`，当前结论为 `NOT READY`；唯一 strict blocker 是尚无通过检查的 `external_tool`、`bench`、`scaled_vehicle` 或 `full_vehicle` benchmark。
+- 已完成：`scripts/pre_release_check.py` 已用 `--check-report docs/reports/v1_readiness.md` 防止 readiness 报告与当前证据漂移。
+- 发布边界：真正声称 v1.0 前运行 `backend/.venv/bin/python scripts/check_v1_readiness.py --strict-v1 --require-portable-zips`；当前该命令应失败，直到接入独立外部或实测 reference。
+
 ## 优先级路线
 
 ### P0: 可信回归底座
