@@ -984,6 +984,89 @@ test("fault list failure does not masquerade as an empty fault configuration", a
   await attachPageScreenshot(page, testInfo, "workflow-fault-list-error");
 });
 
+test("fault action failures keep configured faults visible", async ({ page, request }, testInfo) => {
+  await request.delete("/api/faults");
+  const seed = await request.post("/api/faults", {
+    data: {
+      fault_type: "sensor_bias",
+      wheel: "rl",
+      value: 0.07,
+      active: true,
+    },
+  });
+  expect(seed.ok()).toBeTruthy();
+  const seedFault = await seed.json() as { id: string };
+
+  await page.route("**/api/faults", async (route) => {
+    const method = route.request().method();
+    if (method === "POST") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic fault add failure" }),
+      });
+      return;
+    }
+    if (method === "DELETE") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic fault clear failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+  await page.route(`**/api/faults/${seedFault.id}`, async (route) => {
+    const method = route.request().method();
+    if (method === "PATCH") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic fault toggle failure" }),
+      });
+      return;
+    }
+    if (method === "DELETE") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic fault delete failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const faultPanel = page.locator(".panel").filter({ hasText: "故障注入" });
+  await expect(faultPanel).toBeVisible();
+  await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
+
+  await faultPanel.getByRole("button", { name: "+ 添加" }).click();
+  await expect(page.getByText("添加故障失败：synthetic fault add failure").first()).toBeVisible();
+  await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
+
+  await faultPanel.getByRole("button", { name: "停用" }).click();
+  await expect(page.getByText("切换状态失败：synthetic fault toggle failure").first()).toBeVisible();
+  await expect(faultPanel.getByRole("button", { name: "停用" })).toBeVisible();
+
+  await faultPanel.getByRole("button", { name: "×" }).click();
+  await expect(page.getByText("删除故障失败：synthetic fault delete failure").first()).toBeVisible();
+  await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
+
+  await faultPanel.getByRole("button", { name: "清空全部故障" }).click();
+  await expect(page.getByText("清除失败：synthetic fault clear failure").first()).toBeVisible();
+  await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
+  await expect(faultPanel.getByRole("button", { name: "+ 添加" })).toBeEnabled();
+  await expect(faultPanel.getByRole("button", { name: "刷新故障" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-fault-action-errors");
+});
+
 test("script library workflow loads, starts, lays out markers, and stops a fixed script", async ({ page, request }, testInfo) => {
   await request.post("/api/script/stop");
   await request.post("/api/path/clear");
