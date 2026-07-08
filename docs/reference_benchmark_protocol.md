@@ -127,14 +127,21 @@ backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso388
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --root validation_data/.incoming --require-independent-source
 ```
 
-之后，才把该目录移动到 `validation_data/<benchmark_id>/`，再重新生成 `docs/reports/reference_benchmark_review.md` 和 `docs/reports/v1_readiness.md`。
+之后，用 promotion 门禁检查并移动到正式 `validation_data/<benchmark_id>/`：
+
+```bash
+backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh --dry-run
+backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh
+```
+
+`scripts/promote_reference_benchmark.py` 会拒绝未通过 checker 的模板、非独立来源和已存在的目标目录。promotion 成功后，再重新生成 `docs/reports/reference_benchmark_review.md` 和 `docs/reports/v1_readiness.md`。
 
 ## 当前状态
 
 - 已有内部黄金实验：`docs/golden_experiments.json`。
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
 - 已有参考数据结构 checker 与 reviewer report 输出：`scripts/check_reference_benchmarks.py`。
-- 已有独立 reference 接入脚手架：`scripts/scaffold_reference_benchmark.py`，默认输出到 `validation_data/.incoming/`，不会伪造通过证据。
+- 已有独立 reference 接入脚手架与 promotion 门禁：`scripts/scaffold_reference_benchmark.py` 默认输出到 `validation_data/.incoming/`，`scripts/promote_reference_benchmark.py` 只允许通过检查的独立来源进入正式 `validation_data/`。
 - 已有两个解析参考 benchmark：`validation_data/analytic_steady_circle_30kmh/` 和 `validation_data/analytic_step_steer_30kmh/`。
 - 已有当前审查报告：`docs/reports/reference_benchmark_review.md`，记录 2/2 解析 benchmark 通过、独立外部/实测 benchmark 为 0。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。

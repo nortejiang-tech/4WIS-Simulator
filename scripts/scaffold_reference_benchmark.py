@@ -211,7 +211,7 @@ Template: `{template}`
 - [ ] Fill `manifest.json.metrics` with reviewed target metrics and tolerances.
 - [ ] Document sampling rate, filtering, time synchronisation, coordinate frames, and any data crop.
 - [ ] Run `backend/.venv/bin/python scripts/check_reference_benchmarks.py --root validation_data/.incoming`.
-- [ ] Move this directory to `validation_data/{benchmark_id}/` only after the checker passes and the source is reviewable.
+- [ ] Promote this directory with `backend/.venv/bin/python scripts/promote_reference_benchmark.py {benchmark_id} --dry-run`, then rerun without `--dry-run`.
 - [ ] Regenerate `docs/reports/reference_benchmark_review.md` and `docs/reports/v1_readiness.md`.
 
 ## Reviewer Notes
