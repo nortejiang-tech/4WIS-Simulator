@@ -665,6 +665,40 @@ test("scenario list failure stays visible in the scenario panel", async ({ page 
   await attachPageScreenshot(page, testInfo, "workflow-scenario-list-error");
 });
 
+test("scenario version refresh failure surfaces a toast without blocking scenario tools", async ({ page }, testInfo) => {
+  let failScenarioRefresh = false;
+  await page.route("**/api/scenario", async (route) => {
+    if (route.request().method() === "GET" && failScenarioRefresh) {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic scenario refresh failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const scenarioPanel = page.locator(".panel").filter({ hasText: "场景路况" });
+  await expect(scenarioPanel).toBeVisible();
+  await scenarioPanel.getByRole("button", { name: "广场" }).click();
+  await expect(scenarioPanel).toContainText("当前：广场");
+
+  failScenarioRefresh = true;
+  await scenarioPanel.getByRole("button", { name: "清除场景" }).click();
+  await expect(page.getByTestId("toast-error")).toContainText(
+    "刷新场景几何失败：synthetic scenario refresh failure",
+  );
+  await expect(scenarioPanel.getByRole("button", { name: "广场" })).toBeEnabled();
+  await expect(scenarioPanel.getByRole("button", { name: "刷新场景" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-scenario-refresh-error");
+});
+
 test("scenario disturbance editor places, edits, and clears a road disturbance", async ({ page, request }, testInfo) => {
   await request.post("/api/scene/clear");
 

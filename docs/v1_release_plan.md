@@ -59,6 +59,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖原理页交互 demo 后端计算失败异常态，断言错误留在对应 demo 区域、页面主体不空白，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页标准路径生成、跟踪策略切换和路径清除，生成场景路径 workflow screenshot attachment。
 - 已完成：Playwright 覆盖 App 顶层 path_version 触发的参考路径刷新失败异常态，断言错误 toast 可见且场景路径工具仍可用，并生成异常态 screenshot attachment。
+- 已完成：Playwright 覆盖 App 顶层 scenario_version 触发的场景几何刷新失败异常态，断言错误 toast 可见且场景面板工具仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页路径模板读取失败异常态，断言错误停留在轨迹/路径面板、生成按钮禁用、刷新模板和手动绘制仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页场景列表读取失败异常态，断言错误停留在场景路况面板、刷新按钮仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖场景页路面扰动编辑的新建、选中编辑、参数应用和清空，生成扰动编辑 workflow screenshot attachment。
