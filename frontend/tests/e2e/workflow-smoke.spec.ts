@@ -613,6 +613,65 @@ test("load analysis params failure leaves a visible empty state", async ({ page 
   await attachPageScreenshot(page, testInfo, "workflow-load-params-error");
 });
 
+test("load analysis profile action failures stay visible without blocking the toolbar", async ({ page }, testInfo) => {
+  await page.route("**/api/vehicle-profiles/LS9", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic profile load failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+  await page.route("**/api/vehicle-profiles/LS9/apply", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic profile apply failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+  await page.route("**/api/vehicle-profiles/bad_profile", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic profile save failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /负载/ }).click();
+
+  await expect(page.getByText("实时四轮负载")).toBeVisible();
+  await expect(page.getByRole("button", { name: "重新计算" })).toBeEnabled();
+
+  await page.getByRole("button", { name: "载入" }).click();
+  await expect(page.getByText("载入车型失败：synthetic profile load failure").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "载入" })).toBeEnabled();
+
+  await page.getByRole("button", { name: "应用到仿真" }).click();
+  await expect(page.getByText("应用车型失败：synthetic profile apply failure").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "应用到仿真" })).toBeEnabled();
+
+  await page.getByPlaceholder("新车型名").fill("bad_profile");
+  await page.getByRole("button", { name: "保存车型" }).click();
+  await expect(page.getByText("保存车型失败：synthetic profile save failure").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "重新计算" })).toBeEnabled();
+  await expect(page.locator(".load-chart-panel").first()).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-load-profile-action-errors");
+});
+
 test("scenario path workflow generates, follows, and clears a reference path", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
