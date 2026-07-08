@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import sys
@@ -51,6 +52,7 @@ ALLOWED_SOURCE_TYPES = {"analytic", "external_tool", "bench", "scaled_vehicle", 
 INDEPENDENT_SOURCE_TYPES = {"external_tool", "bench", "scaled_vehicle", "full_vehicle"}
 REQUIRED_CHANNELS = ("t", "vx", "vy", "yaw_rate", "pose_x", "pose_y", "driver_steering")
 UNRESOLVED_PLACEHOLDER_TOKENS = ("TODO", "TBD", "PLACEHOLDER", "FILL_ME", "待补", "待定")
+GENERATED_BENCHMARK_FILES = {"manifest.json", "reference.csv", "sim4wis_experiment.yaml", "notes.md"}
 
 
 @dataclass
@@ -248,6 +250,77 @@ def _validate_no_placeholders(path: Path, manifest: dict[str, Any], notes: str, 
         result.failures.append(f"{path.name}: notes.md contains unresolved placeholder(s)")
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _resolve_artifact_path(root: Path, rel_path: str) -> Path:
+    artifact_rel = Path(rel_path)
+    if artifact_rel.is_absolute():
+        raise ValueError("path must be relative to the benchmark directory")
+    if any(part in {"", ".", ".."} for part in artifact_rel.parts):
+        raise ValueError("path must be a normalized relative path without '.' or '..'")
+    resolved = (root / artifact_rel).resolve()
+    try:
+        resolved.relative_to(root.resolve())
+    except ValueError as exc:
+        raise ValueError("path must stay inside the benchmark directory") from exc
+    return resolved
+
+
+def _validate_source_artifacts(path: Path, manifest: dict[str, Any], result: BenchmarkResult) -> None:
+    if result.source_type not in INDEPENDENT_SOURCE_TYPES:
+        return
+    artifacts = manifest.get("source_artifacts")
+    if not isinstance(artifacts, list) or not artifacts:
+        result.failures.append(f"{path.name}: independent source must declare non-empty source_artifacts")
+        return
+
+    for idx, artifact in enumerate(artifacts):
+        prefix = f"source_artifacts[{idx}]"
+        if not isinstance(artifact, dict):
+            result.failures.append(f"{path.name}: {prefix} must be an object")
+            continue
+        rel_path = artifact.get("path")
+        role = artifact.get("role")
+        expected_sha = artifact.get("sha256")
+        if not isinstance(rel_path, str) or not rel_path.strip():
+            result.failures.append(f"{path.name}: {prefix}.path must be a non-empty relative path")
+            continue
+        if not isinstance(role, str) or not role.strip():
+            result.failures.append(f"{path.name}: {prefix}.role must describe the artifact role")
+        if not isinstance(expected_sha, str) or not expected_sha.strip():
+            result.failures.append(f"{path.name}: {prefix}.sha256 must be a non-empty hex digest")
+            continue
+        expected_sha = expected_sha.strip().lower()
+        if len(expected_sha) != 64 or any(ch not in "0123456789abcdef" for ch in expected_sha):
+            result.failures.append(f"{path.name}: {prefix}.sha256 must be a 64-character lowercase hex digest")
+            continue
+        try:
+            artifact_path = _resolve_artifact_path(path, rel_path.strip())
+        except ValueError as exc:
+            result.failures.append(f"{path.name}: {prefix}.path invalid: {exc}")
+            continue
+        normalized_rel_path = Path(rel_path.strip()).as_posix()
+        if normalized_rel_path in GENERATED_BENCHMARK_FILES:
+            result.failures.append(
+                f"{path.name}: {prefix}.path must point to raw/source evidence, not generated benchmark file {normalized_rel_path!r}"
+            )
+            continue
+        if not artifact_path.is_file():
+            result.failures.append(f"{path.name}: {prefix}.path {rel_path!r} does not exist")
+            continue
+        actual_sha = _sha256_file(artifact_path)
+        if actual_sha != expected_sha:
+            result.failures.append(
+                f"{path.name}: {prefix}.sha256 mismatch for {rel_path!r}: expected {expected_sha}, got {actual_sha}"
+            )
+
+
 def _validate_csv_channels(path: Path, ref: dict[str, np.ndarray], result: BenchmarkResult) -> None:
     for ch in REQUIRED_CHANNELS:
         if ch not in ref:
@@ -301,6 +374,7 @@ def check_benchmark(path: Path) -> BenchmarkResult:
     if notes_path.is_file():
         result.reviewer_notes = _load_text(notes_path)
     _validate_no_placeholders(path, manifest, result.reviewer_notes, result)
+    _validate_source_artifacts(path, manifest, result)
 
     try:
         ref = _load_reference_csv(path / "reference.csv")

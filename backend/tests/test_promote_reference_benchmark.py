@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import importlib.util
 import json
 import sys
@@ -80,11 +81,20 @@ def write_valid_external_benchmark(root: Path, benchmark_id: str = "external_ste
         "pose_y": {"unit": "m", "coordinate_frame": "world y"},
         "driver_steering": {"unit": "normalized", "convention": "Sim4WIS driver input"},
     }
+    raw_source = bench / "raw_external_export.csv"
+    raw_source.write_text("fixture raw export used to verify source_artifacts hashing\n", encoding="utf-8")
     manifest = {
         "benchmark_id": benchmark_id,
         "source_type": "external_tool",
         "source_name": "independent fixture",
         "source_version": "test",
+        "source_artifacts": [
+            {
+                "path": raw_source.name,
+                "role": "raw external fixture export",
+                "sha256": hashlib.sha256(raw_source.read_bytes()).hexdigest(),
+            }
+        ],
         "vehicle_mapping": {"note": "same defaults for checker fixture"},
         "channels": channels,
         "metrics": {

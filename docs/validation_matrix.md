@@ -29,11 +29,11 @@
 | 手柄映射与直控模式 | L2 | `backend/tests/test_manual_strategies.py`, `frontend/src/input/gamepadConfig.ts`, `frontend/tests/e2e/workflow-smoke.spec.ts`, 手册 GIF | 配置 UI 和直控策略有自动化覆盖；浏览器 Gamepad API 和设备轴序仍依赖真实硬件回归。 |
 | 车辆几何工作室 | L2 | `frontend/src/vehicle/geometryModel.ts`, `frontend/src/components/vehicle/*`, `frontend/tests/e2e/workflow-smoke.spec.ts`, `CHANGELOG.md` v0.16 记录 | 已有浏览器 smoke 覆盖 SVG 拖拽点写入参数编辑缓冲；前端几何数学与后端部分共享概念但不是同一语言实现，仍需跨端一致性测试。 |
 | 便携包发布 | L2 | `scripts/build_portable.py`, `dist_portable/`, GitHub Release assets | 依赖 python-build-standalone 和目标平台 wheel 可用性；发布前必须跑 `scripts/pre_release_check.py`。 |
-| 参考/外部/实测对照接入 | L3 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md`, `validation_data/analytic_steady_circle_30kmh/`, `validation_data/analytic_step_steer_30kmh/`, `scripts/check_reference_benchmarks.py`, `backend/tests/test_reference_benchmarks.py` | 已有两个解析 benchmark，`--require-data` 可通过；`--require-independent-source` 会继续失败直到接入通过检查的外部工具、台架、缩比车或实车 benchmark，因此当前不能提升到外部工具对照或 L4 实测等级。 |
+| 参考/外部/实测对照接入 | L3 | `docs/reference_benchmark_protocol.md`, `validation_data/README.md`, `validation_data/analytic_steady_circle_30kmh/`, `validation_data/analytic_step_steer_30kmh/`, `scripts/check_reference_benchmarks.py`, `scripts/scaffold_reference_benchmark.py`, `scripts/normalize_reference_csv.py`, `scripts/promote_reference_benchmark.py`, `backend/tests/test_reference_benchmarks.py`, `backend/tests/test_normalize_reference_csv.py`, `backend/tests/test_promote_reference_benchmark.py` | 已有两个解析 benchmark，`--require-data` 可通过；独立来源接入已有 incoming 脚手架、原始 CSV 归一、source artifact SHA-256 校验和 promotion 门禁；`--require-independent-source` 会继续失败直到接入通过检查的外部工具、台架、缩比车或实车 benchmark，因此当前不能提升到外部工具对照或 L4 实测等级。 |
 
 ## 当前最高风险
 
-1. 外部对照不足：已有稳态圆周和阶跃转向两个解析 benchmark，并有 `--require-independent-source` 防误报门禁；但多数结论仍缺 CarSim/CarMaker、公开基准或实测数据。
+1. 外部对照不足：已有稳态圆周和阶跃转向两个解析 benchmark，并有 `--require-independent-source`、incoming promotion 和 source artifact checksum 防误报门禁；但多数结论仍缺 CarSim/CarMaker、公开基准或实测数据。
 2. 浏览器端自动化仍偏 smoke：关键 workflow 页截图、车辆几何拖拽、分析页截图/图表增删/hover cursor/drag-to-zoom/PNG 导出、负载页图表绘制/原理说明弹窗、原理页 demo 计算失败异常态、场景页标准路径生成/跟踪/清除、路面扰动编辑新建/编辑/清空、故障注入添加/启停/清空、动作脚本库载入/启动/停止、数据录制开始/停止/CSV 导出、回放 meta 读取失败异常态、路径模板读取失败异常态、路径版本刷新失败异常态、场景版本刷新失败异常态、扰动面板与 2D 画布写操作失败异常态、故障写操作失败异常态、脚本库读取失败异常态、脚本状态读取失败异常态、脚本解析失败异常态、脚本启动/停止失败异常态、run 列表/数据/删除失败异常态、试验页实验库读取/保存/删除失败异常态、试验页机动模板读取失败异常态、试验页 batch 启动失败异常态、运行页模型/路面控制失败异常态、Python 策略状态读取和手动重载失败异常态、车辆页参数应用被拒绝异常态、车辆页项目列表读取失败异常态、车辆页项目 YAML 加载/保存失败异常态、场景列表/加载/清除失败异常态、负载页扫图计算失败异常态、负载页车型库读取失败异常态、负载页参数读取失败异常态、负载页车型载入/保存/应用失败异常态、负载页敏感度扫描失败异常态、命令面板模型切换失败异常态、录制状态读取/开始/停止/CSV 导出失败异常态、回放时间轴、命令面板导航和手柄配置编辑已有覆盖，但更多深层页面状态和更少见后端失败分支仍主要靠人工端到端验证。
 3. 安全研究边界需要持续显式化：报告结论应始终标注参数假设、机构假设和不可外推范围。
 4. 发布资产一致性要机械化：版本号、lockfile、构建产物、手册和 release asset 需要同一套检查清单约束。
@@ -42,6 +42,6 @@
 
 1. 继续做外部基准对照：在已有解析稳态圆周和阶跃转向 benchmark 之外，至少再接入 ISO 3888 双移线或 CarSim/CarMaker 导出结果，形成更完整的 L3 证据包。
 2. 扩展 Playwright：继续覆盖更深页面状态和异常态截图，减少人工 UI 回归成本。
-3. 接入真实 reference 数据：checker 已能汇总误差表和 reviewer notes；下一步是放入真实外部/实测 benchmark，并由人工审查误差解释。
+3. 接入真实 reference 数据：checker 已能汇总误差表、reviewer notes 和独立来源 artifact checksum；下一步是放入真实外部/实测 benchmark，并由人工审查误差解释。
 4. 抽象研究报告流水线：后续新增故障研究脚本应复用 `scripts/reporting.py` 的文档外壳、章节、callout、表格和图片组件，避免复制整页模板。
 5. 接入实物验证数据：缩比 4WIS K&C 平台或台架数据进入后，将关键模型从 L3 推进到 L4。

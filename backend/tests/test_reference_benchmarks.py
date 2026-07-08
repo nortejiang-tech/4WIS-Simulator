@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import importlib.util
 import json
 import sys
@@ -23,6 +24,14 @@ def load_checker():
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
     return mod
+
+
+def write_source_artifact(root: Path, rel_path: str, content: str) -> dict[str, str]:
+    path = root / rel_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    return {"path": rel_path, "role": "raw external fixture export", "sha256": digest}
 
 
 def test_reference_checker_allows_empty_root_by_default(tmp_path: Path) -> None:
@@ -183,11 +192,60 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
     assert len(results) == 1
 
     code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert len(results) == 1
+    assert any("source_artifacts" in failure for failure in results[0].failures)
+
+    source_artifacts = [write_source_artifact(bench, "raw/fixture_export.csv", "t,vx\n0,1\n")]
+    manifest["source_artifacts"] = source_artifacts
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
     assert code == 0
     assert len(results) == 1
     assert results[0].source_type == "external_tool"
     assert results[0].has_independent_source
 
+    manifest["source_artifacts"] = [{**source_artifacts[0], "sha256": "0" * 64}]
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert any("sha256 mismatch" in failure for failure in results[0].failures)
+
+    manifest["source_artifacts"] = [write_source_artifact(bench, "raw/reference.csv", "raw external file\n")]
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 0
+    assert results[0].has_independent_source
+
+    manifest["source_artifacts"] = [
+        {
+            "path": "reference.csv",
+            "role": "raw external fixture export",
+            "sha256": hashlib.sha256((bench / "reference.csv").read_bytes()).hexdigest(),
+        }
+    ]
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert any("not generated benchmark file" in failure for failure in results[0].failures)
+
+    manifest["source_artifacts"] = source_artifacts
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     code, results = checker.check_reference_benchmarks(tmp_path, report_path=report)
     assert code == 0
     assert len(results) == 1

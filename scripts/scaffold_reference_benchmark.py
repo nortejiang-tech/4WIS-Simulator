@@ -181,6 +181,13 @@ def manifest_template(
                 "Record any unavailable source parameters and justify the Sim4WIS substitute.",
             ],
         },
+        "source_artifacts": [
+            {
+                "path": "raw_source_export.csv",
+                "role": "TODO: raw external-tool export, bench log, measurement log, or source report",
+                "sha256": "TODO: run shasum -a 256 raw_source_export.csv and paste the digest",
+            }
+        ],
         "channels": {
             "t": {"unit": "s", "coordinate_frame": "experiment time", "sampling": "TODO"},
             "vx": {"unit": "m/s", "coordinate_frame": "body x", "sensor": "TODO"},
@@ -207,6 +214,7 @@ Template: `{template}`
 ## Intake Checklist
 
 - [ ] Replace `reference.csv` with real exported or measured samples.
+- [ ] Save the raw/source export or measurement/report file in this directory and fill `manifest.json.source_artifacts` with its SHA-256.
 - [ ] Fill `manifest.json.vehicle_mapping` with the parameter mapping used for Sim4WIS.
 - [ ] Fill `manifest.json.metrics` with reviewed target metrics and tolerances.
 - [ ] Document sampling rate, filtering, time synchronisation, coordinate frames, and any data crop.

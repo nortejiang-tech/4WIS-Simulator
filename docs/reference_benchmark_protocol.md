@@ -37,6 +37,7 @@ validation_data/
 - `source_type`: `analytic` / `external_tool` / `bench` / `scaled_vehicle` / `full_vehicle`
 - `source_name`: 例如 `CarMaker 14.0`、`K&C rig v1`、`scaled_4wis_platform`
 - `source_version`
+- `source_artifacts`: 独立来源必须提供至少一个原始/导出/测量/报告文件的 `path`、`role` 和 `sha256`；解析 `analytic` benchmark 可省略
 - `vehicle_mapping`: 外部参数如何映射到 `VehicleParams`
 - `channels`: 每列单位、坐标系、采样率
 - `metrics`: 对照指标、容差、理由
@@ -64,7 +65,8 @@ validation_data/
 2. 没有单位和坐标系说明的数据只能作为探索材料，不能作为 L3/L4 证据。
 3. 外部工具对照必须记录工具版本、轮胎模型、求解步长和车辆参数映射。
 4. 实测对照必须记录传感器、采样率、滤波、同步方式和数据裁剪窗口。
-5. 更新 `docs/validation_matrix.md` 前，必须能复现对照脚本输出。
+5. 独立来源必须把原始导出、测量日志、工具报告或参数文件留存在 benchmark 目录内，并在 `manifest.source_artifacts` 中记录 SHA-256；不能用 `reference.csv`、`manifest.json`、`sim4wis_experiment.yaml` 或 `notes.md` 这些生成件冒充原始证据。
+6. 更新 `docs/validation_matrix.md` 前，必须能复现对照脚本输出。
 
 ## 自动检查
 
@@ -140,6 +142,22 @@ backend/.venv/bin/python scripts/normalize_reference_csv.py \
 
 该脚本只负责列名映射、单位换算、数值合法性和时间单调性检查；它不会创建或修改 `manifest.json`，不会选择指标容差，也不会让 benchmark 自动具备独立证据资格。`manifest.channels`、`vehicle_mapping`、`metrics` 和 `notes.md` 仍必须由接入者按真实来源补齐并复核。
 
+同时必须把原始导出或测量/报告文件放在同一个 incoming benchmark 目录内，并填写 `manifest.source_artifacts`。示例：
+
+```json
+{
+  "source_artifacts": [
+    {
+      "path": "raw_source_export.csv",
+      "role": "raw CarMaker CSV export before Sim4WIS normalization",
+      "sha256": "..."
+    }
+  ]
+}
+```
+
+checker 会拒绝缺失的 artifact、越界路径、checksum 不匹配，以及把 `reference.csv` 等生成件当作原始证据的写法。
+
 完成补齐后运行：
 
 ```bash
@@ -160,7 +178,7 @@ backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888
 - 已有内部黄金实验：`docs/golden_experiments.json`。
 - 已有内部发布门禁：`scripts/pre_release_check.py`。
 - 已有参考数据结构 checker 与 reviewer report 输出：`scripts/check_reference_benchmarks.py`。
-- 已有独立 reference 接入脚手架、原始 CSV 归一工具与 promotion 门禁：`scripts/scaffold_reference_benchmark.py` 默认输出到 `validation_data/.incoming/`，`scripts/normalize_reference_csv.py` 只生成标准 `reference.csv`，`scripts/promote_reference_benchmark.py` 只允许通过检查的独立来源进入正式 `validation_data/`。
+- 已有独立 reference 接入脚手架、原始 CSV 归一工具、source artifact checksum 约束与 promotion 门禁：`scripts/scaffold_reference_benchmark.py` 默认输出到 `validation_data/.incoming/`，`scripts/normalize_reference_csv.py` 只生成标准 `reference.csv`，`scripts/check_reference_benchmarks.py` 会校验独立来源 artifact 的 SHA-256，`scripts/promote_reference_benchmark.py` 只允许通过检查的独立来源进入正式 `validation_data/`。
 - 已有两个解析参考 benchmark：`validation_data/analytic_steady_circle_30kmh/` 和 `validation_data/analytic_step_steer_30kmh/`。
 - 已有当前审查报告：`docs/reports/reference_benchmark_review.md`，记录 2/2 解析 benchmark 通过、独立外部/实测 benchmark 为 0。
 - 尚缺真实外部工具或实测数据；该缺口仍然是 v1.0 前的关键风险。
