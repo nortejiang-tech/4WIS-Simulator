@@ -146,6 +146,15 @@ def main() -> int:
         if args.require_independent_reference:
             ref_cmd.append("--require-independent-source")
         failures += command(ref_cmd, ROOT)
+        failures += command(
+            [
+                py,
+                "scripts/check_reference_benchmarks.py",
+                "--check-report",
+                "docs/reports/reference_benchmark_review.md",
+            ],
+            ROOT,
+        )
 
     failures += command([npm, "run", "type-check"], FRONTEND)
 

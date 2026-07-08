@@ -90,6 +90,14 @@ backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/rep
 
 报告会汇总每个 benchmark 的来源、limitations、warnings/failures、每项指标的 Sim/Reference/Delta/Tolerance 和 `notes.md` 摘要。仓库当前留存的审查件为 `docs/reports/reference_benchmark_review.md`；该报告只是复现性与人工评审材料，不能自动提升 `docs/validation_matrix.md` 的可信度等级。
 
+pre-release 会校验已提交的 review report 是否与当前 benchmark 数据一致；单独检查时运行：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --check-report docs/reports/reference_benchmark_review.md
+```
+
+`--check-report` 只比较当前渲染结果与已有文件，发现缺失或过期会失败并提示重新运行 `--report`，不会在验证过程中静默改写审查件。
+
 当前支持从 `reference.csv` 自动计算参考值的指标包括：
 
 - `yaw_rate_peak_dps`

@@ -1,6 +1,6 @@
 # Reference Benchmark Review Report
 
-- Data root: `/Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/validation_data`
+- Data root: `validation_data`
 - Benchmarks checked: 2
 - Passing benchmarks: 2/2
 - Passing independent external/measured benchmarks: 0

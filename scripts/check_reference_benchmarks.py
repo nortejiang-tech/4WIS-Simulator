@@ -344,6 +344,14 @@ def _first_lines(text: str, max_lines: int = 8) -> str:
     return "\n".join(lines[:max_lines])
 
 
+def _display_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT))
+    except ValueError:
+        return str(resolved)
+
+
 def render_review_report(root: Path, results: list[BenchmarkResult]) -> str:
     """Render a reviewer-facing Markdown report from checked benchmark results."""
     ok_count = sum(1 for r in results if r.ok)
@@ -351,7 +359,7 @@ def render_review_report(root: Path, results: list[BenchmarkResult]) -> str:
     lines = [
         "# Reference Benchmark Review Report",
         "",
-        f"- Data root: `{root}`",
+        f"- Data root: `{_display_path(root)}`",
         f"- Benchmarks checked: {len(results)}",
         f"- Passing benchmarks: {ok_count}/{len(results)}",
         f"- Passing independent external/measured benchmarks: {independent_count}",
@@ -416,18 +424,45 @@ def write_review_report(path: Path, root: Path, results: list[BenchmarkResult]) 
     path.write_text(render_review_report(root, results), encoding="utf-8")
 
 
+def check_review_report_fresh(path: Path, root: Path, results: list[BenchmarkResult]) -> bool:
+    expected = render_review_report(root, results)
+    try:
+        actual = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        print(
+            f"{path}: reference benchmark review report is missing; "
+            f"regenerate with --report {path}",
+            file=sys.stderr,
+        )
+        return False
+    if actual != expected:
+        print(
+            f"{path}: reference benchmark review report is stale; "
+            f"regenerate with --report {path}",
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
 def check_reference_benchmarks(
     root: Path = DEFAULT_ROOT,
     require_data: bool = False,
     require_independent_source: bool = False,
     report_path: Path | None = None,
+    check_report_path: Path | None = None,
 ) -> tuple[int, list[BenchmarkResult]]:
     benches = discover_benchmarks(root)
     if not benches:
+        report_fresh = True
         if report_path is not None:
             write_review_report(report_path, root, [])
+        if check_report_path is not None:
+            report_fresh = check_review_report_fresh(check_report_path, root, [])
         if require_data or require_independent_source:
             print(f"{root}: no reference benchmarks found", file=sys.stderr)
+            return 1, []
+        if not report_fresh:
             return 1, []
         print(f"{root}: no reference benchmarks found; external validation evidence remains absent")
         return 0, []
@@ -435,6 +470,9 @@ def check_reference_benchmarks(
     results = [check_benchmark(path) for path in benches]
     if report_path is not None:
         write_review_report(report_path, root, results)
+    report_fresh = True
+    if check_report_path is not None:
+        report_fresh = check_review_report_fresh(check_report_path, root, results)
     failures = sum(len(r.failures) for r in results)
     for r in results:
         status = "ok" if r.ok else "failed"
@@ -449,7 +487,9 @@ def check_reference_benchmarks(
             f"{root}: no passing independent external-tool, bench, scaled-vehicle, or full-vehicle benchmark found",
             file=sys.stderr,
         )
-    return (1 if failures or (require_independent_source and independent_count == 0) else 0), results
+    return (
+        1 if failures or not report_fresh or (require_independent_source and independent_count == 0) else 0
+    ), results
 
 
 def main() -> int:
@@ -461,13 +501,20 @@ def main() -> int:
         action="store_true",
         help="fail unless at least one passing external_tool/bench/scaled_vehicle/full_vehicle benchmark exists",
     )
-    parser.add_argument("--report", type=Path, help="write a reviewer-facing Markdown report")
+    report_group = parser.add_mutually_exclusive_group()
+    report_group.add_argument("--report", type=Path, help="write a reviewer-facing Markdown report")
+    report_group.add_argument(
+        "--check-report",
+        type=Path,
+        help="fail if the reviewer-facing Markdown report is missing or stale",
+    )
     args = parser.parse_args()
     code, _results = check_reference_benchmarks(
         args.root,
         require_data=args.require_data,
         require_independent_source=args.require_independent_source,
         report_path=args.report,
+        check_report_path=args.check_report,
     )
     return code
 

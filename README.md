@@ -100,7 +100,7 @@ backend/.venv/bin/python scripts/study_single_wheel_failure.py
 python scripts/pre_release_check.py
 ```
 
-该脚本会检查版本一致性、前端 lockfile、后端 pytest、smoke、黄金实验 KPI 回归、外部参考数据结构、前端 type-check、生产构建和 Playwright 浏览器 smoke。
+该脚本会检查版本一致性、前端 lockfile、后端 pytest、smoke、黄金实验 KPI 回归、外部参考数据结构、参考 benchmark 审查报告一致性、前端 type-check、生产构建和 Playwright 浏览器 smoke。
 
 常用单项命令：
 
@@ -110,6 +110,7 @@ backend/.venv/bin/python scripts/smoke_test.py   # 从仓库根目录运行 smok
 backend/.venv/bin/python scripts/check_golden_experiments.py
 backend/.venv/bin/python scripts/check_reference_benchmarks.py
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --check-report docs/reports/reference_benchmark_review.md
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-independent-source  # 需要真实外部/实测来源时使用
 cd frontend && npm run type-check
 cd frontend && npm run build
@@ -119,10 +120,10 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 
 当前 `v0.16.0` 验证基线：
 
-- 后端：`210 passed`
+- 后端：`211 passed`
 - smoke：`32/32 通过`
 - 黄金实验：`step_steer_60kmh`、`iso3888_dlc_60kmh` 和 3 个单轮失效快速样本 KPI 回归通过
-- 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`docs/reports/reference_benchmark_review.md` 已生成当前 reviewer-facing 审查材料；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
+- 外部参考：`analytic_steady_circle_30kmh` 和 `analytic_step_steer_30kmh` 两个解析 benchmark 通过；`docs/reports/reference_benchmark_review.md` 已生成当前 reviewer-facing 审查材料，pre-release 会用 `--check-report` 防止该报告与 benchmark 数据漂移；`--require-independent-source` 仍会失败，直到接入 CarSim/CarMaker、公开基准或实测数据
 - 前端：type-check 通过
 - 浏览器 smoke：Playwright Chromium `50 passed`，覆盖工作流渲染、试验到分析页交接、分析页通道切换/加图/hover cursor/drag-to-zoom/PNG 导出/截图证据、分析页 run 列表/数据读取/删除失败异常态、试验页实验库读取/保存/删除失败和机动模板读取失败异常态、原理页 demo 计算失败异常态、车辆几何拖拽、车辆页项目列表/加载/保存失败异常态、运行页模型/路面控制失败异常态、Python 策略状态读取和手动重载失败异常态、数据录制开始/停止/CSV 导出/状态读取失败/开始失败/停止失败/导出失败异常态、分析回放时间轴、回放 meta 读取失败 fallback、场景路径/扰动/故障 workflow、路径/场景版本刷新失败异常态、场景列表/加载/清除失败、路径模板读取失败、扰动更新/删除/清空失败和 2D 画布放置/拖动失败异常态、故障列表读取失败和添加/切换/删除/清空失败异常态、脚本库读取/解析/状态读取/启动/停止失败异常态、负载页车型库/参数读取失败、车型载入/保存/应用失败和敏感度扫描失败异常态、命令面板导航/模型切换失败异常态、手柄配置编辑
 - 前端生产构建通过且无 Vite chunk warning；默认 `index` chunk 354.92 kB，低于 500 kB 入口预算；懒加载 3D vendor 最大 chunk `vendor-three-core` 666.67 kB，低于 700 kB 3D core 预算；入口 `index.css` 为 15.68 kB / gzip 3.41 kB，车辆几何、工作流页面、负载页、模型页和共享 load 图表/控制样式拆为独立 CSS chunks，App 壳层、视口/HUD、命令面板、手柄配置、Panel 壳层、Panel 内容控件和快速开始卡片样式已收敛到组件私有 CSS

@@ -27,6 +27,9 @@ def load_checker():
 
 def test_reference_checker_allows_empty_root_by_default(tmp_path: Path) -> None:
     checker = load_checker()
+    default_report = checker.render_review_report(checker.DEFAULT_ROOT, [])
+    assert "- Data root: `validation_data`" in default_report
+
     code, results = checker.check_reference_benchmarks(tmp_path)
     assert code == 0
     assert results == []
@@ -46,6 +49,19 @@ def test_reference_checker_allows_empty_root_by_default(tmp_path: Path) -> None:
     text = report.read_text(encoding="utf-8")
     assert "No reference benchmark directories were found" in text
     assert "External validation evidence remains absent" in text
+
+    code, results = checker.check_reference_benchmarks(tmp_path, check_report_path=report)
+    assert code == 0
+    assert results == []
+
+    code, results = checker.check_reference_benchmarks(tmp_path, check_report_path=tmp_path / "missing.md")
+    assert code == 1
+    assert results == []
+
+    report.write_text(text + "\nStale manual edit.\n", encoding="utf-8")
+    code, results = checker.check_reference_benchmarks(tmp_path, check_report_path=report)
+    assert code == 1
+    assert results == []
 
 
 def test_reference_checker_reports_malformed_benchmark(tmp_path: Path) -> None:
@@ -162,16 +178,27 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    code, results = checker.check_reference_benchmarks(tmp_path, check_report_path=report)
+    assert code == 1
+    assert len(results) == 1
+
     code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
     assert code == 0
     assert len(results) == 1
     assert results[0].source_type == "external_tool"
     assert results[0].has_independent_source
 
+    code, results = checker.check_reference_benchmarks(tmp_path, report_path=report)
+    assert code == 0
+    assert len(results) == 1
+    code, results = checker.check_reference_benchmarks(tmp_path, check_report_path=report)
+    assert code == 0
+    assert len(results) == 1
+
     text = report.read_text(encoding="utf-8")
     assert "## analytic_step_40kmh - PASS" in text
-    assert "Passing independent external/measured benchmarks: 0" in text
-    assert "No passing independent external-tool" in text
+    assert "Passing independent external/measured benchmarks: 1" in text
+    assert "No passing independent external-tool" not in text
     assert "| `yaw_rate_peak_dps` |" in text
     assert "Reviewer note: deterministic fixture, not external evidence." in text
     assert "does not upgrade validation levels without human review" in text
