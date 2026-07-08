@@ -1001,6 +1001,91 @@ test("disturbance action failures keep existing disturbance state visible", asyn
   await request.post("/api/scene/clear");
 });
 
+test("disturbance canvas placement and drag failures surface toasts", async ({ page, request }, testInfo) => {
+  await request.post("/api/reset");
+  await request.post("/api/scene/clear");
+
+  await page.route("**/api/scene/disturbances", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic disturbance placement failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const disturbancePanel = page.locator(".panel").filter({ hasText: "路面扰动编辑" });
+  await expect(disturbancePanel).toBeVisible();
+  await disturbancePanel.getByRole("button", { name: "放置" }).click();
+  await expect(disturbancePanel).toContainText("放置中");
+
+  const canvas = page.locator(".canvas-container canvas").first();
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("2D canvas is not visible for disturbance canvas failure test");
+  await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.48);
+  await expect(page.getByText("放置扰动失败：synthetic disturbance placement failure").first()).toBeVisible();
+  await expect(disturbancePanel.getByRole("button", { name: /放置中/ })).toBeEnabled();
+  await page.keyboard.press("Escape");
+  await expect(disturbancePanel.getByRole("button", { name: "放置" })).toBeEnabled();
+
+  await page.unroute("**/api/scene/disturbances");
+  await request.post("/api/scene/clear");
+  const seed = await request.post("/api/scene/disturbances", {
+    data: {
+      type: "ice_patch",
+      x: 4,
+      y: 0,
+      length: 6,
+      width: 4,
+      heading: 0,
+      mu: 0.25,
+    },
+  });
+  expect(seed.ok()).toBeTruthy();
+  const seededDisturbance = await seed.json() as { id: string };
+
+  await page.route(`**/api/scene/disturbances/${seededDisturbance.id}`, async (route) => {
+    if (route.request().method() !== "PUT") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic disturbance move failure" }),
+    });
+  });
+
+  await expect(disturbancePanel).toContainText("冰面 / 低附着");
+  await disturbancePanel.locator("span", { hasText: "冰面 / 低附着" }).click();
+  await expect(disturbancePanel).toContainText("编辑");
+
+  const pxmText = await page.locator(".mono.small", { hasText: /px\/m/ }).first().textContent();
+  const pxm = Number((pxmText ?? "").match(/(\d+)/)?.[1] ?? "35");
+  const freshBox = await canvas.boundingBox();
+  if (!freshBox) throw new Error("2D canvas disappeared before disturbance drag failure test");
+  const dragX = freshBox.x + freshBox.width / 2;
+  const dragY = freshBox.y + freshBox.height / 2 - 4 * pxm;
+  await page.mouse.move(dragX, dragY);
+  await page.mouse.down();
+  await page.mouse.move(dragX + 32, dragY + 18, { steps: 8 });
+  await page.mouse.up();
+
+  await expect(page.getByText("移动扰动失败：synthetic disturbance move failure").first()).toBeVisible();
+  await expect(disturbancePanel).toContainText("冰面 / 低附着");
+
+  await attachPageScreenshot(page, testInfo, "workflow-disturbance-canvas-errors");
+  await request.post("/api/scene/clear");
+});
+
 test("scenario fault injection panel adds, toggles, and clears faults", async ({ page, request }, testInfo) => {
   await request.delete("/api/faults");
 
