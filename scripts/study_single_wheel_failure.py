@@ -847,6 +847,146 @@ def build_html(rows, curves, param_sens, figs: dict[str, str]) -> str:
     def img(key, alt):
         return embedded_png_figure(figs[key], alt)
 
+    def actuator_table() -> str:
+        return html_table(
+            ["", "前轮执行器", "后轮执行器"],
+            [
+                ["自锁性", "无自锁", "自锁"],
+                ["正效率", "—（正常伺服）", "≈30%"],
+                ["逆效率 η_rev", "≈60%（轮胎力可反驱机构）", "0（不可反驱）"],
+                [
+                    html_cell("<b>断电/失效形态</b>", raw=True),
+                    html_cell("<b>自由脚轮</b>：J·δ̈ = −η_rev·τ_KP − c·δ̇ − τ_c·sgn(δ̇)", raw=True),
+                    html_cell("<b>锁死在失效位置</b>（原角锁死 / 跑飞后锁死）", raw=True),
+                ],
+                [
+                    "正常工况含义",
+                    "需持续供电抵抗回正力矩（能耗↑），失效温和",
+                    "断电保持、能耗低（以 30% 正效率换自锁），失效恶性",
+                ],
+            ],
+        )
+
+    def fmea_table() -> str:
+        return html_table(
+            ["编号", "轴", "失效模式", "典型成因", "注入方式"],
+            [
+                [
+                    "FM1",
+                    "前",
+                    "自由脚轮（断电/驱动级失效）",
+                    "供电中断、桥臂关断、控制器失效",
+                    html_cell(
+                        "<code>free_caster</code>：会话层积分机构 ODE（J=3 kg·m²，c=80 N·m·s/rad，η=0.6），"
+                        "经作动器环节生效；复用平台逐步实时计算的 Reimpell 主销力矩",
+                        raw=True,
+                    ),
+                ],
+                [
+                    "FM2",
+                    "后",
+                    "弯中/机动中原角锁死",
+                    "自锁机构失电即锁",
+                    html_cell("<code>stuck_hold</code>（锁存失效瞬间实际轮角）", raw=True),
+                ],
+                [
+                    "FM3",
+                    "后",
+                    "跑飞后锁死",
+                    "驱动级故障先失控输出再锁死",
+                    html_cell(f"<code>stuck_value</code> +{STUCK_DEG:.0f}°", raw=True),
+                ],
+            ],
+        )
+
+    def hara_table() -> str:
+        return html_table(
+            ["危害事件", "运行场景", "S", "E", "C（未缓解，实测）", "ASIL"],
+            [
+                [
+                    "H1 后轮跑飞后锁死→非预期横摆",
+                    "高速直行 ~100 km/h",
+                    "S3",
+                    "E4",
+                    html_cell(
+                        f"<b>C3</b>（TTLD {fmt(b['ttld_s'], 1)} s）",
+                        {"style": f"color:{C_COLORS['C3']}"},
+                        raw=True,
+                    ),
+                    html_cell("<b>D</b>", raw=True),
+                ],
+                [
+                    "H2 后轮弯中锁死→出弯残余转向",
+                    "山区弯道-出弯 ~60 km/h",
+                    "S3",
+                    "E3",
+                    html_cell("<b>C2</b>", {"style": f"color:{C_COLORS['C2']}"}, raw=True),
+                    "B",
+                ],
+                [
+                    "H3 前轮断电自由→前轴转向不足化",
+                    "弯中 ~60 km/h",
+                    "S2",
+                    "E3",
+                    html_cell("<b>C2</b>（~4 Hz 衰减摆振后转向不足外漂）", {"style": f"color:{C_COLORS['C2']}"}, raw=True),
+                    "A–B",
+                ],
+                [
+                    "H4 前轮断电自由→toe 失衡慢漂",
+                    "高速直行 ~100 km/h",
+                    "S3",
+                    "E4",
+                    html_cell(
+                        f"<b>C2</b>（TTLD {fmt(ff_s['ttld_s'], 1)} s）",
+                        {"style": f"color:{C_COLORS['C2']}"},
+                        raw=True,
+                    ),
+                    "B",
+                ],
+            ],
+        )
+
+    def controllability_table() -> str:
+        return html_table(
+            [html_cell("等级", raw=True), f"判据（评估窗 {EVAL_WINDOW:.0f} s）"],
+            [
+                [
+                    html_cell("<b>C1</b>", {"style": f"color:{C_COLORS['C1']}"}, raw=True),
+                    html_cell("TTLD=∞ 且 偏差峰值&lt;0.45 m 且 Δr残余&lt;1°/s 且 Δa_y峰值&lt;2 m/s²", raw=True),
+                ],
+                [
+                    html_cell("<b>C2</b>", {"style": f"color:{C_COLORS['C2']}"}, raw=True),
+                    html_cell(f"TTLD ≥ {T_REACT} s（反应窗内未脱离车道）且 Δa_y峰值 &lt; 5 m/s²", raw=True),
+                ],
+                [
+                    html_cell("<b>C3</b>", {"style": f"color:{C_COLORS['C3']}"}, raw=True),
+                    "其余",
+                ],
+            ],
+        )
+
+    def tool_iteration_table() -> str:
+        return html_table(
+            ["版本", "由分析需求倒逼的平台能力"],
+            [
+                ["v0.10", "实验底座：SimSession 无头会话（~25× 实时）、run 落盘、KPI 流水线、变体矩阵"],
+                [
+                    "v0.13",
+                    "定时故障注入进实验 schema（stuck 族）；fault_reconfig 容错策略——三次数据驱动"
+                    "迭代：纯运动学 ICR 投影被数据否决 → 镜像 P 环在后轮饱和自旋 → PI+限幅减速定型",
+                ],
+                [
+                    "v0.14",
+                    html_cell(
+                        "<b>自由脚轮失效模型</b>（free_caster 机构 ODE，复用平台实时主销力矩通道）；"
+                        "fault_reconfig free 模式（增益补偿）；<b>参数×故障×工况敏感性流水线</b>"
+                        "（vehicle overrides / scene μ 逐点自动配无故障参考）",
+                        raw=True,
+                    ),
+                ],
+            ],
+        )
+
     n_cases = len(rows) // 2
     n_c3_base = sum(1 for r in rows if r["mitigation"] == "baseline" and r["c_class"] == "C3")
     n_c3_mit = sum(1 for r in rows if r["mitigation"] == "mitigated" and r["c_class"] == "C3")
@@ -898,16 +1038,8 @@ ESP 级横摆 PI + 限幅减速</b>，前轮自由用<b>健康轮增益补偿</b
 缓解后 {n_c3_mit}/{n_cases} 组合 C3（<b>清零</b>）：最恶性组合横摆扰动峰值
 {fmt(b["dyaw_peak_dps"], 1)}→{fmt(m["dyaw_peak_dps"], 1)}°/s、2 s 航向漂移
 {fmt(b["dpsi_2s_deg"], 1)}→{fmt(m["dpsi_2s_deg"], 1)}°。""", "kbox")
-    tool_iteration = callout_box("""<p>本研究的另一目的：<b>用实际工程分析迭代仿真工具</b>。两版研究写入平台的能力：</p>
-<table>
-<tr><th>版本</th><th>由分析需求倒逼的平台能力</th></tr>
-<tr><td>v0.10</td><td>实验底座：SimSession 无头会话（~25× 实时）、run 落盘、KPI 流水线、变体矩阵</td></tr>
-<tr><td>v0.13</td><td>定时故障注入进实验 schema（stuck 族）；fault_reconfig 容错策略——三次数据驱动
-迭代：纯运动学 ICR 投影被数据否决 → 镜像 P 环在后轮饱和自旋 → PI+限幅减速定型</td></tr>
-<tr><td>v0.14</td><td><b>自由脚轮失效模型</b>（free_caster 机构 ODE，复用平台实时主销力矩通道）；
-fault_reconfig free 模式（增益补偿）；<b>参数×故障×工况敏感性流水线</b>
-（vehicle overrides / scene μ 逐点自动配无故障参考）</td></tr>
-</table>
+    tool_iteration = callout_box(f"""<p>本研究的另一目的：<b>用实际工程分析迭代仿真工具</b>。两版研究写入平台的能力：</p>
+{tool_iteration_table()}
 <p>沉淀的可复用资产：任意"失效 × 机动 × 参数"矩阵已是配置问题而非编码问题；本报告任何 run 均可在
 前端「试验/分析」页交互复查与回放。</p>""", "toolbox")
     conclusion = report_section("10　结论", """<p>(1) 执行机构特性（自锁性/逆效率）决定单轮失效的物理形态：前轮（无自锁，η_rev=0.6）失效为自由
@@ -936,42 +1068,14 @@ fault_reconfig free 模式（增益补偿）；<b>参数×故障×工况敏感�
 
 <h2>2　执行机构设定与失效模式</h2>
 <h3>2.1 机构传动特性</h3>
-<table>
-<tr><th></th><th>前轮执行器</th><th>后轮执行器</th></tr>
-<tr><td>自锁性</td><td>无自锁</td><td>自锁</td></tr>
-<tr><td>正效率</td><td>—（正常伺服）</td><td>≈30%</td></tr>
-<tr><td>逆效率 η_rev</td><td>≈60%（轮胎力可反驱机构）</td><td>0（不可反驱）</td></tr>
-<tr><td><b>断电/失效形态</b></td><td><b>自由脚轮</b>：J·δ̈ = −η_rev·τ_KP − c·δ̇ − τ_c·sgn(δ̇)</td>
-<td><b>锁死在失效位置</b>（原角锁死 / 跑飞后锁死）</td></tr>
-<tr><td>正常工况含义</td><td>需持续供电抵抗回正力矩（能耗↑），失效温和</td>
-<td>断电保持、能耗低（以 30% 正效率换自锁），失效恶性</td></tr>
-</table>
+{actuator_table()}
 <h3>2.2 分析的失效模式（FMEA 摘要）</h3>
-<table>
-<tr><th>编号</th><th>轴</th><th>失效模式</th><th>典型成因</th><th>注入方式</th></tr>
-<tr><td>FM1</td><td>前</td><td>自由脚轮（断电/驱动级失效）</td><td>供电中断、桥臂关断、控制器失效</td>
-<td><code>free_caster</code>：会话层积分机构 ODE（J=3 kg·m²，c=80 N·m·s/rad，η=0.6），
-经作动器环节生效；复用平台逐步实时计算的 Reimpell 主销力矩</td></tr>
-<tr><td>FM2</td><td>后</td><td>弯中/机动中原角锁死</td><td>自锁机构失电即锁</td>
-<td><code>stuck_hold</code>（锁存失效瞬间实际轮角）</td></tr>
-<tr><td>FM3</td><td>后</td><td>跑飞后锁死</td><td>驱动级故障先失控输出再锁死</td>
-<td><code>stuck_value</code> +{STUCK_DEG:.0f}°</td></tr>
-</table>
+{fmea_table()}
 <p>前轮机械卡滞（异物侵入）仍可能出现"前轮卡死"，概率量级低于断电类失效；其后果与缓解（同轴镜像）
 已在 v1 验证，本文不再重复。</p>
 
 <h2>3　HARA：危害分析与风险评估（按机构差异化修订）</h2>
-<table>
-<tr><th>危害事件</th><th>运行场景</th><th>S</th><th>E</th><th>C（未缓解，实测）</th><th>ASIL</th></tr>
-<tr><td>H1 后轮跑飞后锁死→非预期横摆</td><td>高速直行 ~100 km/h</td><td>S3</td><td>E4</td>
-<td style="color:#d62728"><b>C3</b>（TTLD {fmt(b["ttld_s"], 1)} s）</td><td><b>D</b></td></tr>
-<tr><td>H2 后轮弯中锁死→出弯残余转向</td><td>山区弯道-出弯 ~60 km/h</td><td>S3</td><td>E3</td>
-<td style="color:#ff9f1c"><b>C2</b></td><td>B</td></tr>
-<tr><td>H3 前轮断电自由→前轴转向不足化</td><td>弯中 ~60 km/h</td><td>S2</td><td>E3</td>
-<td style="color:#ff9f1c"><b>C2</b>（~4 Hz 衰减摆振后转向不足外漂）</td><td>A–B</td></tr>
-<tr><td>H4 前轮断电自由→toe 失衡慢漂</td><td>高速直行 ~100 km/h</td><td>S3</td><td>E4</td>
-<td style="color:#ff9f1c"><b>C2</b>（TTLD {fmt(ff_s["ttld_s"], 1)} s）</td><td>B</td></tr>
-</table>
+{hara_table()}
 <p>安全目标 <b>SG1（ASIL D，由 H1 导出）：任一转向执行器单点失效不得导致车辆非预期偏离车道</b>；
 安全状态：重构转向 + 受控降速的降级行驶。</p>
 
@@ -979,12 +1083,7 @@ fault_reconfig free 模式（增益补偿）；<b>参数×故障×工况敏感�
 <p>与 v1 相同的口径：<b>驾驶员开环</b>（失效后不纠正，最不利暴露）；以同参数无故障参考 run 的轨迹为
 基准折线，度量横向偏差 d(t)、车道脱离时间 TTLD（裕度 {LANE_MARGIN} m）、相对参考的横摆扰动 Δr、
 侧向加速度增量 Δa_y（时间对齐相减——稳态弯名义 a_y 不计入）、质心侧偏角 β。</p>
-<table>
-<tr><th>等级</th><th>判据（评估窗 {EVAL_WINDOW:.0f} s）</th></tr>
-<tr><td style="color:#2ca02c"><b>C1</b></td><td>TTLD=∞ 且 偏差峰值&lt;0.45 m 且 Δr残余&lt;1°/s 且 Δa_y峰值&lt;2 m/s²</td></tr>
-<tr><td style="color:#ff9f1c"><b>C2</b></td><td>TTLD ≥ {T_REACT} s（反应窗内未脱离车道）且 Δa_y峰值 &lt; 5 m/s²</td></tr>
-<tr><td style="color:#d62728"><b>C3</b></td><td>其余</td></tr>
-</table>
+{controllability_table()}
 
 <h2>5　差异化安全机制设计</h2>
 <h3>5.1 后轮锁死（FM2/FM3）：同轴镜像力抵消 + ESP 级横摆 PI + 限幅减速</h3>

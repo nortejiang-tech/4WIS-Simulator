@@ -65,6 +65,25 @@ def test_report_section_rejects_invalid_heading_level() -> None:
         raise AssertionError("expected invalid heading level to fail")
 
 
+def test_html_table_escapes_cells_and_allows_explicit_raw_html() -> None:
+    reporting = load_reporting()
+
+    html = reporting.html_table(
+        [reporting.html_cell("等级", {"style": "width:20%"})],
+        [
+            [
+                "<unsafe>",
+                reporting.html_cell("<b>C2</b>", {"style": "color:#ff9f1c"}, raw=True),
+            ],
+        ],
+    )
+
+    assert html == (
+        '<table><tr><th style="width:20%">等级</th></tr>'
+        '<tr><td>&lt;unsafe&gt;</td><td style="color:#ff9f1c"><b>C2</b></td></tr></table>'
+    )
+
+
 def test_callout_and_meta_helpers_merge_safe_attributes() -> None:
     reporting = load_reporting()
 
