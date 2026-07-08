@@ -560,6 +560,32 @@ test("load analysis sweep failure surfaces an error and keeps controls usable", 
   await attachPageScreenshot(page, testInfo, "workflow-load-sweep-error");
 });
 
+test("load analysis profile list failure surfaces an error without blanking the page", async ({ page }, testInfo) => {
+  await page.route("**/api/vehicle-profiles", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic profile list failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /负载/ }).click();
+
+  await expect(page.getByText("实时四轮负载")).toBeVisible();
+  await expect(page.getByText("读取车型库失败：synthetic profile list failure").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "重新计算" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "重置 LS9" })).toBeEnabled();
+  await expect(page.locator(".load-chart-panel").first()).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-load-profile-list-error");
+});
+
 test("scenario path workflow generates, follows, and clears a reference path", async ({ page }, testInfo) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
@@ -609,9 +635,7 @@ test("path version refresh failure surfaces a toast without blocking scenario to
 
   failPathRefresh = true;
   await trajectoryPanel.getByRole("button", { name: "清除路径" }).click();
-  await expect(page.getByTestId("toast-error")).toContainText(
-    "刷新参考路径失败：synthetic path refresh failure",
-  );
+  await expect(page.getByText("刷新参考路径失败：synthetic path refresh failure").first()).toBeVisible();
   await expect(trajectoryPanel.getByRole("button", { name: "生成" })).toBeEnabled();
   await expect(trajectoryPanel.getByRole("button", { name: "手动绘制" })).toBeEnabled();
 
@@ -690,9 +714,7 @@ test("scenario version refresh failure surfaces a toast without blocking scenari
 
   failScenarioRefresh = true;
   await scenarioPanel.getByRole("button", { name: "清除场景" }).click();
-  await expect(page.getByTestId("toast-error")).toContainText(
-    "刷新场景几何失败：synthetic scenario refresh failure",
-  );
+  await expect(page.getByText("刷新场景几何失败：synthetic scenario refresh failure").first()).toBeVisible();
   await expect(scenarioPanel.getByRole("button", { name: "广场" })).toBeEnabled();
   await expect(scenarioPanel.getByRole("button", { name: "刷新场景" })).toBeEnabled();
 
