@@ -80,6 +80,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖运行页动作脚本库读取失败异常态，断言错误不会伪装成空脚本库、刷新库按钮仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖运行页动作脚本状态读取失败异常态，断言错误停留在脚本面板、脚本编辑和刷新库仍可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖动作脚本解析失败异常态，断言错误保留在脚本面板且原 YAML 仍可编辑，并生成异常态 screenshot attachment。
+- 已完成：Playwright 覆盖动作脚本启动和停止失败异常态，断言错误保留在脚本面板、YAML 内容不丢且脚本控制入口可恢复，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖运行页数据录制面板的开始录制、采样数增长、停止录制和 CSV 导出，生成录制 workflow screenshot attachment。
 - 已完成：Playwright 覆盖运行页数据录制 CSV 导出失败异常态，断言错误停留在录制面板、导出按钮恢复可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖命令面板模型切换失败异常态，断言错误 toast 可见、命令面板关闭且工作流导航仍可用。

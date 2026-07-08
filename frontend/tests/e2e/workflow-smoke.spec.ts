@@ -1418,6 +1418,63 @@ test("script parse failure stays visible in the script panel", async ({ page, re
   await attachPageScreenshot(page, testInfo, "workflow-script-parse-error");
 });
 
+test("script start and stop failures keep script controls recoverable", async ({ page, request }, testInfo) => {
+  await request.post("/api/script/stop");
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "数据" }).click();
+
+  const scriptPanel = page.locator(".panel").filter({ hasText: "动作脚本" });
+  await expect(scriptPanel).toBeVisible();
+  await scriptPanel.locator("select").selectOption("double_lane_change");
+  await scriptPanel.getByRole("button", { name: "载入" }).click();
+  await expect(scriptPanel.locator("textarea")).toContainText("name: double_lane_change");
+
+  await page.route("**/api/script/start", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic script start failure" }),
+    });
+  });
+
+  await scriptPanel.getByRole("button", { name: "▶ 启动脚本" }).click();
+  await expect(scriptPanel.getByRole("alert")).toContainText("synthetic script start failure");
+  await expect(scriptPanel.locator("textarea")).toContainText("name: double_lane_change");
+  await expect(scriptPanel.getByRole("button", { name: "▶ 启动脚本" })).toBeEnabled();
+
+  await page.unroute("**/api/script/start");
+  await scriptPanel.getByRole("button", { name: "▶ 启动脚本" }).click();
+  await expect(scriptPanel).toContainText("运行中: double_lane_change (7 个动作)");
+  await expect(scriptPanel.getByRole("button", { name: /停止脚本/ })).toBeVisible();
+
+  await page.route("**/api/script/stop", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic script stop failure" }),
+    });
+  });
+
+  await scriptPanel.getByRole("button", { name: /停止脚本/ }).click();
+  await expect(scriptPanel.getByRole("alert")).toContainText("synthetic script stop failure");
+  await expect(scriptPanel.locator("textarea")).toContainText("name: double_lane_change");
+  await expect(scriptPanel.getByRole("button", { name: /停止脚本/ })).toBeVisible();
+
+  await attachPageScreenshot(page, testInfo, "workflow-script-control-errors");
+
+  await page.unroute("**/api/script/stop");
+  await request.post("/api/script/stop");
+});
+
 test("script library failure does not masquerade as an empty script library", async ({ page, request }, testInfo) => {
   await request.post("/api/script/stop");
   await page.route("**/api/script/library", async (route) => {
