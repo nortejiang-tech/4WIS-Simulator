@@ -54,6 +54,106 @@ def measured_provenance() -> dict[str, object]:
     }
 
 
+def write_reference_benchmark(
+    root: Path,
+    benchmark_id: str,
+    source_type: str = "analytic",
+    source_name: str = "fixture source",
+    source_version: str = "test",
+) -> Path:
+    bench = root / benchmark_id
+    bench.mkdir(parents=True)
+
+    exp_raw = {
+        "name": benchmark_id,
+        "model_type": "simplified_dynamic",
+        "strategy": "ideal_ackermann",
+        "maneuver": {
+            "name": "step",
+            "steps": [
+                {"name": "accel", "duration": 4.0, "speed_kmh": 40.0, "speed_ramp_s": 2.0},
+                {
+                    "name": "step",
+                    "duration": 4.0,
+                    "steer": {"kind": "step", "amplitude": 0.03, "t_step": 0.5},
+                },
+            ],
+        },
+        "dt": 0.01,
+        "record_hz": 20.0,
+    }
+    (bench / "sim4wis_experiment.yaml").write_text(
+        yaml.safe_dump(exp_raw, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    exp = Experiment.model_validate(exp_raw)
+    result = run_experiment(exp)
+    with (bench / "reference.csv").open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=("t", "vx", "vy", "yaw_rate", "pose_x", "pose_y", "driver_steering"),
+        )
+        writer.writeheader()
+        for i, t in enumerate(result.t):
+            writer.writerow(
+                {
+                    "t": t,
+                    "vx": result.channels["vx"][i],
+                    "vy": result.channels["vy"][i],
+                    "yaw_rate": result.channels["yaw_rate"][i],
+                    "pose_x": result.channels["pose_x"][i],
+                    "pose_y": result.channels["pose_y"][i],
+                    "driver_steering": result.channels["driver_steering"][i],
+                }
+            )
+
+    channel_specs = {
+        "t": {"unit": "s"},
+        "vx": {"unit": "m/s"},
+        "vy": {"unit": "m/s"},
+        "yaw_rate": {"unit": "rad/s", "coordinate_frame": "body z"},
+        "pose_x": {"unit": "m", "coordinate_frame": "world x"},
+        "pose_y": {"unit": "m", "coordinate_frame": "world y"},
+        "driver_steering": {"unit": "normalized", "convention": "Sim4WIS driver input"},
+    }
+
+    manifest: dict[str, object] = {
+        "benchmark_id": benchmark_id,
+        "source_type": source_type,
+        "source_name": source_name,
+        "source_version": source_version,
+        "vehicle_mapping": {"note": "fixture mapping"},
+        "channels": channel_specs,
+        "metrics": {
+            "yaw_rate_peak_dps": {"abs_tol": 1e-9, "reason": "deterministic fixture"},
+            "pose_y_peak_abs_m": {"abs_tol": 1e-9, "reason": "deterministic fixture"},
+            "trajectory_error_rms_m": {"abs_tol": 1e-9, "reason": "deterministic fixture"},
+        },
+        "limitations": ["fixture"],
+    }
+
+    if source_type == "external_tool":
+        raw_source = bench / "raw_source_export.csv"
+        raw_source.write_text("fixture raw export\n", encoding="utf-8")
+        manifest["provenance"] = external_tool_provenance()
+        manifest["source_artifacts"] = [write_source_artifact(bench, "raw_source_export.csv", "raw source export")]
+    elif source_type != "analytic":
+        raw_source = bench / "raw_source_export.csv"
+        raw_source.write_text("fixture raw export\n", encoding="utf-8")
+        manifest["provenance"] = measured_provenance()
+        manifest["source_artifacts"] = [write_source_artifact(bench, "raw_source_export.csv", "raw source export")]
+
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (bench / "notes.md").write_text(
+        f"# {benchmark_id}\n\nFixture benchmark for incoming audit tests.\n",
+        encoding="utf-8",
+    )
+    return bench
+
+
 def test_reference_checker_allows_empty_root_by_default(tmp_path: Path) -> None:
     checker = load_checker()
     default_report = checker.render_review_report(checker.DEFAULT_ROOT, [])
@@ -356,3 +456,50 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
     code, results = checker.check_reference_benchmarks(tmp_path)
     assert code == 1
     assert any("notes.md contains unresolved placeholder" in failure for failure in results[0].failures)
+
+
+def test_reference_incoming_audit_distinguishes_ready_and_not_ready(tmp_path: Path) -> None:
+    checker = load_checker()
+    incoming = tmp_path / "validation_data" / ".incoming"
+    incoming.mkdir(parents=True)
+
+    write_reference_benchmark(incoming, "analytic_pending", source_type="analytic")
+    write_reference_benchmark(incoming, "external_tool_ready", source_type="external_tool")
+
+    code, statuses = checker.audit_incoming_benchmarks(incoming)
+    assert code == 1
+    assert len(statuses) == 2
+    by_id = {status.benchmark_id: status for status in statuses}
+    assert by_id["analytic_pending"].ready_for_promotion is False
+    assert any("not an independent external/measured source" in blocker for blocker in by_id["analytic_pending"].blockers)
+    assert by_id["external_tool_ready"].ready_for_promotion is True
+    assert not by_id["external_tool_ready"].blockers
+
+
+def test_reference_incoming_audit_report_includes_status_lines(tmp_path: Path) -> None:
+    checker = load_checker()
+    incoming = tmp_path / "validation_data" / ".incoming"
+    incoming.mkdir(parents=True)
+
+    write_reference_benchmark(incoming, "external_tool_ready", source_type="external_tool", source_name="fixture")
+
+    code, statuses = checker.audit_incoming_benchmarks(incoming)
+    assert code == 0
+    assert len(statuses) == 1
+    assert statuses[0].ready_for_promotion
+
+    report = tmp_path / "incoming_audit.md"
+    checker.write_incoming_audit_report(report, incoming, statuses)
+    text = report.read_text(encoding="utf-8")
+    assert "# Incoming Reference Benchmark Audit Report" in text
+    assert "external_tool_ready - READY" in text
+    assert "Promotion readiness means" in text
+
+
+def test_reference_incoming_audit_empty_dir_returns_zero(tmp_path: Path) -> None:
+    checker = load_checker()
+    incoming = tmp_path / "validation_data" / ".incoming"
+
+    code, statuses = checker.audit_incoming_benchmarks(incoming)
+    assert code == 0
+    assert statuses == []

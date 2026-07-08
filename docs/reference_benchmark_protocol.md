@@ -187,6 +187,8 @@ checker 会拒绝缺失的 artifact、越界路径、checksum 不匹配，以及
 完成补齐后运行：
 
 ```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --incoming-audit --incoming-root validation_data/.incoming
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --incoming-audit --incoming-root validation_data/.incoming --incoming-report docs/reports/incoming_reference_benchmark_audit.md
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --root validation_data/.incoming --require-independent-source
 ```
 

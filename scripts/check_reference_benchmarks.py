@@ -37,6 +37,7 @@ from sim4wis.experiment.session import run_experiment  # noqa: E402
 
 
 DEFAULT_ROOT = ROOT / "validation_data"
+DEFAULT_INCOMING_ROOT = ROOT / "validation_data" / ".incoming"
 REQUIRED_FILES = ("manifest.json", "reference.csv", "sim4wis_experiment.yaml")
 REQUIRED_MANIFEST_FIELDS = (
     "benchmark_id",
@@ -111,6 +112,22 @@ class BenchmarkResult:
     @property
     def has_independent_source(self) -> bool:
         return self.source_type in INDEPENDENT_SOURCE_TYPES
+
+
+@dataclass
+class IncomingBenchmarkStatus:
+    benchmark_id: str
+    source_type: str
+    source_name: str
+    source_version: str
+    checked_metrics: int
+    has_independent_source: bool
+    blockers: list[str]
+    warnings: list[str]
+
+    @property
+    def ready_for_promotion(self) -> bool:
+        return not self.blockers
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -399,6 +416,84 @@ def _validate_source_artifacts(path: Path, manifest: dict[str, Any], result: Ben
         result.source_artifacts.append(
             SourceArtifact(path=normalized_rel_path, role=str(role).strip(), sha256=expected_sha)
         )
+
+
+def assess_incoming_benchmark_for_promotion(path: Path) -> tuple[bool, list[str]]:
+    result = check_benchmark(path)
+    blockers = _promotion_blockers(path.name, result)
+    return not blockers, blockers
+
+
+def _promotion_blockers(benchmark_id: str, result: BenchmarkResult) -> list[str]:
+    blockers: list[str] = list(result.failures)
+    if not result.has_independent_source:
+        blockers.append(f"{benchmark_id}: source_type {result.source_type!r} is not an independent external/measured source")
+    if result.checked_metrics <= 0:
+        blockers.append(f"{benchmark_id}: no metrics were checked")
+    return blockers
+
+
+def audit_incoming_benchmarks(root: Path = DEFAULT_INCOMING_ROOT) -> tuple[int, list[IncomingBenchmarkStatus]]:
+    if not root.exists():
+        print(f"{root}: no incoming benchmark directory")
+        return 0, []
+    bench_paths = discover_benchmarks(root)
+    if not bench_paths:
+        print(f"{root}: no incoming benchmark directories found")
+        return 0, []
+
+    statuses: list[IncomingBenchmarkStatus] = []
+    for path in bench_paths:
+        result = check_benchmark(path)
+        blockers = _promotion_blockers(path.name, result)
+        statuses.append(
+            IncomingBenchmarkStatus(
+                benchmark_id=path.name,
+                source_type=result.source_type,
+                source_name=result.source_name,
+                source_version=result.source_version,
+                checked_metrics=result.checked_metrics,
+                has_independent_source=result.has_independent_source,
+                blockers=blockers,
+                warnings=result.warnings,
+            )
+        )
+
+    any_blocked = any(not status.ready_for_promotion for status in statuses)
+    return 1 if any_blocked else 0, statuses
+
+
+def render_incoming_audit_report(root: Path, statuses: list[IncomingBenchmarkStatus]) -> str:
+    ready = sum(1 for status in statuses if status.ready_for_promotion)
+    lines = [
+        "# Incoming Reference Benchmark Audit Report",
+        "",
+        f"- Data root: `{_display_path(root)}`",
+        f"- Incoming benchmarks: {len(statuses)}",
+        f"- Ready for promotion: {ready}/{len(statuses)}",
+        "- Promotion readiness means: passes checker + independent source type + at least one checked metric.",
+        "",
+    ]
+    for status in statuses:
+        summary = "READY" if status.ready_for_promotion else "NOT READY"
+        lines += [
+            f"## {status.benchmark_id} - {summary}",
+            "",
+            f"- Source: {status.source_type or 'unknown'} / {status.source_name or 'unknown'} / {status.source_version or 'unknown'}",
+            f"- Checked metrics: {status.checked_metrics}",
+            f"- Independent source: {status.has_independent_source}",
+        ]
+        if status.warnings:
+            lines.append(f"- Warnings: {'; '.join(status.warnings)}")
+        if status.blockers:
+            lines.append(f"- Blockers: {'; '.join(status.blockers)}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def write_incoming_audit_report(path: Path, root: Path, statuses: list[IncomingBenchmarkStatus]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(render_incoming_audit_report(root, statuses), encoding="utf-8")
 
 
 def _validate_csv_channels(path: Path, ref: dict[str, np.ndarray], result: BenchmarkResult) -> None:
@@ -721,6 +816,7 @@ def check_reference_benchmarks(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="validation_data root")
+    parser.add_argument("--incoming-root", type=Path, default=DEFAULT_INCOMING_ROOT, help="incoming benchmark root")
     parser.add_argument("--require-data", action="store_true", help="fail when no benchmark directories exist")
     parser.add_argument(
         "--require-independent-source",
@@ -734,7 +830,20 @@ def main() -> int:
         type=Path,
         help="fail if the reviewer-facing Markdown report is missing or stale",
     )
+    parser.add_argument(
+        "--incoming-audit",
+        action="store_true",
+        help="run promotion-readiness audit for .incoming benchmark directories",
+    )
+    parser.add_argument("--incoming-report", type=Path, help="write incoming intake audit report")
     args = parser.parse_args()
+
+    if args.incoming_audit or args.incoming_report is not None:
+        code, statuses = audit_incoming_benchmarks(args.incoming_root)
+        if args.incoming_report is not None:
+            write_incoming_audit_report(args.incoming_report, args.incoming_root, statuses)
+        return code
+
     code, _results = check_reference_benchmarks(
         args.root,
         require_data=args.require_data,

@@ -43,17 +43,7 @@ def _display(path: Path, root: Path = ROOT) -> str:
 
 def validate_incoming_benchmark(path: Path, root: Path = ROOT) -> tuple[bool, list[str]]:
     checker = _load_reference_checker(root)
-    result = checker.check_benchmark(path)
-    errors: list[str] = []
-    if not result.ok:
-        errors.extend(result.failures)
-    if not result.has_independent_source:
-        errors.append(
-            f"{path.name}: source_type {result.source_type!r} is not an independent external/measured source"
-        )
-    if result.checked_metrics <= 0:
-        errors.append(f"{path.name}: no metrics were checked")
-    return not errors, errors
+    return checker.assess_incoming_benchmark_for_promotion(path)
 
 
 def promote_reference_benchmark(

@@ -42,6 +42,7 @@ backend/.venv/bin/python scripts/normalize_reference_csv.py --input raw_export.c
 ```bash
 backend/.venv/bin/python scripts/suggest_reference_metrics.py validation_data/.incoming/carmaker_iso3888_dlc_60kmh
 backend/.venv/bin/python scripts/suggest_reference_artifacts.py validation_data/.incoming/carmaker_iso3888_dlc_60kmh raw_source_export.csv --role "raw source export for CarMaker normalization"
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --incoming-audit --incoming-root validation_data/.incoming
 backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh --dry-run
 backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh
 ```
@@ -89,6 +90,13 @@ backend/.venv/bin/python scripts/suggest_reference_metrics.py validation_data/.i
 
 ```bash
 backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md
+```
+
+如果要快速盘点 `.incoming` 目录里待接入的数据块是否可 promotion，可运行：
+
+```bash
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --incoming-audit --incoming-root validation_data/.incoming
+backend/.venv/bin/python scripts/check_reference_benchmarks.py --incoming-audit --incoming-root validation_data/.incoming --incoming-report docs/reports/incoming_reference_benchmark_audit.md
 ```
 
 该报告会包含指标误差表、通过校验的 provenance、source artifacts/SHA-256 和 `notes.md` 摘要，但不会自动把任何能力提升到 L3/L4；可信度等级仍需人工审查真实来源、限制和误差解释。
