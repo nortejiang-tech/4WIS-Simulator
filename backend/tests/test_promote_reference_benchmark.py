@@ -88,6 +88,12 @@ def write_valid_external_benchmark(root: Path, benchmark_id: str = "external_ste
         "source_type": "external_tool",
         "source_name": "independent fixture",
         "source_version": "test",
+        "provenance": {
+            "solver_step_s": 0.001,
+            "tire_model": "fixture tyre model",
+            "vehicle_parameter_source": "fixture vehicle parameters",
+            "export_pipeline": "fixture CSV export",
+        },
         "source_artifacts": [
             {
                 "path": raw_source.name,

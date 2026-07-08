@@ -37,6 +37,7 @@ validation_data/
 - `source_type`: `analytic` / `external_tool` / `bench` / `scaled_vehicle` / `full_vehicle`
 - `source_name`: 例如 `CarMaker 14.0`、`K&C rig v1`、`scaled_4wis_platform`
 - `source_version`
+- `provenance`: 独立来源必须提供工具求解/导出口径或实测传感器/滤波/同步口径；解析 `analytic` benchmark 可省略
 - `source_artifacts`: 独立来源必须提供至少一个原始/导出/测量/报告文件的 `path`、`role` 和 `sha256`；解析 `analytic` benchmark 可省略
 - `vehicle_mapping`: 外部参数如何映射到 `VehicleParams`
 - `channels`: 每列单位、坐标系、采样率
@@ -63,8 +64,8 @@ validation_data/
 
 1. 没有 `manifest.json` 的数据不能进入可信度矩阵。
 2. 没有单位和坐标系说明的数据只能作为探索材料，不能作为 L3/L4 证据。
-3. 外部工具对照必须记录工具版本、轮胎模型、求解步长和车辆参数映射。
-4. 实测对照必须记录传感器、采样率、滤波、同步方式和数据裁剪窗口。
+3. 外部工具对照必须记录工具版本、轮胎模型、求解步长、车辆参数来源和导出流程。
+4. 实测对照必须记录传感器、采样率、滤波、同步方式、数据裁剪窗口和标定口径。
 5. 独立来源必须把原始导出、测量日志、工具报告或参数文件留存在 benchmark 目录内，并在 `manifest.source_artifacts` 中记录 SHA-256；不能用 `reference.csv`、`manifest.json`、`sim4wis_experiment.yaml` 或 `notes.md` 这些生成件冒充原始证据。
 6. 更新 `docs/validation_matrix.md` 前，必须能复现对照脚本输出。
 
@@ -140,7 +141,7 @@ backend/.venv/bin/python scripts/normalize_reference_csv.py \
   --map driver_steering=Steer_deg --unit driver_steering=deg
 ```
 
-该脚本只负责列名映射、单位换算、数值合法性和时间单调性检查；它不会创建或修改 `manifest.json`，不会选择指标容差，也不会让 benchmark 自动具备独立证据资格。`manifest.channels`、`vehicle_mapping`、`metrics` 和 `notes.md` 仍必须由接入者按真实来源补齐并复核。
+该脚本只负责列名映射、单位换算、数值合法性和时间单调性检查；它不会创建或修改 `manifest.json`，不会选择指标容差，也不会让 benchmark 自动具备独立证据资格。`manifest.provenance`、`manifest.channels`、`vehicle_mapping`、`metrics` 和 `notes.md` 仍必须由接入者按真实来源补齐并复核。
 
 同时必须把原始导出或测量/报告文件放在同一个 incoming benchmark 目录内，并填写 `manifest.source_artifacts`。示例：
 
@@ -157,6 +158,8 @@ backend/.venv/bin/python scripts/normalize_reference_csv.py \
 ```
 
 checker 会拒绝缺失的 artifact、越界路径、checksum 不匹配，以及把 `reference.csv` 等生成件当作原始证据的写法。
+
+对 `external_tool`，`manifest.provenance` 至少需要 `solver_step_s`、`tire_model`、`vehicle_parameter_source` 和 `export_pipeline`。对 `bench`、`scaled_vehicle` 或 `full_vehicle`，至少需要 `sensor_suite`、`sampling_rate_hz`、`filtering`、`time_sync`、`crop_window_s` 和 `calibration`。
 
 完成补齐后运行：
 

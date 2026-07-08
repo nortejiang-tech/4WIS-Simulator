@@ -168,11 +168,28 @@ def manifest_template(
     source_version: str,
     template: str,
 ) -> dict[str, Any]:
+    if source_type == "external_tool":
+        provenance: dict[str, Any] = {
+            "solver_step_s": "TODO",
+            "tire_model": "TODO",
+            "vehicle_parameter_source": "TODO",
+            "export_pipeline": "TODO",
+        }
+    else:
+        provenance = {
+            "sensor_suite": "TODO",
+            "sampling_rate_hz": "TODO",
+            "filtering": "TODO",
+            "time_sync": "TODO",
+            "crop_window_s": "TODO",
+            "calibration": "TODO",
+        }
     return {
         "benchmark_id": benchmark_id,
         "source_type": source_type,
         "source_name": source_name,
         "source_version": source_version,
+        "provenance": provenance,
         "vehicle_mapping": {
             "status": "TODO",
             "template": template,
@@ -215,6 +232,7 @@ Template: `{template}`
 
 - [ ] Replace `reference.csv` with real exported or measured samples.
 - [ ] Save the raw/source export or measurement/report file in this directory and fill `manifest.json.source_artifacts` with its SHA-256.
+- [ ] Fill `manifest.json.provenance` with tool solver/export details or measured sensor/filter/sync details.
 - [ ] Fill `manifest.json.vehicle_mapping` with the parameter mapping used for Sim4WIS.
 - [ ] Fill `manifest.json.metrics` with reviewed target metrics and tolerances.
 - [ ] Document sampling rate, filtering, time synchronisation, coordinate frames, and any data crop.

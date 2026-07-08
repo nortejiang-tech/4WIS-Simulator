@@ -53,6 +53,20 @@ INDEPENDENT_SOURCE_TYPES = {"external_tool", "bench", "scaled_vehicle", "full_ve
 REQUIRED_CHANNELS = ("t", "vx", "vy", "yaw_rate", "pose_x", "pose_y", "driver_steering")
 UNRESOLVED_PLACEHOLDER_TOKENS = ("TODO", "TBD", "PLACEHOLDER", "FILL_ME", "待补", "待定")
 GENERATED_BENCHMARK_FILES = {"manifest.json", "reference.csv", "sim4wis_experiment.yaml", "notes.md"}
+EXTERNAL_TOOL_PROVENANCE_FIELDS = (
+    "solver_step_s",
+    "tire_model",
+    "vehicle_parameter_source",
+    "export_pipeline",
+)
+MEASURED_PROVENANCE_FIELDS = (
+    "sensor_suite",
+    "sampling_rate_hz",
+    "filtering",
+    "time_sync",
+    "crop_window_s",
+    "calibration",
+)
 
 
 @dataclass
@@ -258,6 +272,59 @@ def _validate_no_placeholders(path: Path, manifest: dict[str, Any], notes: str, 
         result.failures.append(f"{path.name}: notes.md contains unresolved placeholder(s)")
 
 
+def _has_reviewed_value(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return math.isfinite(float(value)) and float(value) > 0.0
+    if isinstance(value, list):
+        return bool(value)
+    if isinstance(value, dict):
+        return bool(value)
+    return value is not None
+
+
+def _is_positive_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value)) and value > 0.0
+
+
+def _is_time_window(value: Any) -> bool:
+    if not isinstance(value, list) or len(value) != 2:
+        return False
+    start, end = value
+    if isinstance(start, bool) or isinstance(end, bool):
+        return False
+    if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
+        return False
+    return math.isfinite(float(start)) and math.isfinite(float(end)) and float(end) > float(start)
+
+
+def _validate_independent_provenance(path: Path, manifest: dict[str, Any], result: BenchmarkResult) -> None:
+    if result.source_type not in INDEPENDENT_SOURCE_TYPES:
+        return
+    provenance = manifest.get("provenance")
+    if not isinstance(provenance, dict) or not provenance:
+        result.failures.append(f"{path.name}: independent source must declare non-empty provenance")
+        return
+
+    required_fields = (
+        EXTERNAL_TOOL_PROVENANCE_FIELDS if result.source_type == "external_tool" else MEASURED_PROVENANCE_FIELDS
+    )
+    for field_name in required_fields:
+        if field_name not in provenance or not _has_reviewed_value(provenance[field_name]):
+            result.failures.append(f"{path.name}: provenance.{field_name} missing or not reviewed")
+    if result.source_type == "external_tool" and "solver_step_s" in provenance:
+        if not _is_positive_number(provenance["solver_step_s"]):
+            result.failures.append(f"{path.name}: provenance.solver_step_s must be a positive number")
+    if result.source_type != "external_tool":
+        if "sampling_rate_hz" in provenance and not _is_positive_number(provenance["sampling_rate_hz"]):
+            result.failures.append(f"{path.name}: provenance.sampling_rate_hz must be a positive number")
+        if "crop_window_s" in provenance and not _is_time_window(provenance["crop_window_s"]):
+            result.failures.append(f"{path.name}: provenance.crop_window_s must be [start_s, end_s] with end_s > start_s")
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as f:
@@ -386,6 +453,7 @@ def check_benchmark(path: Path) -> BenchmarkResult:
     if notes_path.is_file():
         result.reviewer_notes = _load_text(notes_path)
     _validate_no_placeholders(path, manifest, result.reviewer_notes, result)
+    _validate_independent_provenance(path, manifest, result)
     _validate_source_artifacts(path, manifest, result)
 
     try:

@@ -47,6 +47,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：生成并纳入 `docs/reports/reference_benchmark_review.md`，作为当前 reviewer-facing 审查件；报告明确当前通过项都是解析参考，独立外部/实测 benchmark 数量仍为 0。
 - 已完成：新增 `scripts/scaffold_reference_benchmark.py` 与 `scripts/promote_reference_benchmark.py`，用于把 CarSim/CarMaker、台架、缩比车或实车 benchmark 先生成到 `validation_data/.incoming/`，再由 promotion 门禁确认通过 checker 且来源独立后移入正式 `validation_data/<benchmark_id>/`。
 - 已完成：独立来源 benchmark 必须在 `manifest.source_artifacts` 中登记原始/导出/测量/报告文件及 SHA-256；checker 会拒绝缺失 artifact、checksum 不匹配或把生成件冒充原始证据的写法。
+- 已完成：独立来源 benchmark 必须在 `manifest.provenance` 中登记外部工具求解/导出口径或实测传感器/滤波/同步口径；checker 会拒绝缺失或未复核的必填 provenance 字段。
 - 继续补齐公开或可导出的参考工况：ISO 3888 双移线，以及至少一个外部工具或实测来源。
 - 对每个新增工况保存参考来源、车辆参数映射、目标指标和误差解释。
 - 优先对照 `yaw_rate_peak_dps`、稳态横摆增益、速度跟踪 RMS、侧偏角峰值、轨迹横向偏差。

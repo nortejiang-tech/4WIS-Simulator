@@ -44,6 +44,8 @@ def test_scaffold_creates_incoming_template_without_active_evidence(tmp_path: Pa
     }
     manifest = json.loads((result.path / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["source_type"] == "external_tool"
+    assert manifest["provenance"]["solver_step_s"] == "TODO"
+    assert manifest["provenance"]["tire_model"] == "TODO"
     assert manifest["metrics"] == {}
     assert (result.path / "reference.csv").read_text(encoding="utf-8").splitlines()[0] == (
         "t,vx,vy,yaw_rate,pose_x,pose_y,driver_steering"

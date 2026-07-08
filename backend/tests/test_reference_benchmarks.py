@@ -34,6 +34,26 @@ def write_source_artifact(root: Path, rel_path: str, content: str) -> dict[str, 
     return {"path": rel_path, "role": "raw external fixture export", "sha256": digest}
 
 
+def external_tool_provenance() -> dict[str, object]:
+    return {
+        "solver_step_s": 0.001,
+        "tire_model": "fixture tyre model",
+        "vehicle_parameter_source": "fixture vehicle parameters",
+        "export_pipeline": "fixture CSV export",
+    }
+
+
+def measured_provenance() -> dict[str, object]:
+    return {
+        "sensor_suite": ["fixture IMU", "fixture wheel speed"],
+        "sampling_rate_hz": 100.0,
+        "filtering": "fixture low-pass filter",
+        "time_sync": "fixture trigger sync",
+        "crop_window_s": [0.0, 8.0],
+        "calibration": "fixture calibration certificate",
+    }
+
+
 def test_reference_checker_allows_empty_root_by_default(tmp_path: Path) -> None:
     checker = load_checker()
     default_report = checker.render_review_report(checker.DEFAULT_ROOT, [])
@@ -203,6 +223,24 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert any("provenance" in failure for failure in results[0].failures)
+
+    manifest["provenance"] = {**external_tool_provenance(), "solver_step_s": "0.001"}
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert any("provenance.solver_step_s must be a positive number" in failure for failure in results[0].failures)
+
+    manifest["provenance"] = external_tool_provenance()
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
     assert code == 0
     assert len(results) == 1
     assert results[0].source_type == "external_tool"
@@ -245,6 +283,36 @@ def test_reference_checker_compares_valid_benchmark(tmp_path: Path) -> None:
     assert any("not generated benchmark file" in failure for failure in results[0].failures)
 
     manifest["source_artifacts"] = source_artifacts
+    manifest["source_type"] = "bench"
+    manifest["provenance"] = external_tool_provenance()
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert any("provenance.sensor_suite" in failure for failure in results[0].failures)
+
+    manifest["provenance"] = {**measured_provenance(), "crop_window_s": [8.0, 0.0]}
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 1
+    assert any("provenance.crop_window_s must be" in failure for failure in results[0].failures)
+
+    manifest["provenance"] = measured_provenance()
+    (bench / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    code, results = checker.check_reference_benchmarks(tmp_path, require_independent_source=True)
+    assert code == 0
+    assert results[0].source_type == "bench"
+
+    manifest["source_type"] = "external_tool"
+    manifest["provenance"] = external_tool_provenance()
     (bench / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
