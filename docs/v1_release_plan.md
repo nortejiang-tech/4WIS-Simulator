@@ -51,6 +51,7 @@ v1.0 只有在以下门槛都满足时才应发布：
 - 已完成：Playwright 覆盖试验页 batch 启动失败异常态，断言错误 toast、运行矩阵仍可操作，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖运行页模型切换和路面 μ 设置失败异常态，断言错误 toast、控制面板保持可操作，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖运行页 Python 策略状态读取失败异常态，断言设计面板显示“状态未知”与后端错误，不再伪装成文件不存在，并生成异常态 screenshot attachment。
+- 已完成：Playwright 覆盖设计页 Python 策略手动重载失败异常态，断言先通过真实策略切换激活面板、失败 toast 可见且重载按钮恢复可用，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖车辆页参数应用被拒绝异常态，断言错误 toast、未应用编辑仍保留，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖车辆页项目列表读取失败异常态，断言错误停留在项目面板、加载按钮禁用、车辆几何图仍可见，并生成异常态 screenshot attachment。
 - 已完成：Playwright 覆盖车辆页项目 YAML 加载失败异常态，断言错误停留在项目面板、加载按钮恢复可操作、车辆几何图仍可见，并生成异常态 screenshot attachment。

@@ -397,6 +397,41 @@ test("user python status failure stays visible in the design panel", async ({ pa
   await attachPageScreenshot(page, testInfo, "workflow-user-python-status-error");
 });
 
+test("user python reload failure keeps the panel usable", async ({ page }, testInfo) => {
+  await page.route("**/api/user_python/reload", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic user python reload failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const controlPanel = page
+    .locator(".panel")
+    .filter({ has: page.locator(".panel-name", { hasText: "控制策略" }) });
+  await expect(controlPanel).toBeVisible();
+  await controlPanel.getByRole("button", { name: "Python 策略" }).click();
+
+  await page.getByRole("tab", { name: "设计" }).click();
+  const panel = page.locator(".panel").filter({ hasText: "Python 策略插件" });
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText("激活");
+
+  const reloadButton = panel.getByRole("button", { name: "强制重载" });
+  await expect(reloadButton).toBeEnabled();
+  await reloadButton.click();
+  await expect(page.getByText("重载失败：synthetic user python reload failure").first()).toBeVisible();
+  await expect(panel).toContainText("Python 策略插件");
+  await expect(reloadButton).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-user-python-reload-error");
+});
+
 test("vehicle geometry drag updates the shared parameter edit buffer", async ({ page }) => {
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
