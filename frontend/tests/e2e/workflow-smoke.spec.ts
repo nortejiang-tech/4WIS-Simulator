@@ -925,6 +925,82 @@ test("scenario disturbance editor places, edits, and clears a road disturbance",
   await attachPageScreenshot(page, testInfo, "workflow-scenario-disturbance");
 });
 
+test("disturbance action failures keep existing disturbance state visible", async ({ page, request }, testInfo) => {
+  await request.post("/api/scene/clear");
+  const seed = await request.post("/api/scene/disturbances", {
+    data: {
+      type: "ice_patch",
+      x: 12,
+      y: 3,
+      length: 10,
+      width: 6,
+      heading: 0,
+      mu: 0.25,
+    },
+  });
+  expect(seed.ok()).toBeTruthy();
+  const seededDisturbance = await seed.json() as { id: string };
+
+  await page.route(`**/api/scene/disturbances/${seededDisturbance.id}`, async (route) => {
+    const method = route.request().method();
+    if (method === "PUT") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic disturbance update failure" }),
+      });
+      return;
+    }
+    if (method === "DELETE") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "synthetic disturbance delete failure" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+  await page.route("**/api/scene/clear", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic disturbance clear failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const disturbancePanel = page.locator(".panel").filter({ hasText: "路面扰动编辑" });
+  await expect(disturbancePanel).toBeVisible();
+  await expect(disturbancePanel).toContainText("冰面 / 低附着");
+
+  await disturbancePanel.locator("span", { hasText: "冰面 / 低附着" }).click();
+  await expect(disturbancePanel).toContainText("编辑");
+  await disturbancePanel.locator('input[type="number"]').first().fill("14");
+  await disturbancePanel.getByRole("button", { name: "应用修改" }).click();
+  await expect(page.getByText("更新失败：synthetic disturbance update failure").first()).toBeVisible();
+  await expect(disturbancePanel).toContainText("冰面 / 低附着");
+
+  await disturbancePanel.getByRole("button", { name: "删除" }).click();
+  await expect(page.getByText("删除失败：synthetic disturbance delete failure").first()).toBeVisible();
+  await expect(disturbancePanel).toContainText("冰面 / 低附着");
+
+  await disturbancePanel.getByRole("button", { name: "清空全部" }).click();
+  await expect(page.getByText("清空失败：synthetic disturbance clear failure").first()).toBeVisible();
+  await expect(disturbancePanel).toContainText("冰面 / 低附着");
+  await expect(disturbancePanel.getByRole("button", { name: "放置" })).toBeEnabled();
+
+  await attachPageScreenshot(page, testInfo, "workflow-disturbance-action-errors");
+  await request.post("/api/scene/clear");
+});
+
 test("scenario fault injection panel adds, toggles, and clears faults", async ({ page, request }, testInfo) => {
   await request.delete("/api/faults");
 
