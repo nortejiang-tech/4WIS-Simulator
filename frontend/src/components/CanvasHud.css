@@ -32,18 +32,21 @@
   color: var(--text);
 }
 
+.canvas-hud .hud-mono {
+  font-family: var(--font-mono);
+}
+
+.canvas-hud .hud-small {
+  font-size: var(--font-size-xs);
+}
+
 .hud-value.strong {
   font-weight: 600;
   color: var(--accent);
 }
 
-.hud-value.mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+.hud-value.hud-mono {
   font-size: 12px;
-}
-
-.hud-value.small {
-  font-size: 11px;
 }
 
 .hud-zoom {

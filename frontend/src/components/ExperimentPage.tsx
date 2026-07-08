@@ -253,7 +253,7 @@ export default function ExperimentPage() {
               {pathTemplates.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
             {pathTemplateError && (
-              <span className="small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>
+              <span className="wf-small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>
                 {pathTemplateError}
               </span>
             )}
@@ -328,7 +328,7 @@ export default function ExperimentPage() {
           </div>
         ))}
 
-        <div className="small" style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.6 }}>
+        <div className="wf-small" style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.6 }}>
           转向幅值是归一化驾驶员输入（理想阿克曼下为曲率分数）：60 km/h 时 0.05 ≈ 4.6 m/s²
           侧向加速度；&gt;0.06 将超出附着极限变成甩尾工况。目标车速建议始终配 2–4 s 斜坡。
         </div>
@@ -354,7 +354,7 @@ export default function ExperimentPage() {
         <input className="wf-input" placeholder="如：40, 60, 80" value={speedsText}
                onChange={(e) => setSpeedsText(e.target.value)} />
 
-        <div className="small" style={{ color: "var(--muted)", margin: "8px 0" }}>
+        <div className="wf-small" style={{ color: "var(--muted)", margin: "8px 0" }}>
           {variants.length > 0
             ? `将展开为 ${variants.length} 个变体运行`
             : "无变体 → 按当前定义运行 1 次"}
@@ -371,7 +371,7 @@ export default function ExperimentPage() {
                    style={{ width: `${(job.done / Math.max(1, job.total)) * 100}%`,
                             background: job.status === "error" ? "var(--bad)" : "var(--accent)" }} />
             </div>
-            <div className="small" style={{ color: "var(--muted)", marginTop: 4 }}>
+            <div className="wf-small" style={{ color: "var(--muted)", marginTop: 4 }}>
               {job.status === "running" && `正在跑：${job.current_label || "…"}`}
               {job.status === "done" && `✓ 完成 ${job.done} runs · ${job.elapsed_s.toFixed(1)} s`}
               {job.status === "error" && `✗ 失败：${job.error}`}

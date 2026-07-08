@@ -26,27 +26,27 @@ export default function Hud({ state }: { state: SimStateMessage }) {
       </div>
       <div className="hud-row">
         <span className="hud-label">vₓ</span>
-        <span className="hud-value mono">{fmtKmh(state.velocity.vx)} km/h</span>
+        <span className="hud-value hud-mono">{fmtKmh(state.velocity.vx)} km/h</span>
       </div>
       <div className="hud-row">
         <span className="hud-label">ψ̇</span>
-        <span className="hud-value mono">{yaw_rate_deg.toFixed(1)} °/s</span>
+        <span className="hud-value hud-mono">{yaw_rate_deg.toFixed(1)} °/s</span>
       </div>
       <div className="hud-row">
         <span className="hud-label">pose</span>
-        <span className="hud-value mono">
+        <span className="hud-value hud-mono">
           ({state.pose.x.toFixed(1)}, {state.pose.y.toFixed(1)}) {psi_deg.toFixed(0)}°
         </span>
       </div>
       <div className="hud-row">
         <span className="hud-label">δ (°)</span>
-        <span className="hud-value mono small">
+        <span className="hud-value hud-mono hud-small">
           {state.wheels.map((w) => ((w.delta * 180) / Math.PI).toFixed(1)).join(" / ")}
         </span>
       </div>
       <div className="hud-row">
         <span className="hud-label">μ</span>
-        <span className="hud-value mono small">
+        <span className="hud-value hud-mono hud-small">
           {state.wheels.map((w, i) => (
             <span key={i} style={{ color: muTextColor(w.mu) }}>
               {(w.mu ?? 1).toFixed(2)}{i < 3 ? " / " : ""}
@@ -56,7 +56,7 @@ export default function Hud({ state }: { state: SimStateMessage }) {
       </div>
       <div className="hud-row">
         <span className="hud-label">ICR偏差</span>
-        <span className="hud-value mono small">
+        <span className="hud-value hud-mono hud-small">
           {anyDev
             ? devs.map((d, i) => (
                 <span key={i} style={{ color: d != null && Math.abs(d) > 0.3 ? "#f87171" : undefined }}>
@@ -68,7 +68,7 @@ export default function Hud({ state }: { state: SimStateMessage }) {
       </div>
       <div className="hud-zoom">
         <button onClick={() => setPxm(pxm * 1.25)}>+</button>
-        <span className="mono small">{pxm.toFixed(0)} px/m</span>
+        <span className="hud-mono hud-small">{pxm.toFixed(0)} px/m</span>
         <button onClick={() => setPxm(pxm / 1.25)}>−</button>
       </div>
     </div>

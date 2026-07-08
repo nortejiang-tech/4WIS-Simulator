@@ -68,7 +68,7 @@ function formatError(e: unknown): string {
 function PageLoader() {
   return (
     <main className="page-loader" aria-live="polite">
-      <span className="mono">Loading</span>
+      <span className="app-mono">Loading</span>
     </main>
   );
 }
@@ -78,7 +78,7 @@ function PanelLoader({ label }: { label: string }) {
     <div className="panel" aria-live="polite">
       <div className="panel-head">
         <span className="panel-name">{label}</span>
-        <span className="small mono" style={{ color: "var(--muted)", marginLeft: "auto" }}>
+        <span className="app-xs app-mono" style={{ color: "var(--muted)", marginLeft: "auto" }}>
           Loading
         </span>
       </div>
@@ -169,7 +169,7 @@ export default function App() {
         <span className="title">Simulator</span>
         {version && (
           <span
-            className="small mono"
+            className="app-xs app-mono"
             style={{ color: "var(--muted)", fontSize: 10, alignSelf: "flex-end", paddingBottom: 2 }}
             title="后端版本（/api/version）"
           >

@@ -113,7 +113,7 @@ export default function ProjectPanel() {
       </div>
 
       {(info || error) && (
-        <div className="small" style={{ color: error ? "var(--bad)" : "var(--good)", marginTop: 4 }}>
+        <div className="panel-small" style={{ color: error ? "var(--bad)" : "var(--good)", marginTop: 4 }}>
           {error ?? info}
         </div>
       )}

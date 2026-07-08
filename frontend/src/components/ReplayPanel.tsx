@@ -229,7 +229,7 @@ export default function ReplayPanel({ runs, colors, cache, version, onTime, onCl
         <button className="wf-x" data-testid="replay-close" aria-label="关闭回放" onClick={onClose}>✕</button>
       </div>
       {dimsWarning && (
-        <div className="small" role="alert" style={{ color: "var(--warn)", padding: "0 10px 6px" }}>
+        <div className="wf-small" role="alert" style={{ color: "var(--warn)", padding: "0 10px 6px" }}>
           {dimsWarning}
         </div>
       )}
@@ -256,7 +256,7 @@ export default function ReplayPanel({ runs, colors, cache, version, onTime, onCl
                aria-label="回放时间"
                style={{ flex: 1 }}
                onChange={(e) => { setPlaying(false); setTCur(Number(e.target.value)); }} />
-        <span className="mono replay-time" data-testid="replay-time">{tCur.toFixed(2)} / {tMax.toFixed(1)} s</span>
+        <span className="wf-mono replay-time" data-testid="replay-time">{tCur.toFixed(2)} / {tMax.toFixed(1)} s</span>
       </div>
     </div>
   );

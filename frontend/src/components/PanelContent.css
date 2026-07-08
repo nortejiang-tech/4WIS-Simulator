@@ -1,3 +1,11 @@
+.panel-small {
+  font-size: var(--font-size-xs);
+}
+
+.panel-mono {
+  font-family: var(--font-mono);
+}
+
 .chart-item {
   padding-top: 4px;
 }
@@ -45,7 +53,7 @@
 
 .driver-readout .value {
   color: var(--text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 
 .bar {
@@ -122,13 +130,13 @@
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 1px 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
   color: var(--text);
 }
 
 .params-list {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
   display: grid;
   grid-template-columns: auto 1fr;
@@ -136,7 +144,7 @@
 }
 
 .params-list .value {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   color: var(--text);
   text-align: right;
 }

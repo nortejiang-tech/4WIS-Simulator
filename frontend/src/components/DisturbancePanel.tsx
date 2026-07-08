@@ -125,7 +125,7 @@ export default function DisturbancePanel() {
       </div>
 
       {placeType && (
-        <div className="small" style={{ color: "var(--muted)", marginTop: 4 }}>
+        <div className="panel-small" style={{ color: "var(--muted)", marginTop: 4 }}>
           在 2D 画布上点击放置「{TYPE_LABELS[placeType]}」，可连续放置
         </div>
       )}
@@ -142,11 +142,11 @@ export default function DisturbancePanel() {
               onDelete={() => remove(d.id)}
             />
           ))}
-          <button className="small" onClick={clearAll} style={{ marginTop: 4 }}>清空全部</button>
+          <button className="panel-small" onClick={clearAll} style={{ marginTop: 4 }}>清空全部</button>
         </div>
       )}
       {disturbances.length === 0 && (
-        <div className="small" style={{ color: "var(--muted)", marginTop: 6 }}>
+        <div className="panel-small" style={{ color: "var(--muted)", marginTop: 6 }}>
           无扰动 — 选择类型后点「放置」在画布上添加
         </div>
       )}
@@ -154,12 +154,12 @@ export default function DisturbancePanel() {
       {/* Editor form for the selection */}
       {selected && (
         <div style={{ marginTop: 8, borderTop: "1px solid var(--border)", paddingTop: 8 }}>
-          <div className="small" style={{ marginBottom: 6 }}>
-            编辑 <span className="mono">{selected.id}</span>（可在画布上拖动）
+          <div className="panel-small" style={{ marginBottom: 6 }}>
+            编辑 <span className="panel-mono">{selected.id}</span>（可在画布上拖动）
           </div>
           {fields.map(([k, label, step]) => (
             <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <span className="small" style={{ color: "var(--muted)", width: 92 }}>{label}</span>
+              <span className="panel-small" style={{ color: "var(--muted)", width: 92 }}>{label}</span>
               <input
                 type="number"
                 step={step}
@@ -191,7 +191,7 @@ function DistRow({
       onClick={onSelect}
     >
       <span>{label}</span>
-      <span className="mono small" style={{ color: "var(--muted)" }}>
+      <span className="panel-mono panel-small" style={{ color: "var(--muted)" }}>
         ({d.x.toFixed(0)}, {d.y.toFixed(0)})
       </span>
       <button

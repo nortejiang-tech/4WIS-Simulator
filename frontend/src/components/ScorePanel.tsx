@@ -160,7 +160,7 @@ export default function ScorePanel() {
           onClick={() => { setSlotA(null); setSlotB(null); }}>清除 A/B</button>
       </div>
 
-      <div className="small" style={{ marginTop: 6, color: "var(--muted)", lineHeight: 1.5 }}>
+      <div className="panel-small" style={{ marginTop: 6, color: "var(--muted)", lineHeight: 1.5 }}>
         基于最近 {cur.samples} 帧历史。
         {slotA && <span style={{ color: "#34d399" }}> A={slotA.label}</span>}
         {slotB && <span style={{ color: "#fb923c" }}> B={slotB.label}</span>}

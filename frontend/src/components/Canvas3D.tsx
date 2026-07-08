@@ -645,16 +645,16 @@ function HUD3D({ follow, onToggleFollow }: { follow: boolean; onToggleFollow: ()
       </div>
       <div className="hud-row">
         <span className="hud-label">vₓ</span>
-        <span className="hud-value mono">{fmtKmh(vx)} km/h</span>
+        <span className="hud-value hud-mono">{fmtKmh(vx)} km/h</span>
       </div>
       <div className="hud-row">
         <span className="hud-label">ψ̇</span>
-        <span className="hud-value mono">{((yaw * 180) / Math.PI).toFixed(1)} °/s</span>
+        <span className="hud-value hud-mono">{((yaw * 180) / Math.PI).toFixed(1)} °/s</span>
       </div>
       {modelType === "multibody" && att && (
         <div className="hud-row">
           <span className="hud-label">侧倾/俯仰</span>
-          <span className="hud-value mono small">
+          <span className="hud-value hud-mono hud-small">
             φ{((att.roll * 180) / Math.PI).toFixed(1)}° / θ{((att.pitch * 180) / Math.PI).toFixed(1)}°
           </span>
         </div>
@@ -662,7 +662,7 @@ function HUD3D({ follow, onToggleFollow }: { follow: boolean; onToggleFollow: ()
       {wheels && (
         <div className="hud-row">
           <span className="hud-label">μ</span>
-          <span className="hud-value mono small">
+          <span className="hud-value hud-mono hud-small">
             {wheels.map((w, i) => (
               <span key={i} style={{ color: mu3dTextColor(w.mu) }}>
                 {(w.mu ?? 1).toFixed(2)}{i < 3 ? " / " : ""}
@@ -672,7 +672,7 @@ function HUD3D({ follow, onToggleFollow }: { follow: boolean; onToggleFollow: ()
         </div>
       )}
       <div className="hud-zoom">
-        <span className="mono small">相机</span>
+        <span className="hud-mono hud-small">相机</span>
         <button onClick={onToggleFollow}>{follow ? "跟随中" : "自由"}</button>
       </div>
     </div>

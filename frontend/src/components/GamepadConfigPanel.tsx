@@ -126,7 +126,7 @@ export default function GamepadConfigPanel() {
         </div>
       }
       badge={
-        <span className="small" style={{ marginLeft: "auto",
+        <span className="panel-small" style={{ marginLeft: "auto",
           color: gamepadId ? "var(--good)" : "var(--muted)", maxWidth: 130,
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
           title={gamepadId ?? "未检测到设备"}>
@@ -149,7 +149,7 @@ export default function GamepadConfigPanel() {
           </button>
         ))}
       </div>
-      {activePreset && <div className="small" style={{ color: "var(--muted)", margin: "4px 0 8px", lineHeight: 1.5 }}>
+      {activePreset && <div className="panel-small" style={{ color: "var(--muted)", margin: "4px 0 8px", lineHeight: 1.5 }}>
         {activePreset.hint}
         {cfg.mode !== "assisted" && <> · <b>已接管策略</b>：{requiredStrategy(cfg.mode)}</>}
       </div>}
@@ -245,7 +245,7 @@ export default function GamepadConfigPanel() {
       </div>
 
       {/* live monitor */}
-      <div className="gp-chan-head">实时监视{!gp && <span className="small" style={{ color: "var(--muted)", fontWeight: 400 }}>（连接手柄后显示）</span>}</div>
+      <div className="gp-chan-head">实时监视{!gp && <span className="panel-small" style={{ color: "var(--muted)", fontWeight: 400 }}>（连接手柄后显示）</span>}</div>
       {gp && (
         <div className="gp-mon">
           {live.axes.map((v, i) => (

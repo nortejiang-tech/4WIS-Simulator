@@ -120,7 +120,7 @@ export default function RecordingPanel() {
         <span className="value">{status?.channels.length ?? 0} / {status?.available_channels.length ?? 0}</span>
       </div>
       {error && (
-        <div className="small" style={{ color: "var(--bad)", marginTop: 4 }}>{error}</div>
+        <div className="panel-small" style={{ color: "var(--bad)", marginTop: 4 }}>{error}</div>
       )}
     </Panel>
   );

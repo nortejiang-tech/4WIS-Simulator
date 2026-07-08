@@ -96,7 +96,7 @@ export default function UserPythonPanel() {
     >
 
       {statusError && (
-        <div className="small" role="alert" style={{
+        <div className="panel-small" role="alert" style={{
           color: "var(--bad)",
           background: "rgba(239,68,68,0.08)",
           border: "1px solid rgba(239,68,68,0.28)",
@@ -110,7 +110,7 @@ export default function UserPythonPanel() {
 
       {status && (
         <>
-          <div className="small" style={{ color: "var(--muted)", marginBottom: 4, wordBreak: "break-all" }}>
+          <div className="panel-small" style={{ color: "var(--muted)", marginBottom: 4, wordBreak: "break-all" }}>
             {status.file_path}
           </div>
 
@@ -125,13 +125,13 @@ export default function UserPythonPanel() {
           )}
 
           {status.status === "no_file" && (
-            <div className="small" style={{ color: "#f59e0b", marginBottom: 6 }}>
+            <div className="panel-small" style={{ color: "#f59e0b", marginBottom: 6 }}>
               请在上方路径创建 user_strategy.py，仿真器会自动加载。
             </div>
           )}
 
           {status.last_reload && (
-            <div className="small" style={{ color: "var(--muted)", marginBottom: 6 }}>
+            <div className="panel-small" style={{ color: "var(--muted)", marginBottom: 6 }}>
               上次重载：{new Date(status.last_reload * 1000).toLocaleTimeString()}
             </div>
           )}
@@ -139,7 +139,7 @@ export default function UserPythonPanel() {
           <button onClick={reload} disabled={busy || !isActive}>
             {busy ? "重载中…" : "强制重载"}
           </button>
-          <div className="small" style={{ color: "var(--muted)", marginTop: 4 }}>
+          <div className="panel-small" style={{ color: "var(--muted)", marginTop: 4 }}>
             保存文件后 ≈1s 自动热重载；或切换到 user_python 策略后点此手动触发。
           </div>
         </>

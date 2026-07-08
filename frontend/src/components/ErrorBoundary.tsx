@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <div style={{ fontWeight: 600, marginBottom: 6 }}>
             {this.props.label} 渲染出错
           </div>
-          <div className="small mono" style={{ color: "var(--bad, #f87171)", marginBottom: 8 }}>
+          <div className="panel-small panel-mono" style={{ color: "var(--bad, #f87171)", marginBottom: 8 }}>
             {String(this.state.error?.message ?? this.state.error)}
           </div>
           <button onClick={() => this.setState({ error: null })}>重试</button>

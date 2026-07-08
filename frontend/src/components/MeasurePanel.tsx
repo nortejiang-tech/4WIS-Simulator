@@ -97,11 +97,11 @@ export default function MeasurePanel() {
             <Row label="直线位移" value={`${m.net.toFixed(2)} m`} />
           </>
         ) : (
-          <div className="small" style={{ color: "var(--muted)" }}>暂无轨迹（先驾驶/激励一段）</div>
+          <div className="panel-small" style={{ color: "var(--muted)" }}>暂无轨迹（先驾驶/激励一段）</div>
         )}
       </div>
 
-      <div className="small" style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.4 }}>
+      <div className="panel-small" style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.4 }}>
         卷尺：开启后在 2D 画布点两点测直线距离，第三次点击重新开始。
       </div>
     </Panel>

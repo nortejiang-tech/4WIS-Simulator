@@ -172,7 +172,7 @@ export default function ControlPanel() {
           )}
         </div>
         {holdSpeed && driver && (
-          <div className="small" style={{ color: "var(--muted)", marginTop: 4 }}>
+          <div className="panel-small" style={{ color: "var(--muted)", marginTop: 4 }}>
             目标车速 ≈ {fmtKmh(driver.throttle * vMax)} km/h（W/S 增减，松手保持；Space 急停）
           </div>
         )}
@@ -193,10 +193,10 @@ export default function ControlPanel() {
               borderRadius: 6, padding: "4px 6px", fontSize: 12,
             }}
           />
-          <span className="small" style={{ color: "var(--muted)" }}>km/h</span>
+          <span className="panel-small" style={{ color: "var(--muted)" }}>km/h</span>
         </div>
         {cruiseOn && (
-          <div className="small" style={{ color: "var(--muted)", marginTop: 4 }}>
+          <div className="panel-small" style={{ color: "var(--muted)", marginTop: 4 }}>
             定速保持 {Math.round(toKmh(cruiseSpeed))} km/h（覆盖 W/S；转向仍可手动/策略控制）
           </div>
         )}
@@ -204,7 +204,7 @@ export default function ControlPanel() {
         <div style={{ marginTop: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--muted)" }}>
             <span>转向回正速度</span>
-            <span className="mono">{steerReturn === 0 ? "保持（不回正）" : `${(steerReturn * 1.5).toFixed(2)}×`}</span>
+            <span className="panel-mono">{steerReturn === 0 ? "保持（不回正）" : `${(steerReturn * 1.5).toFixed(2)}×`}</span>
           </div>
           <input
             type="range" min={0} max={1} step={0.01}
@@ -245,7 +245,7 @@ export default function ControlPanel() {
               <option key={s.label} value={s.label}>{s.label}（μ={s.mu}）</option>
             ))}
           </select>
-          <span className="mono" style={{ fontSize: 13, minWidth: 42, textAlign: "right" }}>{baseMu.toFixed(2)}</span>
+          <span className="panel-mono" style={{ fontSize: 13, minWidth: 42, textAlign: "right" }}>{baseMu.toFixed(2)}</span>
         </div>
         <input
           type="range" min={0.05} max={1.0} step={0.01}
@@ -253,7 +253,7 @@ export default function ControlPanel() {
           onChange={(e) => applySceneMu(Number(e.target.value))}
           style={{ width: "100%", marginTop: 6 }}
         />
-        <div className="small" style={{ color: "var(--muted)" }}>
+        <div className="panel-small" style={{ color: "var(--muted)" }}>
           基础轮胎-地面摩擦系数（μ）。选预设后仍可拖动微调。
         </div>
       </Panel>

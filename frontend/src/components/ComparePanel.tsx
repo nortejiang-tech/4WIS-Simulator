@@ -89,7 +89,7 @@ export default function ComparePanel() {
         </label>
       </div>
 
-      <div className="small" style={{ marginTop: 6, display: "flex", gap: 12 }}>
+      <div className="panel-small" style={{ marginTop: 6, display: "flex", gap: 12 }}>
         <span style={{ color: RUN_COLORS.A }}>● A: {saved.A?.label ?? "（空）"}</span>
         <span style={{ color: RUN_COLORS.B }}>● B: {saved.B?.label ?? "（空）"}</span>
       </div>

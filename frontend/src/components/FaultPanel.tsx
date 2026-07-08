@@ -173,9 +173,9 @@ export default function FaultPanel() {
 
       {/* Fault list */}
       {listError ? (
-        <div className="small" role="alert" style={{ color: "var(--bad)" }}>{listError}</div>
+        <div className="panel-small" role="alert" style={{ color: "var(--bad)" }}>{listError}</div>
       ) : faults.length === 0 ? (
-        <div className="small" style={{ color: "var(--muted)" }}>暂无故障配置</div>
+        <div className="panel-small" style={{ color: "var(--muted)" }}>暂无故障配置</div>
       ) : (
         <>
           {faults.map((f) => (
@@ -188,7 +188,7 @@ export default function FaultPanel() {
                 background: f.active ? "#ef4444" : "var(--muted)",
                 flexShrink: 0,
               }} />
-              <span className="small" style={{ flex: 1, color: "var(--text)" }}>
+              <span className="panel-small" style={{ flex: 1, color: "var(--text)" }}>
                 {WHEEL_LABELS[f.wheel]} · {FAULT_LABELS[f.fault_type]}
                 {VALUE_HINT[f.fault_type] !== null && ` (${f.value.toFixed(3)})`}
               </span>
@@ -215,7 +215,7 @@ export default function FaultPanel() {
         </>
       )}
 
-      <div className="small" style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.4 }}>
+      <div className="panel-small" style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.4 }}>
         执行器故障影响实际转角；传感器故障影响上报值（不影响物理）。
       </div>
     </Panel>

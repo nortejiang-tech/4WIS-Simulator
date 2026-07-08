@@ -173,7 +173,7 @@ export default function ScriptPanel() {
       )}
       {statusError && (
         <div
-          className="small"
+          className="panel-small"
           role="alert"
           style={{ color: "var(--bad)", marginTop: 4 }}
         >
@@ -182,7 +182,7 @@ export default function ScriptPanel() {
       )}
       {(info || error) && (
         <div
-          className="small"
+          className="panel-small"
           role={error ? "alert" : "status"}
           style={{ color: error ? "var(--bad)" : "var(--good)", marginTop: 4 }}
         >

@@ -119,7 +119,7 @@ export default function TrajectoryPanel() {
       </div>
 
       <div style={{ display: "flex", gap: 6, marginTop: 6, alignItems: "center" }}>
-        <span className="small" style={{ color: "var(--muted)" }}>巡航速度</span>
+        <span className="panel-small" style={{ color: "var(--muted)" }}>巡航速度</span>
         <input
           type="number" min={0} max={120} step={1}
           value={cruiseKmh}
@@ -127,7 +127,7 @@ export default function TrajectoryPanel() {
           style={{ ...inputStyle, width: 64, flex: "0 0 auto" }}
           disabled={busy}
         />
-        <span className="small" style={{ color: "var(--muted)" }}>km/h</span>
+        <span className="panel-small" style={{ color: "var(--muted)" }}>km/h</span>
         <button onClick={onFollow} disabled={busy || pointCount < 2} style={{ marginLeft: "auto" }}>
           跟踪此路径
         </button>
@@ -152,7 +152,7 @@ export default function TrajectoryPanel() {
         </button>
       </div>
 
-      <div className="small" style={{ color: "var(--muted)", marginTop: 6 }}>
+      <div className="panel-small" style={{ color: "var(--muted)", marginTop: 6 }}>
         {pointCount > 0
           ? `当前路径: ${path?.name || "custom"} · ${pointCount} 点 · ${coneCount} 桩`
           : "无路径"}
@@ -160,10 +160,10 @@ export default function TrajectoryPanel() {
       </div>
 
       {error && (
-        <div className="small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>{error}</div>
+        <div className="panel-small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>{error}</div>
       )}
       {templatesError && (
-        <div className="small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>
+        <div className="panel-small" role="alert" style={{ color: "var(--bad)", marginTop: 4 }}>
           {templatesError}
         </div>
       )}

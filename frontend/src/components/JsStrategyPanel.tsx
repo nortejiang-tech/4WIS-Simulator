@@ -167,7 +167,7 @@ export default function JsStrategyPanel() {
         </div>
       )}
 
-      <div className="small" style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.4 }}>
+      <div className="panel-small" style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.4 }}>
         函数在浏览器中执行，结果通过 WebSocket 发回仿真器。<br />
         签名：<code>function compute(driver, state) {"{"} return {"{"}fl, fr, rl, rr{"}"} {"}"}</code>（rad）
       </div>

@@ -206,7 +206,7 @@ export default function AnalysisPage() {
             <div className="wf-empty">还没有 run — 到「试验」页跑一个批量</div>
           )}
         </div>
-        <div className="small" style={{ color: "var(--muted)", padding: "6px 2px" }}>
+        <div className="wf-small" style={{ color: "var(--muted)", padding: "6px 2px" }}>
           点击选择（最多 {MAX_SELECT} 个）进行叠加对比
         </div>
       </aside>
@@ -258,7 +258,7 @@ export default function AnalysisPage() {
                       <tr key={row.key}>
                         <td>{row.label}</td>
                         {vals.map((v, i) => (
-                          <td key={i} className="mono">{v != null ? v.toFixed(row.digits) : "—"}</td>
+                          <td key={i} className="wf-mono">{v != null ? v.toFixed(row.digits) : "—"}</td>
                         ))}
                       </tr>
                     );

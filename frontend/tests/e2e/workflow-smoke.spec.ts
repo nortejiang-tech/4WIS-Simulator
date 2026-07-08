@@ -1237,7 +1237,7 @@ test("disturbance canvas placement and drag failures surface toasts", async ({ p
   await disturbancePanel.locator("span", { hasText: "冰面 / 低附着" }).click();
   await expect(disturbancePanel).toContainText("编辑");
 
-  const pxmText = await page.locator(".mono.small", { hasText: /px\/m/ }).first().textContent();
+  const pxmText = await page.locator(".hud-mono.hud-small", { hasText: /px\/m/ }).first().textContent();
   const pxm = Number((pxmText ?? "").match(/(\d+)/)?.[1] ?? "35");
   const freshBox = await canvas.boundingBox();
   if (!freshBox) throw new Error("2D canvas disappeared before disturbance drag failure test");

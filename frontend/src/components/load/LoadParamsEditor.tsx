@@ -38,7 +38,7 @@ export function LoadParamsEditor({ params, onChange, onResetDefault, resetDisabl
           </button>
         )}
       </div>
-      {!params && <div className="small">读取中...</div>}
+      {!params && <div className="panel-small">读取中...</div>}
       {params && (
         <>
           <div className="load-param-section-label">核心参数</div>
