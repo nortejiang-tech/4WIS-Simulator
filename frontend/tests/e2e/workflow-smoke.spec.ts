@@ -328,6 +328,62 @@ test("experiment library failure does not masquerade as an empty library", async
   await attachPageScreenshot(page, testInfo, "workflow-experiment-library-error");
 });
 
+test("experiment library write failures keep the editor and library state visible", async ({ page, request }, testInfo) => {
+  const experimentName = `e2e_write_failure_${Date.now()}`;
+  await request.delete(`/api/experiments/${experimentName}`);
+
+  await page.route("**/api/experiments/*", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic experiment save failure" }),
+    });
+  });
+
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /试验/ }).click();
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+
+  await page.getByLabel("名称").fill(experimentName);
+  await page.getByRole("button", { name: "保存到实验库" }).click();
+  await expect(page.getByText("保存失败：synthetic experiment save failure").first()).toBeVisible();
+  await expect(page.getByLabel("名称")).toHaveValue(experimentName);
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+
+  await page.unroute("**/api/experiments/*");
+  await page.getByRole("button", { name: "保存到实验库" }).click();
+  await expect(page.getByText(`已保存：${experimentName}`).first()).toBeVisible();
+  const libraryItem = page.locator(".wf-list-item").filter({ hasText: experimentName });
+  await expect(libraryItem).toBeVisible();
+
+  await page.route("**/api/experiments/*", async (route) => {
+    if (route.request().method() !== "DELETE") {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "synthetic experiment delete failure" }),
+    });
+  });
+
+  await libraryItem.locator("button[title='删除']").click();
+  await expect(page.getByText("删除失败：synthetic experiment delete failure").first()).toBeVisible();
+  await expect(libraryItem).toBeVisible();
+  await expect(page.getByLabel("名称")).toHaveValue(experimentName);
+
+  await attachPageScreenshot(page, testInfo, "workflow-experiment-library-write-errors");
+
+  await page.unroute("**/api/experiments/*");
+  await request.delete(`/api/experiments/${experimentName}`);
+});
+
 test("experiment maneuver template failure stays visible without blocking editing", async ({ page }, testInfo) => {
   await page.route("**/api/maneuver-templates", async (route) => {
     await route.fulfill({
