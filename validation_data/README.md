@@ -34,10 +34,10 @@ backend/.venv/bin/python scripts/scaffold_reference_benchmark.py carmaker_iso388
 如果原始数据来自外部 CSV 导出，可用归一工具生成标准 `reference.csv`：
 
 ```bash
-backend/.venv/bin/python scripts/normalize_reference_csv.py --input raw_export.csv --output validation_data/.incoming/carmaker_iso3888_dlc_60kmh/reference.csv --map t=Time_ms --unit t=ms --map vx=Vx_kmh --unit vx=km/h --map vy=Vy_kmh --unit vy=km/h --map yaw_rate=YawRate_deg_s --unit yaw_rate=deg/s --map pose_x=X_mm --unit pose_x=mm --map pose_y=Y_mm --unit pose_y=mm --map driver_steering=Steer_deg --unit driver_steering=deg
+backend/.venv/bin/python scripts/normalize_reference_csv.py --input raw_export.csv --output validation_data/.incoming/carmaker_iso3888_dlc_60kmh/reference.csv --map t=Time_ms --unit t=ms --map vx=Vx_kmh --unit vx=km/h --map vy=Vy_kmh --unit vy=km/h --map yaw_rate=YawRate_deg_s --unit yaw_rate=deg/s --map pose_x=X_mm --unit pose_x=mm --map pose_y=Y_mm --unit pose_y=mm --map driver_steering=Steer_deg --unit driver_steering=deg --crop-start-s 1.5 --crop-end-s 9.5 --zero-time
 ```
 
-`normalize_reference_csv.py` 只做列映射、单位换算和基础数值检查；`manifest.json`、指标容差、车辆参数映射、采样/滤波说明和 `notes.md` 仍必须按真实来源人工补齐。独立来源还必须填写 `manifest.provenance`，并把原始导出、测量日志、工具报告或参数文件保存在 benchmark 目录内，在 `manifest.source_artifacts` 中记录 SHA-256；checker 会拒绝缺失 provenance、缺失 artifact、checksum 不匹配、越界路径，以及把 `reference.csv` 等生成件当作原始证据。补齐并清理占位符后，先 `--dry-run` promotion，再移动到正式目录：
+`normalize_reference_csv.py` 只做列映射、单位换算、可复现时间窗裁剪、时间归零和基础数值检查；`manifest.json`、指标容差、车辆参数映射、采样/滤波说明和 `notes.md` 仍必须按真实来源人工补齐。使用裁剪选项时，要把原始裁剪时间窗记录进 `manifest.provenance.crop_window_s` 或 `notes.md`。独立来源还必须填写 `manifest.provenance`，并把原始导出、测量日志、工具报告或参数文件保存在 benchmark 目录内，在 `manifest.source_artifacts` 中记录 SHA-256；checker 会拒绝缺失 provenance、缺失 artifact、checksum 不匹配、越界路径，以及把 `reference.csv` 等生成件当作原始证据。补齐并清理占位符后，先 `--dry-run` promotion，再移动到正式目录：
 
 ```bash
 backend/.venv/bin/python scripts/promote_reference_benchmark.py carmaker_iso3888_dlc_60kmh --dry-run

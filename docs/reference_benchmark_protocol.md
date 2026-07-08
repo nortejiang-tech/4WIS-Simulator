@@ -138,10 +138,11 @@ backend/.venv/bin/python scripts/normalize_reference_csv.py \
   --map yaw_rate=YawRate_deg_s --unit yaw_rate=deg/s \
   --map pose_x=X_mm --unit pose_x=mm \
   --map pose_y=Y_mm --unit pose_y=mm \
-  --map driver_steering=Steer_deg --unit driver_steering=deg
+  --map driver_steering=Steer_deg --unit driver_steering=deg \
+  --crop-start-s 1.5 --crop-end-s 9.5 --zero-time
 ```
 
-该脚本只负责列名映射、单位换算、数值合法性和时间单调性检查；它不会创建或修改 `manifest.json`，不会选择指标容差，也不会让 benchmark 自动具备独立证据资格。`manifest.provenance`、`manifest.channels`、`vehicle_mapping`、`metrics` 和 `notes.md` 仍必须由接入者按真实来源补齐并复核。
+该脚本只负责列名映射、单位换算、可复现时间窗裁剪、时间归零、数值合法性和时间单调性检查；它不会创建或修改 `manifest.json`，不会选择指标容差，也不会让 benchmark 自动具备独立证据资格。使用 `--crop-start-s` / `--crop-end-s` 时，应把原始时间窗记录到 `manifest.provenance.crop_window_s` 或 `notes.md`。`manifest.provenance`、`manifest.channels`、`vehicle_mapping`、`metrics` 和 `notes.md` 仍必须由接入者按真实来源补齐并复核。
 
 同时必须把原始导出或测量/报告文件放在同一个 incoming benchmark 目录内，并填写 `manifest.source_artifacts`。示例：
 

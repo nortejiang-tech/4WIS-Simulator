@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Normalize exported reference data into the Sim4WIS reference.csv schema.
 
-This script only converts raw CSV columns and units. It does not create or
-modify manifest.json, does not choose metrics/tolerances, and does not make the
+This script only converts raw CSV columns and units, with optional
+time-window cropping and time-zero normalization. It does not create or modify
+manifest.json, does not choose metrics/tolerances, and does not make the
 benchmark promotable by itself.
 """
 
@@ -81,8 +82,17 @@ def normalize_reference_csv(
     output_path: Path,
     mappings: dict[str, str],
     units: dict[str, str] | None = None,
+    crop_start_s: float | None = None,
+    crop_end_s: float | None = None,
+    zero_time: bool = False,
 ) -> NormalizeResult:
     units = {**DEFAULT_UNITS, **(units or {})}
+    if crop_start_s is not None and not math.isfinite(crop_start_s):
+        raise ValueError("crop_start_s must be finite")
+    if crop_end_s is not None and not math.isfinite(crop_end_s):
+        raise ValueError("crop_end_s must be finite")
+    if crop_start_s is not None and crop_end_s is not None and crop_end_s <= crop_start_s:
+        raise ValueError("crop_end_s must be greater than crop_start_s")
     missing_mapping = [channel for channel in REQUIRED_CHANNELS if channel not in mappings]
     if missing_mapping:
         raise ValueError(f"missing required channel mapping(s): {', '.join(missing_mapping)}")
@@ -127,6 +137,20 @@ def normalize_reference_csv(
     if len(rows) < 2:
         raise ValueError(f"{input_path} must contain at least two samples")
 
+    if crop_start_s is not None or crop_end_s is not None:
+        rows = [
+            row
+            for row in rows
+            if (crop_start_s is None or row["t"] >= crop_start_s)
+            and (crop_end_s is None or row["t"] <= crop_end_s)
+        ]
+        if len(rows) < 2:
+            raise ValueError(f"{input_path}: crop window must retain at least two samples")
+
+    if zero_time:
+        t0 = rows[0]["t"]
+        rows = [{**row, "t": row["t"] - t0} for row in rows]
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=REQUIRED_CHANNELS)
@@ -152,6 +176,13 @@ def main() -> int:
         default=[],
         help="target=unit for source data before conversion, e.g. --unit yaw_rate=deg/s",
     )
+    parser.add_argument("--crop-start-s", type=float, help="keep samples with converted time >= this value")
+    parser.add_argument("--crop-end-s", type=float, help="keep samples with converted time <= this value")
+    parser.add_argument(
+        "--zero-time",
+        action="store_true",
+        help="subtract the first retained sample time after optional cropping",
+    )
     args = parser.parse_args()
 
     try:
@@ -160,6 +191,9 @@ def main() -> int:
             args.output,
             parse_key_values(args.map, "--map"),
             parse_key_values(args.unit, "--unit"),
+            crop_start_s=args.crop_start_s,
+            crop_end_s=args.crop_end_s,
+            zero_time=args.zero_time,
         )
     except Exception as exc:
         print(f"normalize failed: {exc}", file=sys.stderr)

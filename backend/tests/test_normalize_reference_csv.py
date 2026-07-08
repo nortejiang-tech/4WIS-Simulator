@@ -97,6 +97,111 @@ def test_normalize_reference_csv_converts_units(tmp_path: Path) -> None:
     assert math.isclose(float(rows[0]["driver_steering"]), math.pi / 18.0)
 
 
+def test_normalize_reference_csv_crops_and_zeroes_time(tmp_path: Path) -> None:
+    normalizer = load_module()
+    raw = tmp_path / "raw.csv"
+    out = tmp_path / "reference.csv"
+    write_raw_csv(
+        raw,
+        [
+            {"t": "0.0", "vx": "1", "vy": "0", "yaw_rate": "0", "x": "0", "y": "0", "steer": "0"},
+            {"t": "0.5", "vx": "2", "vy": "0", "yaw_rate": "0", "x": "1", "y": "0", "steer": "0.1"},
+            {"t": "1.0", "vx": "3", "vy": "0", "yaw_rate": "0", "x": "2", "y": "0", "steer": "0.2"},
+            {"t": "1.5", "vx": "4", "vy": "0", "yaw_rate": "0", "x": "3", "y": "0", "steer": "0.3"},
+        ],
+    )
+
+    result = normalizer.normalize_reference_csv(
+        raw,
+        out,
+        {
+            "t": "t",
+            "vx": "vx",
+            "vy": "vy",
+            "yaw_rate": "yaw_rate",
+            "pose_x": "x",
+            "pose_y": "y",
+            "driver_steering": "steer",
+        },
+        crop_start_s=0.5,
+        crop_end_s=1.0,
+        zero_time=True,
+    )
+
+    assert result.rows == 2
+    rows = read_reference_csv(out)
+    assert [float(row["t"]) for row in rows] == [0.0, 0.5]
+    assert [float(row["vx"]) for row in rows] == [2.0, 3.0]
+    assert [float(row["pose_x"]) for row in rows] == [1.0, 2.0]
+
+
+def test_normalize_reference_csv_refuses_invalid_crop_window(tmp_path: Path) -> None:
+    normalizer = load_module()
+    raw = tmp_path / "raw.csv"
+    write_raw_csv(
+        raw,
+        [
+            {"t": "0", "vx": "1", "vy": "0", "yaw_rate": "0", "x": "0", "y": "0", "steer": "0"},
+            {"t": "1", "vx": "1", "vy": "0", "yaw_rate": "0", "x": "1", "y": "0", "steer": "0"},
+        ],
+    )
+
+    try:
+        normalizer.normalize_reference_csv(
+            raw,
+            tmp_path / "reference.csv",
+            {
+                "t": "t",
+                "vx": "vx",
+                "vy": "vy",
+                "yaw_rate": "yaw_rate",
+                "pose_x": "x",
+                "pose_y": "y",
+                "driver_steering": "steer",
+            },
+            crop_start_s=1.0,
+            crop_end_s=1.0,
+        )
+    except ValueError as exc:
+        assert "crop_end_s must be greater than crop_start_s" in str(exc)
+    else:
+        raise AssertionError("expected invalid crop window to fail")
+
+
+def test_normalize_reference_csv_refuses_too_narrow_crop_window(tmp_path: Path) -> None:
+    normalizer = load_module()
+    raw = tmp_path / "raw.csv"
+    write_raw_csv(
+        raw,
+        [
+            {"t": "0", "vx": "1", "vy": "0", "yaw_rate": "0", "x": "0", "y": "0", "steer": "0"},
+            {"t": "1", "vx": "1", "vy": "0", "yaw_rate": "0", "x": "1", "y": "0", "steer": "0"},
+            {"t": "2", "vx": "1", "vy": "0", "yaw_rate": "0", "x": "2", "y": "0", "steer": "0"},
+        ],
+    )
+
+    try:
+        normalizer.normalize_reference_csv(
+            raw,
+            tmp_path / "reference.csv",
+            {
+                "t": "t",
+                "vx": "vx",
+                "vy": "vy",
+                "yaw_rate": "yaw_rate",
+                "pose_x": "x",
+                "pose_y": "y",
+                "driver_steering": "steer",
+            },
+            crop_start_s=0.75,
+            crop_end_s=1.25,
+        )
+    except ValueError as exc:
+        assert "crop window must retain at least two samples" in str(exc)
+    else:
+        raise AssertionError("expected too-narrow crop window to fail")
+
+
 def test_normalize_reference_csv_refuses_missing_mapping(tmp_path: Path) -> None:
     normalizer = load_module()
     raw = tmp_path / "raw.csv"
