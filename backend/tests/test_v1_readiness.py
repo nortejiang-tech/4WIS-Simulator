@@ -74,3 +74,43 @@ def test_golden_regression_fails_when_required_case_missing(tmp_path: Path) -> N
 
     assert result.status == "fail"
     assert "missing experiments" in result.detail
+
+
+def test_incoming_reference_pipeline_status_is_present() -> None:
+    checker = load_checker()
+    checks = checker.evaluate_v1_readiness(checker.ROOT)[1]
+    by_id = {check.check_id: check for check in checks}
+    check = by_id["incoming_reference_pipeline"]
+    assert check.status in {"pass", "gap"}
+    assert check.evidence == (
+        "validation_data/.incoming",
+        "scripts/check_reference_benchmarks.py",
+    )
+
+
+def test_incoming_reference_pipeline_reports_blocked_benchmarks_with_mocked_audit(monkeypatch) -> None:
+    checker = load_checker()
+
+    class FakeModule:
+        def __init__(self) -> None:
+            self.audit_incoming_benchmarks = self._audit
+
+        def _audit(self, root: Path):
+            return 1, [
+                type(
+                    "FakeStatus",
+                    (),
+                    {
+                        "benchmark_id": "mock_bench",
+                        "ready_for_promotion": False,
+                        "blockers": ["missing manifest", "bad metric"],
+                    },
+                )(),
+            ]
+
+    module = FakeModule()
+    monkeypatch.setattr(checker, "_load_module", lambda *_args, **_kwargs: module)
+    check = checker.check_incoming_reference_pipeline(checker.ROOT)
+    assert check.status == "gap"
+    assert check.strict_required is False
+    assert "mock_bench" in check.detail

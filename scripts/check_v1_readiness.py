@@ -255,6 +255,50 @@ def check_reference_evidence(root: Path) -> list[ReadinessCheck]:
     return checks
 
 
+def check_incoming_reference_pipeline(root: Path) -> ReadinessCheck:
+    checker = _load_module(root / "scripts" / "check_reference_benchmarks.py", "check_reference_benchmarks_for_v1_incoming")
+    code, statuses = checker.audit_incoming_benchmarks(root / "validation_data" / ".incoming")
+    evidence = ("validation_data/.incoming", "scripts/check_reference_benchmarks.py")
+
+    if code == 0 and not statuses:
+        return ReadinessCheck(
+            "incoming_reference_pipeline",
+            "Incoming reference pipeline",
+            "pass",
+            "No incoming benchmark directories found; intake gate is clear.",
+            evidence,
+            strict_required=False,
+        )
+
+    if code != 0:
+        blocked = [status.benchmark_id for status in statuses if not status.ready_for_promotion]
+        detail = "; ".join(
+            f"{status.benchmark_id}: {', '.join(status.blockers)}"
+            for status in statuses
+            if not status.ready_for_promotion
+        )
+        if detail:
+            detail = detail[:300]
+        return ReadinessCheck(
+            "incoming_reference_pipeline",
+            "Incoming reference pipeline",
+            "gap",
+            f"{len(blocked)} incoming benchmark(s) blocked for promotion ({detail}).",
+            evidence,
+            strict_required=False,
+        )
+
+    ready = [status for status in statuses if status.ready_for_promotion]
+    return ReadinessCheck(
+        "incoming_reference_pipeline",
+        "Incoming reference pipeline",
+        "pass",
+        f"{len(ready)}/{len(statuses)} incoming benchmark(s) are ready for promotion.",
+        evidence,
+        strict_required=False,
+    )
+
+
 def check_frontend_smoke(root: Path) -> ReadinessCheck:
     spec = root / "frontend" / "tests" / "e2e" / "workflow-smoke.spec.ts"
     package = root / "frontend" / "package.json"
@@ -400,6 +444,7 @@ def evaluate_v1_readiness(
     checks.append(check_golden_regression(root))
     checks.append(check_validation_matrix(root))
     checks.extend(check_reference_evidence(root))
+    checks.append(check_incoming_reference_pipeline(root))
     checks.append(check_frontend_smoke(root))
     checks.append(check_report_pipeline(root))
     checks.append(check_release_delivery(root, require_portable_zips=require_portable_zips))
