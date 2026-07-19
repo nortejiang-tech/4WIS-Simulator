@@ -1,6 +1,6 @@
 # 4WIS Simulator
 
-四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前版本是 `v0.99.0`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到便携版发布的闭环。
+四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前版本是 `v0.99.1`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到便携版发布的闭环。
 
 项目仍定位为内部预研和工程分析工具，不是经过实车标定或认证的安全结论工具。模型可信度和边界见 [docs/validation_matrix.md](docs/validation_matrix.md)。
 
@@ -127,7 +127,7 @@ cd frontend && npm run e2e       # 先生产构建，再跑 Playwright，避免 
 cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 ```
 
-当前 `v0.99.0` 验证基线：
+当前 `v0.99.1` 验证基线：
 
 - 后端：`245 passed`
 - smoke：`32/32 通过`

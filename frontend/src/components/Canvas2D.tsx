@@ -13,15 +13,15 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Rect, Line, Circle, Group, Text } from "react-konva";
+import { Stage, Layer, Rect, Line, Circle, Text } from "react-konva";
 
 import { useSimStore } from "@/store/sim";
 import { createDisturbance, updateDisturbance } from "@/api/scene";
 import DisturbanceLayer from "./canvas2d/DisturbanceLayer";
 import ScenarioLayer from "./canvas2d/ScenarioLayer";
 import IcrLayer from "./canvas2d/IcrLayer";
+import VehicleLayer from "./canvas2d/VehicleLayer";
 import Hud from "./canvas2d/Hud";
-import { wheelMuColor } from "./canvas2d/colors";
 import type { Camera2D } from "./canvas2d/projection";
 import { ROT, screenToWorld, worldToScreen } from "./canvas2d/projection";
 
@@ -85,6 +85,24 @@ export default function Canvas2D() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
 
+  // Accumulated wheel rotation, so the 2D wheels' spokes visibly spin.
+  // Mirrors the same integration Canvas3D does in its useFrame loop.
+  const spinRef = useRef<number[]>([0, 0, 0, 0]);
+  const lastSpinT = useRef(0);
+  const simT = state?.t ?? 0;
+  useEffect(() => {
+    const st = useSimStore.getState().state;
+    if (!st) return;
+    const dt = st.t - lastSpinT.current;
+    lastSpinT.current = st.t;
+    if (dt > 0 && dt < 0.5) {
+      const s = spinRef.current;
+      for (let i = 0; i < 4; i++) {
+        s[i] = (s[i] + (st.wheels[i]?.omega ?? 0) * dt) % (Math.PI * 2);
+      }
+    }
+  }, [simT]);
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -133,16 +151,6 @@ export default function Canvas2D() {
 
   const cam: Camera2D = { camX: state.pose.x, camY: state.pose.y, pxm, W, H };
   const S = (wx: number, wy: number) => worldToScreen(cam, wx, wy);
-
-  const L = state.params.wheelbase;
-  const tF = state.params.track_front;
-  const tR = state.params.track_rear;
-  const tireR = state.params.tire_radius;
-
-  const bodyL = L + 0.55;
-  const bodyW = Math.max(tF, tR) + 0.35;
-  const wheelL = 2 * tireR;
-  const wheelW = 0.22;
 
   const [vsx, vsy] = S(state.pose.x, state.pose.y);
   const psiDeg = (state.pose.psi * 180) / Math.PI;
@@ -303,52 +311,16 @@ export default function Canvas2D() {
               lineJoin="round"
             />
           )}
-          {/* Vehicle group at (vsx, vsy); +ROT keeps forward pointing up */}
-          <Group x={vsx} y={vsy} rotation={-psiDeg + ROT} listening={false}>
-            {/* Body rectangle (centred at origin) */}
-            <Rect
-              x={(-bodyL * pxm) / 2}
-              y={(-bodyW * pxm) / 2}
-              width={bodyL * pxm}
-              height={bodyW * pxm}
-              fill="rgba(59,130,246,0.18)"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              cornerRadius={6}
-            />
-            {/* Forward arrow */}
-            <Line
-              points={[0, 0, (bodyL * pxm) / 3, 0]}
-              stroke="#93c5fd"
-              strokeWidth={2}
-            />
-            {/* Wheels — body y is mapped to local -Y (screen up at ψ=0) */}
-            {state.wheels.map((w, i) => {
-              const wxL = w.pos_body[0] * pxm;
-              const wyL = -w.pos_body[1] * pxm;
-              const deltaDeg = (w.delta * 180) / Math.PI;
-              return (
-                <Group key={i} x={wxL} y={wyL} rotation={-deltaDeg}>
-                  <Rect
-                    x={(-wheelL * pxm) / 2}
-                    y={(-wheelW * pxm) / 2}
-                    width={wheelL * pxm}
-                    height={wheelW * pxm}
-                    fill={wheelMuColor(w.mu)}
-                    stroke="#cbd5e1"
-                    strokeWidth={1}
-                    cornerRadius={2}
-                  />
-                  {/* Tiny notch ahead of the wheel = rolling direction */}
-                  <Line
-                    points={[(wheelL * pxm) / 2, 0, (wheelL * pxm) / 2 + 6, 0]}
-                    stroke="#e2e8f0"
-                    strokeWidth={1.5}
-                  />
-                </Group>
-              );
-            })}
-          </Group>
+          {/* Vehicle (body + wheels + velocity vector); +ROT keeps forward up */}
+          <VehicleLayer
+            state={state}
+            x={vsx}
+            y={vsy}
+            rotationDeg={-psiDeg + ROT}
+            pxm={pxm}
+            spin={spinRef.current}
+            theme={theme}
+          />
           {/* Steering geometry: perpendicular lines + per-wheel/vehicle ICR */}
           <IcrLayer state={state} cam={cam} />
 

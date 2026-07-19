@@ -41,6 +41,13 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useSimStore } from "@/store/sim";
 import type { DisturbanceMsg } from "@/types/sim";
 import { fmtKmh } from "@/ui/units";
+import {
+  WHEEL,
+  bodyDimensions,
+  bodyOutline,
+  cabinOutline,
+  lampPositions,
+} from "./vehicleShape";
 import "./CanvasHud.css";
 
 // sim world (x fwd, y left, h up) → three.js (x, up, -y)
@@ -64,6 +71,37 @@ function muHex(mu: number): number {
   return 0x4c1d95;
 }
 
+/**
+ * Extrude a body-frame outline into a 3D shell.
+ *
+ * The outline lives in sim body coordinates (x forward, y left). We build the
+ * Shape in those axes, extrude along +Z, then the caller rotates by −90° about
+ * X so the extrusion direction becomes "up":
+ *     (bx, by, d)  --rotX(−90°)-->  (bx, d, −by)
+ * which is exactly the w2t mapping. Using the same outline as Canvas2D keeps
+ * the two viewports visually identical (see vehicleShape.ts).
+ */
+function extrudeOutline(
+  outline: [number, number][],
+  height: number,
+  bevel: number,
+): ExtrudeGeometry {
+  const shape = new Shape();
+  outline.forEach(([bx, by], i) => {
+    if (i === 0) shape.moveTo(bx, by);
+    else shape.lineTo(bx, by);
+  });
+  shape.closePath();
+  return new ExtrudeGeometry(shape, {
+    depth: Math.max(height - 2 * bevel, 0.01),
+    bevelEnabled: bevel > 0,
+    bevelThickness: bevel,
+    bevelSize: bevel,
+    bevelSegments: 2,
+    curveSegments: 8,
+  });
+}
+
 function Vehicle({ geom }: { geom: Geom }) {
   const root = useRef<Group>(null);
   const sprung = useRef<Group>(null);  // body shell — heaves + rolls + pitches
@@ -80,11 +118,26 @@ function Vehicle({ geom }: { geom: Geom }) {
     [-L / 2, +tR / 2],   // RL
     [-L / 2, -tR / 2],   // RR
   ];
-  const bodyLen = L + 0.55;
-  const bodyWidth = Math.max(tF, tR) + 0.3;
-  const bodyHeight = 0.55;
-  const wheelWidth = 0.22;
+  // Silhouette shared with Canvas2D so both viewports show the same vehicle.
+  const { length: bodyLen, width: bodyWidth } = bodyDimensions(L, Math.max(tF, tR));
+  const bodyHeight = 0.52;
+  const cabinHeight = 0.34;
+  const wheelWidth = 2 * tireR * WHEEL.widthRatio;
+  const rimR = tireR * WHEEL.rimRatio;
   const bodyHeightBase = tireR;  // sprung-group pivot height (≈ roll/pitch axis)
+
+  const shellGeom = useMemo(
+    () => extrudeOutline(bodyOutline(bodyLen, bodyWidth), bodyHeight, 0.05),
+    [bodyLen, bodyWidth],
+  );
+  const cabinGeom = useMemo(
+    () => extrudeOutline(cabinOutline(bodyLen, bodyWidth), cabinHeight, 0.04),
+    [bodyLen, bodyWidth],
+  );
+  const lamps = useMemo(() => lampPositions(bodyLen, bodyWidth), [bodyLen, bodyWidth]);
+
+  // Dispose extruded geometries when the vehicle size changes.
+  useEffect(() => () => { shellGeom.dispose(); cabinGeom.dispose(); }, [shellGeom, cabinGeom]);
 
   useFrame((_, dt) => {
     const st = useSimStore.getState().state;
@@ -122,21 +175,61 @@ function Vehicle({ geom }: { geom: Geom }) {
     <group ref={root}>
       {/* Sprung body — heaves / rolls / pitches relative to the wheels */}
       <group ref={sprung} position={[0, bodyHeightBase, 0]}>
-        {/* Body shell */}
-        <mesh position={[0, bodyHeight / 2, 0]} castShadow>
-          <boxGeometry args={[bodyLen, bodyHeight, bodyWidth]} />
-          <meshStandardMaterial color="#3b82f6" transparent opacity={0.55} />
+        {/* Painted shell — extruded from the same outline Canvas2D draws */}
+        <mesh geometry={shellGeom} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
+          <meshStandardMaterial
+            color="#2f6fb8"
+            metalness={0.45}
+            roughness={0.38}
+            transparent
+            opacity={0.92}
+          />
         </mesh>
-        {/* Roof / cabin hint */}
-        <mesh position={[-L * 0.05, bodyHeight + 0.12, 0]}>
-          <boxGeometry args={[bodyLen * 0.45, 0.25, bodyWidth * 0.82]} />
-          <meshStandardMaterial color="#1e3a8a" transparent opacity={0.5} />
+        {/* Greenhouse — tinted glass volume sitting on the shell */}
+        <mesh
+          geometry={cabinGeom}
+          position={[0, bodyHeight - 0.02, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          castShadow
+        >
+          <meshStandardMaterial
+            color="#bfdbfe"
+            metalness={0.25}
+            roughness={0.12}
+            transparent
+            opacity={0.42}
+          />
         </mesh>
-        {/* Forward nose marker */}
-        <mesh position={[bodyLen / 2 - 0.05, bodyHeight / 2, 0]}>
-          <boxGeometry args={[0.12, 0.18, bodyWidth * 0.5]} />
-          <meshStandardMaterial color="#93c5fd" emissive="#1d4ed8" emissiveIntensity={0.4} />
-        </mesh>
+        {/* Head lamps — emissive, so the front end is unmistakable */}
+        {lamps.head.map(([bx, by], i) => {
+          const [lx, , lz] = w2t(bx, by, 0);
+          return (
+            <mesh key={`h${i}`} position={[lx, bodyHeight * 0.55, lz]}>
+              <sphereGeometry args={[Math.min(0.11, bodyWidth * 0.055), 12, 10]} />
+              <meshStandardMaterial
+                color="#fffbeb"
+                emissive="#fde68a"
+                emissiveIntensity={1.4}
+                toneMapped={false}
+              />
+            </mesh>
+          );
+        })}
+        {/* Tail lamps */}
+        {lamps.tail.map(([bx, by], i) => {
+          const [lx, , lz] = w2t(bx, by, 0);
+          return (
+            <mesh key={`t${i}`} position={[lx, bodyHeight * 0.58, lz]}>
+              <boxGeometry args={[0.05, 0.09, Math.min(0.26, bodyWidth * 0.14)]} />
+              <meshStandardMaterial
+                color="#ef4444"
+                emissive="#dc2626"
+                emissiveIntensity={1.1}
+                toneMapped={false}
+              />
+            </mesh>
+          );
+        })}
       </group>
 
       {/* Wheels */}
@@ -150,15 +243,41 @@ function Vehicle({ geom }: { geom: Geom }) {
                   A cylinder's default axis is Y; rotate it onto Z (lateral),
                   then spin about local X to roll forward. */}
               <group ref={(r) => (spinRefs.current[i] = r)}>
-                {/* Cylinder axis along the lateral (Z) axis → wheel rolls forward */}
-                <mesh rotation={[Math.PI / 2, 0, 0]}>
-                  <cylinderGeometry args={[tireR, tireR, wheelWidth, 20]} />
-                  <meshStandardMaterial ref={(m) => (tireMats.current[i] = m)} color="#0f172a" />
+                {/* Tyre — cylinder axis along the lateral (Z) axis → rolls forward */}
+                <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
+                  <cylinderGeometry args={[tireR, tireR, wheelWidth, 24]} />
+                  <meshStandardMaterial
+                    ref={(m) => (tireMats.current[i] = m)}
+                    color="#0f172a"
+                    roughness={0.85}
+                    metalness={0.05}
+                  />
                 </mesh>
-                {/* radial spoke (in the forward-up plane) so spin is visible */}
-                <mesh position={[tireR * 0.55, 0, 0]}>
-                  <boxGeometry args={[tireR * 0.7, 0.05, wheelWidth * 1.02]} />
-                  <meshStandardMaterial color="#e2e8f0" />
+                {/* Rim disc, slightly proud of the tyre on both faces */}
+                <mesh rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[rimR, rimR, wheelWidth * 1.04, 20]} />
+                  <meshStandardMaterial color="#94a3b8" metalness={0.75} roughness={0.3} />
+                </mesh>
+                {/* Spokes — same count as the 2D wheel so the two views agree */}
+                {Array.from({ length: WHEEL.spokes }).map((_, k) => {
+                  const a = (k * 2 * Math.PI) / WHEEL.spokes;
+                  return (
+                    <mesh
+                      key={k}
+                      position={[Math.cos(a) * rimR * 0.5, Math.sin(a) * rimR * 0.5, 0]}
+                      rotation={[0, 0, a]}
+                    >
+                      <boxGeometry args={[rimR * 0.9, tireR * 0.11, wheelWidth * 1.08]} />
+                      <meshStandardMaterial color="#cbd5e1" metalness={0.6} roughness={0.35} />
+                    </mesh>
+                  );
+                })}
+                {/* Hub cap */}
+                <mesh rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry
+                    args={[tireR * WHEEL.hubRatio, tireR * WHEEL.hubRatio, wheelWidth * 1.12, 12]}
+                  />
+                  <meshStandardMaterial color="#e2e8f0" metalness={0.8} roughness={0.22} />
                 </mesh>
               </group>
             </group>
