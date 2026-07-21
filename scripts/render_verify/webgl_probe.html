@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>4WIS WebGL Probe</title>
+<style>
+  html, body { margin: 0; background: #0a0f1c; color: #e2e8f0;
+    font: 14px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  #info { padding: 14px 18px; }
+  #info b { color: #7fb0c9; }
+  .row { margin: 2px 0; }
+  .warn { color: #f59e0b; }
+  .bad { color: #f87171; }
+  .ok { color: #6cbf93; }
+  canvas { display: block; width: 100vw; height: 46vh; }
+  #legend { padding: 6px 18px; color: #a9b1b5; font-size: 12px; }
+  code { color: #e2914c; }
+</style>
+</head>
+<body>
+<div id="info">measuring…</div>
+<div id="legend">
+  Two coplanar quads (blue behind, magenta in front) drawn <b>2&nbsp;cm apart at ~12&nbsp;m</b>
+  — the vehicle's actual cabin-on-shell seam scale — through the app's
+  <code>near:0.1 / far:2000</code> range. Solid magenta = the depth buffer resolves the seam
+  (24-bit, e.g. this Mac). Speckling / shimmer of blue through magenta = z-fighting, which
+  appears once <b>DEPTH_BITS ≤ 16</b> (software / older Windows GPU fallbacks). Combined with a
+  low <b>FPS</b>, this is the flicker + jitter Windows users report.
+</div>
+<canvas id="gl"></canvas>
+<script>
+const canvas = document.getElementById("gl");
+const gl = canvas.getContext("webgl2", { antialias: true, alpha: true }) ||
+           canvas.getContext("webgl", { antialias: true, alpha: true });
+const info = document.getElementById("info");
+const L = (txt, cls) => `<div class="row ${cls||''}">${txt}</div>`;
+
+if (!gl) {
+  info.innerHTML = L("WebGL unavailable — the GPU/driver is fully blocklisted.", "bad");
+} else {
+  const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+  const attrs = gl.getContextAttributes() || {};
+  const depth = gl.getParameter(gl.DEPTH_BITS);
+  const renderer = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+  const vendor = dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
+  const soft = /swiftshader|software|llvmpipe|microsoft basic|warp/i.test(renderer);
+  info.innerHTML =
+    L(`<b>Renderer</b>: ${renderer} ${soft ? '<span class="bad">[SOFTWARE FALLBACK]</span>' : ''}`) +
+    L(`<b>Vendor</b>: ${vendor}`) +
+    L(`<b>GL</b>: ${gl.getParameter(gl.VERSION)}`) +
+    L(`<b>DEPTH_BITS</b>: <span class="${depth>=24?'ok':'bad'}">${depth}</span>` +
+      (depth < 24 ? "  ← low precision → z-fighting likely" : "")) +
+    L(`<b>antialias granted</b>: ${attrs.antialias}   <b>dpr</b>: ${window.devicePixelRatio}`) +
+    L(`<b>FPS</b>: <span id="fps">…</span>  (heavy scene target 60; &lt;30 = the "抖动/卡顿" report)`);
+
+  // Clip-space depth is controlled directly: for a point at eye-distance d, standard
+  // perspective gives clip.w = d and clip.z = d*(f+n)/(f-n) - 2fn/(f-n). Scaling clip.x/.y
+  // by w makes the quad fill the screen after the perspective divide. This reproduces the
+  // exact depth-buffer resolution the app has at that distance, on whatever backend is active.
+  const vs = `#version 300 es
+    in vec2 p; uniform float d;
+    const float n = 0.1, f = 2000.0;
+    void main(){
+      float zc = d*(f+n)/(f-n) - 2.0*f*n/(f-n);
+      gl_Position = vec4(p.x*d, p.y*d, zc, d);
+    }`;
+  const fs = `#version 300 es
+    precision highp float; uniform vec4 c; out vec4 o; void main(){ o = c; }`;
+  const sh = (t,s)=>{ const o=gl.createShader(t); gl.shaderSource(o,s); gl.compileShader(o);
+    if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(o)); return o; };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-0.9,-0.9, 0.9,-0.9, -0.9,0.9, 0.9,0.9]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, "p");
+  gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const uD = gl.getUniformLocation(prog, "d");
+  const uC = gl.getUniformLocation(prog, "c");
+  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS);
+
+  let frames = 0, t0 = performance.now();
+  const fpsEl = () => document.getElementById("fps");
+  function draw(){
+    canvas.width = Math.max(1, canvas.clientWidth*devicePixelRatio);
+    canvas.height = Math.max(1, canvas.clientHeight*devicePixelRatio);
+    gl.viewport(0,0,canvas.width,canvas.height);
+    gl.clearColor(0.04,0.06,0.11,1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.uniform1f(uD, 12.02); gl.uniform4f(uC, 0.2,0.4,0.9,1); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); // blue, 2cm behind
+    gl.uniform1f(uD, 12.00); gl.uniform4f(uC, 0.9,0.2,0.7,1); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); // magenta, front
+    frames++;
+    const now = performance.now();
+    if (now - t0 >= 500 && fpsEl()) { fpsEl().textContent = (frames*1000/(now-t0)).toFixed(0); frames=0; t0=now; }
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+}
+</script>
+</body>
+</html>

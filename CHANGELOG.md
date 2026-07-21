@@ -2,6 +2,46 @@
 
 本项目版本约定：阶段即次版本（Phase 1 = 0.1，Phase 2 = 0.2，Phase 3 = 0.3，改进轮 = 0.4 起）。
 
+## 0.99.2 — 2026-07-21（渲染兼容性修复：2D 崩溃闪烁 · 3D z-fighting/透明/阴影）
+
+### 背景
+
+0.99.1 车辆可视化重制在部分 Windows 机器上出现严重频闪、抖动、兼容性问题
+（提交方的 Mac 走 ANGLE→Metal 24 位深度、硬件加速，观察不到）。定位到两个 v0.99.1
+引入的渲染回归 + 一个弱 GPU 放大器：
+
+1. **2D 默认视图崩溃→闪烁**：新 `VehicleLayer` 用了 Konva `shadowBlur`/渐变（旧 2D 视图
+   0 处）。当 Konva stage 在布局瞬间为 0 尺寸时，带阴影形状会 blit 一块 0×0 buffer
+   canvas → 抛 `drawImage ... width or height of 0`，被视图 ErrorBoundary 捕获并重建 →
+   在慢机/高 DPI 缩放机器上表现为崩溃-重建循环频闪。对时序敏感，快 Mac 命中不到。
+2. **3D z-fighting / 透明排序抖动**：新几何把座舱贴在车身上（`bodyHeight-0.02` 相交）、
+   车身用 `transparent opacity=0.92`（几乎不透明却关了深度写入）。相机 `near:0.1/far:2000`
+   在车辆位置(~12m)的深度分辨率 24 位≈0.09mm（Mac 干净）、16 位≈22mm（比 2cm 座舱缝还
+   粗 → z-fighting）；软件/老 Windows GPU 回退到 16 位即闪。
+3. **软件渲染性能悬崖**：改版把车辆网格/材质翻约 3–4 倍 + 投影阴影，VM/远程/无独显的
+   Windows 机器回退到 SwiftShader 软件渲染 → 个位数帧率（抖动/卡顿），上下文丢失黑屏闪。
+
+### 修复 (Fixed)
+
+- **P0 · 2D**：`Canvas2D` 在测得 `W,H ≥ 4` 前不挂载 `<Stage>`（容器仍留 ref 供 ResizeObserver
+  测量），彻底消除 0 尺寸 buffer 崩溃；`VehicleLayer` 的阴影形状加 `perfectDrawEnabled={false}`
+  作为纵深防御 + 轻微提速。开发态 StrictMode 双挂载下原本必现的崩溃已消失。
+- **P1 · 3D**：车身壳体改为**不透明**（0.92→实心，去掉 `transparent` 标志）——恢复深度写入，
+  消除透明排序抖动，并让嵌入车身的座舱底部被正确遮挡；座舱下沉 8cm 嵌进实心壳体，座舱缝
+  即使 16 位深度也不再 z-fight；相机 `near 0.1→0.3`（约 3× 深度精度，对近距观察无影响）；
+  平行光加 `shadow-normalBias` + `shadow-mapSize 1024` 消除新曲面壳体的自阴影噪点。视觉观感
+  与 0.99.1 一致（0.92 本就近乎不透明）。
+
+### 验证
+
+- 新增 `scripts/render_verify/`：在 Mac 上复现弱 GPU / Windows 渲染路径的验证工具——
+  `launch.sh software` 强制 Chrome 走 SwiftShader 软件 WebGL（已验证复现 `[SOFTWARE FALLBACK]`），
+  `webgl_probe.html` 读出 renderer/DEPTH_BITS/FPS + z-fight 自检，`README.md` 给 Mac(Tier 1)
+  与真 Windows `chrome://gpu`(Tier 2) 两层路径。
+- type-check / 生产构建通过；2D 崩溃在原可复现环境已消失，3D 车身渲染干净。
+- **注**：16 位深度 z-fighting 与真实 Windows 驱动行为无法在 Mac 上 100% 复现；本补丁按机理
+  修复，建议在报告问题的那台 Windows 机上回归确认。
+
 ## 0.99.1 — 2026-07-20（车辆可视化重制：2D/3D 共享车身轮廓 · 细节渲染）
 
 ### 背景

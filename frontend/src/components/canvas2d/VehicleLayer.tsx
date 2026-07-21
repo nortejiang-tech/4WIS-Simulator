@@ -182,6 +182,7 @@ function Body({
         shadowColor={pal.edge}
         shadowBlur={10}
         shadowOpacity={0.3}
+        perfectDrawEnabled={false}
       />
       {/* Greenhouse */}
       <Line
@@ -213,6 +214,7 @@ function Body({
           radius={lampR}
           fill={pal.headlight}
           shadowColor={pal.headlight} shadowBlur={8} shadowOpacity={0.85}
+          perfectDrawEnabled={false}
         />
       ))}
       {lamps.tail.map(([bx, by], i) => (
@@ -223,6 +225,7 @@ function Body({
           fill={pal.taillight}
           cornerRadius={lampR * 0.35}
           shadowColor={pal.taillight} shadowBlur={6} shadowOpacity={0.75}
+          perfectDrawEnabled={false}
         />
       ))}
     </>

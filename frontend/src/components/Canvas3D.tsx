@@ -175,20 +175,24 @@ function Vehicle({ geom }: { geom: Geom }) {
     <group ref={root}>
       {/* Sprung body — heaves / rolls / pitches relative to the wheels */}
       <group ref={sprung} position={[0, bodyHeightBase, 0]}>
-        {/* Painted shell — extruded from the same outline Canvas2D draws */}
+        {/* Painted shell — extruded from the same outline Canvas2D draws.
+            Kept OPAQUE: at 0.92 it looked near-solid anyway, but the `transparent`
+            flag disabled depth writes → transparent-sort flicker on Windows GPUs and
+            let the embedded cabin base z-fight through. Opaque writes depth, so the
+            cabin's embedded portion is cleanly occluded. */}
         <mesh geometry={shellGeom} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
           <meshStandardMaterial
             color="#2f6fb8"
             metalness={0.45}
             roughness={0.38}
-            transparent
-            opacity={0.92}
           />
         </mesh>
-        {/* Greenhouse — tinted glass volume sitting on the shell */}
+        {/* Greenhouse — tinted glass emerging from the beltline. Base embedded 8 cm
+            into the (now opaque) shell so the near-parallel overlap sits well inside
+            solid geometry and can't z-fight at the seam, even on 16-bit depth GPUs. */}
         <mesh
           geometry={cabinGeom}
-          position={[0, bodyHeight - 0.02, 0]}
+          position={[0, bodyHeight - 0.08, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
           castShadow
         >
@@ -703,12 +707,21 @@ export default function Canvas3D() {
     <div className="canvas-container">
       <Canvas
         shadows
-        camera={{ position: [-8, 7, 8], fov: 50, near: 0.1, far: 2000, up: [0, 1, 0] }}
+        camera={{ position: [-8, 7, 8], fov: 50, near: 0.3, far: 2000, up: [0, 1, 0] }}
         gl={{ antialias: true }}
       >
         <color attach="background" args={[dark ? "#0a0f1c" : "#eef2f7"]} />
         <hemisphereLight args={[dark ? "#cbd5e1" : "#ffffff", dark ? "#0a0f1c" : "#c7d2dd", dark ? 0.9 : 1.1]} />
-        <directionalLight position={[20, 30, 10]} intensity={1.1} castShadow />
+        {/* normalBias offsets shadow sampling along the surface normal — kills the
+            self-shadow "acne" shimmer the new curved extruded shell showed on GPUs
+            with coarse/low-precision shadow maps (Windows). */}
+        <directionalLight
+          position={[20, 30, 10]}
+          intensity={1.1}
+          castShadow
+          shadow-normalBias={0.04}
+          shadow-mapSize={[1024, 1024]}
+        />
 
         <Grid
           args={[400, 400]}

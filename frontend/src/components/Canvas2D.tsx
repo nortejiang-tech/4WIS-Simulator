@@ -141,7 +141,13 @@ export default function Canvas2D() {
     return out;
   }, [trajectory, state, pxm, W, H]);
 
-  if (!state) {
+  // Never mount the Konva <Stage> at a degenerate size. A shadowed/gradient shape
+  // (VehicleLayer) drawn while the stage is momentarily 0-sized makes Konva blit a
+  // 0×0 buffer canvas → "drawImage ... width or height of 0" throws, the view's
+  // ErrorBoundary catches it and rebuilds, and on slower/DPI-scaled machines the
+  // crash→rebuild loop reads as severe flicker. The container keeps its ref so the
+  // ResizeObserver still measures and re-renders once a real size arrives.
+  if (!state || W < 4 || H < 4) {
     return (
       <div ref={containerRef} className="canvas-container">
         <div className="canvas-loading">等待仿真数据…</div>
