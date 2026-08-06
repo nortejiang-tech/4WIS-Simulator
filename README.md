@@ -49,7 +49,7 @@ python scripts/start.py
 ```
 
 首次运行会自动装依赖（`pip install -e backend` + `npm install`），然后起后端
-（`:8010`）和 Vite 开发服务器（`:5173`），并打开 `http://127.0.0.1:5173/`。
+（`:8010`）和 Vite 开发服务器（`:5173`），并打开 `http://localhost:5173/`。
 加 `--build` 则改为构建前端并由后端单口托管，浏览器打开 `http://127.0.0.1:8010/`。
 
 ### 开发模式
@@ -70,7 +70,8 @@ npm install
 npm run dev
 ```
 
-浏览器打开 `http://127.0.0.1:5173/`。如果前端需要代理到非默认后端端口，设置 `SIM4WIS_BACKEND_HTTP` 和 `SIM4WIS_BACKEND_WS`。
+浏览器打开 `http://localhost:5173/`（Vite 在 macOS 上只监听 IPv6 回环，写死 `127.0.0.1`
+会连不上）。如果前端需要代理到非默认后端端口，设置 `SIM4WIS_BACKEND_HTTP` 和 `SIM4WIS_BACKEND_WS`。
 
 ## 主要工作流
 

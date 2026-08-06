@@ -100,7 +100,12 @@ def main() -> int:
 
     # Give the servers a moment to bind their ports before launching the browser.
     time.sleep(2.0)
-    url = "http://127.0.0.1:5173" if not args.build else "http://127.0.0.1:8010"
+    # Dev mode goes to `localhost`, not `127.0.0.1`: Vite binds the loopback
+    # interface the OS hands it, which on macOS is IPv6 `[::1]` only — so the
+    # literal IPv4 address refuses the connection and the browser opens on an
+    # error page. `localhost` resolves to whichever family is listening.
+    # The --build path is served by uvicorn, which is bound to IPv4 explicitly.
+    url = "http://localhost:5173" if not args.build else "http://127.0.0.1:8010"
     if not args.no_browser:
         _info(f"Opening browser → {url}")
         webbrowser.open(url)
