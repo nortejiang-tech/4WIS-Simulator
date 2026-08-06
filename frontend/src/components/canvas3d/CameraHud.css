@@ -1,0 +1,102 @@
+/* Camera-mode switch + roof-rig sliders, layered onto the 3D HUD. */
+
+.hud-cam-modes {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.hud-zoom .hud-cam-modes button {
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 0;
+}
+
+.hud-zoom .hud-cam-modes button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.hud-zoom .hud-cam-modes button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.hud-zoom button.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b1220;
+  font-weight: 600;
+}
+
+.roofcam-panel {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roofcam-presets {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.roofcam-presets button {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 3px 0;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.roofcam-presets button:hover {
+  background: #2a3a52;
+}
+
+.roofcam-presets button.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b1220;
+  font-weight: 600;
+}
+
+.roofcam-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roofcam-lab {
+  color: var(--muted);
+  font-size: 11px;
+  width: 52px;
+  flex: 0 0 auto;
+}
+
+.roofcam-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.roofcam-val {
+  font-size: 11px;
+  width: 46px;
+  text-align: right;
+  flex: 0 0 auto;
+  color: var(--text);
+}
+
+.roofcam-hint {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.roofcam-hint b {
+  color: var(--text);
+  font-family: var(--font-mono);
+}

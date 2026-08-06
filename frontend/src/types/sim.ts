@@ -111,11 +111,32 @@ export interface SimStateMessage {
 }
 
 // Reference path (fetched from REST when path_version changes)
+
+/** A course marker. `kind` picks the glyph both viewports draw. */
+export interface PathCone {
+  x: number;
+  y: number;
+  kind: "cone" | "pole" | string;
+  color: string;
+  height: number;   // metres
+}
+
+/** A painted ground line (lane edge, test-section box, start/finish). */
+export interface PathMark {
+  points: [number, number][];
+  color: string;
+  width: number;    // metres
+  dash: boolean;
+}
+
 export interface PathPlan {
   name: string;
+  label: string;   // human-readable maneuver name
+  notes: string;   // the geometry that was actually laid out, in one line
   closed: boolean;
   points: [number, number][];  // world frame
-  cones: [number, number][];   // ground markers
+  cones: PathCone[];           // ground markers
+  marks: PathMark[];           // painted ground lines
 }
 
 // Static driving scenario (fetched from REST when scenario_version changes)

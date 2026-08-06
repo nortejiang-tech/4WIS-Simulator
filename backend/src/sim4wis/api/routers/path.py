@@ -11,9 +11,26 @@ router = APIRouter()
 
 
 @router.get("/path/templates")
-async def path_templates() -> dict[str, list[str]]:
-    from sim4wis.controller.path import list_templates
-    return {"templates": list_templates()}
+async def path_templates() -> dict[str, Any]:
+    """Template names (kept as a plain list for older clients) + the parameter
+    specs the trajectory panel renders its inputs from."""
+    from sim4wis.controller.path import list_templates, template_specs
+    return {"templates": list_templates(), "specs": template_specs()}
+
+
+def _vehicle_dimensions() -> dict[str, float]:
+    """Drawn body size of the *active* vehicle, so ISO lane widths track it.
+
+    Same factors as the frontend's `vehicleShape.bodyDimensions`, which is what
+    the user actually sees between the cones.
+    """
+    from sim4wis.controller.path import BODY_WIDTH_FACTOR
+    from sim4wis.core.simulator import get_simulator
+    p = get_simulator().params
+    return {
+        "vehicle_width": max(p.track_front, p.track_rear) * BODY_WIDTH_FACTOR,
+        "vehicle_length": p.wheelbase * 1.20,
+    }
 
 
 @router.get("/path")
@@ -44,8 +61,11 @@ class TemplateBody(BaseModel):
 @router.post("/path/template")
 async def set_path_template(body: TemplateBody) -> dict[str, Any]:
     from sim4wis.controller.path import plan_from_template, set_active_plan
+    # Vehicle-derived geometry is injected unless the caller pinned it, so a
+    # script/experiment with `params: {}` still gets a course sized for the car.
+    params = {**_vehicle_dimensions(), **body.params}
     try:
-        plan = plan_from_template(body.name, body.params)
+        plan = plan_from_template(body.name, params)
     except KeyError as e:
         raise HTTPException(status_code=400, detail=f"unknown template: {e}") from e
     except TypeError as e:
@@ -58,4 +78,5 @@ async def set_path_template(body: TemplateBody) -> dict[str, Any]:
 async def clear_path() -> dict[str, Any]:
     from sim4wis.controller.path import clear_active_plan
     version = clear_active_plan()
-    return {"version": version, "points": [], "cones": [], "closed": False, "name": ""}
+    return {"version": version, "points": [], "cones": [], "marks": [],
+            "closed": False, "name": "", "label": "", "notes": ""}

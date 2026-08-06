@@ -17,6 +17,7 @@ import { Stage, Layer, Rect, Line, Circle, Text } from "react-konva";
 
 import { useSimStore } from "@/store/sim";
 import { createDisturbance, updateDisturbance } from "@/api/scene";
+import CourseLayer from "./canvas2d/CourseLayer";
 import DisturbanceLayer from "./canvas2d/DisturbanceLayer";
 import ScenarioLayer from "./canvas2d/ScenarioLayer";
 import IcrLayer from "./canvas2d/IcrLayer";
@@ -216,7 +217,6 @@ export default function Canvas2D() {
     return out;
   };
 
-  const coneScreen = (path?.cones ?? []).map(([x, y]) => S(x, y));
   const runA = showOverlay ? runScreenPoints(savedRuns.A?.trajectory) : [];
   const runB = showOverlay ? runScreenPoints(savedRuns.B?.trajectory) : [];
   const crosshair = editMode || distPlaceType != null || measureMode;
@@ -266,7 +266,9 @@ export default function Canvas2D() {
             onSelect={(id) => setSelectedDistId(id)}
             onDragEnd={handleDistDragEnd}
           />
-          {/* Reference path + cones (step 17) */}
+          {/* Maneuver course: painted marks + cones, under the reference line */}
+          {path && <CourseLayer path={path} cam={cam} />}
+          {/* Reference path (step 17) */}
           {pathPoints.length >= 4 && (
             <Line
               points={pathPoints}
@@ -280,17 +282,6 @@ export default function Canvas2D() {
               closed={path?.closed}
             />
           )}
-          {coneScreen.map(([cx, cy], i) => (
-            <Circle
-              key={`cone-${i}`}
-              x={cx} y={cy}
-              radius={5}
-              fill="#f59e0b"
-              stroke="#fde68a"
-              strokeWidth={1}
-              listening={false}
-            />
-          ))}
           {/* Waypoint editor draft */}
           {draftLine.length >= 4 && (
             <Line points={draftLine} stroke="#fb7185" strokeWidth={1.5} dash={[4, 4]} listening={false} />

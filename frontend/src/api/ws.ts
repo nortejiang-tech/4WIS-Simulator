@@ -1,7 +1,7 @@
 // Thin WebSocket wrapper — owns reconnect (exponential backoff), heartbeat
 // (half-open detection), and routes messages into the Zustand store.
 
-import type { ClientMessage, Scenario, SimStateMessage } from "@/types/sim";
+import type { ClientMessage, PathCone, PathMark, Scenario, SimStateMessage } from "@/types/sim";
 import { useSimStore } from "@/store/sim";
 import { fetchJSON, postJSON } from "@/api/http";
 
@@ -122,14 +122,33 @@ export function setDriverMode(mode_params: Record<string, unknown>) {
 interface PathResponse {
   version: number;
   name: string;
+  label?: string;
+  notes?: string;
   closed: boolean;
   points: [number, number][];
-  cones: [number, number][];
+  // Cones used to be bare [x, y] pairs; accept both so a stale backend (or a
+  // recorded fixture) still renders instead of throwing.
+  cones: (PathCone | [number, number])[];
+  marks?: PathMark[];
+}
+
+function normalizeCone(c: PathCone | [number, number]): PathCone {
+  return Array.isArray(c)
+    ? { x: c[0], y: c[1], kind: "cone", color: "#f97316", height: 0.75 }
+    : c;
 }
 
 function ingestPath(d: PathResponse) {
   useSimStore.getState().setPath(
-    { name: d.name, closed: d.closed, points: d.points, cones: d.cones },
+    {
+      name: d.name,
+      label: d.label ?? d.name,
+      notes: d.notes ?? "",
+      closed: d.closed,
+      points: d.points,
+      cones: (d.cones ?? []).map(normalizeCone),
+      marks: d.marks ?? [],
+    },
     d.version,
   );
 }
