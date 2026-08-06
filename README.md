@@ -1,12 +1,14 @@
 # 4WIS Simulator
 
-四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前版本是 `v0.99.2`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到便携版发布的闭环。
+四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前版本是 `v0.99.3`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到便携版发布的闭环。
 
 项目仍定位为内部预研和工程分析工具，不是经过实车标定或认证的安全结论工具。模型可信度和边界见 [docs/validation_matrix.md](docs/validation_matrix.md)。
 
 ## 当前能力
 
 - 实时仿真：运动学、简化动力学、多体动力学三档模型，支持 2D/3D 视图、路面扰动、坡道、减速带、split-μ、bump-steer。
+- 3D 视角：自由 / 跟随 / **车顶**三挡相机（`C` 键循环）。车顶机位固定在车身上朝前，机位几何可调，是配方向盘/手柄跑工况的驾驶视角。
+- 标准工况场地：直线、圆弧、绕桩、单移线、ISO 3888-1/-2 双移线、定圆(ISO 4138)、八字、侧方停车，按标准几何铺出锥桶/标杆和地面标线，车道宽和车位尺寸随当前车辆自适应。
 - 控制策略：阿克曼、理想阿克曼、后轮转向、蟹行、零半径、轨迹跟踪、故障重构、手动逐轮和全向车身控制。
 - 实验系统：YAML 实验定义、无头批跑、策略/车速/参数变体矩阵、run 落盘、KPI 后端化。
 - 分析系统：run 库、KPI 对比、通道叠图、轨迹叠图、幽灵车回放、命令面板。
@@ -34,11 +36,21 @@
 
 ### 一键启动
 
+不想装任何东西：从 [Releases](https://github.com/nortejiang-tech/4WIS-Simulator/releases)
+下载对应平台的便携包解压，双击 `start.command`（macOS）或 `start.bat`（Windows）。
+包里自带 Python 运行时和已构建的前端，无需安装 Python / Node，浏览器会自动打开
+`http://127.0.0.1:8010/`。macOS 首次会被 Gatekeeper 拦截 → 右键点 `start.command`
+→ 打开 → 再点"打开"。
+
+有源码的话：
+
 ```bash
 python scripts/start.py
 ```
 
-启动后浏览器打开 `http://127.0.0.1:8010/`。
+首次运行会自动装依赖（`pip install -e backend` + `npm install`），然后起后端
+（`:8010`）和 Vite 开发服务器（`:5173`），并打开 `http://127.0.0.1:5173/`。
+加 `--build` 则改为构建前端并由后端单口托管，浏览器打开 `http://127.0.0.1:8010/`。
 
 ### 开发模式
 
@@ -127,7 +139,7 @@ cd frontend && npm run e2e       # 先生产构建，再跑 Playwright，避免 
 cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 ```
 
-当前 `v0.99.2` 验证基线：
+当前 `v0.99.3` 验证基线：
 
 - 后端：`245 passed`
 - smoke：`32/32 通过`
