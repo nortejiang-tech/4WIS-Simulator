@@ -5,6 +5,14 @@ import {
   loadGamepadConfig,
   saveGamepadConfig,
 } from "@/input/gamepadConfig";
+import {
+  CamMode3d,
+  RoofCamConfig,
+  loadCamMode,
+  loadRoofCam,
+  saveCamMode,
+  saveRoofCam,
+} from "@/view/roofCamera";
 
 export type DistType = "ice_patch" | "split_mu" | "speed_bump" | "slope";
 
@@ -50,6 +58,9 @@ interface SimStore {
   // 2D zoom + 3D camera pose, lifted here so the view survives 2D/3D switches.
   view2dPxm: number;
   camera3d: { position: [number, number, number]; target: [number, number, number] } | null;
+  // 3D camera: orbit / target-locked orbit / roof-mounted driving view.
+  camMode3d: CamMode3d;
+  roofCam: RoofCamConfig;
   // Transient toasts (errors / confirmations).
   toasts: ToastMsg[];
   // Keyboard "hold speed" mode: when on, W/S nudge a *persistent* target speed
@@ -111,6 +122,8 @@ interface SimStore {
   setSelectedDistId: (id: string | null) => void;
   setView2dPxm: (v: number) => void;
   setCamera3d: (c: SimStore["camera3d"]) => void;
+  setCamMode3d: (m: CamMode3d) => void;
+  setRoofCam: (c: RoofCamConfig) => void;
   pushToast: (kind: ToastMsg["kind"], text: string) => void;
   dismissToast: (id: number) => void;
   setHoldSpeed: (b: boolean) => void;
@@ -172,6 +185,8 @@ export const useSimStore = create<SimStore>((set, get) => ({
   selectedDistId: null,
   view2dPxm: DEFAULT_PXM,
   camera3d: null,
+  camMode3d: loadCamMode(),
+  roofCam: loadRoofCam(),
   toasts: [],
   holdSpeed: false,
   steerReturn: 0.667,   // ≈ baseline return rate (slider midpoint feel)
@@ -240,6 +255,8 @@ export const useSimStore = create<SimStore>((set, get) => ({
   setSelectedDistId: (id) => set({ selectedDistId: id }),
   setView2dPxm: (v) => set({ view2dPxm: Math.max(4, Math.min(200, v)) }),
   setCamera3d: (c) => set({ camera3d: c }),
+  setCamMode3d: (m) => { saveCamMode(m); set({ camMode3d: m }); },
+  setRoofCam: (c) => { saveRoofCam(c); set({ roofCam: c }); },
   pushToast: (kind, text) => {
     const id = toastSeq++;
     set({ toasts: [...get().toasts.slice(-3), { id, kind, text }] });

@@ -39,8 +39,19 @@ import {
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 import { useSimStore } from "@/store/sim";
-import type { DisturbanceMsg } from "@/types/sim";
+import type { DisturbanceMsg, PathCone, PathMark } from "@/types/sim";
 import { fmtKmh } from "@/ui/units";
+import {
+  CAM_MODE_LABEL,
+  CamMode3d,
+  ROOF_LIMITS,
+  ROOF_PRESETS,
+  RoofCamConfig,
+  defaultRoofCam,
+  nextCamMode,
+} from "@/view/roofCamera";
+import RoofCamera from "./canvas3d/RoofCamera";
+import { buildCones, buildMarks, disposeCourse, ribbon } from "./canvas3d/courseFurniture";
 import {
   WHEEL,
   bodyDimensions,
@@ -49,6 +60,7 @@ import {
   lampPositions,
 } from "./vehicleShape";
 import "./CanvasHud.css";
+import "./canvas3d/CameraHud.css";
 
 // sim world (x fwd, y left, h up) → three.js (x, up, -y)
 function w2t(x: number, y: number, h = 0): [number, number, number] {
@@ -370,7 +382,9 @@ function Trajectory() {
       const x = traj[start + i * 2];
       const y = traj[start + i * 2 + 1];
       arr[i * 3] = x;
-      arr[i * 3 + 1] = 0.03;
+      // Above the course paint (0.035) so the trail isn't swallowed by a
+      // painted test section.
+      arr[i * 3 + 1] = 0.06;
       arr[i * 3 + 2] = -y;
     }
     pos.needsUpdate = true;
@@ -398,36 +412,71 @@ function RunOverlay({ sig }: { sig: string }) {
   return <>{lines.map((l, i) => <primitive key={i} object={l} />)}</>;
 }
 
-// ---------- Reference path + cones ----------
+// ---------- Reference path + course furniture ----------
+
+interface PathSig {
+  points: [number, number][];
+  cones: PathCone[];
+  marks: PathMark[];
+  closed: boolean;
+}
 
 function ReferencePath({ pathSig }: { pathSig: string }) {
-  const data = useMemo<{ points: [number, number][]; cones: [number, number][]; closed: boolean }>(() => {
+  const data = useMemo<PathSig>(() => {
     try {
       return JSON.parse(pathSig);
     } catch {
-      return { points: [], cones: [], closed: false };
+      return { points: [], cones: [], marks: [], closed: false };
     }
   }, [pathSig]);
 
+  // The reference line is drawn as a painted ribbon rather than a GL line: a
+  // 1 px line vanishes from the roof camera at any distance, and a ground-level
+  // racing line is exactly what you want to aim the car along.
   const line = useMemo(() => {
     if (data.points.length < 2) return null;
-    const pts = data.points.map(([x, y]) => new Vector3(x, 0.05, -y));
-    if (data.closed && pts.length > 2) pts.push(pts[0].clone());
-    const g = new BufferGeometry().setFromPoints(pts);
-    const m = new LineBasicMaterial({ color: "#f472b6" });
-    return new Line(g, m);
+    const pts = [...data.points];
+    if (data.closed && pts.length > 2) pts.push(pts[0]);
+    const g = ribbon(pts, 0.12, 0.05);
+    const m = new MeshStandardMaterial({
+      color: "#f472b6", roughness: 0.8, emissive: "#f472b6", emissiveIntensity: 0.25,
+    });
+    return new Mesh(g, m);
   }, [data]);
+  useEffect(() => () => {
+    if (line) { line.geometry.dispose(); (line.material as MeshStandardMaterial).dispose(); }
+  }, [line]);
+
+  // Cones and paint are rebuilt only when the plan changes, and disposed when
+  // it does — a swapped course would otherwise leak a few hundred buffers.
+  const course = useMemo(
+    () => [...buildMarks(data.marks ?? []), ...buildCones(data.cones ?? [])],
+    [data],
+  );
+  useEffect(() => () => disposeCourse(course), [course]);
 
   return (
     <>
       {line && <primitive object={line} />}
-      {data.cones.map(([x, y], i) => (
-        <mesh key={i} position={[x, 0.3, -y]}>
-          <coneGeometry args={[0.22, 0.6, 12]} />
-          <meshStandardMaterial color="#f59e0b" emissive="#b45309" emissiveIntensity={0.3} />
-        </mesh>
-      ))}
+      {course.map((o, i) => <primitive key={i} object={o} />)}
     </>
+  );
+}
+
+// ---------- Horizon ----------
+
+/**
+ * A ground disc far below the grid. Without it the roof camera looks straight
+ * into background colour — there is no horizon line, so distance and speed have
+ * nothing to read against. Sits at −0.05 m so it can never z-fight the road
+ * surfaces (0.00 … 0.06).
+ */
+function Horizon({ dark }: { dark: boolean }) {
+  return (
+    <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow={false}>
+      <circleGeometry args={[1400, 64]} />
+      <meshBasicMaterial color={dark ? "#0d1526" : "#dde5ee"} />
+    </mesh>
   );
 }
 
@@ -616,7 +665,7 @@ function Disturbances({ sceneSig }: { sceneSig: string }) {
   );
 }
 
-// ---------- Follow camera ----------
+// ---------- Orbit camera (free / target-locked) ----------
 
 function FollowCamera({ follow }: { follow: boolean }) {
   const { camera } = useThree();
@@ -683,6 +732,7 @@ export default function Canvas3D() {
     JSON.stringify({
       points: s.path?.points ?? [],
       cones: s.path?.cones ?? [],
+      marks: s.path?.marks ?? [],
       closed: s.path?.closed ?? false,
     }),
   );
@@ -691,9 +741,24 @@ export default function Canvas3D() {
     s.showOverlay ? `${s.savedRuns.A?.trajectory.length ?? 0}:${s.savedRuns.B?.trajectory.length ?? 0}` : "",
   );
 
-  const [follow, setFollow] = useState(true);
+  const camMode = useSimStore((s) => s.camMode3d);
+  const setCamMode = useSimStore((s) => s.setCamMode3d);
   const theme = useSimStore((s) => s.theme);
   const dark = theme === "dark";
+  const roof = camMode === "roof";
+
+  // `C` cycles 自由 → 跟随 → 车顶. Only while the 3D view is mounted, and never
+  // while typing into a panel input.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "KeyC" || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      const tgt = e.target as HTMLElement | null;
+      if (tgt && /^(INPUT|TEXTAREA|SELECT)$/.test(tgt.tagName)) return;
+      setCamMode(nextCamMode(useSimStore.getState().camMode3d));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [setCamMode]);
 
   if (!ready) {
     return (
@@ -723,6 +788,7 @@ export default function Canvas3D() {
           shadow-mapSize={[1024, 1024]}
         />
 
+        <Horizon dark={dark} />
         <Grid
           args={[400, 400]}
           cellSize={1}
@@ -732,7 +798,9 @@ export default function Canvas3D() {
           sectionThickness={1}
           sectionColor={dark ? "#1e293b" : "#94a3b8"}
           infiniteGrid
-          fadeDistance={120}
+          // From the roof the useful cones are 40–80 m out; the orbit default
+          // fades them into the ground long before that.
+          fadeDistance={roof ? 260 : 120}
           fadeStrength={1.5}
           followCamera
         />
@@ -744,10 +812,10 @@ export default function Canvas3D() {
         <Trajectory />
         <Vehicle geom={{ L, tF, tR, tireR }} />
         <IcrMarkers />
-        <FollowCamera follow={follow} />
+        {roof ? <RoofCamera /> : <FollowCamera follow={camMode === "follow"} />}
       </Canvas>
 
-      <HUD3D follow={follow} onToggleFollow={() => setFollow((f) => !f)} />
+      <HUD3D camMode={camMode} onCamMode={setCamMode} />
     </div>
   );
 }
@@ -761,7 +829,58 @@ function mu3dTextColor(mu?: number): string {
   return "#a78bfa";
 }
 
-function HUD3D({ follow, onToggleFollow }: { follow: boolean; onToggleFollow: () => void }) {
+/** Roof-rig sliders — only mounted while the roof camera is active. */
+function RoofCamPanel() {
+  const cfg = useSimStore((s) => s.roofCam);
+  const setCfg = useSimStore((s) => s.setRoofCam);
+  const keys: (keyof RoofCamConfig)[] = ["height", "back", "pitch", "fov", "smooth", "attitude"];
+
+  const activePreset = ROOF_PRESETS.find((p) =>
+    Object.entries(p.cfg).every(([k, v]) => Math.abs(cfg[k as keyof RoofCamConfig] - (v as number)) < 1e-6),
+  );
+
+  return (
+    <div className="roofcam-panel">
+      <div className="roofcam-presets">
+        {ROOF_PRESETS.map((p) => (
+          <button
+            key={p.key}
+            title={p.hint}
+            className={activePreset?.key === p.key ? "on" : ""}
+            onClick={() => setCfg({ ...cfg, ...p.cfg })}
+          >
+            {p.label}
+          </button>
+        ))}
+        <button title="恢复默认机位" onClick={() => setCfg(defaultRoofCam())}>复位</button>
+      </div>
+      {keys.map((k) => {
+        const lim = ROOF_LIMITS[k];
+        return (
+          <label key={k} className="roofcam-row">
+            <span className="roofcam-lab">{lim.label}</span>
+            <input
+              type="range"
+              aria-label={`车顶视角 ${lim.label}`}
+              min={lim.min} max={lim.max} step={lim.step}
+              value={cfg[k]}
+              onChange={(e) => setCfg({ ...cfg, [k]: Number(e.target.value) })}
+            />
+            <span className="roofcam-val hud-mono">
+              {cfg[k].toFixed(lim.step < 0.1 ? 2 : 1)}{lim.unit}
+            </span>
+          </label>
+        );
+      })}
+      <div className="roofcam-hint">按 <b>C</b> 循环 自由 / 跟随 / 车顶</div>
+    </div>
+  );
+}
+
+function HUD3D({ camMode, onCamMode }: { camMode: CamMode3d; onCamMode: (m: CamMode3d) => void }) {
+  const [showCam, setShowCam] = useState(false);
+  const pathLabel = useSimStore((s) => s.path?.label ?? "");
+  const coneCount = useSimStore((s) => s.path?.cones.length ?? 0);
   const strategy = useSimStore((s) => s.state?.strategy ?? "—");
   const vx = useSimStore((s) => s.state?.velocity.vx ?? 0);
   const yaw = useSimStore((s) => s.state?.velocity.yaw_rate ?? 0);
@@ -803,10 +922,37 @@ function HUD3D({ follow, onToggleFollow }: { follow: boolean; onToggleFollow: ()
           </span>
         </div>
       )}
+      {pathLabel && (
+        <div className="hud-row">
+          <span className="hud-label">工况</span>
+          <span className="hud-value hud-small">{pathLabel} · {coneCount} 桩</span>
+        </div>
+      )}
       <div className="hud-zoom">
         <span className="hud-mono hud-small">相机</span>
-        <button onClick={onToggleFollow}>{follow ? "跟随中" : "自由"}</button>
+        <div className="hud-cam-modes">
+          {(["orbit", "follow", "roof"] as CamMode3d[]).map((m) => (
+            <button
+              key={m}
+              className={camMode === m ? "on" : ""}
+              onClick={() => onCamMode(m)}
+            >
+              {CAM_MODE_LABEL[m]}
+            </button>
+          ))}
+        </div>
+        {camMode === "roof" && (
+          <button
+            className={showCam ? "on" : ""}
+            aria-label="机位调节"
+            title="机位调节"
+            onClick={() => setShowCam((v) => !v)}
+          >
+            ⚙
+          </button>
+        )}
       </div>
+      {camMode === "roof" && showCam && <RoofCamPanel />}
     </div>
   );
 }

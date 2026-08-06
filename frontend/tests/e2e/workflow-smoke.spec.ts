@@ -892,6 +892,68 @@ test("scenario path workflow generates, follows, and clears a reference path", a
   await attachPageScreenshot(page, testInfo, "workflow-scenario-path");
 });
 
+test("maneuver parameters reach the backend and the laid-out geometry is echoed back", async ({ page }, testInfo) => {
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /场景/ }).click();
+
+  const trajectoryPanel = page.locator(".panel").filter({ hasText: "轨迹 / 路径" });
+  await trajectoryPanel.locator("select").first().selectOption("slalom");
+  await expect(trajectoryPanel).toContainText("标杆阵列");
+
+  // Knobs come from the backend spec, so a maneuver-specific one must exist.
+  const spacing = trajectoryPanel.getByLabel(/桩距/);
+  await expect(spacing).toHaveValue("18");
+  await spacing.fill("24");
+  await trajectoryPanel.getByRole("button", { name: "生成" }).click();
+
+  // The panel echoes what the backend actually laid out, not what was asked.
+  await expect(trajectoryPanel).toContainText(/当前路径: slalom · \d+ 点 · \d+ 桩/);
+  await expect(trajectoryPanel).toContainText("桩距 24 m");
+  await expect(trajectoryPanel).toContainText(/车宽 [\d.]+ m/);
+
+  // Switching maneuver resets the knobs to that maneuver's own defaults.
+  await trajectoryPanel.locator("select").first().selectOption("skidpad");
+  await expect(trajectoryPanel.getByLabel(/半径/)).toHaveValue("30");
+
+  await attachPageScreenshot(page, testInfo, "workflow-maneuver-params");
+});
+
+test("3D camera modes switch and the roof rig persists its settings", async ({ page }, testInfo) => {
+  // The quick-start card sits over the 3D HUD on a first visit.
+  await page.addInitScript(() => localStorage.setItem("4wis_quickstart_dismissed", "1"));
+  await page.goto("/");
+  await page.locator(".view-switch button", { hasText: "3D" }).click();
+
+  const hud = page.locator(".canvas-hud");
+  await expect(hud.getByRole("button", { name: "车顶" })).toBeVisible();
+  await hud.getByRole("button", { name: "车顶" }).click();
+
+  // The rig panel only exists in roof mode.
+  await hud.getByRole("button", { name: "机位调节" }).click();
+  const height = hud.getByLabel("车顶视角 高度");
+  await expect(height).toBeVisible();
+  await setRangeValue(height, "3.4");
+  await expect(hud).toContainText("3.40m");
+
+  // A preset rewrites the rig; 复位 puts the defaults back.
+  await hud.getByRole("button", { name: "追车" }).click();
+  await expect(hud).toContainText("3.20m");
+  await hud.getByRole("button", { name: "复位" }).click();
+  await expect(hud).toContainText("2.10m");
+
+  // `C` cycles 自由 → 跟随 → 车顶, and the mode survives a reload.
+  await page.locator(".viewport-root").click({ position: { x: 400, y: 400 } });
+  await page.keyboard.press("c");
+  await expect(hud.getByRole("button", { name: "自由" })).toHaveClass(/on/);
+
+  await page.reload();
+  await page.locator(".view-switch button", { hasText: "3D" }).click();
+  await expect(page.locator(".canvas-hud").getByRole("button", { name: "自由" })).toHaveClass(/on/);
+
+  await attachPageScreenshot(page, testInfo, "workflow-roof-camera");
+});
+
 test("path version refresh failure surfaces a toast without blocking scenario tools", async ({ page }, testInfo) => {
   let failPathRefresh = false;
   await page.route("**/api/path", async (route) => {
