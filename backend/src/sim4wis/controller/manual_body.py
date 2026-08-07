@@ -43,7 +43,7 @@ class ManualBodyStrategy(ControllerStrategy):
         except (TypeError, ValueError):
             return 0.0
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:  # noqa: ARG002
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:  # noqa: ARG002
         p = self.params
         mp = driver.mode_params or {}
         vx = self._frac(mp, "vx_frac") * p.v_max

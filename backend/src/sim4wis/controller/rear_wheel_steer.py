@@ -21,6 +21,8 @@ from __future__ import annotations
 import numpy as np
 
 from sim4wis.controller.base import ControllerStrategy
+from sim4wis.controller.longitudinal import speed_command
+from sim4wis.controller.steering_feel import front_steer_angle
 from sim4wis.controller.rws_common import (
     command_from_axle_angles,
     reference_yaw_rate,
@@ -58,15 +60,26 @@ class RearWheelSteerStrategy(ControllerStrategy):
     def _default_curve(self) -> list[tuple[float, float]]:
         return [(v, zero_sideslip_ratio(self.params, v / 3.6)) for v in DEFAULT_SPEEDS_KMH]
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:
         p = self.params
         mp = driver.mode_params
         mode = mp.get("rws_mode", DEFAULT_MODE)
         if mode not in MODES:
             mode = DEFAULT_MODE
-        df = p.steer_limit * float(driver.steering)
+        # Front-axle angle via the shared feel layer (work-package B): the
+        # same variable gear ratio + soft limit that ideal_ackermann uses, so
+        # both hero strategies have consistent on-centre feel across speed.
+        raw_rad = mp.get("steer_raw_rad") if mp else None
+        if raw_rad is not None:
+            df = max(-p.steer_limit, min(p.steer_limit, float(raw_rad)))
+        elif mp and mp.get("steer_bypass_feel"):
+            # Open-loop excitation bypass — see ideal_ackermann.compute.
+            df = p.steer_limit * float(driver.steering)
+        else:
+            df = front_steer_angle(p, float(driver.steering), float(state.vx),
+                                   float(state.mu_avg))
         v = abs(float(state.vx))
-        v_cmd = p.v_max * float(driver.throttle)
+        v_cmd = speed_command(p, driver, float(state.vx), dt, float(state.mu_avg))
 
         # Timestep for the filters (robust to the fixed 200 Hz loop).
         t = float(state.t)

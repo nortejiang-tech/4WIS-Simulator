@@ -24,6 +24,12 @@ function ScenarioLayer({ scenario, cam }: { scenario: Scenario; cam: Camera2D })
     return out;
   };
   const dash = [cam.pxm * 2, cam.pxm * 2];
+  // Resolve a line's dash array: a metre-rhythm `dash_pattern` wins over the
+  // legacy boolean `dash`; both are scaled to pixels by cam.pxm.
+  const dashFor = (ln: Scenario["lines"][number]): number[] | undefined => {
+    if (ln.dash_pattern) return [ln.dash_pattern[0] * cam.pxm, ln.dash_pattern[1] * cam.pxm];
+    return ln.dash ? dash : undefined;
+  };
 
   return (
     <Group listening={false}>
@@ -47,7 +53,7 @@ function ScenarioLayer({ scenario, cam }: { scenario: Scenario; cam: Camera2D })
           points={flat(ln.points)}
           stroke={ln.color}
           strokeWidth={Math.max(1, ln.width * cam.pxm)}
-          dash={ln.dash ? dash : undefined}
+          dash={dashFor(ln)}
           lineCap="butt"
           lineJoin="round"
           listening={false}
@@ -64,6 +70,20 @@ function ScenarioLayer({ scenario, cam }: { scenario: Scenario; cam: Camera2D })
                 cornerRadius={r * 0.5} fill="#15181d" stroke="#0a0d14" strokeWidth={1} />
               <Circle x={sx} y={sy} r={r} fill={TL_COLOR[state] ?? "#ef4444"}
                 shadowColor={TL_COLOR[state] ?? "#ef4444"} shadowBlur={r} />
+            </Group>
+          );
+        }
+        if (m.type === "distance") {
+          // Distance post: a small tick mark + the metre value.
+          const meters = typeof m.meta?.m === "number" ? String(m.meta.m) : "";
+          const h = Math.max(8, 1.2 * cam.pxm);
+          return (
+            <Group key={`m${i}`} listening={false}>
+              <Rect x={sx - 0.6} y={sy - h} width={1.6} height={h} fill="#e8e8e8" />
+              {meters && (
+                <Circle x={sx + 0.2} y={sy - h} r={Math.max(7, 2.2 * cam.pxm)}
+                  fill="#1c1f25" stroke="#e8e8e8" strokeWidth={1} />
+              )}
             </Group>
           );
         }

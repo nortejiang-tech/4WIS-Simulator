@@ -111,7 +111,11 @@ def case_kinematic_circle_closure() -> bool:
     strat = make_strategy("ideal_ackermann", params)
     env = EnvironmentState()
     dt = 0.005
-    driver = DriverInput(throttle=0.3, steering=0.3)
+    # Use the steer_raw_rad bypass (v0.100) so this tests the ICR geometry
+    # directly — the speed-dependent feel layer would otherwise change κ as v
+    # rises from standstill and the path wouldn't close.
+    driver = DriverInput(throttle=0.3, steering=0.0,
+                         mode_params={"steer_raw_rad": 0.15})
     cmd0 = strat.compute(driver, model.state)
     R = abs(cmd0.icr_target_body[1])
     v = 0.3 * params.v_max
@@ -427,20 +431,31 @@ def case_multibody() -> bool:
           and abs(m.state.fz.sum() - p.mass * 9.81) < 1.0)
     checks.append(eq)
 
-    # left turn → roll>0 (right side down) and right Fz > left Fz
+    # left turn → roll>0 (right side down) and right Fz > left Fz.
+    # Use the steer_raw_rad bypass so the cornering accel is set directly
+    # (independent of the v0.100 speed-dependent feel layer).
     m.reset()
+    corner_driver = DriverInput(throttle=0.25, steering=0.0,
+                                mode_params={"steer_raw_rad": 0.25})
     for _ in range(int(4.0 / dt)):
-        m.step(dt, strat.compute(DriverInput(0.25, 0.4), m.state), env)
+        m.step(dt, strat.compute(corner_driver, m.state), env)
     left = m.state.fz[0] + m.state.fz[2]
     right = m.state.fz[1] + m.state.fz[3]
     corner = m.state.roll > np.deg2rad(0.3) and right > left * 1.1
     checks.append(corner)
     roll_deg = np.degrees(m.state.roll)
 
-    # braking → pitch<0 (nose dive) and front Fz > rear Fz
+    # braking → pitch<0 (nose dive) and front Fz > rear Fz.
+    # v0.100: braking is a real friction-brake channel. Build the driver with
+    # brake=0.6 (gear D), and fill cmd.brake_cmd the way the live loop does so
+    # the multibody model applies actual brake torque (front-biased).
     m.reset(); m.state.vx = 15.0; m.state.wheel_omega[:] = 15.0 / p.tire_radius
+    bf = float(getattr(p, "brake_bias_front", 0.65))
+    brake_driver = DriverInput(throttle=0.0, brake=0.6, gear=1, steering=0.0)
     for _ in range(int(1.2 / dt)):
-        m.step(dt, strat.compute(DriverInput(-0.6, 0.0), m.state), env)
+        cmd = strat.compute(brake_driver, m.state)
+        cmd.brake_cmd = np.array([bf * 0.6, bf * 0.6, (1 - bf) * 0.6, (1 - bf) * 0.6])
+        m.step(dt, cmd, env)
     front = m.state.fz[0] + m.state.fz[1]
     rear = m.state.fz[2] + m.state.fz[3]
     brake = m.state.pitch < np.deg2rad(-0.3) and front > rear * 1.1

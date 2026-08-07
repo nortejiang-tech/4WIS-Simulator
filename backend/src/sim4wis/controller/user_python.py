@@ -117,11 +117,13 @@ class HotReloadStrategy(ControllerStrategy):
 
     # ---- ControllerStrategy --------------------------------------------------
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:  # noqa: ARG002
         if self._compute_fn is None:
             return ControlCommand.zero()
         driver_d = {
             "throttle": driver.throttle,
+            "brake": driver.brake,
+            "gear": driver.gear,
             "steering": driver.steering,
             "handbrake": driver.handbrake,
             "mode_params": dict(driver.mode_params),

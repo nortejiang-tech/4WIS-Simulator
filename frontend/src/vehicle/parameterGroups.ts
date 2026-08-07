@@ -39,6 +39,9 @@ export const PARAMETER_GROUPS: ParameterGroup[] = [
       ["steer_limit", "最大转角 (°)", 0.5, DEG],
       ["steer_tau", "作动时间常数 (s)", 0.01],
       ["steer_rate_max", "最大角速率 (rad/s)", 0.5],
+      ["steer_wheel_range", "方向盘总转角 (°)", 30],
+      ["steer_ratio_low", "低速传动比 (0=按盘径自动)", 0.5],
+      ["steer_ratio_high", "高速传动比 (0=低速比×3.5)", 0.5],
     ],
   },
   {
@@ -75,6 +78,17 @@ export const PARAMETER_GROUPS: ParameterGroup[] = [
       ["air_density", "空气密度 ρ (kg/m³)", 0.01],
       ["aero_lift_coeff_front", "前轴升力 Cl_F", 0.01],
       ["aero_lift_coeff_rear", "后轴升力 Cl_R", 0.01],
+      ["v_max_reverse", "倒车限速 (m/s)", 0.5],
+    ],
+  },
+  {
+    title: "制动系统",
+    tier: "advanced",
+    defaultOpen: false,
+    fields: [
+      ["brake_torque_max", "最大制动力矩 (N·m)", 500],
+      ["brake_bias_front", "前轴制动分配", 0.05],
+      ["brake_tau", "制动响应时间常数 (s)", 0.01],
     ],
   },
   {

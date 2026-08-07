@@ -107,7 +107,12 @@ export default function ExcitationPanel() {
       // NOT an acceleration pedal — so command the target speed directly.
       const vmax = useSimStore.getState().state?.params.v_max ?? 15;
       const throttle = Math.max(-1, Math.min(1, fromKmh(tgtKmh) / vmax));
-      setDriver(throttle, steering);
+      // steer_bypass_feel: an open-loop steer test measures the *vehicle*, so
+      // the amplitude must not be reshaped by the driver-input feel layer
+      // (variable gear ratio + grip soft limit) — same rule the front_deg
+      // validation experiments follow. Without it the amplitude knob went dead
+      // above ~0.14 at 60 km/h and the sweep amplitude varied with speed.
+      setDriver(throttle, steering, { steer_bypass_feel: true });
     }, 1000 / 60);
   };
 

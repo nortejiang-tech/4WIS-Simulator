@@ -69,6 +69,29 @@ export default function ParamsPanel() {
         <div className="panel-small" style={{ color: "var(--muted)", margin: "4px 0" }}>核心参数</div>
         {CORE_PARAMETER_GROUPS.map((g) => renderGroup(g))}
 
+        <div className="panel-small" style={{ color: "var(--muted)", margin: "8px 0 2px" }}>方向盘硬件预设</div>
+        <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+          <button className="panel-small" onClick={() => setValue("steer_wheel_range", 540)}
+            title="常见 PC 方向盘（锁到锁 540°）">
+            PC 盘 540°
+          </button>
+          <button className="panel-small" onClick={() => setValue("steer_wheel_range", 270)}
+            title="Dolio R270 等小行程方向盘（锁到锁 270°）">
+            Dolio R270 270°
+          </button>
+          <button className="panel-small" onClick={() => setValue("steer_wheel_range", 900)}
+            title="900° 方向盘（低速需多打）">
+            900°
+          </button>
+          <span className="panel-small" style={{ color: "var(--muted)", alignSelf: "center" }}>
+            当前 {value("steer_wheel_range")}° · 传动比自动跟随
+          </span>
+        </div>
+        <div className="panel-small" style={{ color: "var(--muted)", marginBottom: 6 }}>
+          换盘只需改这一项：传动比默认按盘径推导，使满行程正好打到转向极限，
+          所以 270°/540°/900° 的手感一致，不必逐个重调。
+        </div>
+
         <div className="panel-small" style={{ color: "var(--muted)", margin: "8px 0 4px" }}>高级参数</div>
         {ADVANCED_PARAMETER_GROUPS.map((g) => renderGroup(g))}
 

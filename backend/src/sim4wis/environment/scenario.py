@@ -51,14 +51,25 @@ class Line:
     color: str = WHITE
     width: float = 0.15          # metres
     dash: bool = False
+    # Optional (on, off) dash rhythm in metres; when set it overrides `dash`
+    # and lets a builder paint standard lane-marking rhythms (e.g. GB 5768.3
+    # "6 m mark / 9 m gap" for motorway lane dividers). None = legacy uniform
+    # dash behaviour keyed off the boolean `dash`.
+    dash_pattern: tuple[float, float] | None = None
 
     def serialize(self) -> dict:
-        return {"points": self.points, "color": self.color, "width": self.width, "dash": self.dash}
+        return {
+            "points": self.points,
+            "color": self.color,
+            "width": self.width,
+            "dash": self.dash,
+            "dash_pattern": list(self.dash_pattern) if self.dash_pattern is not None else None,
+        }
 
 
 @dataclass
 class Marker:
-    type: str                    # traffic_light | start_finish
+    type: str                    # traffic_light | start_finish | distance
     x: float
     y: float
     heading: float = 0.0         # rad, +x forward
@@ -69,13 +80,51 @@ class Marker:
 
 
 @dataclass
+class Spawn:
+    """A named spawn pose (x, y, heading) — lets a scenario offer more than one
+    start point (e.g. a proving ground with a long-straight start, a skidpad
+    entry, a handling area)."""
+    name: str
+    x: float
+    y: float
+    heading: float = 0.0         # rad, +x forward
+
+    def as_tuple(self) -> tuple[float, float, float]:
+        return (self.x, self.y, self.heading)
+
+    def serialize(self) -> dict:
+        return {"name": self.name, "x": self.x, "y": self.y, "heading": self.heading}
+
+
+@dataclass
 class Scenario:
     name: str
     label: str
     surfaces: list[Surface] = field(default_factory=list)
     lines: list[Line] = field(default_factory=list)
     markers: list[Marker] = field(default_factory=list)
-    spawn: tuple[float, float, float] = (0.0, 0.0, 0.0)   # x, y, heading
+    spawn: tuple[float, float, float] = (0.0, 0.0, 0.0)   # x, y, heading (legacy single spawn)
+    spawns: list[Spawn] = field(default_factory=list)      # named spawn points (optional)
+    # Named anchor poses (x, y, heading) that path templates can be rigidly
+    # transformed onto so a slalom/skidpad/straight course aligns with a real
+    # road instead of always being laid down at the world origin along +X.
+    anchors: dict[str, tuple[float, float, float]] = field(default_factory=dict)
+
+    @property
+    def effective_spawn(self) -> tuple[float, float, float]:
+        """Resolve the spawn pose: prefer the first named spawn, fall back to `spawn`."""
+        if self.spawns:
+            return self.spawns[0].as_tuple()
+        return self.spawn
+
+    def find_spawn(self, name: str | None) -> tuple[float, float, float]:
+        """Return the pose for a named spawn, or the effective spawn if name
+        is None / not found."""
+        if name:
+            for sp in self.spawns:
+                if sp.name == name:
+                    return sp.as_tuple()
+        return self.effective_spawn
 
     def serialize(self) -> dict:
         return {
@@ -84,7 +133,9 @@ class Scenario:
             "surfaces": [s.serialize() for s in self.surfaces],
             "lines": [ln.serialize() for ln in self.lines],
             "markers": [m.serialize() for m in self.markers],
-            "spawn": list(self.spawn),
+            "spawn": list(self.effective_spawn),
+            "spawns": [sp.serialize() for sp in self.spawns],
+            "anchors": {k: list(v) for k, v in self.anchors.items()},
         }
 
 
@@ -440,11 +491,201 @@ def _track_shanghai() -> Scenario:
                                   center, half_w=7.5, spawn_idx=0, smooth=3)
 
 
+def _arc_points(cx: float, cy: float, r: float, th0: float, th1: float,
+                n: int = 96) -> list[list[float]]:
+    """Points along a circular arc of radius `r` centred at (cx,cy), from
+    angle th0 to th1 (radians, math convention). Local copy so the environment
+    module need not depend on controller.path."""
+    return [[cx + r * math.cos(th0 + (th1 - th0) * i / n),
+             cy + r * math.sin(th0 + (th1 - th0) * i / n)] for i in range(n + 1)]
+
+
+def _arc_road(cx: float, cy: float, radius: float, th0: float, th1: float,
+              n_lanes: int = 2, lane_width: float = 3.75,
+              ) -> tuple[list[Surface], list[Line]]:
+    """Exact circular-arc road: asphalt annulus + standard lane markings.
+
+    Unlike `_road` (which offsets a polyline and smoothes it with Chaikin),
+    this generator is built from true circles so the radius is exact and
+    labelled — "different curvatures" is a measurable, reproducible property.
+
+    Lane markings follow GB 5768.3:
+        * solid white edge lines, 0.20 m wide, at the outer/inner pavement edges
+        * dashed white lane dividers between lanes, 0.15 m wide, 6 m mark / 9 m gap
+    Returns (surfaces, lines). The road is one-way (no yellow centre line).
+    """
+    half_w = n_lanes * lane_width / 2.0
+    r_out = radius + half_w
+    r_in = radius - half_w
+    # Asphalt annulus: outer arc forward + inner arc reversed → filled ring.
+    outer = _arc_points(cx, cy, r_out, th0, th1)
+    inner = _arc_points(cx, cy, r_in, th0, th1)
+    ribbon = outer + inner[::-1]
+    surfaces = [Surface(ribbon, ASPHALT, "road")]
+    lines: list[Line] = [
+        Line(outer, WHITE, 0.20),
+        Line(inner, WHITE, 0.20),
+    ]
+    # Interior lane dividers: one between each adjacent pair of lanes.
+    for i in range(1, n_lanes):
+        r_div = r_in + i * lane_width
+        lines.append(Line(_arc_points(cx, cy, r_div, th0, th1),
+                          WHITE, 0.15, dash_pattern=(6.0, 9.0)))
+    return surfaces, lines
+
+
+def _straight_road(x0: float, y0: float, length: float, heading: float,
+                   n_lanes: int = 2, lane_width: float = 3.75,
+                   ) -> tuple[list[Surface], list[Line]]:
+    """Straight multi-lane road starting at (x0,y0) along `heading` (rad).
+
+    Mirrors `_arc_road` for the straight section. Edge lines solid white 0.20 m;
+    interior dividers dashed white 0.15 m, 6 m mark / 9 m gap (GB 5768.3)."""
+    ca, sa = math.cos(heading), math.sin(heading)
+    half_w = n_lanes * lane_width / 2.0
+    # Forward (along heading) and left-normal vectors.
+    fx, fy = ca, sa
+    nx, ny = -sa, ca
+
+    def at(s: float, off: float) -> list[float]:
+        x = x0 + s * fx + off * nx
+        y = y0 + s * fy + off * ny
+        return [x, y]
+
+    left = [at(0.0, +half_w), at(length, +half_w)]
+    right = [at(0.0, -half_w), at(length, -half_w)]
+    surfaces = [Surface(left + right[::-1], ASPHALT, "road")]
+    lines: list[Line] = [
+        Line(left, WHITE, 0.20),
+        Line(right, WHITE, 0.20),
+    ]
+    for i in range(1, n_lanes):
+        off = -half_w + i * lane_width
+        lines.append(Line([at(0.0, off), at(length, off)],
+                          WHITE, 0.15, dash_pattern=(6.0, 9.0)))
+    return surfaces, lines
+
+
+def _proving_ground() -> Scenario:
+    """Proving ground — a flat, drivable road network for driving tests.
+
+    Built to the requirements in docs/driving_experience_plan.md §C2:
+    standard lane markings, multiple lanes, several exact-curvature corners,
+    a long straight, a skidpad and an open handling pad. Flat ground only —
+    no scenery meshes, no textures (rendering-load neutral). All corner radii
+    are explicit parameters, so curvature is labelled and reproducible.
+
+    Layout (≈ 1300 × 500 m, +x forward, +y left):
+        ① 800 m × 3-lane high-speed straight along +X from the origin
+        ② a return loop of 5 exact-curvature corners (R = 150/100/60/40/25)
+           linking the far end of the straight back toward the start
+        ③ a R = 30 m skidpad (concentric lane lines) east of the straight end
+        ④ a 200 × 60 m open handling pad for slalom / lane-change
+    """
+    n_lanes = 3
+    lane_width = 3.75
+    straight_len = 800.0
+
+    surfaces: list[Surface] = []
+    lines: list[Line] = []
+    markers: list[Marker] = []
+
+    # ground base (flat grass under everything)
+    surfaces.append(Surface(_rect(400, -260, 1300, 500), GRASS, "grass"))
+
+    # ① High-speed straight: 3 lanes along +X from (0,0).
+    s_straight, l_straight = _straight_road(0.0, 0.0, straight_len, 0.0,
+                                            n_lanes=n_lanes, lane_width=lane_width)
+    surfaces += s_straight
+    lines += l_straight
+    # Distance posts every 50 m (driving-relevant, not decoration).
+    for m in range(50, int(straight_len), 50):
+        # pair of posts just outside each edge line
+        markers.append(Marker("distance", m, +(n_lanes * lane_width) / 2 + 1.5,
+                              0.0, {"m": m}))
+        markers.append(Marker("distance", m, -(n_lanes * lane_width) / 2 - 1.5,
+                              0.0, {"m": m}))
+
+    # ② Return loop: 5 exact-curvature corners joining the far end of the
+    #    straight back to the start. Each corner is a true circular arc with
+    #    an explicit radius; a labelled anchor records (centre, radius) so the
+    #    radius is measurable and reproducible. The corners are laid out as a
+    #    descending-radius sequence south of the straight.
+    corners = [
+        # (centre_x, centre_y, radius, th0, th1, label)
+        # Angles in math convention; we route clockwise (decreasing angle) so
+        # each arc leaves the straight end heading +x and curves down/right.
+        (820.0,  -60.0, 150.0, math.pi / 2,  0.0,            "corner_R150"),
+        (820.0, -210.0, 100.0, math.pi,      math.pi / 2,    "corner_R100"),
+        (720.0, -210.0,  60.0, 0.0,         -math.pi / 2,    "corner_R60"),
+        (660.0, -150.0,  40.0, -math.pi / 2,-math.pi,        "corner_R40"),
+        (620.0,  -60.0,  25.0, 0.0,          math.pi / 2,    "corner_R25"),
+    ]
+    anchors: dict[str, tuple[float, float, float]] = {}
+    for (ccx, ccy, crad, cth0, cth1, clabel) in corners:
+        cs, cl = _arc_road(ccx, ccy, crad, cth0, cth1,
+                           n_lanes=n_lanes, lane_width=lane_width)
+        surfaces += cs
+        lines += cl
+        # entry marker + radius anchor (centre pose; nominal radius in meta)
+        ex = ccx + crad * math.cos(cth0)
+        ey = ccy + crad * math.sin(cth0)
+        markers.append(Marker("distance", ex, ey, 0.0,
+                              {"m": 0, "corner": clabel, "radius": crad}))
+        anchors[clabel] = (ccx, ccy, 0.0)
+
+    # ③ Skidpad: R = 30 m circle with concentric inner/outer lane lines,
+    #    east of the straight end so it doesn't overlap.
+    skid_cx, skid_cy, skid_r = 940.0, -60.0, 30.0
+    # Pavement ring a bit wider than the circle for runoff; inner/outer edges.
+    skid_outer = _arc_points(skid_cx, skid_cy, skid_r + 3.0, 0.0, 2 * math.pi)
+    skid_inner = _arc_points(skid_cx, skid_cy, skid_r - 3.0, 0.0, 2 * math.pi)
+    surfaces.append(Surface(skid_outer + skid_inner[::-1], ASPHALT, "road"))
+    lines.append(Line(skid_outer, WHITE, 0.20))
+    lines.append(Line(skid_inner, WHITE, 0.20))
+    # the nominal circle itself as a dashed reference
+    lines.append(Line(_arc_points(skid_cx, skid_cy, skid_r, 0.0, 2 * math.pi),
+                      YELLOW, 0.12, dash_pattern=(3.0, 3.0)))
+    anchors["skidpad"] = (skid_cx - skid_r - 4.0, skid_cy, 0.0)
+
+    # ④ Open handling pad: 200 × 60 m of empty pavement for slalom / DLC.
+    pad_cx, pad_cy = 940.0, -260.0
+    pad_w, pad_h = 200.0, 60.0
+    surfaces.append(Surface(_rect(pad_cx, pad_cy, pad_w, pad_h), CONCRETE, "plaza"))
+    lines.append(Line(_rect(pad_cx, pad_cy, pad_w, pad_h) + [
+        [pad_cx - pad_w / 2, pad_cy - pad_h / 2]], WHITE, 0.20))
+    anchors["handling"] = (pad_cx - pad_w / 2 + 5.0, pad_cy, 0.0)
+
+    # straight anchor at the start of the straight (just inside the origin)
+    anchors["straight_start"] = (8.0, 0.0, 0.0)
+    # a second straight anchor at the far end (for acceleration-then-brake runs)
+    anchors["straight_mid"] = (400.0, 0.0, 0.0)
+
+    spawns = [
+        Spawn("直线起点", 8.0, 0.0, 0.0),
+        Spawn("环路入口", 820.0, 90.0, 0.0),
+        Spawn("定圆入口", float(anchors["skidpad"][0]), float(anchors["skidpad"][1]), 0.0),
+        Spawn("操控区", float(anchors["handling"][0]), float(anchors["handling"][1]), 0.0),
+    ]
+
+    return Scenario(
+        name="proving_ground",
+        label="试验场",
+        surfaces=surfaces,
+        lines=lines,
+        markers=markers,
+        spawn=(8.0, 0.0, 0.0),
+        spawns=spawns,
+        anchors=anchors,
+    )
+
+
 _BUILDERS = {
     "plaza": _plaza,
     "town": _town,
     "track_small": _track_small,
     "track_shanghai": _track_shanghai,
+    "proving_ground": _proving_ground,
 }
 
 # ── module-level active scenario (mirrors controller.path) ────────────────────

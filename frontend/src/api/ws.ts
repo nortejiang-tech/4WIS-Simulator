@@ -100,8 +100,32 @@ export function sendMessage(m: ClientMessage) {
   }
 }
 
-export function setDriver(throttle: number, steering: number, mode_params?: Record<string, unknown>) {
-  sendMessage({ type: "driver", throttle, steering, mode_params });
+export interface DriverCommand {
+  throttle?: number;
+  brake?: number;
+  gear?: number;       // -1 = R, 0 = N, 1 = D
+  steering?: number;
+  handbrake?: number;  // 0 | 1
+  mode_params?: Record<string, unknown>;
+}
+
+export function setDriver(
+  throttle: number,
+  steering: number,
+  mode_params?: Record<string, unknown>,
+  opts?: { brake?: number; gear?: number; handbrake?: number },
+) {
+  // Back-compat single-arg callers still work; new callers pass opts for the
+  // split brake/gear/handbrake channels.
+  sendMessage({
+    type: "driver",
+    throttle,
+    steering,
+    mode_params,
+    brake: opts?.brake ?? 0,
+    gear: opts?.gear ?? 1,
+    handbrake: opts?.handbrake ?? 0,
+  });
 }
 
 export function setStrategy(name: string) {
@@ -157,8 +181,12 @@ export async function fetchPath() {
   ingestPath(await fetchJSON<PathResponse>("/api/path"));
 }
 
-export async function setPathTemplate(name: string, params: Record<string, number> = {}) {
-  ingestPath(await postJSON<PathResponse>("/api/path/template", { name, params }));
+export async function setPathTemplate(
+  name: string,
+  params: Record<string, number> = {},
+  anchor?: string | null,
+) {
+  ingestPath(await postJSON<PathResponse>("/api/path/template", { name, params, anchor: anchor ?? null }));
 }
 
 export async function setPathWaypoints(points: [number, number][], closed = false) {
@@ -187,8 +215,11 @@ export async function fetchScenario() {
   ingestScenario(await fetchJSON<ScenarioResponse>("/api/scenario"));
 }
 
-export async function loadScenario(name: string) {
-  ingestScenario(await postJSON<ScenarioResponse>(`/api/scenarios/${encodeURIComponent(name)}/load`, {}));
+export async function loadScenario(name: string, spawn?: string | null) {
+  // `spawn` is a FastAPI query param on the POST route (not a body field).
+  let url = `/api/scenarios/${encodeURIComponent(name)}/load`;
+  if (spawn) url += `?spawn=${encodeURIComponent(spawn)}`;
+  ingestScenario(await postJSON<ScenarioResponse>(url, {}));
 }
 
 export async function clearScenario() {

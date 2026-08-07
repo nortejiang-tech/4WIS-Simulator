@@ -71,6 +71,18 @@ class KinematicModel(VehicleModel):
         s = self.state
         p = self.params
 
+        # 0. Surface friction under the vehicle. This model has no tyre and so
+        #    no per-wheel μ, but the driver-facing layers (kinematic brake rate,
+        #    steering soft limit) still need to know what the road offers —
+        #    without it they silently assume dry asphalt everywhere.
+        scene = getattr(env, "scene", None)
+        base_mu = env.mu if scene is None else getattr(scene, "base_mu", env.mu)
+        if scene is not None:
+            local = scene.wheel_env(np.array([s.x, s.y]))
+            if local.mu_override is not None:
+                base_mu = local.mu_override
+        s.mu_avg = float(base_mu)
+
         # 1. Adopt commanded steer angles and wheel speeds (Phase-1 assumption)
         s.delta[:] = cmd.delta_cmd
         s.wheel_omega[:] = cmd.wheel_speed_cmd

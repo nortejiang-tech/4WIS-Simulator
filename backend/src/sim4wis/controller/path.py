@@ -98,6 +98,32 @@ class PathPlan:
     def is_empty(self) -> bool:
         return self.points.shape[0] < 2
 
+    def transform(self, dx: float, dy: float, dheading: float) -> PathPlan:
+        """Rigidly translate + rotate the whole plan (points + cones + marks).
+
+        Generators lay courses out from the world origin along +X. This moves
+        them onto a scenario anchor pose so a slalom sits on the handling pad
+        instead of overlapping unrelated road. `dheading` is in radians, CCW.
+        Rotation is applied about the world origin (generators are rooted at
+        the origin), then translated by (dx, dy).
+        """
+        ch, sh = math.cos(dheading), math.sin(dheading)
+        pts = np.asarray(self.points, dtype=np.float64)
+        if pts.shape[0]:
+            rot = np.empty_like(pts)
+            rot[:, 0] = pts[:, 0] * ch - pts[:, 1] * sh
+            rot[:, 1] = pts[:, 0] * sh + pts[:, 1] * ch
+            self.points = rot + np.array([dx, dy])
+
+        def _xform(x: float, y: float) -> tuple[float, float]:
+            return (x * ch - y * sh + dx, x * sh + y * ch + dy)
+
+        for cone in self.cones:
+            cone.x, cone.y = _xform(cone.x, cone.y)
+        for mark in self.marks:
+            mark.points = [list(_xform(px, py)) for px, py in mark.points]
+        return self
+
     def serialize(self) -> dict[str, Any]:
         return {
             "name": self.name,
@@ -657,7 +683,16 @@ def template_accepts(name: str, key: str) -> bool:
     return bool(fn) and key in fn.__code__.co_varnames[:fn.__code__.co_argcount]
 
 
-def plan_from_template(name: str, params: dict[str, Any] | None = None) -> PathPlan:
+def plan_from_template(name: str, params: dict[str, Any] | None = None,
+                       anchor: str | None = None) -> PathPlan:
+    """Generate a standard-maneuver PathPlan, optionally rigidly transformed
+    onto a named anchor of the active scenario.
+
+    Without `anchor`, the course is laid out at the world origin along +X
+    (the legacy behaviour every caller relied on). With `anchor`, the plan is
+    rotated+translated onto that anchor's pose in the active scenario, so a
+    slalom lands on the handling pad, a skidpad on the skidpad, etc.
+    """
     if name not in _TEMPLATES:
         raise KeyError(name)
     fn = _TEMPLATES[name]
@@ -667,4 +702,21 @@ def plan_from_template(name: str, params: dict[str, Any] | None = None) -> PathP
     for k in VEHICLE_PARAMS:
         if k in kwargs and not template_accepts(name, k):
             kwargs.pop(k)
-    return fn(**kwargs)
+    plan = fn(**kwargs)
+    if anchor:
+        from sim4wis.environment import scenario as scn  # local — avoid cycles
+        active = scn.get_active()
+        if active is None:
+            raise ValueError(
+                f"cannot place course on anchor '{anchor}': no scenario is loaded"
+            )
+        try:
+            ax, ay, aheading = active.anchors[anchor]
+        except KeyError as exc:
+            raise KeyError(
+                f"scenario '{active.name}' has no anchor named '{anchor}'. "
+                f"available: {list(active.anchors)}"
+            ) from exc
+        plan.transform(ax, ay, aheading)
+        plan.notes = f"{plan.notes} · 锚点 {anchor}" if plan.notes else f"锚点 {anchor}"
+    return plan

@@ -25,6 +25,17 @@ import {
 } from "@/api/ws";
 import { fetchJSON } from "@/api/http";
 import { useSimStore } from "@/store/sim";
+
+/** Default anchor for each maneuver family (used when the scenario offers it). */
+const TEMPLATE_DEFAULT_ANCHOR: Record<string, string> = {
+  slalom: "handling",
+  lane_change: "handling",
+  double_lane_change: "handling",
+  iso3888_1: "handling",
+  skidpad: "skidpad",
+  straight: "straight_start",
+  arc: "straight_start",
+};
 import { activeBtn, inputStyle, selectStyle } from "@/ui/styles";
 import { fromKmh } from "@/ui/units";
 import Panel from "@/components/Panel";
@@ -73,12 +84,25 @@ export default function TrajectoryPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
+  // Anchor selection: "none" = lay out at world origin (legacy); any other
+  // value = a named anchor from the active scenario to place the course on.
+  const [anchor, setAnchor] = useState<string>("none");
 
   const path = useSimStore((s) => s.path);
+  const scenario = useSimStore((s) => s.scenario);
   const editMode = useSimStore((s) => s.editMode);
   const draft = useSimStore((s) => s.draftWaypoints);
   const setEditMode = useSimStore((s) => s.setEditMode);
   const clearDraft = useSimStore((s) => s.clearDraft);
+
+  // Anchors the active scenario offers. When the maneuver has a sensible
+  // default anchor, preselect it.
+  const anchorNames = scenario?.anchors ? Object.keys(scenario.anchors) : [];
+  useEffect(() => {
+    if (!anchorNames.length) { setAnchor("none"); return; }
+    const def = TEMPLATE_DEFAULT_ANCHOR[selected];
+    setAnchor(def && anchorNames.includes(def) ? def : "none");
+  }, [selected, scenario?.name]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const refreshTemplates = () => {
     fetchJSON<{ templates: string[]; specs?: TemplateSpec[] }>("/api/path/templates")
@@ -120,7 +144,8 @@ export default function TrajectoryPanel() {
     }
   };
 
-  const onGenerate = () => wrap(() => setPathTemplate(selected, params));
+  const onGenerate = () => wrap(() => setPathTemplate(selected, params,
+    anchor !== "none" ? anchor : null));
   const onClear = () => wrap(async () => { await clearPath(); });
 
   const onFollow = () => {
@@ -160,6 +185,17 @@ export default function TrajectoryPanel() {
         <button onClick={onGenerate} disabled={busy || templates.length === 0}>生成</button>
         <button onClick={refreshTemplates} disabled={busy}>刷新模板</button>
       </div>
+
+      {anchorNames.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+          <span className="panel-small" style={{ color: "var(--muted)" }}>铺到锚点：</span>
+          <select value={anchor} onChange={(e) => setAnchor(e.target.value)}
+            disabled={busy} style={selectStyle}>
+            <option value="none">世界原点（默认）</option>
+            {anchorNames.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </div>
+      )}
 
       {spec?.desc && (
         <div className="panel-small" style={{ color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>

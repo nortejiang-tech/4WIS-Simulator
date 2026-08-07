@@ -187,7 +187,12 @@ class ScriptRunner:
                     pass
 
     async def _brake(self, duration: float) -> None:
-        self.sim.set_driver(throttle=-1.0)
+        # Full friction-brake pedal (gear stays in D; reverse is a separate
+        # concern). This is the new brake channel, not the legacy throttle=-1.
+        # The throttle is lifted too: the legacy `throttle=-1` form implied it,
+        # and scripts written against that expect `brake` to mean coast-and-stop
+        # rather than "hold the previous throttle and fight it".
+        self.sim.set_driver(throttle=0.0, brake=1.0)
         # Wait either duration or until vehicle stopped, whichever sooner.
         t_start = time.time()
         while time.time() - t_start < duration:
@@ -201,7 +206,7 @@ class ScriptRunner:
                 return
             except asyncio.TimeoutError:
                 pass
-        self.sim.set_driver(throttle=0.0)
+        self.sim.set_driver(brake=0.0)
 
     async def _wait_until(self, args: dict) -> None:
         t_target = args.get("t")

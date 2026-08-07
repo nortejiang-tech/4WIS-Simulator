@@ -1,0 +1,854 @@
+<style>
+  :root{
+    --ink:#1a1e23; --ink-soft:#565f66; --ink-faint:#8a9298;
+    --paper:#edf0ef; --paper-raised:#ffffff; --paper-sunken:#e2e6e4;
+    --line:#d3d9d6;
+    --steel:#2c5a73; --steel-soft:#dde8ec;
+    --signal:#a85a17; --signal-soft:#f2e2cd;
+    --good:#2c7a52; --good-soft:#dcefe2;
+    --warn:#92650a; --warn-soft:#f2e6c6;
+    --critical:#9c3b30; --critical-soft:#f5ddd8;
+    --font-display:"Iowan Old Style","Palatino Linotype","URW Palladio L","Book Antiqua",Georgia,serif;
+    --font-body:-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(20,24,27,.06),0 4px 16px rgba(20,24,27,.05);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ink:#e8eaea; --ink-soft:#a9b1b5; --ink-faint:#6b7378;
+      --paper:#14181b; --paper-raised:#1c2226; --paper-sunken:#101416;
+      --line:#2a3236;
+      --steel:#7fb0c9; --steel-soft:#1b2b32;
+      --signal:#e2914c; --signal-soft:#3a2a17;
+      --good:#6cbf93; --good-soft:#163625;
+      --warn:#d8b25a; --warn-soft:#362a10;
+      --critical:#e08277; --critical-soft:#3a1e19;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e8eaea; --ink-soft:#a9b1b5; --ink-faint:#6b7378;
+    --paper:#14181b; --paper-raised:#1c2226; --paper-sunken:#101416;
+    --line:#2a3236;
+    --steel:#7fb0c9; --steel-soft:#1b2b32;
+    --signal:#e2914c; --signal-soft:#3a2a17;
+    --good:#6cbf93; --good-soft:#163625;
+    --warn:#d8b25a; --warn-soft:#362a10;
+    --critical:#e08277; --critical-soft:#3a1e19;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --ink:#1a1e23; --ink-soft:#565f66; --ink-faint:#8a9298;
+    --paper:#edf0ef; --paper-raised:#ffffff; --paper-sunken:#e2e6e4;
+    --line:#d3d9d6;
+    --steel:#2c5a73; --steel-soft:#dde8ec;
+    --signal:#a85a17; --signal-soft:#f2e2cd;
+    --good:#2c7a52; --good-soft:#dcefe2;
+    --warn:#92650a; --warn-soft:#f2e6c6;
+    --critical:#9c3b30; --critical-soft:#f5ddd8;
+    --shadow:0 1px 2px rgba(20,24,27,.06),0 4px 16px rgba(20,24,27,.05);
+  }
+
+  *{box-sizing:border-box;}
+  html{background:var(--paper);}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--font-body); font-size:16px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    html{scroll-behavior:smooth;}
+  }
+  ::selection{ background:var(--signal-soft); color:var(--ink); }
+  a{ color:var(--steel); text-decoration-thickness:1px; text-underline-offset:2px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible{
+    outline:2px solid var(--signal); outline-offset:2px; border-radius:2px;
+  }
+  code, .mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+  h1,h2,h3,h4{ font-family:var(--font-display); font-weight:600; text-wrap:balance; color:var(--ink); }
+  p{ margin:0 0 1em; max-width:70ch; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 1.25rem; }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    border-bottom:1px solid var(--line); background:var(--paper-raised);
+    position:sticky; top:0; z-index:40; backdrop-filter:saturate(1.1);
+  }
+  .topbar-inner{
+    max-width:1180px; margin:0 auto; padding:.7rem 1.25rem;
+    display:flex; align-items:center; gap:.75rem; justify-content:space-between;
+  }
+  .brand{ display:flex; align-items:center; gap:.55rem; font-family:var(--font-mono); font-size:.85rem; color:var(--ink-soft); }
+  .brand b{ color:var(--ink); font-family:var(--font-body); font-weight:700; letter-spacing:.01em; }
+  .brand .sep{ color:var(--line); }
+  .version-badge{
+    font-family:var(--font-mono); font-size:.78rem; padding:.2rem .5rem; border-radius:4px;
+    background:var(--signal-soft); color:var(--signal); border:1px solid color-mix(in srgb, var(--signal) 35%, transparent);
+  }
+
+  /* ---------- hero ---------- */
+  .hero{ border-bottom:1px solid var(--line); overflow:hidden; position:relative; }
+  .hero-inner{
+    max-width:1180px; margin:0 auto; padding:3.2rem 1.25rem 2.6rem;
+    display:grid; grid-template-columns:1.3fr .9fr; gap:2.5rem; align-items:center;
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:.78rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--signal); margin-bottom:.9rem; display:flex; align-items:center; gap:.5rem;
+  }
+  .eyebrow::before{ content:""; width:1.4rem; height:1px; background:var(--signal); display:inline-block; }
+  .hero h1{ font-size:clamp(1.8rem,1.4rem + 1.8vw,2.7rem); line-height:1.15; margin:0 0 .7rem; }
+  .hero .dek{ font-size:1.08rem; color:var(--ink-soft); max-width:52ch; margin-bottom:0; }
+  .hero-motif{ justify-self:center; opacity:.92; }
+  .hero-motif svg{ width:100%; max-width:320px; height:auto; }
+
+  .stats-row{
+    display:grid; grid-template-columns:repeat(6,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    margin-top:2.2rem;
+  }
+  .stat-card{ background:var(--paper-raised); padding:1rem .9rem; min-width:0; }
+  .stat-card .n{ font-family:var(--font-mono); font-weight:700; font-size:1.35rem; color:var(--ink); display:block; font-variant-numeric:tabular-nums; }
+  .stat-card .l{ font-size:.76rem; color:var(--ink-soft); margin-top:.2rem; display:block; }
+  .stat-card .s{ font-size:.72rem; color:var(--ink-faint); margin-top:.15rem; display:block; }
+  .stat-card.crit .n{ color:var(--critical); }
+
+  @media (max-width:900px){
+    .hero-inner{ grid-template-columns:1fr; }
+    .hero-motif{ display:none; }
+    .stats-row{ grid-template-columns:repeat(2,1fr); }
+  }
+  @media (max-width:560px){
+    .stats-row{ grid-template-columns:repeat(2,1fr); }
+  }
+
+  /* ---------- layout shell ---------- */
+  .shell{ max-width:1180px; margin:0 auto; padding:2.6rem 1.25rem 6rem; display:grid; grid-template-columns:220px minmax(0,1fr); gap:3rem; align-items:start; }
+  nav.toc{ display:none; }
+  @media (min-width:1000px){
+    nav.toc{
+      display:block; position:sticky; top:4.2rem; max-height:calc(100vh - 5rem); overflow-y:auto;
+      font-size:.86rem; padding-right:.5rem;
+    }
+  }
+  nav.toc ol{ list-style:none; margin:0; padding:0; border-left:2px solid var(--line); }
+  nav.toc li a{
+    display:block; padding:.32rem 0 .32rem .85rem; color:var(--ink-soft); text-decoration:none;
+    border-left:2px solid transparent; margin-left:-2px;
+  }
+  nav.toc li a:hover{ color:var(--ink); }
+  nav.toc li a.active{ color:var(--signal); border-left-color:var(--signal); font-weight:600; }
+  nav.toc .toc-sub{ list-style:none; margin:0 0 .3rem; padding:0 0 0 .85rem; }
+  nav.toc .toc-sub a{ padding:.18rem 0; font-size:.8rem; color:var(--ink-faint); border-left:none; }
+  nav.toc .toc-sub a:hover{ color:var(--ink-soft); }
+
+  main{ min-width:0; }
+  section.section{ padding-top:1rem; margin-bottom:3.6rem; scroll-margin-top:4.5rem; }
+  .kicker{ font-family:var(--font-mono); font-size:.78rem; color:var(--signal); letter-spacing:.04em; margin-bottom:.35rem; display:block; }
+  section.section h2{ font-size:clamp(1.35rem,1.15rem + .6vw,1.75rem); margin:0 0 .9rem; }
+  .lede{ color:var(--ink-soft); font-size:1.02rem; max-width:66ch; }
+
+  /* ---------- origin ---------- */
+  .origin-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:2rem; align-items:start; margin-top:1.4rem; }
+  @media (max-width:800px){ .origin-grid{ grid-template-columns:1fr; } }
+  .req-doc{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+    padding:1.5rem 1.6rem; box-shadow:var(--shadow); position:relative;
+  }
+  .req-doc::before{
+    content:"原始需求 · 4WIS Simulator 功能需求.md"; display:block; font-family:var(--font-mono); font-size:.72rem;
+    color:var(--ink-faint); letter-spacing:.03em; margin-bottom:1rem; text-transform:uppercase;
+  }
+  .req-doc ol{ margin:0; padding-left:1.3rem; }
+  .req-doc li{ margin-bottom:.85rem; color:var(--ink); }
+  .req-doc li::marker{ font-family:var(--font-mono); color:var(--signal); font-weight:700; }
+  .req-note{ font-size:.85rem; color:var(--ink-soft); border-top:1px dashed var(--line); margin-top:1.2rem; padding-top:1rem; }
+
+  .side-note{ display:flex; flex-direction:column; gap:1rem; }
+  .fact-box{ background:var(--steel-soft); border-radius:10px; padding:1.1rem 1.2rem; border:1px solid color-mix(in srgb, var(--steel) 25%, transparent); }
+  .fact-box h4{ font-size:.95rem; margin:0 0 .4rem; color:var(--steel); }
+  .fact-box p{ font-size:.9rem; color:var(--ink); margin:0; }
+
+  /* ---------- timeline rail ---------- */
+  .rail-scroll{ overflow-x:auto; margin:0 -1.25rem; padding:0 1.25rem 1rem; }
+  .rail{ display:flex; gap:.9rem; min-width:max-content; padding-bottom:.4rem; }
+  .era-card{
+    width:196px; flex:0 0 auto; border:1px solid var(--line); border-radius:10px; background:var(--paper-raised);
+    padding:.9rem .95rem; border-top:3px solid var(--era-color, var(--steel));
+  }
+  .era-card .era-date{ font-family:var(--font-mono); font-size:.7rem; color:var(--ink-faint); display:block; margin-bottom:.3rem; }
+  .era-card h3{ font-size:.92rem; margin:0 0 .55rem; line-height:1.3; }
+  .era-chips{ display:flex; flex-wrap:wrap; gap:.3rem; }
+  .chip{
+    font-family:var(--font-mono); font-size:.72rem; padding:.14rem .45rem; border-radius:99px;
+    background:var(--paper-sunken); color:var(--ink-soft); text-decoration:none; border:1px solid var(--line);
+  }
+  .chip:hover{ border-color:var(--era-color,var(--steel)); color:var(--ink); }
+
+  /* ---------- architecture ---------- */
+  .arch-diagram{
+    display:grid; gap:.6rem; margin:1.4rem 0 1.8rem;
+  }
+  .arch-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.6rem; }
+  .arch-box{
+    border:1px solid var(--line); background:var(--paper-raised); border-radius:8px; padding:.75rem .85rem;
+  }
+  .arch-box .t{ font-weight:700; font-size:.88rem; display:block; margin-bottom:.15rem; }
+  .arch-box .d{ font-size:.78rem; color:var(--ink-soft); }
+  .arch-box.accent{ border-color:color-mix(in srgb, var(--signal) 40%, transparent); background:var(--signal-soft); }
+  .arch-box.accent .t{ color:var(--signal); }
+  .arch-arrow{ text-align:center; color:var(--ink-faint); font-size:.85rem; font-family:var(--font-mono); }
+
+  .stack-table{ width:100%; border-collapse:collapse; font-size:.88rem; }
+  .stack-table th{ text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); padding:.4rem .6rem; border-bottom:1px solid var(--line); }
+  .stack-table td{ padding:.45rem .6rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  .stack-table td:first-child{ font-weight:600; white-space:nowrap; }
+  .table-scroll{ overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
+
+  /* ---------- era blocks ---------- */
+  .era-block{ border-top:1px solid var(--line); padding-top:1.8rem; margin-top:1.8rem; scroll-margin-top:4.5rem; }
+  .era-block:first-of-type{ border-top:none; margin-top:1rem; }
+  .era-block-head{ display:flex; align-items:baseline; gap:.7rem; flex-wrap:wrap; margin-bottom:.6rem; }
+  .era-tag{
+    font-family:var(--font-mono); font-size:.72rem; font-weight:700; padding:.15rem .5rem; border-radius:4px;
+    background:var(--era-color,var(--steel)); color:#fff;
+  }
+  .era-block h3{ font-size:1.15rem; margin:0; }
+  .era-range{ font-family:var(--font-mono); font-size:.78rem; color:var(--ink-faint); margin-left:auto; }
+
+  .version-list{ display:flex; flex-direction:column; gap:.55rem; margin:1.1rem 0; }
+  details.version{ border:1px solid var(--line); border-radius:8px; background:var(--paper-raised); }
+  details.version summary{
+    cursor:pointer; list-style:none; padding:.65rem .9rem; display:flex; align-items:center; gap:.7rem;
+    font-size:.9rem;
+  }
+  details.version summary::-webkit-details-marker{ display:none; }
+  details.version summary::before{ content:"›"; font-family:var(--font-mono); color:var(--ink-faint); transition:transform .15s; }
+  details.version[open] summary::before{ transform:rotate(90deg); }
+  .v-tag{ font-family:var(--font-mono); font-weight:700; color:var(--signal); white-space:nowrap; }
+  .v-date{ font-family:var(--font-mono); font-size:.76rem; color:var(--ink-faint); white-space:nowrap; }
+  .v-title{ color:var(--ink-soft); }
+  .v-body{ padding:0 1rem 1rem 2.4rem; font-size:.88rem; color:var(--ink-soft); }
+  .v-body p{ margin:0; max-width:none; }
+
+  .callout{ border-radius:8px; padding:1rem 1.15rem; margin:1.1rem 0; font-size:.92rem; border:1px solid; }
+  .callout strong.tag{ font-family:var(--font-mono); font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; display:inline-block; margin-bottom:.35rem; padding:.1rem .4rem; border-radius:4px; }
+  .callout p:last-child{ margin-bottom:0; }
+  .callout-turn{ background:var(--steel-soft); border-color:color-mix(in srgb, var(--steel) 35%, transparent); }
+  .callout-turn strong.tag{ background:var(--steel); color:#fff; }
+
+  /* ---------- difficulty deep-dive cards ---------- */
+  .diff-card{
+    border:1px solid var(--line); border-radius:12px; background:var(--paper-raised); box-shadow:var(--shadow);
+    padding:1.5rem 1.6rem; margin-bottom:1.6rem; scroll-margin-top:4.5rem;
+  }
+  .diff-head{ display:flex; align-items:flex-start; gap:1rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .diff-num{ font-family:var(--font-mono); font-size:1.6rem; font-weight:700; color:var(--line); line-height:1; }
+  .diff-head h3{ font-size:1.12rem; margin:0 0 .3rem; }
+  .diff-meta{ display:flex; gap:.5rem; flex-wrap:wrap; }
+  .tagv{ font-family:var(--font-mono); font-size:.72rem; padding:.1rem .45rem; border-radius:4px; background:var(--signal-soft); color:var(--signal); }
+  .tagera{ font-family:var(--font-mono); font-size:.72rem; padding:.1rem .45rem; border-radius:4px; background:var(--paper-sunken); color:var(--ink-soft); }
+  .diff-sub{ margin-top:1rem; }
+  .diff-sub h4{ font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); margin:0 0 .35rem; font-family:var(--font-mono); font-weight:600; }
+  .diff-sub p{ font-size:.92rem; max-width:none; }
+
+  .stat-pair{ display:flex; align-items:stretch; gap:.7rem; margin:.9rem 0; flex-wrap:wrap; }
+  .stat-block{ flex:1; min-width:170px; border-radius:8px; padding:.7rem .9rem; }
+  .stat-block.before{ background:var(--critical-soft); }
+  .stat-block.after{ background:var(--good-soft); }
+  .stat-block .stat-label{ display:block; font-size:.72rem; color:var(--ink-soft); margin-bottom:.2rem; }
+  .stat-block .stat-value{ display:block; font-family:var(--font-mono); font-weight:700; font-size:1.02rem; }
+  .stat-block.before .stat-value{ color:var(--critical); }
+  .stat-block.after .stat-value{ color:var(--good); }
+  .stat-arrow{ align-self:center; color:var(--ink-faint); font-size:1.2rem; }
+
+  /* ---------- capability grid ---------- */
+  .cap-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem; margin-top:1.3rem; }
+  .cap-card{ border:1px solid var(--line); border-radius:10px; background:var(--paper-raised); padding:1.1rem 1.25rem; }
+  .cap-card h4{ font-size:.95rem; margin:0 0 .5rem; display:flex; align-items:center; gap:.5rem; }
+  .cap-card h4 .dot{ width:.55rem; height:.55rem; border-radius:99px; background:var(--signal); display:inline-block; flex:none; }
+  .cap-card p{ font-size:.85rem; color:var(--ink-soft); margin:0; }
+
+  /* ---------- quality / tables ---------- */
+  .level-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:.5rem; margin:1.2rem 0; }
+  @media (max-width:750px){ .level-grid{ grid-template-columns:repeat(2,1fr); } }
+  .level-cell{ border:1px solid var(--line); border-radius:8px; padding:.7rem .8rem; background:var(--paper-raised); }
+  .level-cell b{ font-family:var(--font-mono); display:block; margin-bottom:.25rem; }
+  .level-cell span{ font-size:.78rem; color:var(--ink-soft); }
+
+  table.data{ width:100%; border-collapse:collapse; font-size:.86rem; }
+  table.data th{ text-align:left; padding:.55rem .7rem; background:var(--paper-sunken); font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); white-space:nowrap; }
+  table.data td{ padding:.55rem .7rem; border-top:1px solid var(--line); vertical-align:top; }
+  table.data tr:hover td{ background:color-mix(in srgb, var(--steel-soft) 45%, transparent); }
+
+  .pill{ display:inline-block; font-family:var(--font-mono); font-size:.72rem; font-weight:700; padding:.1rem .5rem; border-radius:99px; white-space:nowrap; }
+  .pill-good{ background:var(--good-soft); color:var(--good); }
+  .pill-warn{ background:var(--warn-soft); color:var(--warn); }
+  .pill-critical{ background:var(--critical-soft); color:var(--critical); }
+
+  .gate-banner{
+    display:flex; align-items:center; gap:1rem; flex-wrap:wrap; border-radius:10px; padding:1rem 1.3rem;
+    background:var(--critical-soft); border:1px solid color-mix(in srgb, var(--critical) 35%, transparent); margin:1.3rem 0;
+  }
+  .gate-banner .big{ font-family:var(--font-mono); font-weight:700; font-size:1.15rem; color:var(--critical); }
+  .gate-banner p{ margin:0; font-size:.88rem; color:var(--ink); max-width:none; }
+
+  /* ---------- roadmap ---------- */
+  .road-cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1.1rem; margin-top:1.2rem; }
+  .road-col h4{ font-size:.9rem; margin:0 0 .6rem; padding-bottom:.4rem; border-bottom:2px solid var(--line); }
+  .road-col ul{ margin:0; padding-left:1.1rem; }
+  .road-col li{ font-size:.87rem; color:var(--ink-soft); margin-bottom:.55rem; }
+
+  /* ---------- footer ---------- */
+  footer{ border-top:1px solid var(--line); margin-top:4rem; }
+  footer .wrap{ padding:2rem 1.25rem 3rem; display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:center; }
+  footer p{ margin:0; font-size:.82rem; color:var(--ink-faint); }
+
+  hr.rule{ border:none; border-top:1px solid var(--line); margin:2rem 0; }
+</style>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><b>4WIS Simulator</b><span class="sep">/</span>开发全景报告</div>
+    <span class="version-badge">v0.99.0 · V1 候选</span>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <span class="eyebrow">开发任务汇报 · 产品与技术全景</span>
+      <h1>从一页需求，到一套仿真实验平台</h1>
+      <p class="dek">四轮独立转向（4WIS）工程研究平台 46 天完整开发历程：22 个正式版本、一次范式级产品转型、若干个潜伏数值稳定性 bug，以及一份对"我们到底验证到什么程度"的持续诚实记录。</p>
+    </div>
+    <div class="hero-motif" aria-hidden="true">
+      <svg viewBox="0 0 300 210" xmlns="http://www.w3.org/2000/svg">
+        <rect x="108" y="52" width="84" height="118" rx="6" fill="none" stroke="var(--steel)" stroke-width="1.4" opacity="0.55"/>
+        <g stroke="var(--ink-faint)" stroke-width="1" opacity="0.5">
+          <line x1="45" y1="98" x2="106" y2="66"/>
+          <line x1="45" y1="98" x2="106" y2="150"/>
+          <line x1="45" y1="98" x2="194" y2="70"/>
+          <line x1="45" y1="98" x2="194" y2="146"/>
+        </g>
+        <line x1="45" y1="98" x2="45" y2="98" />
+        <path d="M 78 98 A 33 33 0 0 1 74 65" fill="none" stroke="var(--signal)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+        <circle cx="45" cy="98" r="3.2" fill="var(--signal)"/>
+        <g transform="rotate(-22 106 66)"><rect x="96" y="55" width="20" height="30" rx="3" fill="var(--steel)" opacity="0.85"/></g>
+        <g transform="rotate(16 106 150)"><rect x="96" y="139" width="20" height="30" rx="3" fill="var(--steel)" opacity="0.6"/></g>
+        <g transform="rotate(-9 194 70)"><rect x="184" y="59" width="20" height="30" rx="3" fill="var(--steel)" opacity="0.85"/></g>
+        <g transform="rotate(9 194 146)"><rect x="184" y="135" width="20" height="30" rx="3" fill="var(--steel)" opacity="0.6"/></g>
+        <text x="45" y="118" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="var(--ink-faint)">ICR</text>
+      </svg>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="stats-row">
+      <div class="stat-card"><span class="n">46 天</span><span class="l">开发跨度</span><span class="s">2026-05-23 → 07-08</span></div>
+      <div class="stat-card"><span class="n">22 个</span><span class="l">正式版本</span><span class="s">v0.1.0 → v0.99.0</span></div>
+      <div class="stat-card"><span class="n">23 → 245</span><span class="l">后端测试</span><span class="s">+ smoke 32/32</span></div>
+      <div class="stat-card"><span class="n">0 → 50</span><span class="l">浏览器端到端场景</span><span class="s">Playwright 工作流覆盖</span></div>
+      <div class="stat-card"><span class="n">≈25K 行</span><span class="l">当前代码规模</span><span class="s">77 个 Python + 79 个 TS/TSX</span></div>
+      <div class="stat-card crit"><span class="n">NOT READY</span><span class="l">v1 门禁结论</span><span class="s">唯一阻塞：独立外部基准</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc" aria-label="目录">
+    <ol>
+      <li><a href="#origin">一、起点：一页需求</a></li>
+      <li><a href="#timeline">二、全局时间线</a></li>
+      <li><a href="#architecture">三、技术架构现状</a></li>
+      <li><a href="#eras">四、八个开发阶段</a>
+        <ol class="toc-sub">
+          <li><a href="#era-a">A 起步三部曲</a></li>
+          <li><a href="#era-b">B 全面补课</a></li>
+          <li><a href="#era-c">C 转向与场景精修</a></li>
+          <li><a href="#era-d">D 统一物理底座</a></li>
+          <li><a href="#era-e">E 完整性整改+平台重构</a></li>
+          <li><a href="#era-f">F 安全研究实战</a></li>
+          <li><a href="#era-g">G 交互建模与手柄</a></li>
+          <li><a href="#era-h">H V1 收官验证</a></li>
+        </ol>
+      </li>
+      <li><a href="#difficulties">五、关键难点全纪录</a></li>
+      <li><a href="#capabilities">六、当前产品能力全景</a></li>
+      <li><a href="#quality">七、质量与可信度体系</a></li>
+      <li><a href="#roadmap">八、遗留问题与后续规划</a></li>
+      <li><a href="#spinoff">九、衍生成果</a></li>
+      <li><a href="#summary">十、总结与方法论</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="origin" class="section">
+      <span class="kicker">01</span>
+      <h2>一、起点：一页需求</h2>
+      <p class="lede">项目从零到现在唯一的书面原始需求，是一份不到 20 行的 Markdown 文件。下面是它的全文——今天平台的每一个模型、每一条策略、每一次安全研究，都是从这五段话生长出来的。</p>
+      <div class="origin-grid">
+        <div class="req-doc">
+          <ol>
+            <li>前端需要是网页版的形式，以确保可以在 Windows 和 Mac 上面都可以正常运行。</li>
+            <li>可视化仿真的操控方式需要至少包含四种：键盘操控方向盘转角和车速；通过脚本/动作序列规定方向盘角度和车速；规定行驶轨迹（手动搭建或标准化路径模块拼接）；未来可扩展——通过 USB 模拟设备（方向盘、手柄）控制车辆。</li>
+            <li>仿真过程中需要能实时观测每个车轮的转角、转向阻力矩、每个车轮的转向中心和整车瞬心的显示，并将可实现部分以曲线记录。</li>
+            <li>悬架参数（主销后倾角、主销内倾角、车轮外倾角、车轮尺寸等运动学/动力学相关参数）需要可按需调整并按项目保存。</li>
+            <li>需要可以手动在可视化仿真路线中增加扰动设置，比如减速带、斜坡路、对开路面等。</li>
+          </ol>
+          <div class="req-note">全文引自 <code>4WIS Simulator 功能需求.md</code>，写于 2026-06-19（squash 基线时间戳），是项目全程唯一的正式需求文档——没有 PRD、没有原型图，后续所有功能都由"需求 + 实测反馈 + 工程复核"迭代出来。</div>
+        </div>
+        <div class="side-note">
+          <div class="fact-box">
+            <h4>需求条目 2 的伏笔</h4>
+            <p>"USB 模拟设备（方向盘、手柄）"当时被明确标注为"未来可扩展"、因缺硬件而暂缓。它在 v0.9.0 首次以 Web Gamepad API 落地，v0.15.0 才真正长成一套"轴 → 车轮分组"的通用绑定机制——从提出到完整实现，跨越了项目近全程。</p>
+          </div>
+          <div class="fact-box">
+            <h4>需求之外的背景研究</h4>
+            <p>仓库根目录同期还留有一份《四轮独立转向解耦控制系统：挑战与方案研究》背景资料。这提示项目动机不只是"做一个仿真器"，而是服务于 4WIS 解耦控制这一更大的工程研究命题——仿真平台是研究这个命题的工具，不是目的本身。</p>
+          </div>
+          <div class="fact-box">
+            <h4>需求条目 3 的完成度</h4>
+            <p>"每个车轮的转向中心"这一条在 v0.1.0 尚未实现，直到 v0.4.0 才作为"需求补全"专项补上——瞬心投影、带符号偏差、超限变红、CSV 通道全部到位，距最初提出过了约 20 天。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="timeline" class="section">
+      <span class="kicker">02</span>
+      <h2>二、全局时间线</h2>
+      <p class="lede">46 天内共发布 22 个版本（另有 v0.5.0 曾在代码里 bump 但从未打包发布，与 v0.6.0 合并交付）。时间线并非匀速推进——2026-07-02 单日连发 6 个版本，是整个项目节奏最密集的一天。</p>
+      <div class="rail-scroll">
+        <div class="rail">
+          <div class="era-card" style="--era-color:#2c5a73"><span class="era-date">05-23 → 05-25</span><h3>A · 起步三部曲</h3><div class="era-chips"><a class="chip" href="#era-a">v0.1.0</a><a class="chip" href="#era-a">v0.2.0</a><a class="chip" href="#era-a">v0.3.0</a></div></div>
+          <div class="era-card" style="--era-color:#4a7a5a"><span class="era-date">06-12 → 06-13</span><h3>B · 全面补课</h3><div class="era-chips"><a class="chip" href="#era-b">v0.4.0</a><a class="chip" href="#era-b">v0.6.0</a></div></div>
+          <div class="era-card" style="--era-color:#7a6a2c"><span class="era-date">06-13 → 06-18</span><h3>C · 转向与场景精修</h3><div class="era-chips"><a class="chip" href="#era-c">v0.7.0</a><a class="chip" href="#era-c">v0.7.1</a><a class="chip" href="#era-c">v0.7.2</a><a class="chip" href="#era-c">v0.7.3</a></div></div>
+          <div class="era-card" style="--era-color:#a85a17"><span class="era-date">06-20 → 06-21</span><h3>D · 统一物理底座</h3><div class="era-chips"><a class="chip" href="#era-d">v0.8.0</a><a class="chip" href="#era-d">v0.8.1</a><a class="chip" href="#era-d">v0.8.2</a></div></div>
+          <div class="era-card" style="--era-color:#8a3a3a"><span class="era-date">07-02（单日 6 版）</span><h3>E · 完整性整改 + 平台重构</h3><div class="era-chips"><a class="chip" href="#era-e">v0.9.0</a><a class="chip" href="#era-e">v0.10.0</a><a class="chip" href="#era-e">v0.11.0</a><a class="chip" href="#era-e">v0.11.1</a><a class="chip" href="#era-e">v0.12.0</a></div></div>
+          <div class="era-card" style="--era-color:#9c3b30"><span class="era-date">07-02 → 07-03</span><h3>F · 安全研究实战</h3><div class="era-chips"><a class="chip" href="#era-f">v0.13.0</a><a class="chip" href="#era-f">v0.14.0</a></div></div>
+          <div class="era-card" style="--era-color:#5a5a8a"><span class="era-date">07-03</span><h3>G · 交互建模与手柄</h3><div class="era-chips"><a class="chip" href="#era-g">v0.15.0</a><a class="chip" href="#era-g">v0.16.0</a></div></div>
+          <div class="era-card" style="--era-color:#3a3a3a"><span class="era-date">06-20 → 07-08 收敛</span><h3>H · V1 收官验证</h3><div class="era-chips"><a class="chip" href="#era-h">v0.99.0</a><span class="chip">≈100 commits</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture" class="section">
+      <span class="kicker">03</span>
+      <h2>三、技术架构现状</h2>
+      <p class="lede">纯 Web 形态：后端是 Python 仿真内核，前端是浏览器客户端，中间用 WebSocket + REST 桥接。核心原则贯穿全程——控制器只给转角/转速指令、API 只做请求响应适配、前端图表只消费后端结果，物理永远只活在一处。</p>
+      <div class="arch-diagram">
+        <div class="arch-row">
+          <div class="arch-box"><span class="t">前端 · React + TypeScript + Vite</span><span class="d">79 个 TS/TSX 源文件 · zustand 状态 · uPlot 曲线 · Konva 2D · three.js/@react-three 3D · KaTeX 公式</span></div>
+        </div>
+        <div class="arch-arrow">▲ WebSocket /ws/state 60 Hz 推送 ▼ ・ REST（experiments / runs / scenarios / faults / params）</div>
+        <div class="arch-row">
+          <div class="arch-box accent"><span class="t">仿真内核 · FastAPI + WebSocket</span><span class="d">200 Hz（5 ms）内部积分步长；77 个 Python 源文件，10,875 行</span></div>
+        </div>
+        <div class="arch-row">
+          <div class="arch-box"><span class="t">vehicle/model_core.py</span><span class="d">唯一共享数学层：滑移运动学、稳态 bicycle 求解、载荷敏感刚度、半隐式轮速积分</span></div>
+          <div class="arch-box"><span class="t">tire / kingpin / geometry</span><span class="d">Pacejka 轮胎内核、主销力矩四项分解、连杆几何求解</span></div>
+          <div class="arch-box"><span class="t">controller</span><span class="d">9 类控制策略，含 RWS 共享库 rws_common、故障重构 fault_reconfig</span></div>
+          <div class="arch-box"><span class="t">experiment</span><span class="d">schema / SimSession / kpi / store / batch —— 实验即文件，运行即资产</span></div>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="stack-table">
+          <thead><tr><th>层</th><th>技术选型</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>后端框架</td><td>FastAPI ≥0.115 · uvicorn · websockets · pydantic ≥2.7 · numpy · pyyaml</td><td>零重依赖；进程池等扩展仅用标准库预留</td></tr>
+            <tr><td>前端框架</td><td>React · TypeScript · Vite</td><td>生产构建 tsc -b + vite build</td></tr>
+            <tr><td>状态与图表</td><td>zustand · uPlot · Konva/react-konva</td><td>2D 画布与实时曲线；history/trajectory 走定时器重算模式</td></tr>
+            <tr><td>3D 与公式</td><td>three.js · @react-three/fiber · @react-three/drei · katex</td><td>3D 懒加载独立 vendor chunk，预算 700 kB 内</td></tr>
+            <tr><td>测试</td><td>pytest · pytest-asyncio · Playwright</td><td>后端 245 项 + smoke 32 项 + 浏览器 50 场景</td></tr>
+            <tr><td>布局系统</td><td class="mono">尚未引入 dockview</td><td>已批准但排在 Phase B-3，README/依赖列表中仍未出现</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="eras" class="section">
+      <span class="kicker">04</span>
+      <h2>四、八个开发阶段</h2>
+      <p class="lede">按叙事而非严格版本号切分为八个阶段。每个阶段先讲背景与交付，遇到的核心难点在标注处展开、并在下一节做完整的技术复盘。</p>
+
+      <article class="era-block" id="era-a" style="--era-color:#2c5a73">
+        <div class="era-block-head">
+          <span class="era-tag">ERA A</span><h3>起步三部曲</h3><span class="era-range">2026-05-23 → 05-25 · v0.1.0–v0.3.0</span>
+        </div>
+        <p>三天内从零搭出可跑的 4WIS 仿真骨架：运动学模型、控制策略、可视化、记录、3D、多体动力学、便携分发全部到位。Phase 划分严格对应需求文档的展开顺序。</p>
+        <div class="version-list">
+          <details class="version"><summary><span class="v-tag">v0.1.0</span><span class="v-date">05-23</span><span class="v-title">Phase 1 · 运动学基座</span></summary><div class="v-body"><p>运动学 4WIS 模型；5 种控制策略（含理想阿克曼解析解，四轮瞬心严格共点、零滑移）；WebSocket 状态流 <code>/ws/state</code>；2D 可视化；YAML 项目文件。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.2.0</span><span class="v-date">05-24</span><span class="v-title">Phase 2 · 记录与扰动</span></summary><div class="v-body"><p>Recording/CSV 导出；μ 路面扰动；YAML 动作脚本；简化动力学模型；悬架阻力矩；减速带/斜坡扰动；FMU/MATLAB 适配器；smoke 测试 24 项。同日用户手测反馈 5 个问题，团队产出系统性根因分析文档，明确排到 Phase 3 交付后再统一处理。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.3.0</span><span class="v-date">05-25</span><span class="v-title">Phase 3 · 3D、多体、便携包</span></summary><div class="v-body"><p>3D 可视化（Three.js）；轨迹编辑器 + pure-pursuit 跟踪；14 自由度多体动力学；A/B 双跑对比；路面摩擦预设；定速巡航 + 回正速度滑块；转向作动器一阶滞后；深浅主题；便携一键启动包。同版完成 P0/P1/P2 三批改进（键盘保持模式、对开路面 μ 可视化、减速带数值修正、脚本↔路桩关联、kingpin 力矩单调性修复、系统性轮胎/伺服标定）；默认车型换装智己 LS9；后端端口 8000→8010 避让本机 LLM 服务；摩擦系数改绝对值语义。</p></div></details>
+        </div>
+        <div class="callout callout-turn"><strong class="tag">难点提要</strong><p>键盘归零导致无法定速/定转角、对开路面"μ 锁存"疑云、减速带数值发散、kingpin 力矩非单调、中速甩尾疑似模型发散——六个问题里五个是标定/语义问题，一个是真 bug，详见 §五「假警报陷阱」。</p></div>
+      </article>
+
+      <article class="era-block" id="era-b" style="--era-color:#4a7a5a">
+        <div class="era-block-head">
+          <span class="era-tag">ERA B</span><h3>全面补课</h3><span class="era-range">2026-06-12 → 06-13 · v0.4.0 / v0.6.0</span>
+        </div>
+        <p>Phase 3 之后有约 18 天空档，重新拾起项目时做的是一轮"补课"：把需求文档里还没做完的条目补齐，同时把工程质量和验证套件补上。</p>
+        <div class="version-list">
+          <details class="version"><summary><span class="v-tag">v0.4.0</span><span class="v-date">06-12</span><span class="v-title">需求补全 + 物理保真 + 工程质量 + UX</span></summary><div class="v-body"><p>每轮转向中心与偏差可视化（需求条目 3 补全）；扰动画布 GUI 编辑；车辆/悬架参数编辑面板（需求条目 4 补全）；Pacejka 轮胎模型；pure-pursuit 曲率限速；图表导出；472 行 36 端点的 rest.py 按资源拆分路由；测试 23 → 77，smoke 28 → 32。修复 <code>vehicle_icr_from_velocity</code> 符号镜像 bug、保存项目丢失 scene 的 bug、3 个过期 pytest。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.6.0</span><span class="v-date">06-13</span><span class="v-title">策略设计与验证套件</span></summary><div class="v-body"><p>（v0.5.0 曾 bump 但从未打包发布，与本版合并交付）策略设计器（曲线映射 + ICR 拖拽两种所见即所得模式）；开环激励测试（阶跃/正弦/扫频/双移线）；策略评分 7 项 KPI + A/B 捕获对比；分体齿条力链（主销力矩→拉杆力→齿条轴向力→电机需求力矩）；故障注入框架（6 种，ISO 26262 导向）；Python 热重载策略插件；浏览器 JS 策略沙箱；车速单位改 km/h；测量工具。测试 77 → 112。</p></div></details>
+        </div>
+        <div class="callout callout-turn"><strong class="tag">难点提要</strong><p>开环激励的节流阀语义误用，一度被误判为"低速数值发散"；history/trajectory 原地 mutate 导致 zustand 选择器不重渲染。详见 §五「假警报陷阱」。</p></div>
+      </article>
+
+      <article class="era-block" id="era-c" style="--era-color:#7a6a2c">
+        <div class="era-block-head">
+          <span class="era-tag">ERA C</span><h3>转向与场景精修</h3><span class="era-range">2026-06-13 → 06-18 · v0.7.0–v0.7.3</span>
+        </div>
+        <p>这一阶段把"后轮转向"从单一策略做成一整套方法族，把仿真场景从空地做成有街景的小镇，把负载分析页从"看起来对"做成真正物理自洽。</p>
+        <div class="version-list">
+          <details class="version"><summary><span class="v-tag">v0.7.0</span><span class="v-date">06-13</span><span class="v-title">后轮转向方法族 + 界面重构</span></summary><div class="v-body"><p>4 种 RWS 策略（车速调度/横摆反馈/瞬态前馈/模型跟踪）+ 策略设计器新增 k(vx) 调度模式；主界面重构为 5 个分组 Tab；22 个面板全部内嵌帮助；3D 车轮转向方向修复；RWS 默认增益经 <code>tune_rws.py</code> 阶跃工况整定，120 km/h 阶跃下四种 RWS 侧偏角均收敛到 ≈0°。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.7.1</span><span class="v-date">06-14</span><span class="v-title">RWS 归并 + 稳定性修复 + 标准场景</span></summary><div class="v-body"><p>4 个 RWS 策略归并为 1 个策略 + 子模式下拉；修复三种反馈模式在运动学模型上的剧烈振荡；ICR 右侧 bug 修复；标准场景路况上线（广场/城市路口/小赛道/上海赛车场近似，2D+3D）。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.7.2</span><span class="v-date">06-14</span><span class="v-title">小镇路网 + 3D 立体建筑</span></summary><div class="v-body"><p>"城市路口"场景替换为仿德国 Schwäbisch Gmünd 老城特征的程序化小镇路网（椭圆环路+密集内部街网+市集/教堂广场+小河+174 栋建筑）；3D 建筑改 ExtrudeGeometry 拉伸出高度。仅为特征程序化近似，非测绘精度或版权地图复制。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.7.3</span><span class="v-date">06-18</span><span class="v-title">负载页物理补完 + 组件拆分</span></summary><div class="v-body"><p>用户追问"为什么不同车速下电机零输出位置都是 0°"，牵出 sweep 模型此前把驱动力/camber thrust/toe 全部忽略的假象。补入滚阻+风阻、camber thrust、静态 toe、kingpin 交叉项四类物理，新增 δ_eq 敏感度面板；<code>LoadAnalysisPage.tsx</code> 从 1061 行拆分为 ~290 行编排 + 9 个子组件；sweep 内部轮胎模型加缓存提速。测试 128 → 139。</p></div></details>
+        </div>
+        <div class="callout callout-turn"><strong class="tag">难点提要</strong><p>RWS 反馈模式的运动学代数环振荡、ICR atan2 符号 bug、δ_eq≡0 是模型恒等式而非物理结论的认知纠正。前者详见 §五「控制回路代数环」。</p></div>
+      </article>
+
+      <article class="era-block" id="era-d" style="--era-color:#a85a17">
+        <div class="era-block-head">
+          <span class="era-tag">ERA D</span><h3>统一物理底座</h3><span class="era-range">2026-06-20 → 06-21 · v0.8.0–v0.8.2</span>
+        </div>
+        <p>一次完整的底盘动力学 review 之后，团队决定不再继续"加功能"，先解决物理散落在五处、单轮 sweep 看不见车速依赖这两个根本问题。这一阶段也是项目第一次推送到 GitHub。</p>
+        <div class="version-list">
+          <details class="version"><summary><span class="v-tag">v0.8.0</span><span class="v-date">06-20</span><span class="v-title">model_core 统一底座 + bicycle 耦合 + 讲解页</span></summary><div class="v-body"><p><code>vehicle/model_core.py</code> 成为唯一共享数学层；<code>tire.pacejka_combined_forces</code> 统一轮胎内核；kingpin 力矩四项分解；<code>model_registry</code> 模型注册中心（primary 两层 + research 多体）；W1 稳态 bicycle 耦合——单轮 sweep 不再假设车身锁直行；载荷敏感刚度 c_α(Fz)；新增"数学模型"讲解页（10 章 + 9 张教学 SVG + 3 个交互 demo，只读教学端点复用真实底座）。本版由人机异步接力完成——用户离线期间 Codex 先做完底座统一，回来后再接力 bicycle 耦合与讲解页。测试 144 → 161，首次 squash 推送 GitHub。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.8.1</span><span class="v-date">06-20</span><span class="v-title">body_coupling 口径开关</span></summary><div class="v-body"><p>W1 bicycle 耦合让单轮 sweep 更贴近驾驶手感，但工程师另有"无论车身怎么响应，单轮自己要扛住多少力"的选型需求。新增 <code>body_coupling</code> 参数（vehicle 整车装载 / isolated 单轮台架），贯穿 sweep、敏感度、kingpin 分解 demo 全链路，两种口径共存而非二选一。测试 167。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.8.2</span><span class="v-date">06-21</span><span class="v-title">kingpin 气胎拖距重复计算修正</span></summary><div class="v-body"><p>依据姊妹项目《底盘与转向动力学讲义》交叉核对《Steering Handbook》时，发现气胎拖距被结构性计入两次、符号相反几乎完全抵消，且抵消最严重的区间正是 δ_eq 所在的小转角区。修正后气胎拖距只经 Mz 一条通道进入且与机械拖距同向叠加。同时完成负载页/工作台 UX 层级增强、新增可关闭"快速开始"引导卡。测试 168。</p></div></details>
+        </div>
+        <div class="callout callout-turn"><strong class="tag">难点提要</strong><p>物理"重复造轮子"与单轮 sweep 的车速盲区、一个 kingpin 力矩公式的三次迭代订正。均在 §五 有完整复盘。</p></div>
+      </article>
+
+      <article class="era-block" id="era-e" style="--era-color:#8a3a3a">
+        <div class="era-block-head">
+          <span class="era-tag">ERA E</span><h3>完整性整改 + 平台化重构</h3><span class="era-range">2026-07-02（单日 6 版）· v0.9.0–v0.12.0</span>
+        </div>
+        <p>项目节奏最密集的一天：先做一次"整车/底盘控制/软件产品"三视角系统审查，揪出一个潜伏两个月的数值稳定性 bug；随即批准并连续交付 v1.0 平台重构的 Phase A、B-1、B-2、C-1。</p>
+        <div class="version-list">
+          <details class="version"><summary><span class="v-tag">v0.9.0</span><span class="v-date">07-02</span><span class="v-title">时域物理补齐 · 轮速积分稳定性 · 手柄输入</span></summary><div class="v-body"><p>把负载页早补的物理（阻力、气动升力、camber thrust、静态 toe）同步接入时域模型；修复潜伏于 v0.8.2 的轮速自旋数值失稳（详见 §五）；multibody 补上坡道纵向重力；Web Gamepad API 手柄输入首次落地；FastAPI 版本号硬编码 bug 修复。测试 179。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.10.0</span><span class="v-date">07-02</span><span class="v-title">v1 重构 Phase A · 实验底座</span></summary><div class="v-body"><p><code>sim4wis.experiment</code> 包全量落地：schema / SimSession 无头会话 / KPI 后端化 / run 结果资产 / 批量变体矩阵 + REST。顺带修复轮速伺服追斜坡的结构性超调（条件积分防饱卷 + 指令加速度前馈）。验收：6-run DLC 矩阵 96 秒仿真只需 ≈4 秒墙钟，约 23 倍实时。测试 188。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.11.0</span><span class="v-date">07-02</span><span class="v-title">v1 重构 Phase B-1 · 工作流导航</span></summary><div class="v-body"><p>侧栏改工作流七段导航 rail；试验页（实验 CRUD/机动编辑/运行矩阵/进度/KPI 小表）；分析页（run 浏览器/KPI 对比表/通道叠图/轨迹俯视）首次上线。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.11.1</span><span class="v-date">07-02</span><span class="v-title">v1 重构 Phase B-2 · 回放与命令面板</span></summary><div class="v-body"><p>run 回放（≤6 辆幽灵车叠放、播放倍速、时间轴、叠图黄色游标同步）；⌘K / Ctrl+K 命令面板（页面/策略/模型全键盘导航）。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.12.0</span><span class="v-date">07-02</span><span class="v-title">v1 重构 Phase C-1 · 时域载荷敏感度</span></summary><div class="v-body"><p>时域轮胎模型接入 c_α(Fz) = c_α0·(Fz/Fz,nom)^0.8 载荷敏感刚度，只缩放 c_α 不动 c_κ，轮速伺服整定不受影响。测试 190。</p></div></details>
+        </div>
+        <div class="callout callout-turn"><strong class="tag">难点提要</strong><p>潜伏两个月的轮速自旋数值失稳、"实时驾驶仪表台"到"仿真实验平台"的产品范式转型诊断——本阶段最重的两个故事，详见 §五。</p></div>
+      </article>
+
+      <article class="era-block" id="era-f" style="--era-color:#9c3b30">
+        <div class="era-block-head">
+          <span class="era-tag">ERA F</span><h3>安全研究实战</h3><span class="era-range">2026-07-02 → 07-03 · v0.13.0–v0.14.0</span>
+        </div>
+        <p>平台化重构完成主干的当天，就拿它做了第一个"真研究"：单轮转向失效的 ISO 26262 可控性定量分析。这不是又一个功能，而是对整套实验-运行-资产主干的第一次实战检验。</p>
+        <div class="version-list">
+          <details class="version"><summary><span class="v-tag">v0.13.0</span><span class="v-date">07-02</span><span class="v-title">单轮失效安全研究首发</span></summary><div class="v-body"><p><code>FaultSpec</code> 实验级定时故障注入（卡死零位/卡死实际角/卡死指定角/限幅）；<code>fault_reconfig</code> 容错降级策略（同轴镜像力抵消 + ESP 级横摆 PI + 减速度限幅降级）；一键复现脚本（22 个仿真 run）；自包含 HTML 论文级报告。未缓解时高速直行单轮卡死 4° 判为 C3（TTLD 0.8–0.9 s）；缓解后全矩阵消灭 C3。测试 194。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.14.0</span><span class="v-date">07-03</span><span class="v-title">机构差异化失效 + 参数敏感性</span></summary><div class="v-body"><p>按实际机构重做：前轮无自锁（逆效率≈0.6）→ 断电即自由脚轮（机构 ODE 半隐式积分）；后轮自锁 → 失效即锁死当时位置。新增参数×故障×工况敏感性流水线（车轮/车身/底盘 9 参数扫描）。两条反直觉结论：轮胎侧偏刚度和横摆惯量是第一敏感因子、路面 μ 影响近乎平坦；主销后倾对失效可控性近零敏感、主销偏置 scrub 才是真正的几何抓手。测试 196。</p></div></details>
+        </div>
+        <div class="callout callout-turn"><strong class="tag">难点提要</strong><p>纯运动学 ICR 投影重构被数据否决、a_y 绝对判据必须改为相对基线的增量判据——两条方法论纠偏详见 §五。</p></div>
+      </article>
+
+      <article class="era-block" id="era-g" style="--era-color:#5a5a8a">
+        <div class="era-block-head">
+          <span class="era-tag">ERA G</span><h3>交互建模与手柄</h3><span class="era-range">2026-07-03 · v0.15.0–v0.16.0</span>
+        </div>
+        <p>把两块"仍是纯表单"的界面——手柄配置、车辆参数——升级为可交互、可拖拽的建模工具。</p>
+        <div class="version-list">
+          <details class="version"><summary><span class="v-tag">v0.15.0</span><span class="v-date">07-03</span><span class="v-title">手柄映射机制</span></summary><div class="v-body"><p>手柄输入重构为"轴 → 车轮分组"通用绑定机制：assisted（经典）/ direct（直控，前后轴独立/左右侧独立/逐轮直控/蟹行四种分组预设）/ holonomic（全向车身）三顶层模式；实时校准面板拨动摇杆即自动识别物理轴，设备无关。测试 202。</p></div></details>
+          <details class="version"><summary><span class="v-tag">v0.16.0</span><span class="v-date">07-03</span><span class="v-title">车辆页几何工作室</span></summary><div class="v-body"><p>车辆页从纯数值表单升级为"几何工作室"：三张随参数实时重建、可拖点反写参数的 2D 示意图（整车俯视/主销·车轮/前桥齿条硬点）；<code>geometryModel.ts</code> 纯函数成为唯一数学源，车辆页三图与理论页示意图共用。修复刚性齿条右轮镜像 bug（否则齿条"拉伸"而非平移，左右对称无阿克曼差）；横摆惯量校验公式改用 m·a·b 经验估算修正误报。前端 type-check + build 通过，后端 202 项无回归。</p></div></details>
+        </div>
+      </article>
+
+      <article class="era-block" id="era-h" style="--era-color:#3a3a3a">
+        <div class="era-block-head">
+          <span class="era-tag">ERA H</span><h3>V1 收官验证</h3><span class="era-range">2026-06-20 → 07-08 集中收敛 · v0.99.0 · ≈100 commits</span>
+        </div>
+        <p>v0.16.0 之后，项目几乎不再新增功能，转而用近 100 次提交做一件事：把"我们做了很多东西"证明成"这些东西可以被信任"。</p>
+        <div class="version-list">
+          <details class="version"><summary><span class="v-tag">v0.99.0</span><span class="v-date">07-08</span><span class="v-title">V1 候选收敛：除独立外部基准外全量门禁</span></summary><div class="v-body"><p>建立 <code>validation_matrix.md</code> L0–L4 可信度分级；黄金实验 KPI 回归门禁；参考 benchmark 协议 + incoming intake 流水线（CSV 归一化、provenance 强制字段、SHA-256 原始文件校验、防"生成件冒充证据"）；Playwright 浏览器自动化从 0 做到 50 个工作流场景（含大量异常态覆盖）；前端主入口 bundle 从约 1018 kB 压缩到 355 kB，样式按页面/组件私有化拆分；<code>pre_release_check.py</code> + <code>check_v1_readiness.py</code> 把版本号、lockfile、测试、smoke、黄金实验、构建、发布材料收敛进同一条机械化门禁。测试 245，smoke 32/32，Playwright 50 passed。结论：<strong>NOT READY</strong>，唯一 strict blocker 是尚无通过检查的独立外部/实测基准。</p></div></details>
+        </div>
+        <div class="callout callout-turn"><strong class="tag">难点提要</strong><p>245 项测试全绿仍如实标注 v1 未就绪——本项目最重要的一条工程文化，详见 §五「工程诚信」。</p></div>
+      </article>
+
+    </section>
+
+    <section id="difficulties" class="section">
+      <span class="kicker">05</span>
+      <h2>五、关键难点全纪录</h2>
+      <p class="lede">从 46 天历程里挑出八个最有代表性的技术难点——不是简单的 bug 清单，而是每一个都带来了方法论上的调整，并且这个调整在之后被反复沿用。</p>
+
+      <div class="diff-card" id="diff-1">
+        <div class="diff-head">
+          <span class="diff-num">01</span>
+          <div><h3>假警报陷阱：把"语义误用"误诊为"模型物理发散"</h3>
+            <div class="diff-meta"><span class="tagv">v0.3.0 前</span><span class="tagv">v0.6.0</span><span class="tagera">标定 / 控制器</span></div>
+          </div>
+        </div>
+        <div class="diff-sub"><h4>现象</h4><p>至少两次，团队观察到"车辆在某工况下产生了物理上不合理的巨大侧滑并持续打转"，第一反应都是怀疑动力学模型或轮胎标定错了。</p></div>
+        <div class="diff-sub"><h4>案例一 · 真实标定问题</h4><p>μ=0.9、恒定转向 0.25、中速行驶时，简化动力学模型出现 vy≈−7.8 m/s 的巨大侧滑并持续打转。排查后确认是 <code>LinearTireModel</code> 刚度、轮速伺服增益、无转向速率限制三者耦合导致闭环极易发散——这次是真 bug，经系统标定（轮胎 c_α 70k→120k、转向作动器加一阶滞后+速率限幅）解决。</p></div>
+        <div class="diff-sub"><h4>案例二 · 假警报</h4><p>开环激励测试中，同一辆车"温和的正弦转向指令也会甩尾"，一度被记为"简化动力学模型低速数值发散"疑似 bug。深入复现后发现：模型里 <code>throttle × v_max = 目标车速</code>（这是速度指令，不是加速踏板开度），而激励模块用比例控制器 <code>0.35×(目标车速 − vx)</code> 在 vx≈0 时直接饱和到 throttle=1——相当于向模型下达"目标车速 ≈200 km/h"的指令，车辆当然甩尾。根因是节流阀语义理解错误，模型本身无需任何改动，改为开环 <code>throttle = 目标速度 / v_max</code> 后问题消失。</p></div>
+        <div class="diff-sub"><h4>教训</h4><p>"看起来像物理发散的现象，很多时候是驱动信号或控制器把手的语义用错了。"在断言"数值不稳定"之前，先确认输入激励本身是否合理——这条经验后来被专门记录下来，避免同类现象被反复误判。</p></div>
+      </div>
+
+      <div class="diff-card" id="diff-2">
+        <div class="diff-head">
+          <span class="diff-num">02</span>
+          <div><h3>潜伏两个月的数值稳定性 bug：轮速自旋积分失稳</h3>
+            <div class="diff-meta"><span class="tagv">埋于 v0.8.2</span><span class="tagv">修于 v0.9.0</span><span class="tagera">数值方法</span></div>
+          </div>
+        </div>
+        <div class="diff-sub"><h4>发现契机</h4><p>v0.9.0 做"完整性不够"的三视角系统审查，把负载页早在 v0.7.3 就补全的物理项（滚阻+风阻、气动升力、camber thrust、静态 toe）同步接入时域模型后，暴露出一个从 v0.8.2 起就已潜伏、近两个月未被发现的数值失稳。</p></div>
+        <div class="diff-sub"><h4>根因</h4><p>轮速自旋 ODE 的线性化模态 λ = c_κ·r²/(I_w·v)，在车速 v≤10 m/s 时，λ·h（h=5 ms 积分步长）超出 RK4 数值方法在实轴上的稳定域边界（约 2.78）。为什么两个月没被发现：此前时域模型在平路巡航工况下，稳态平衡点恰好是"零纵向力"，这个不稳定模态从未被真正激励起来——直到本版补入持续存在的纵向力（滚阻、风阻、坡道分量、加减速瞬态），才把这个原本静默的模态"唤醒"。</p></div>
+        <div class="stat-pair">
+          <div class="stat-block before"><span class="stat-label">修复前 · 10 m/s 巡航轮胎纵滑率</span><span class="stat-value">|κ| 振荡达 0.13–0.76</span></div>
+          <div class="stat-arrow">→</div>
+          <div class="stat-block after"><span class="stat-label">修复后 · 1–25 m/s 全速域稳态</span><span class="stat-value">|κ| ≤ 0.002</span></div>
+        </div>
+        <div class="diff-sub"><h4>解法</h4><p>不是简单调小步长或加阻尼掩盖，而是把轮速自由度整体拆出两个时域模型的 RK4 状态向量，改用 <code>model_core.semi_implicit_wheel_spin</code> 半隐式积分——线性滑移区用后向欧拉（无条件稳定），摩擦饱和区（∂Fx/∂ω≈0）保持前向欧拉以避免隐式分母压制打滑本身。</p></div>
+        <div class="diff-sub"><h4>意义</h4><p>这是全项目最具"经典数值方法"色彩的一次调试——通过线性化求特征值、和标准积分方法的稳定域对比，精确定位问题根因，而不是靠试错调参。也提示一个通用教训："能跑"不等于"数值稳定"，尤其当某个自由度的失稳模态恰好被当前测试工况的平衡点掩盖时。</p></div>
+      </div>
+
+      <div class="diff-card" id="diff-3">
+        <div class="diff-head">
+          <span class="diff-num">03</span>
+          <div><h3>物理"重复造轮子"到统一底座，看见车速依赖</h3>
+            <div class="diff-meta"><span class="tagv">v0.8.0</span><span class="tagera">架构 / 建模保真度</span></div>
+          </div>
+        </div>
+        <div class="diff-sub"><h4>问题一 · 物理散落五处</h4><p>轮胎力、kingpin 转向力矩、载荷转移、bicycle 耦合这同一份物理，在三个时域模型（运动学/简化动力学/多体）加上准静态负载页、加上控制器，一共五个地方各写了一遍。任何一次修正都可能遗漏其中一处，不同实现之间会不知不觉产生偏差——后来 v0.9.0 才补齐的"时域/负载页物理割裂"问题，本质上正是这个根因的延续。</p></div>
+        <div class="diff-sub"><h4>问题二 · 单轮 sweep 约掉了车速</h4><p>负载分析页的核心工具此前假设"车身锁死直行"，即 α = −δ，把车速这个变量在数学上直接约掉了——图上完全看不到"高速时线性区收缩、转角-侧偏关系随车速变化"这一 4WIS 工程师非常关心的现象。</p></div>
+        <div class="diff-sub"><h4>解法</h4><p>新建 <code>vehicle/model_core.py</code> 作为唯一共享数学层（不依赖 simulator/controller/API/前端），三个时域模型和负载页全部改为调用它；同时把单轮 sweep 升级为真正的稳态 bicycle 耦合——对每个 (车速, δ) 求解 2×2 方程组（侧向力平衡 + 稳态横摆力矩平衡）得到车身姿态 (β, r)，再反推每个轮子的真实侧偏角。以 LS9 对称底盘为例，前左轮转 δ 时 α_FL ≈ −δ·(1/2 + mV²/(8·c_α·L))：增益随车速平方增长，从静止时的 0.5 一路涨到 50 km/h 时的 2.89，转向饱和点相应地从约 5.7° 收缩到约 1°。</p></div>
+        <div class="diff-sub"><h4>协作花絮</h4><p>这次重构是一次典型的多 AI 工具异步接力：用户离线期间，Codex 先完成了底座统一的基础工作；用户回来后，由 Claude 接力完成 W1 bicycle 耦合与数学模型讲解页，两段工作在同一版本内无缝衔接。</p></div>
+      </div>
+
+      <div class="diff-card" id="diff-4">
+        <div class="diff-head">
+          <span class="diff-num">04</span>
+          <div><h3>一个公式的三次迭代：kingpin 转向阻力矩的持续订正</h3>
+            <div class="diff-meta"><span class="tagv">v0.7.3</span><span class="tagv">v0.8.0</span><span class="tagv">v0.8.2</span><span class="tagera">物理公式复核</span></div>
+          </div>
+        </div>
+        <div class="diff-sub"><h4>为什么难</h4><p>主销转向阻力矩由多个物理项叠加（侧向力经力臂、纵向力经偏置、轮胎自回正力矩、载荷居中项等），任何一项的符号或量级错误都会让 δ_eq（自然回正角）这类关键工程结论产生偏差。这个公式在项目里被连续订正了三次，没有一次是推倒重写。</p></div>
+        <div class="diff-sub"><h4>第一次 · v0.7.3 补项</h4><p>发现驱动力经主销后倾角的二阶耦合项 <code>Fx·r·tan(caster)·sin(δ)</code> 此前被忽略，补入后公式在 δ=0 附近的斜率更真实。</p></div>
+        <div class="diff-sub"><h4>第二次 · v0.8.0 删伪项</h4><p>做统一底座复核时，发现另一项 <code>−Fx·trail·sin(δ)</code> 在几何上根本不成立——Fx 与 trail 方向平行，叉乘恒等于零，是一个"看似合理实则不存在"的伪物理项，直接删除。</p></div>
+        <div class="diff-sub"><h4>第三次 · v0.8.2 交叉校验揪出对消 bug</h4><p>依据姊妹项目《底盘与转向动力学讲义》参考《Steering Handbook》做数学口径复核时，发现气胎拖距 t_p 被结构性地计入了两次——一次悄悄并入 Fy 的机械力臂，一次又作为独立的自回正力矩 Mz 单独算了一次，两者符号相反、几乎完全抵消，且抵消在小转角区最严重——恰好是 δ_eq 工程结论最关心的区域。</p></div>
+        <div class="diff-sub"><h4>意义</h4><p>第三次订正如果没有姊妹项目独立理论写作过程"逼着团队把每个公式重新从教科书推一遍"的交叉校对，很可能会一直藏在代码里。这提示了一个方法论：多项叠加的工程物理公式，光靠单元测试的数值断言不够，还需要"从不同源头独立推导再对照"的复核方式。</p></div>
+      </div>
+
+      <div class="diff-card" id="diff-5">
+        <div class="diff-head">
+          <span class="diff-num">05</span>
+          <div><h3>控制回路代数环：后轮转向反馈模式的运动学振荡</h3>
+            <div class="diff-meta"><span class="tagv">v0.7.1</span><span class="tagera">控制系统调试</span></div>
+          </div>
+        </div>
+        <div class="diff-sub"><h4>现象</h4><p>v0.7.0 一口气实现了 4 种后轮转向（RWS）控制方法，其中 3 种（横摆反馈、稳态+瞬态、模型跟踪）在 v0.7.1 试用阶段被发现在运动学模型上剧烈摆动，实测幅值达 ±33°。</p></div>
+        <div class="diff-sub"><h4>根因</h4><p>运动学模型没有轮胎侧偏/滑移，车辆会瞬时精确执行任何转向指令并产生对应的横摆角速度。而这几种反馈策略的结构是 <code>δr = g2·yaw_rate</code> 这样的闭环——运动学模型下 yaw_rate 又几乎瞬时地由 δr 决定，于是 δr 与 yaw_rate 之间形成了一个没有阻尼、没有相位滞后的代数环，只要环增益大于 1，就会在正负限幅之间持续振荡、永不收敛。</p></div>
+        <div class="diff-sub"><h4>解法</h4><p>对反馈信号（横摆角速度、转角变化率）加一阶低通滤波（τ=0.08 s）引入相位滞后打破代数环，同时下调增益（g2 0.35→0.20、g_yaw 0.20→0.10），三档模型全部稳定，并补充运动学稳定性回归测试防止再犯。</p></div>
+        <div class="diff-sub"><h4>意义</h4><p>一个经典的"模型保真度反而暴露控制器设计缺陷"案例——运动学模型因为"太干净"（没有轮胎滞后这个天然的低通环节），把控制器本身缺乏阻尼的问题暴露了出来；在更真实的动力学模型上，轮胎滑移的滞后恰好掩盖了同样的设计缺陷。</p></div>
+      </div>
+
+      <div class="diff-card" id="diff-6">
+        <div class="diff-head">
+          <span class="diff-num">06</span>
+          <div><h3>安全研究方法论纠偏：两次被数据推翻的直觉</h3>
+            <div class="diff-meta"><span class="tagv">v0.13.0</span><span class="tagv">v0.14.0</span><span class="tagera">研究方法论</span></div>
+          </div>
+        </div>
+        <div class="diff-sub"><h4>纠偏一 · 失效后的控制目标该是什么</h4><p>团队最初尝试了一个"看起来更精确"的方案——用剩余健康轮反解出新的瞬心投影，让车辆整体运动尽量保持"无侧滑几何一致"。仿真数据显示，这个方案在直行工况下会让车辆退化为蟹行（5 秒横向漂移 31 米），过渡阶段横摆角速度 22°/s 反而超过不缓解时的基线 8°/s——方案被数据否决。真正有效的原则是反直觉的：<strong>失效后的控制目标应该是"路径保持"（力平衡），而不是"运动学一致"（零刮胎）</strong>。最终方案改为同轴镜像力抵消 + ESP 级横摆 PI，直接在力平衡层面稳定车辆。</p></div>
+        <div class="diff-sub"><h4>纠偏二 · 可控性判据该用绝对值还是增量</h4><p>最初想直接用侧向加速度 a_y 的绝对值作为可控性判据，但发现稳态过弯本身名义 a_y 就有 4.6 m/s²，会把正常过弯误判为失控（C3 级）。改为使用相对于同工况无故障参考的<strong>增量 Δa_y</strong> 才是正确判据。</p></div>
+        <div class="diff-sub"><h4>意义</h4><p>两条教训指向同一件事：直觉上"看起来更精确/更安全"的方案，在失效场景下反而是错的；唯一可信的仲裁者是仿真数据本身，方法论必须为数据让路，而不是反过来。</p></div>
+      </div>
+
+      <div class="diff-card" id="diff-7">
+        <div class="diff-head">
+          <span class="diff-num">07</span>
+          <div><h3>产品范式转型：从"实时驾驶仪表台"到"实验平台"</h3>
+            <div class="diff-meta"><span class="tagv">v0.9.0 诊断</span><span class="tagv">v0.10–0.12 落地</span><span class="tagera">产品架构</span></div>
+          </div>
+        </div>
+        <div class="diff-sub"><h4>一句话诊断</h4><p>把产品对标 CarSim/CarMaker 之后得出的结论："它们的'好用'不是皮肤，而是一整套工作流范式——一切皆数据集、试验是一等公民、求解器与界面解耦、每次运行留下可分析的结果资产。而当时的产品本质是一个'实时驾驶仪表台'，不是'仿真实验平台'。"</p></div>
+        <div class="diff-sub"><h4>具体差距</h4><p>机动（开环激励）此前完全跑在前端 wall-clock 定时器上——不可复现、不能批量；KPI 算在浏览器 30 秒环形缓冲区里——关掉浏览器就没了，无法跨版本回归比较；求解器只有"1 倍实时"一种形态，即便物理本身能跑到 100 倍以上实时。</p></div>
+        <div class="diff-sub"><h4>推进方式</h4><p>没有先急着重做界面（"UI 重构如果先做，只是给仪表台换壳"），而是先诊断出真正的根因——缺"实验(Experiment)→运行(Run)→结果(Artifact)"这条主干——批准清晰的 A→B→C 分期路线后再动手，且严格按既定顺序执行。Phase A 的验收标准是量化的：<code>LS9 × {前轮转向, RWS 车速调度, 理想阿克曼} × ISO 双移线 @ 60/80/100 km/h</code> 共 9 个 run 出 KPI 对比表、全程 &lt; 1 分钟；实测 6-run DLC 矩阵 96 秒仿真只需 ≈4 秒墙钟，约 23 倍实时。</p></div>
+        <div class="diff-sub"><h4>意义</h4><p>一次"诊断先于开发"的范式转型样本——批准的分期路线全程没有因为"想先看到界面变化"而被打乱。</p></div>
+      </div>
+
+      <div class="diff-card" id="diff-8">
+        <div class="diff-head">
+          <span class="diff-num">08</span>
+          <div><h3>工程诚信：245 项测试全绿，仍如实标注"NOT READY"</h3>
+            <div class="diff-meta"><span class="tagv">v0.99.0</span><span class="tagera">质量文化</span></div>
+          </div>
+        </div>
+        <div class="diff-sub"><h4>背景</h4><p>v0.99.0 是项目投入最多、却几乎不添加新功能的一个版本——近 100 次提交，几乎全部是异常态测试覆盖、样式拆分、发布物料校验和可信度门禁脚本，标志着项目从"做功能"转向"证明可信"的收尾阶段。</p></div>
+        <div class="diff-sub"><h4>做到了什么程度</h4><p>建立 L0–L4 五级可信度分级体系；黄金实验 KPI 回归门禁；参考 benchmark 协议——不仅要求解析对照，还专门开发了"外部/实测数据接入"完整流水线（CSV 归一化、时间窗裁剪、指标片段生成、SHA-256 原始文件校验、provenance 强制字段），专门防止"生成的数据冒充独立证据"这种自我欺骗；浏览器端到端测试从 0 做到 50 个工作流场景；前端主入口 bundle 从约 1018 kB 压缩到 355 kB。</p></div>
+        <div class="gate-banner">
+          <span class="big">check_v1_readiness.py --strict-v1</span>
+          <p>后端 245 项测试全过、smoke 32/32、Playwright 50 场景全过——但结论依旧是 <strong>NOT READY</strong>。唯一 strict blocker：尚无一个通过检查的 <code>external_tool</code> / <code>bench</code> / <code>scaled_vehicle</code> / <code>full_vehicle</code> 基准。</p>
+        </div>
+        <div class="diff-sub"><h4>意义</h4><p>无论内部测试做得多详尽，团队没有让"测试很多"偷换成"已被外部验证"。可信度分级体系本身就明确写着"它不是宣传材料"；reference benchmark checker 甚至专门设计了 <code>--require-independent-source</code> 门禁，防止团队自己把"解析参考"误当成"独立外部证据"来虚报进度。在一个由 AI 大量参与实现的项目里，这一点尤其值得强调：AI 辅助编码可以快速把测试数量堆上去，但"这些测试到底证明了什么、还缺什么"这道判断题，始终诚实地摆在台面上。</p></div>
+      </div>
+
+    </section>
+
+    <section id="capabilities" class="section">
+      <span class="kicker">06</span>
+      <h2>六、当前产品能力全景</h2>
+      <p class="lede">v0.99.0 版本状态：从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放到安全研究报告与便携版发布，已形成闭环。默认车辆标定为智己 LS9。</p>
+      <div class="cap-grid">
+        <div class="cap-card"><h4><span class="dot"></span>实时仿真</h4><p>运动学、简化动力学、多体动力学三档模型；2D/3D 视图；路面扰动、坡道、减速带、split-μ、bump-steer。</p></div>
+        <div class="cap-card"><h4><span class="dot"></span>控制策略</h4><p>阿克曼、理想阿克曼、后轮转向（5 子模式）、蟹行、零半径、轨迹跟踪、故障重构、手动逐轮、全向车身控制，共 9 类。</p></div>
+        <div class="cap-card"><h4><span class="dot"></span>实验系统</h4><p>YAML 实验定义、无头批跑、策略/车速/参数变体矩阵、run 落盘、KPI 后端化。</p></div>
+        <div class="cap-card"><h4><span class="dot"></span>分析系统</h4><p>run 库、KPI 对比表、通道叠图、轨迹叠图、幽灵车回放、⌘K 命令面板。</p></div>
+        <div class="cap-card"><h4><span class="dot"></span>车辆建模</h4><p>车辆参数页、项目保存加载、三张可拖拽几何工作室图（整车、主销/车轮、前桥齿条硬点）。</p></div>
+        <div class="cap-card"><h4><span class="dot"></span>输入系统</h4><p>键盘、YAML 动作脚本、Web Gamepad API，支持多种手柄映射预设和实时校准。</p></div>
+        <div class="cap-card"><h4><span class="dot"></span>安全研究</h4><p>单轮转向失效注入、自由脚轮/锁死机构差异、容错重构策略、参数敏感性流水线、自包含 HTML 报告。</p></div>
+        <div class="cap-card"><h4><span class="dot"></span>发布交付</h4><p>macOS / Windows 便携包、自动生成的图文用户手册、GitHub Release 资产。</p></div>
+      </div>
+    </section>
+
+    <section id="quality" class="section">
+      <span class="kicker">07</span>
+      <h2>七、质量与可信度体系</h2>
+      <p class="lede"><code>docs/validation_matrix.md</code> 明确声明"不是宣传材料"——它的作用是帮助后续开发判断哪些结论可以直接复用，哪些只能作为内部研究假设。</p>
+      <div class="level-grid">
+        <div class="level-cell"><b>L0 概念</b><span>有设计意图或界面入口，缺自动化验证</span></div>
+        <div class="level-cell"><b>L1 单元</b><span>核心函数或局部不变量有单元测试覆盖</span></div>
+        <div class="level-cell"><b>L2 集成</b><span>通过集成测试、smoke 或端到端人工验证</span></div>
+        <div class="level-cell"><b>L3 参考对照</b><span>与理论解、工程公式或独立工具做过定量对照</span></div>
+        <div class="level-cell"><b>L4 实测对照</b><span>与实车、台架或缩比验证平台数据做过定量对照</span></div>
+      </div>
+      <div class="table-scroll">
+        <table class="data">
+          <thead><tr><th>能力</th><th>等级</th><th>主要边界</th></tr></thead>
+          <tbody>
+            <tr><td>运动学 4WIS 策略</td><td><span class="pill pill-good">L3</span></td><td>验证几何一致性与解析对照，不代表执行器/轮胎瞬态或实车精度</td></tr>
+            <tr><td>简化动力学模型</td><td><span class="pill pill-warn">L2</span></td><td>已覆盖阻力/升力/toe/camber/坡道/载荷转移，仍缺外部车辆模型对照</td></tr>
+            <tr><td>多体动力学模型</td><td><span class="pill pill-warn">L2</span></td><td>14 DOF 工程近似，尚未与 CarSim/CarMaker 或台架数据对齐</td></tr>
+            <tr><td>轮胎与载荷敏感度</td><td><span class="pill pill-good">L3</span></td><td>c_α(Fz) 指数模型来自工程假设，缺同款轮胎实测曲线</td></tr>
+            <tr><td>主销/齿条负载分析</td><td><span class="pill pill-good">L3</span></td><td>LS9 参数与机构效率仍是标定快照</td></tr>
+            <tr><td>黄金实验回归</td><td><span class="pill pill-warn">L2</span></td><td>覆盖 step steer / ISO 3888 DLC / 3 个单轮失效样本，仍缺外部基准</td></tr>
+            <tr><td>单轮失效安全研究</td><td><span class="pill pill-good">L3</span></td><td>可支撑内部机制研究，不应直接作为实车 ISO 26262 认证证据</td></tr>
+            <tr><td>参考/外部/实测对照接入</td><td><span class="pill pill-good">L3</span></td><td>已有 2 个解析 benchmark；独立外部/实测来源仍为 0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 style="margin-top:2rem;font-size:1.05rem;">v1 readiness 门禁结果（scripts/check_v1_readiness.py）</h3>
+      <div class="table-scroll">
+        <table class="data">
+          <thead><tr><th>检查项</th><th>状态</th><th>Strict v1</th></tr></thead>
+          <tbody>
+            <tr><td>golden_regression 黄金回归</td><td><span class="pill pill-good">PASS</span></td><td>是</td></tr>
+            <tr><td>validation_matrix 可信度矩阵</td><td><span class="pill pill-good">PASS</span></td><td>是</td></tr>
+            <tr><td>reference_reproducibility 参考对照复现</td><td><span class="pill pill-good">PASS</span></td><td>是</td></tr>
+            <tr><td>independent_reference 独立外部/实测基准</td><td><span class="pill pill-critical">GAP</span></td><td>是</td></tr>
+            <tr><td>incoming_reference_pipeline 待审基准流水线</td><td><span class="pill pill-good">PASS</span></td><td>否</td></tr>
+            <tr><td>browser_smoke 浏览器 smoke</td><td><span class="pill pill-good">PASS</span></td><td>是</td></tr>
+            <tr><td>report_pipeline 研究报告流水线</td><td><span class="pill pill-good">PASS</span></td><td>是</td></tr>
+            <tr><td>release_delivery 发布交付材料</td><td><span class="pill pill-good">PASS</span></td><td>是</td></tr>
+            <tr><td>physical_validation_interface 实物验证接口</td><td><span class="pill pill-good">PASS</span></td><td>否</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gate-banner">
+        <span class="big">结论：NOT READY</span>
+        <p>9 项检查 8 项通过，唯一的 strict v1 阻塞项是 <code>independent_reference</code>——尚无通过检查的外部工具、台架、缩比车或实车基准。</p>
+      </div>
+    </section>
+
+    <section id="roadmap" class="section">
+      <span class="kicker">08</span>
+      <h2>八、遗留问题与后续规划</h2>
+      <p class="lede">按 <code>docs/v1_release_plan.md</code> 与平台重构方案整理的未完成事项，均已有明确认领但尚未排期动手。</p>
+      <div class="road-cols">
+        <div class="road-col">
+          <h4>P1 · 外部对照（v1 唯一硬阻塞）</h4>
+          <ul>
+            <li>已有 2 个解析 benchmark（稳态圆周、阶跃转向），仍缺 ISO 3888 双移线的外部对照</li>
+            <li>需接入至少一个 CarSim/CarMaker 导出结果、公开基准或实测数据</li>
+            <li>L4 实测等级需等待台架或缩比车数据</li>
+          </ul>
+        </div>
+        <div class="road-col">
+          <h4>物理深化（C3 后续）</h4>
+          <ul>
+            <li>横向载荷转移仍按轴重 share 分配，未按防倾杆刚度分配（λf/λr）</li>
+            <li>无制动模型，handbrake 字段贯通但无物理效果</li>
+            <li>转向执行器力矩饱和闭环未做，torque_steer 目前只是诊断量</li>
+            <li>RWS 零侧偏比忽略前后配重差（Cf=Cr 简化假设）</li>
+            <li>摩擦椭圆取 μx=μy，理论页已注明为口径选择</li>
+          </ul>
+        </div>
+        <div class="road-col">
+          <h4>平台化 Phase B-3</h4>
+          <ul>
+            <li>dockview 自由布局（已批准但未引入，前端依赖列表中尚未出现）</li>
+            <li>per-channel 单位体系</li>
+            <li>ExcitationPanel / ScorePanel 降级为后端 KPI 的纯展示层</li>
+          </ul>
+        </div>
+        <div class="road-col">
+          <h4>平台化 Phase C 剩余</h4>
+          <ul>
+            <li>C1 标准试验库（ISO 4138/7401/3888-2、蛇行、泊车机动）</li>
+            <li>C2 4WIS 专属分析页：执行器功率预算、ICR 可达域、摩擦利用率地图、失效模式批量矩阵</li>
+            <li>C4 稳定性边界自动图谱（不足转向梯度、横摆阻尼 vs 车速）</li>
+            <li>C5 单文件 HTML 报告导出</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="spinoff" class="section">
+      <span class="kicker">09</span>
+      <h2>九、衍生成果</h2>
+      <p class="lede">《底盘与转向动力学讲义》是从本项目土壤里长出的独立支线——给公司高管的底盘/转向动力学科普教材，同时兼做转向工程师"圣经级"参考书。两个项目共享同一套轮胎/载荷/主销/稳态横摆物理内核，互为验证。</p>
+      <div class="fact-box" style="max-width:640px;">
+        <h4>交叉验证的价值已经兑现</h4>
+        <p>正是这份讲义在复核《Steering Handbook》口径时，反过来发现了 4WIS Simulator 里 kingpin 力矩气胎拖距重复计算的对消 bug（v0.8.2，详见 §五「一个公式的三次迭代」）——独立支线项目不只是知识沉淀，也是本项目物理正确性的一道额外复核关卡。</p>
+      </div>
+    </section>
+
+    <section id="summary" class="section">
+      <span class="kicker">10</span>
+      <h2>十、总结与方法论</h2>
+      <p>46 天、22 个版本、后端测试从 23 项涨到 245 项、浏览器端到端从 0 做到 50 个场景——这些数字背后是一条清晰的演进轨迹：从"能跑起来"（Phase 1-3）到"补齐需求、系统标定"（v0.4/v0.6）到"专项精修"（v0.7.x）到"统一物理底座"（v0.8.x）到"发现并修复潜伏问题、完成产品范式转型"（v0.9-v0.12）到"用平台做真研究"（v0.13-v0.14）到"交互化建模"（v0.15-v0.16），最终用近 100 次提交的"证明可信"收尾（v0.99.0）——每一个阶段都建立在对上一阶段诚实复盘的基础上。</p>
+      <p>贯穿全程的两条协作原则值得记录：其一，<strong>先完成计划内的开发，再做集成测试式排查</strong>——Phase 2/3 期间用户曾同时给出下一阶段开发任务和 5 个手测发现的问题，明确澄清后者是"整体集成测试时再调查"的参考，不是要求立刻停下手头开发；这套节奏后来一直沿用，避免了"边开发边救火"打乱交付节奏。其二，<strong>重大方向调整先出方案、审批后才实施</strong>——无论是 v0.7.0 后轮转向方法族的 ①→④→③→② 排序，还是 v1 平台重构的 A→B→C 分期与"Phase C 以 C3 物理深化优先"的优先级裁定，都是先形成书面方案交给用户确认，再严格按批准的顺序执行，中途不因为"想先看到某个效果"而打乱既定节奏。</p>
+      <p>项目当前的诚实定位：这是一个<strong>内部工程研究与预研分析工具</strong>，不是经过实车标定或认证的安全结论来源。它现在能做的，是把"4WIS 解耦控制"这个工程研究命题从"纸面推导"变成"可交互、可复现、可批量验证"的实验平台；它还不能做的，是替代台架、缩比车或实车数据——这一条边界，从 <code>docs/validation_matrix.md</code> 到 <code>check_v1_readiness.py</code>，被反复、诚实地写在每一处该写的地方。</p>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>4WIS Simulator 开发全景报告 · 数据截至 v0.99.0（2026-07-08）</p>
+    <p class="mono">来源：CHANGELOG.md · docs/*.md · git log · 项目记忆</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a[href^="#"]'));
+  var targets = links.map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+  if (!('IntersectionObserver' in window) || !targets.length) return;
+  var byId = {};
+  links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+  var current = null;
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting){
+        var a = byId[entry.target.id];
+        if (a && a !== current){
+          if (current) current.classList.remove('active');
+          a.classList.add('active');
+          current = a;
+        }
+      }
+    });
+  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+  targets.forEach(function(t){ io.observe(t); });
+})();
+</script>

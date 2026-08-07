@@ -19,6 +19,7 @@ function formatError(e: unknown): string {
 export default function ScenarioPanel() {
   const [list, setList] = useState<{ name: string; label: string }[]>([]);
   const active = useSimStore((s) => s.scenario?.name ?? null);
+  const spawns = useSimStore((s) => s.scenario?.spawns ?? []);
   const pushToast = useSimStore((s) => s.pushToast);
   const [busy, setBusy] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
@@ -49,6 +50,18 @@ export default function ScenarioPanel() {
       setBusy(false);
     }
   };
+  // Teleport to a named spawn of the already-loaded scenario.
+  const pickSpawn = async (spawnName: string) => {
+    if (!active) return;
+    setBusy(true);
+    try {
+      await loadScenario(active, spawnName);
+    } catch (e) {
+      pushToast("error", `切换出生点失败：${formatError(e)}`);
+    } finally {
+      setBusy(false);
+    }
+  };
   const clear = async () => {
     setBusy(true);
     try {
@@ -75,6 +88,19 @@ export default function ScenarioPanel() {
           </div>
         )}
       </div>
+      {spawns.length > 1 && (
+        <div style={{ marginTop: 6 }}>
+          <span className="panel-small" style={{ color: "var(--muted)", marginRight: 6 }}>出生点：</span>
+          <div className="strategy-buttons" style={{ marginTop: 2 }}>
+            {spawns.map((sp) => (
+              <button key={sp.name} className="panel-small" disabled={busy}
+                onClick={() => pickSpawn(sp.name)} title={`x=${sp.x.toFixed(0)} y=${sp.y.toFixed(0)}`}>
+                {sp.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
         <span className="panel-small" style={{ color: "var(--muted)" }}>
           当前：{active ? (list.find((s) => s.name === active)?.label ?? active) : "无（空网格）"}

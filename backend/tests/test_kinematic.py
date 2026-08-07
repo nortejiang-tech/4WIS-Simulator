@@ -32,11 +32,18 @@ def test_straight_line(model: KinematicModel) -> None:
 
 def test_ideal_ackermann_circle(model: KinematicModel) -> None:
     """Steady-state circular driving with ideal Ackermann should produce a closed
-    circle of the expected radius."""
+    circle of the expected radius.
+
+    Uses the steer_raw_rad bypass (work-package B3) so the test exercises the
+    vehicle's ICR geometry directly, independent of the speed-dependent
+    driver-input feel layer (which would otherwise change κ as v rises)."""
     strat = make_strategy("ideal_ackermann", model.params)
     env = EnvironmentState()
     dt = 0.005
-    driver = DriverInput(throttle=0.3, steering=0.3)
+    # A fixed front-axle angle → fixed curvature → a true circle.
+    delta_rad = 0.15   # ~8.6° front angle
+    driver = DriverInput(throttle=0.3, steering=0.0,
+                         mode_params={"steer_raw_rad": delta_rad})
     # The ICR target tells us the expected radius (= |y_R|).
     cmd0 = strat.compute(driver, model.state)
     expected_radius = abs(cmd0.icr_target_body[1])

@@ -73,6 +73,15 @@ C_COLORS = {"C1": "#2ca02c", "C2": "#ff9f1c", "C3": "#d62728"}
 
 # ─── 场景与实验构造 ──────────────────────────────────────────────────────────
 
+# 转向幅值以**物理前轮角**下发（v0.100 `unit: front_deg`），绕过驾驶员手感层。
+# 安全研究测的是"车辆在单轮失效下怎么走"，不该被驾驶员输入映射的调参改写；
+# 留在归一化口径上意味着以后每次调手感都要重新 promote 一次本研究的基线。
+# 数值取自 v0.99.3 归一化 0.05 / 0.06 对应的同一曲率，用 ideal_ackermann 自身
+# 的对称四轮几何换算（κ = tanδ /(L/2 + tf/2·tanδ)），所以车辆轨迹与迁移前一致。
+STEER_CURVE_DEG = 1.508559   # ← 原 normalized 0.05
+STEER_DLC_DEG = 1.814818     # ← 原 normalized 0.06
+
+
 def scenario_steps(scn: str) -> tuple[list[ManeuverStep], float, float]:
     """返回 (steps, t_fault, 车速 km/h)。"""
     if scn == "straight100":
@@ -85,18 +94,22 @@ def scenario_steps(scn: str) -> tuple[list[ManeuverStep], float, float]:
         return [
             ManeuverStep(name="加速", duration=6.0, speed_kmh=60.0, speed_ramp_s=4.0),
             ManeuverStep(name="入弯", duration=2.0,
-                         steer=SteerProfile(kind="ramp", start=0.0, amplitude=0.05)),
+                         steer=SteerProfile(kind="ramp", start=0.0,
+                                            amplitude=STEER_CURVE_DEG, unit="front_deg")),
             ManeuverStep(name="稳态弯", duration=4.0,
-                         steer=SteerProfile(kind="constant", amplitude=0.05)),
+                         steer=SteerProfile(kind="constant",
+                                            amplitude=STEER_CURVE_DEG, unit="front_deg")),
             ManeuverStep(name="出弯", duration=2.0,
-                         steer=SteerProfile(kind="ramp", start=0.05, amplitude=0.0)),
+                         steer=SteerProfile(kind="ramp", start=STEER_CURVE_DEG,
+                                            amplitude=0.0, unit="front_deg")),
             ManeuverStep(name="直行", duration=2.0),
         ], 10.5, 60.0
     if scn == "dlc60":
         return [
             ManeuverStep(name="加速", duration=6.0, speed_kmh=60.0, speed_ramp_s=4.0),
             ManeuverStep(name="双移线", duration=8.0,
-                         steer=SteerProfile(kind="dlc", amplitude=0.06)),
+                         steer=SteerProfile(kind="dlc", amplitude=STEER_DLC_DEG,
+                                            unit="front_deg")),
             ManeuverStep(name="稳定", duration=2.0),
         ], 8.2, 60.0
     raise KeyError(scn)

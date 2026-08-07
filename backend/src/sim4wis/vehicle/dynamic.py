@@ -47,6 +47,7 @@ from sim4wis.vehicle.load_transfer import vertical_loads
 from sim4wis.vehicle.model_core import (
     body_resistance_force,
     camber_thrust_alpha_offset,
+    friction_brake_torques,
     fz_with_aero_lift,
     rotate_wheel_forces_to_body,
     semi_implicit_wheel_spin,
@@ -90,6 +91,8 @@ class SimplifiedDynamicModel(VehicleModel):
         # Static toe (A3, same convention as the load page): the physical wheel
         # angle is the actuator angle plus the per-wheel alignment offset.
         self._toe = static_toe_offsets(params)
+        # Filtered friction-brake command per wheel (first-order, brake_tau).
+        self._brake_f = np.zeros(N_WHEELS)
         # Initialize static vertical loads
         self.state.fz = vertical_loads(params, ax=0.0, ay=0.0)
 
@@ -122,6 +125,7 @@ class SimplifiedDynamicModel(VehicleModel):
 
         # Per-wheel surface mu cache (re-evaluated using world wheel positions at start)
         wheel_mus, fz_offset, ground_z = self._compute_wheel_env(env)
+        s.mu_avg = float(np.mean(wheel_mus))
 
         # 1b) Bump-steer approximation: a wheel riding over vertical travel toes
         #     by coeff·z (left wheels +, right wheels −). Engineering stand-in
@@ -174,6 +178,24 @@ class SimplifiedDynamicModel(VehicleModel):
         )
         fz_now = np.clip(self.state.fz + fz_offset, 0.0, p.mass * 9.81)
         alpha_camber = camber_thrust_alpha_offset(p, fz_now)
+        # Friction-brake torque (work-package A): added to the motor torque so
+        # the wheel-spin ODE sees the net axle torque. Computed here rather than
+        # at the top of the step because the lockup test needs the *transferred*
+        # loads (fz_now) and the per-wheel ground speed — under hard braking the
+        # front axle carries far more than its static share, which is exactly
+        # what decides whether it locks.
+        t_brake, locked, self._brake_f = friction_brake_torques(
+            brake_cmd=cmd.brake_cmd,
+            brake_filtered=self._brake_f,
+            wheel_omega=wheel_omega_held,
+            vx_wheel=kin.vx_wheel,
+            fz=fz_now,
+            mu=wheel_mus,
+            params=p,
+            dt=dt,
+        )
+        s.wheel_locked = locked
+        t_net = t_motor + t_brake
         omega_new, forces, kappa_new = semi_implicit_wheel_spin(
             dt=dt,
             wheel_omega=wheel_omega_held,
@@ -181,7 +203,8 @@ class SimplifiedDynamicModel(VehicleModel):
             alpha=kin.alpha + alpha_camber,
             fz=fz_now,
             mu=wheel_mus,
-            torque=t_motor,
+            torque=t_net,
+            brake_torque=t_brake,
             tire=self.tire,
             tire_radius=p.tire_radius,
             wheel_inertia=self.iw,
@@ -228,7 +251,12 @@ class SimplifiedDynamicModel(VehicleModel):
     def _compute_motor_torques(
         self, cmd: ControlCommand, omega_actual: np.ndarray, dt: float,
     ) -> np.ndarray:
-        """Run all 4 wheel-speed servos for one step; return torque per wheel.
+        """Run all 4 wheel-speed servos for one step; return motor torque per wheel.
+
+        The friction-brake command is read from `cmd.brake_cmd` and turned into
+        an opposing torque in `_compute_brake_torques` (added to the motor
+        torque before the wheel-spin ODE). Here we only pass the per-wheel
+        brake-active flag to the servo so it does not fight the brake.
 
         Note: a r·Fx feedforward was evaluated to remove the small front/rear κ
         asymmetry (plan §11 item 1) but rejected — feeding back the *actual*
@@ -241,6 +269,7 @@ class SimplifiedDynamicModel(VehicleModel):
                 omega_actual=float(omega_actual[i]),
                 omega_cmd=float(cmd.wheel_speed_cmd[i]),
                 dt=dt,
+                brake_active=bool(cmd.brake_cmd[i] > 0.02),
             )
         return torques
 

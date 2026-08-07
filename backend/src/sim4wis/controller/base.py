@@ -119,7 +119,7 @@ class ControllerStrategy(ABC):
         self.params = params
 
     @abstractmethod
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:
         ...
 
 

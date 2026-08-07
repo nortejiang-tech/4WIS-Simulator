@@ -26,6 +26,7 @@ export interface WheelState {
   // Tyre slip diagnostics (dynamic models only; 0 for kinematic)
   slip_alpha?: number;           // side-slip angle α [rad]
   slip_kappa?: number;           // longitudinal slip ratio κ [-]
+  locked?: boolean;              // friction-brake lockup flag (v0.100)
 }
 
 export interface Pose { x: number; y: number; psi: number }
@@ -40,8 +41,16 @@ export interface SideForceSummary {
 
 export interface DriverEcho {
   throttle: number;
+  brake?: number;        // [0,1] friction-brake pedal (v0.100)
+  gear?: number;         // -1 = R, 0 = N, 1 = D (v0.100)
   steering: number;
   handbrake: number;
+  // Resolved steering-feel outputs for this frame (v0.100). Sent by the
+  // backend so the HUD never has to re-derive the mapping — a front-end copy
+  // cannot see the μ-aware soft limit and so misreports the angle actually
+  // commanded.
+  steer_ratio?: number;          // i(v), the live gear ratio
+  steer_delta_eff_deg?: number;  // δ_eff after ratio + soft limit
   mode_params: Record<string, unknown>;
 }
 
@@ -52,6 +61,12 @@ export interface VehicleParamsLite {
   tire_radius: number;
   steer_limit: number;
   v_max: number;
+  steer_wheel_range?: number;     // deg (v0.100 steering feel)
+  // Resolved ratios — the raw params default to 0 meaning "auto-derive from
+  // steer_wheel_range", so the backend sends the computed values.
+  steer_ratio_low?: number;
+  steer_ratio_high?: number;
+  steer_ratio_v_ref?: number;     // m/s, ratio transition reference speed
 }
 
 export interface DisturbanceBase {
@@ -141,8 +156,17 @@ export interface PathPlan {
 
 // Static driving scenario (fetched from REST when scenario_version changes)
 export interface ScenarioSurface { points: [number, number][]; color: string; kind: string }
-export interface ScenarioLine { points: [number, number][]; color: string; width: number; dash: boolean }
+export interface ScenarioLine {
+  points: [number, number][];
+  color: string;
+  width: number;
+  dash: boolean;
+  /** Optional (on, off) dash rhythm in metres; overrides the boolean `dash`. */
+  dash_pattern?: [number, number] | null;
+}
 export interface ScenarioMarker { type: string; x: number; y: number; heading: number; meta: Record<string, unknown> }
+/** A named spawn pose offered by a scenario (x, y, heading). */
+export interface ScenarioSpawn { name: string; x: number; y: number; heading: number }
 export interface Scenario {
   name: string;
   label: string;
@@ -150,14 +174,20 @@ export interface Scenario {
   lines: ScenarioLine[];
   markers: ScenarioMarker[];
   spawn: [number, number, number];
+  /** Named spawn points (optional; legacy scenarios have none). */
+  spawns?: ScenarioSpawn[];
+  /** Named anchor poses path templates can be placed on. */
+  anchors?: Record<string, [number, number, number]>;
 }
 
 // Client → Server messages
 export interface DriverMsg {
   type: "driver";
   throttle?: number;
+  brake?: number;       // [0,1] friction-brake pedal (v0.100)
+  gear?: number;        // -1 = R, 0 = N, 1 = D (v0.100)
   steering?: number;
-  handbrake?: number;
+  handbrake?: number;   // 0 | 1 parking brake
   mode_params?: Record<string, unknown>;
 }
 export interface StrategyMsg { type: "strategy"; name: string }

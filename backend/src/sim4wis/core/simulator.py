@@ -20,7 +20,11 @@ import math
 import time
 from typing import Any
 
+from sim4wis.controller.longitudinal import apply_brake_command
 from sim4wis.controller.registry import available_strategies, make_strategy
+from sim4wis.controller.steering_feel import front_steer_angle as _front_steer_angle
+from sim4wis.controller.steering_feel import gear_ratio as _gear_ratio
+from sim4wis.controller.steering_feel import low_speed_gear_ratio as _steer_ratio_low
 from sim4wis.core.state import (
     ControlCommand,
     DriverInput,
@@ -37,6 +41,13 @@ from sim4wis.vehicle.model_registry import make_vehicle_model
 # (script.py imports Simulator).
 
 logger = logging.getLogger(__name__)
+
+
+def _steer_ratio_high(params) -> float:
+    """Resolved high-speed steering ratio (i at v → ∞)."""
+    lo = _steer_ratio_low(params)
+    hi = float(getattr(params, "steer_ratio_high", 0.0))
+    return hi if hi > 0.0 else 3.5 * lo
 
 
 class Simulator:
@@ -103,12 +114,43 @@ class Simulator:
     # ---- mutation API used by HTTP / WS handlers ---------------------------
 
     def set_driver(self, *, throttle: float | None = None,
+                   brake: float | None = None,
+                   gear: int | None = None,
                    steering: float | None = None,
                    handbrake: int | None = None,
                    mode_params: dict[str, Any] | None = None) -> None:
+        """Update one or more driver-input channels (others are unchanged).
+
+        Backward-compat: if a caller passes a *negative* throttle and does NOT
+        pass `brake`, it is treated as the legacy signed single-axis form
+        (negative = brake) and rewritten to (throttle=0, brake=−throttle).
+        Callers that want reverse driving set gear=R + positive throttle.
+        """
         d = self.driver
-        if throttle is not None:
-            d.throttle = float(max(-1.0, min(1.0, throttle)))
+        # Legacy rewrite: signed throttle axis → split channels.
+        if throttle is not None and brake is None:
+            # A caller on the legacy protocol owns BOTH channels through this
+            # one axis — it has no other way to release the brake. So a
+            # non-negative throttle must clear it. Leaving the brake latched
+            # here meant any legacy client that braked once (throttle < 0) then
+            # accelerated (throttle > 0) drove with the brake on for the rest
+            # of the session.
+            t = float(max(-1.0, min(1.0, throttle)))
+            if t < 0.0:
+                d.brake = -t
+                d.throttle = 0.0
+            else:
+                d.throttle = t
+                d.brake = 0.0
+        elif throttle is not None:
+            d.throttle = float(max(0.0, min(1.0, throttle)))
+        if brake is not None:
+            d.brake = float(max(0.0, min(1.0, brake)))
+        if gear is not None:
+            gi = int(gear)
+            if gi not in (-1, 0, 1):
+                raise ValueError(f"gear must be -1/0/1, got {gear}")
+            d.gear = gi
         if steering is not None:
             d.steering = float(max(-1.0, min(1.0, steering)))
         if handbrake is not None:
@@ -161,7 +203,7 @@ class Simulator:
         while self._running:
             # 1) Control & integrate
             try:
-                cmd = self.strategy.compute(self.driver, self.model.state)
+                cmd = self.strategy.compute(self.driver, self.model.state, self.dt_sim)
                 if self.fault_injector.has_active:
                     from sim4wis.core.state import ControlCommand
                     cmd = ControlCommand(
@@ -169,6 +211,9 @@ class Simulator:
                         wheel_speed_cmd=cmd.wheel_speed_cmd,
                         icr_target_body=cmd.icr_target_body,
                     )
+                # Fill the friction-brake actuator command from the driver
+                # (strategies don't touch braking — it's a vehicle concern).
+                apply_brake_command(cmd, self.driver, self.params)
                 self.last_cmd = cmd
                 self.model.step(self.dt_sim, cmd, self.env)
                 # Per-wheel steering centre + split-rack force chain (shared
@@ -254,8 +299,18 @@ class Simulator:
             "fault_active": self.fault_injector.has_active,
             "driver": {
                 "throttle": self.driver.throttle,
+                "brake": self.driver.brake,
+                "gear": self.driver.gear,
                 "steering": self.driver.steering,
                 "handbrake": self.driver.handbrake,
+                # Resolved feel-layer outputs, so the HUD reports what the
+                # vehicle actually got rather than re-deriving a ratio that
+                # ignores the grip soft limit.
+                "steer_ratio": _gear_ratio(self.params, float(s.vx)),
+                "steer_delta_eff_deg": math.degrees(
+                    _front_steer_angle(self.params, float(self.driver.steering),
+                                       float(s.vx), float(s.mu_avg))
+                ),
                 "mode_params": dict(self.driver.mode_params),
             },
             "pose": {"x": s.x, "y": s.y, "psi": s.psi},
@@ -270,6 +325,7 @@ class Simulator:
                     "fz": float(s.fz[i]),
                     "torque_steer": float(s.torque_steer[i]),
                     "susp_defl": float(s.susp_defl[i]),
+                    "locked": bool(s.wheel_locked[i]),
                     "slip_alpha": _slip(self.model, "slip_alpha", i),
                     "slip_kappa": _slip(self.model, "slip_kappa", i),
                     "mu": _wheel_mu(i),
@@ -316,6 +372,13 @@ class Simulator:
                 "tire_radius": self.params.tire_radius,
                 "steer_limit": self.params.steer_limit,
                 "v_max": self.params.v_max,
+                "steer_wheel_range": getattr(self.params, "steer_wheel_range", 540.0),
+                # Resolved values, not the raw params: both ratios default to 0
+                # meaning "auto-derive from the wheel range", so pushing the raw
+                # field would tell the HUD the ratio is 0:1.
+                "steer_ratio_low": _steer_ratio_low(self.params),
+                "steer_ratio_high": _steer_ratio_high(self.params),
+                "steer_ratio_v_ref": getattr(self.params, "steer_ratio_v_ref", 22.0),
             },
             "scene": self.scene.serialize() if self.scene else None,
             "path_version": _path_version(),

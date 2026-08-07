@@ -30,6 +30,7 @@ from sim4wis.controller.base import (
     ControllerStrategy,
     compute_commands,
 )
+from sim4wis.controller.longitudinal import speed_command
 from sim4wis.controller.path import get_active_plan
 from sim4wis.core.state import ControlCommand, DriverInput, VehicleParams, VehicleState
 
@@ -59,7 +60,7 @@ class FollowTrajectoryStrategy(ControllerStrategy):
         except (TypeError, ValueError):
             return default
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:
         p = self.params
         plan = self.plan_override if self.plan_override is not None else get_active_plan()
 
@@ -71,7 +72,7 @@ class FollowTrajectoryStrategy(ControllerStrategy):
         ay_max = max(0.1, self._mp(driver, "ay_max", self.AY_MAX))
         ax_brake = max(0.1, self._mp(driver, "ax_brake", self.AX_BRAKE))
 
-        v_cmd = p.v_max * float(driver.throttle)
+        v_cmd = speed_command(p, driver, float(state.vx), dt, float(state.mu_avg))
         if abs(v_cmd) < 0.1 and cruise != 0.0:
             v_cmd = cruise
 

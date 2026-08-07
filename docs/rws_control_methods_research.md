@@ -32,15 +32,54 @@
 ```
 
 `k(vx)` 是车速的单调函数：低速为负（反相，缩小转弯半径、提升机动性），高速为正（同相，提升高速稳定性），
-中间某临界车速处过零。专利里典型的过零点约 **56 km/h**（≈15.6 m/s）。
+中间某临界车速处过零。
 
-**来源**
-- US5224042A *Four wheel steering system with speed-dependent phase reversal*：高速反相、低速同相，按 ≈56 km/h 切换。
-- US4953650 / US5341294：后轮转角比按车速连续变化，高速趋同相以保证稳定性。
+**过零点不是通用常数，也不该抄专利数值**——它由整车参数解析决定。取线性单轨模型的零侧偏比
+（实现见 `backend/src/sim4wis/controller/rws_common.py::zero_sideslip_ratio`）：
+
+```
+k(u) = (−b + a·m·u²/(Cr·L)) / (a + b·m·u²/(Cf·L))        过零点  u₀² = b·Cr·L/(a·m)
+```
+
+按本项目默认标定（LS9：L=3.160 m、a=1.550 m、m=2900 kg、轴侧偏刚度 240 kN/rad）得
+**u₀ ≈ 16.5 m/s ≈ 59 km/h**；k(0)=−1.04、k(90 km/h)=+0.39、k(200 km/h)=+0.81。换车型、换轮胎，过零点跟着变。
+
+**来源**（专利原文已于 2026-07-26 逐条核对，核对记录见 §8）
+
+- **US5224042A** *Four wheel steering system with speed-dependent phase reversal*（GM，1991 申请／1993 授权）——
+  FIG. 3 的稳态查表为**低速反相、高速同相**：原文 "At low vehicle speeds V1, V2, the rear steering is primarily
+  out-of-phase with the front wheel steering. However, at increasing vehicle speeds V3, V4, the rear steering is
+  primarily in-phase"；权利要求 1 亦载明高速时稳态后轮转向与前轮同相。
+  ⚠️ 两点提醒：① 该专利的主发明点是**瞬态项**，整体归属方法 2，此处只引其稳态部分作为相位方向的佐证；
+  ② 原文**未给出任何相位过零车速**——全文唯一的速度阈值 40 mph（≈64 km/h）管的是求导采样点数 n 的拐点，与相位切换无关。
 
 **可实现性：★★★★★（立即可做）**
 纯前馈、只需 `vx`。把 `rear_ratio` 常数替换为一条 `k(vx)` 曲线（折线或 `tanh`/分段），临界车速、低/高速增益做成 `mode_params`。
 天然适合放进**策略设计器**做成可视曲线，与「开环激励 + 评分」闭环对比。
+
+---
+
+## 1b. 变体：按横向加速度调度相位（scheduling on a_y）
+
+**控制律**
+
+调度自变量从车速换成横向加速度，按双阈值切换相位：
+
+```
+|a_y| ∈ (a_y1, a_y2]  →  δ_rear 反相   （抵消不足转向，保机动）
+|a_y| >  a_y2         →  δ_rear 同相   （抑制后轮侧偏角过大，保稳定）
+```
+
+与方法 1 的区别：车速调度是**开环按工况**切换，a_y 调度是**按实际轮胎工作点**切换——同一车速下大转角/低附着会更早进入同相保护区。
+两者可叠加（k(vx) 定基线，a_y 做限幅/修正）。
+
+**来源**
+- US5627754 *Method for controlling a front and rear wheel steering vehicle*（Honda，1995 申请／1997 授权）：
+  a_y 介于第一、第二阈值之间时反相以抵消不足转向；超过第二阈值时转同相，防止后轮产生过大侧偏角。
+
+**可实现性：★★★★☆（可做，需 a_y）**
+`a_y` 在动力学模型下可由 `vy` 微分 + `vx·yaw_rate` 得到，或直接取模型输出的侧向加速度；运动学模型下用 `vx·yaw_rate` 近似。
+两个阈值入 `mode_params`。价值在于它是**唯一以轮胎饱和为切换依据**的量产级策略，和现有轮胎模型/载荷页联动演示效果好。
 
 ---
 
@@ -58,9 +97,20 @@
 
 这正对应用户提到的「根据前轮转角频率输入动态调整后轮转角」。
 
-**来源**
-- US4842089 *Four wheel steering system with closed-loop feedback and open-loop feedforward*：稳态+瞬态分量合成。
-- US5627754 *Method for controlling a front and rear wheel steering vehicle*：稳态项 f(车速, 前轮角)，瞬态项 f(前轮角变化率, 车速)。
+**来源**（专利原文已于 2026-07-26 逐条核对，核对记录见 §8）
+
+- **US5224042A**（GM，1991／1993）——**本方法的主引专利**。摘要即 `θr = θss + θtr`：
+  稳态项 `θss(vx, δf)` 查三维表（低速反相/高速同相，见 §1），瞬态项 `θtr = K(vx)·dδf/dt`。
+  其独有发明点是**求导所用采样点数 n 随车速递减**（拐点 40 mph ≈ 64 km/h）——高速取样少 → 相位滞后小、后轮响应快；
+  低速取样多 → 指令平滑、不过度追随方向盘。
+  原文明确 `θr = θss − θtr` 取**减号**："θtr is subtracted because the rear wheel steady state steering command
+  θss will be in phase with the front wheels over the range of speeds where it is desired that the rear wheels steer
+  temporarily out of phase"——即"瞬时反相"是在同相稳态基线上**减出来**的，回轮时导数变号又自动帮助回正。
+- US5341294 *Four-wheel steering system for vehicle*（Mazda，1991／1994）——同一思想的**机械式**实现：
+  转角比变换机构使中速区间打方向的瞬间转角比"先负后正"（先反相、随即转同相）。
+- US4842089 *…with closed-loop feedback and open-loop feedforward*（GM，1989）——US5224042 引用的在先技术，同一 GM 谱系。［摘要未核原文］
+- 术语出处：SAE 891978 *Development of "Super HICAS", a New Rear Wheel Steering System with Phase-reversal Control*
+  (Eguchi et al., 1989)，US5224042 的 Other References 之一——"phase reversal（相位反转）"一词即源出于此，指的**始终是瞬态那一下**。
 - 频域视角：「方向盘快打时后轮初始反相、慢打/稳态时同相；相位超前随频率降低或车速升高而减小。」
 
 **可实现性：★★★★☆（可做，需数值微分）**
@@ -165,13 +215,43 @@ SMC 相对轻量，可作为「鲁棒闭环」演示；H∞/MPC 需要离线综�
 
 ---
 
+## 8. 来源核对记录（2026-07-26）
+
+建库过程中发现本文 §1 的来源描述与正文自相矛盾（知识库 OPEN-001），遂逐条打开专利原文核对。
+**结论：§1／§2 原有的四条专利描述全部有误，已在上文订正。** 核对经由 freepatentsonline 全文
+（Google Patents 反爬拦截）。
+
+| 公开号 | 权利人／年份 | 原文实际内容 | 订正前本文的写法 | 性质 |
+|---|---|---|---|---|
+| US5224042A | GM，1991 申请／1993 授权 | 稳态 θss(vx,δf) **低速反相、高速同相**；瞬态 θtr=K(vx)·dδf/dt，采样点数随速递减（拐点 40 mph） | 「高速反相、低速同相，按 ≈56 km/h 切换」 | **相位方向写反**；56 km/h 原文无此数；且归错方法（应属 §2） |
+| US4953650 | Mazda，1989／1990 | 后轮转向机构的**锁止／释放装置**（目标角恒定时锁住机构，特定条件释放） | 「后轮转角比按车速连续变化，高速趋同相」 | **与控制律完全无关**，已从来源中移除 |
+| US5341294 | Mazda，1991／1994 | **机械式**转角比变换机构，中速区间打方向瞬间比值「先负后正」 | 同上 | 属瞬态反相（§2 的机械实现），非随速连续调度 |
+| US5627754 | Honda，1995／1997 | 按**横向加速度双阈值**切换相位 | 「稳态项 f(车速,前轮角)，瞬态项 f(前轮角变化率,车速)」 | 该描述实为 US5224042A 的摘要，两条串位；本专利另立为 §1b |
+
+**影响面复查（结论：无外溢）**
+- 代码正确：`rear_wheel_steer.py` + `rws_common.zero_sideslip_ratio` 实现的即低速反相／高速同相，
+  默认过零 ≈59 km/h 由整车参数解析导出，与 US5224042A FIG. 3 方向一致。
+- 前端提示（`ControlPanel.tsx`、`help.tsx`、策略设计器图例）、CHANGELOG、外部讲义正文与配图，
+  方向均为「低速反相、高速同相」，未被污染。
+- 讲义配图中的「示例过零 ≈56 km/h」标注为示例值且已注明「随车型/标定变」，可保留；
+  但**不得**再表述为「专利里的典型值」。
+
+**教训**：本文初版的专利来源行是检索摘要转写，未逐条回原文，出现了方向反转、描述串位和数值杜撰三类错误。
+后续新增来源行一律标注是否已核原文（本文中未核者已用「［…未核原文］」显式标出）。
+
+---
+
 ## 来源
 
-- [US5224042A — Speed-dependent phase reversal](https://patents.google.com/patent/US5224042A/en)
-- [US4953650 — Rear wheel steering control system](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/4953650)
-- [US5341294 — Four-wheel steering system for vehicle](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/5341294)
+> 标 ✅ 者已于 2026-07-26 核对专利全文（见 §8）；未标者仅有检索摘要，引用前须回原文。
+> Google Patents 会对自动访问返回 503／反爬页，改用 freepatentsonline.com/<号码>.html 或下方 USPTO PDF 直链。
+
+- ✅ [US5224042A — Speed-dependent phase reversal](https://patents.google.com/patent/US5224042A/en)（GM 1991／1993；§2 主引，稳态部分佐证 §1）
+- ~~US4953650 — Rear wheel steering control system~~（Mazda 1989／1990：**锁止/释放机构，与控制律无关**，已从 §1 剔除）
+- ✅ [US5341294 — Four-wheel steering system for vehicle](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/5341294)（Mazda 1991／1994；§2 机械式实现）
+- [SAE 891978 — Development of "Super HICAS" with Phase-reversal Control](https://www.sae.org/publications/technical-papers/content/891978/)（Eguchi et al. 1989；"phase reversal" 术语出处）
 - [US4842089 — Closed-loop feedback + open-loop feedforward](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/4842089)
-- [US5627754 — Method for controlling a front and rear wheel steering vehicle](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/5627754)
+- ✅ [US5627754 — Method for controlling a front and rear wheel steering vehicle](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/5627754)（Honda 1995／1997；§1b 按 a_y 调度）
 - [US9469339 — RWS using driving behavior signal feedback](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/9469339)
 - [US5964819 — Vehicle yawing behavior control apparatus](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/5964819)
 - [US5402341 — 4WS control utilizing tire characteristics](https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/5402341)

@@ -56,6 +56,8 @@ async def set_path_waypoints(body: WaypointsBody) -> dict[str, Any]:
 class TemplateBody(BaseModel):
     name: str
     params: dict[str, float] = Field(default_factory=dict)
+    anchor: str | None = Field(default=None,
+                               description="Named scenario anchor to place the course on")
 
 
 @router.post("/path/template")
@@ -65,11 +67,13 @@ async def set_path_template(body: TemplateBody) -> dict[str, Any]:
     # script/experiment with `params: {}` still gets a course sized for the car.
     params = {**_vehicle_dimensions(), **body.params}
     try:
-        plan = plan_from_template(body.name, params)
+        plan = plan_from_template(body.name, params, anchor=body.anchor)
     except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"unknown template: {e}") from e
+        raise HTTPException(status_code=400, detail=f"unknown template or anchor: {e}") from e
     except TypeError as e:
         raise HTTPException(status_code=400, detail=f"bad template params: {e}") from e
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     version = set_active_plan(plan)
     return {"version": version, **plan.serialize()}
 

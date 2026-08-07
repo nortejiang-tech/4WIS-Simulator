@@ -218,11 +218,11 @@ export default function ControlPanel() {
         </div>
 
         <div className="keyhint" style={{ marginTop: 8 }}>
-          <kbd>W</kbd><span>{holdSpeed ? "加速（保持）" : "前进"}</span>
-          <kbd>S</kbd><span>{holdSpeed ? "减速（保持）" : "后退 / 刹车"}</span>
+          <kbd>W</kbd><span>{holdSpeed ? "加速（保持）" : "前进 / 倒车时刹车"}</span>
+          <kbd>S</kbd><span>{holdSpeed ? "减速（保持）" : "刹车 / 停稳后再按入倒挡"}</span>
           <kbd>A</kbd><span>左转向</span>
           <kbd>D</kbd><span>右转向</span>
-          <kbd>Space</kbd><span>{holdSpeed ? "急停（车速归零）" : "松开油门"}</span>
+          <kbd>Space</kbd><span>手刹（驻车制动）</span>
           <kbd>R</kbd><span>重置位姿与轨迹</span>
           <kbd>1‒5</kbd><span>切换策略</span>
         </div>

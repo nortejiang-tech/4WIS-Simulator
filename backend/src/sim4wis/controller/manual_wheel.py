@@ -17,6 +17,7 @@ from __future__ import annotations
 import numpy as np
 
 from sim4wis.controller.base import ControlCommand, ControllerStrategy
+from sim4wis.controller.longitudinal import speed_command
 from sim4wis.core.state import DriverInput, N_WHEELS, VehicleParams, VehicleState
 from sim4wis.vehicle.geometry import vehicle_icr_from_velocity
 
@@ -29,7 +30,7 @@ class ManualWheelStrategy(ControllerStrategy):
     def __init__(self, params: VehicleParams) -> None:
         super().__init__(params)
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:  # noqa: ARG002
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:  # noqa: ARG002
         p = self.params
         mp = driver.mode_params or {}
         raw = mp.get("wheel_norm", [0.0, 0.0, 0.0, 0.0])
@@ -39,7 +40,7 @@ class ManualWheelStrategy(ControllerStrategy):
             norm = np.zeros(N_WHEELS)
         delta = np.clip(norm, -1.0, 1.0) * p.steer_limit
 
-        v = float(driver.throttle) * p.v_max
+        v = speed_command(p, driver, float(state.vx), dt, float(state.mu_avg))
         omega_wheel = np.full(N_WHEELS, v / max(p.tire_radius, 1e-6))
         return ControlCommand(
             delta_cmd=delta,

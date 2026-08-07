@@ -106,6 +106,8 @@ def _apply_client_message(data: Any, sim) -> None:
     if mtype == "driver":
         sim.set_driver(
             throttle=data.get("throttle"),
+            brake=data.get("brake"),
+            gear=data.get("gear"),
             steering=data.get("steering"),
             handbrake=data.get("handbrake"),
             mode_params=data.get("mode_params"),

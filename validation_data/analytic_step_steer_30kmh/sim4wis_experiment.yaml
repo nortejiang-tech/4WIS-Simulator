@@ -15,7 +15,8 @@ maneuver:
     duration: 8.0
     steer:
       kind: step
-      amplitude: 0.05
+      amplitude: 1.508559
+      unit: front_deg
       freq_hz: 0.5
       f0_hz: 0.1
       f1_hz: 2.0

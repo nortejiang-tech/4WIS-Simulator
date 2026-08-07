@@ -176,6 +176,33 @@ class VehicleParams:
     # Wheel-speed servo PI gains (previously hard-coded in wheel_servo.py).
     servo_kp: float = 200.0             # [N·m / (rad/s)]
     servo_ki: float = 50.0              # [N·m / rad]
+    # Friction brake (work-package A). brake_torque_max is sized so a full
+    # pedal can lock the wheels on dry asphalt (m·g·r ≈ 2900×9.81×0.395 ≈
+    # 11 236 N·m → 12 000 gives headroom). brake_bias_front splits the total
+    # between axles (0.65 front keeps the rear from locking first — stable).
+    # brake_tau is the hydraulic/EMB first-order response. v_max_reverse caps
+    # the reverse speed (gear R).
+    brake_torque_max: float = 12_000.0  # 整车最大摩擦制动力矩 [N·m]
+    brake_bias_front: float = 0.65      # 前轴制动力分配比例 [-]
+    brake_tau: float = 0.08             # 制动执行器一阶时间常数 [s]
+    v_max_reverse: float = 5.0          # 倒车限速 [m/s]
+    # Driver-input steering feel (work-package B). The normalised steering
+    # axis is mapped through a variable gear ratio + μ-aware soft limit so the
+    # full wheel travel stays useful across the speed range (see
+    # controller/steering_feel.py). steer_wheel_range is the steering-wheel
+    # lock-to-lock angle [deg] — 540 for a typical PC wheel, 270 for the
+    # Dolio R270 (a UI preset flips this).
+    steer_wheel_range: float = 540.0    # 方向盘锁到锁总转角 [deg]
+    # 0 = auto-derive from steer_wheel_range (see controller/steering_feel.py):
+    #   i_low  makes full wheel travel reach exactly steer_limit at parking speed
+    #   i_high = 3.5 · i_low
+    # Hard-coding these breaks as soon as steer_wheel_range changes — a ratio
+    # sized for a 270° wheel leaves a 540° wheel at full lock by half travel.
+    # Set > 0 to pin an explicit ratio.
+    steer_ratio_low: float = 0.0        # 低速传动比 (0 = 按盘径自动推导)
+    steer_ratio_high: float = 0.0       # 高速传动比 (0 = 3.5 × 低速比)
+    steer_ratio_v_ref: float = 22.0     # 传动比过渡参考车速 [m/s] (≈80 km/h)
+    steer_ay_ref_frac: float = 0.9      # 软限幅目标 a_y 相对 μ·g 的比例 [-]
     suspension: SuspensionParams = field(default_factory=SuspensionParams)
     # Split-rack transmission geometry (分体齿条传动参数).
     # Used to convert kingpin torques → rack forces → motor torque demands.
@@ -215,17 +242,41 @@ class VehicleParams:
 class DriverInput:
     """Normalised driver input — produced by keyboard/script/joystick layers.
 
-    Convention:
-        throttle  ∈ [-1, +1]   negative = brake/reverse, positive = forward
-        steering  ∈ [-1, +1]   +1 = full left, -1 = full right
-        handbrake ∈ {0, 1}
-        mode_params: strategy-specific knobs (e.g., crab angle, rear ratio)
+    Longitudinal input is split into two independent channels so braking is
+    a real friction-brake pedal (μ·Fz-limited, lockable), not just "negative
+    throttle" (which was reverse-driving the motors and behaved the same on
+    ice as on dry asphalt):
+
+        throttle  ∈ [0, +1]   drive pedal — fraction of v_max (gear D) or
+                              v_max_reverse (gear R). 0 = coast.
+        brake     ∈ [0, +1]   friction-brake pedal — fraction of
+                              brake_torque_max. 0 = no friction brake.
+        gear      ∈ {-1, 0, +1}   R(everse) / N(eutral) / D(rive).
+
+    steering  ∈ [-1, +1]   +1 = full left, -1 = full right
+    handbrake ∈ {0, 1}     parking brake (rear-axle fixed brake torque)
+    mode_params: strategy-specific knobs (e.g., crab angle, rear ratio)
+
+    Backward-compat: older callers / scripts used a single signed throttle
+    axis where negative meant brake. `set_driver` still accepts that form and
+    rewrites it into (throttle=0, brake=-throttle) when `brake` is not given.
     """
 
     throttle: float = 0.0
+    brake: float = 0.0
+    gear: int = 1
     steering: float = 0.0
     handbrake: int = 0
     mode_params: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def throttle_signed(self) -> float:
+        """Legacy single-axis view: +throttle forward, −brake reverse.
+
+        Kept so user scripts / experiment code that read `driver.throttle` as
+        a signed value still get a sensible number. New code should read
+        `throttle`, `brake`, `gear` directly."""
+        return float(self.throttle) - float(self.brake)
 
 
 @dataclass
@@ -246,6 +297,13 @@ class ControlCommand:
     delta_cmd: np.ndarray
     wheel_speed_cmd: np.ndarray
     icr_target_body: np.ndarray  # shape (2,) — may contain NaN/Inf
+    # Friction-brake command [0,1] per wheel (work-package A). Carried on the
+    # command (not the driver) because braking is a vehicle-actuator concern,
+    # not a strategy concern — strategies reason about motion targets, the
+    # dynamic model turns the brake pedal into torque. The simulator loop fills
+    # these from DriverInput after the strategy runs.
+    brake_cmd: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
+    handbrake: int = 0
 
     @staticmethod
     def zero() -> ControlCommand:
@@ -318,6 +376,12 @@ class VehicleState:
     fz: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
     torque_steer: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
     susp_defl: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))  # suspension compression vs static [m]
+    wheel_locked: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS, dtype=bool))  # friction-brake lockup flags
+    # Mean surface friction under the four wheels, refreshed by every model
+    # each step. The driver-facing layers (steering soft limit, kinematic brake
+    # rate) read this so they degrade on ice instead of assuming dry asphalt —
+    # they run *before* the tyre model, so they cannot query it themselves.
+    mu_avg: float = 0.85
 
     # Derived geometry
     vehicle_icr_body: np.ndarray = field(default_factory=lambda: np.full(2, np.nan))

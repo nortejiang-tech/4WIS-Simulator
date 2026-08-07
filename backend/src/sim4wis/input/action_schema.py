@@ -11,7 +11,7 @@ Available actions (Phase 2a v1):
     set_mode_params set strategy-specific mode_params dict
     throttle_ramp  linearly ramp throttle from `from` → `to` over `duration`
     steer_ramp     same for steering
-    brake          throttle = -1 for `duration` (or until v=0)
+    brake          full friction brake (brake=1) for `duration` (or until v=0)
     wait_until     blocking wait — until {t, distance, speed_below}
     reset          reset vehicle pose & trajectory
     stop           terminate script

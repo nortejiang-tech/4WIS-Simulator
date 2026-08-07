@@ -31,11 +31,14 @@ from sim4wis.core.state import ControlCommand, DriverInput, VehicleState
 class ZeroRadiusStrategy(ControllerStrategy):
     name = "zero_radius"
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:  # noqa: ARG002
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:  # noqa: ARG002
         p = self.params
 
         # Yaw-rate magnitude: scale so the outer wheel's linear speed equals v_max
         # at full throttle. Outer wheel is at distance R_outer from origin.
+        # NOTE: zero-radius pivots in place (vx=0); `throttle` here is the spin
+        # rate command, not the longitudinal drive pedal, so it deliberately
+        # does NOT go through the longitudinal speed_command layer.
         wheels = p.wheel_positions_body()
         R_max = float(np.max(np.linalg.norm(wheels, axis=1)))
         omega_max = p.v_max / R_max if R_max > 1e-6 else 1.0

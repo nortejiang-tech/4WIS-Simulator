@@ -17,21 +17,52 @@ from __future__ import annotations
 import math
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 SteerKind = Literal["constant", "step", "ramp", "sine", "sweep", "dlc"]
+# Unit of the steer `amplitude`:
+#   "normalized" — driver-style [-1, 1] passed through the strategy's feel layer
+#   "front_deg"  — front-wheel angle in degrees, BYPASSING the feel layer so a
+#                  validation experiment measures the *vehicle*, not the driver
+#                  input mapping. Work-package B3 decoupling.
+SteerUnit = Literal["normalized", "front_deg"]
 
 
 class SteerProfile(BaseModel):
-    """Normalised steering [-1, 1] as a function of time within one step."""
+    """Steering input as a function of time within one step.
+
+    `unit` selects how `amplitude` is interpreted:
+      * "normalized" (default, legacy): [-1, 1], goes through the strategy's
+        steering-feel mapping (variable gear ratio, soft limit).
+      * "front_deg": front-wheel angle in degrees. The experiment applies this
+        directly to delta_cmd, bypassing the feel layer — so a regression
+        baseline survives future tuning of the driver-input mapping.
+    """
 
     kind: SteerKind = "constant"
-    amplitude: float = Field(0.0, ge=-1.0, le=1.0)
+    # The bound depends on the unit — see `_check_amplitude_unit`. The field
+    # bound here is only the widest of the two; a single ±360 bound would let a
+    # "normalized" profile carry 50 and silently command permanent full lock.
+    amplitude: float = Field(0.0, ge=-90.0, le=90.0)
+    unit: SteerUnit = "normalized"
     freq_hz: float = Field(0.5, gt=0.0, le=10.0)     # sine
     f0_hz: float = Field(0.1, gt=0.0, le=10.0)       # sweep start frequency
     f1_hz: float = Field(2.0, gt=0.0, le=10.0)       # sweep end frequency
     t_step: float = Field(0.5, ge=0.0)               # step lead-in [s]
-    start: float = Field(0.0, ge=-1.0, le=1.0)       # ramp start value
+    start: float = Field(0.0, ge=-90.0, le=90.0)     # ramp start value
+
+    @model_validator(mode="after")
+    def _check_amplitude_unit(self) -> SteerProfile:
+        """Bound `amplitude`/`start` against the declared unit."""
+        limit = 1.0 if self.unit == "normalized" else 90.0
+        for name in ("amplitude", "start"):
+            v = getattr(self, name)
+            if abs(v) > limit:
+                raise ValueError(
+                    f"{name}={v} is out of range for unit '{self.unit}' "
+                    f"(|{name}| <= {limit})"
+                )
+        return self
 
     def value(self, t: float, duration: float) -> float:
         """Evaluate the profile at sim-time `t` seconds into the step."""

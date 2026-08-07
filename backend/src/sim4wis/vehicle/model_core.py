@@ -18,6 +18,11 @@ from sim4wis.core.state import N_WHEELS, VehicleParams
 
 G_ACCEL = 9.80665
 VMIN_SLIP = 0.5  # [m/s] floor for slip-angle/slip-ratio denominators
+# Below this wheel spin rate sign(ω) is meaningless for the friction brake.
+_BRAKE_SPIN_EPS = 1e-3   # [rad/s]
+# Below this wheel ground speed the vehicle counts as parked: a held wheel is
+# "parked", not "locked and sliding".
+_BRAKE_HOLD_EPS = 0.05   # [m/s]
 
 
 @dataclass(frozen=True)
@@ -406,6 +411,86 @@ def steady_state_slip_angles(
     return alpha, SteadyStateBody(beta=0.0, yaw_rate=0.0, used_bicycle=False)
 
 
+def friction_brake_torques(
+    *,
+    brake_cmd: np.ndarray,
+    brake_filtered: np.ndarray,
+    wheel_omega: np.ndarray,
+    vx_wheel: np.ndarray,
+    fz: np.ndarray,
+    mu: np.ndarray,
+    params: VehicleParams,
+    dt: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Friction-brake torque per wheel [N·m], opposing wheel spin.
+
+    Shared by the dynamic and multibody models (both drive the same wheel-spin
+    ODE, so the brake belongs here next to `semi_implicit_wheel_spin` rather
+    than duplicated in each model).
+
+    `brake_cmd[i]` is the wheel's share of the pedal — the pedal fraction times
+    its axle's `brake_bias_front` share. `brake_torque_max` is the
+    **whole-vehicle** figure (sized against m·g·r), so each wheel gets its axle
+    share divided by the two wheels on that axle:
+
+        T_i = brake_filtered_i · brake_torque_max / 2
+
+    Without that /2 the vehicle total came out at 2× the documented budget and
+    every wheel locked at ~30% pedal.
+
+    Lockup is deliberate (there is no ABS) and must be *reachable*: the caliper
+    applies what the pedal asks, and the contact patch can only react r·μ·Fz.
+    When the demand exceeds that, the surplus decelerates the wheel itself —
+    ω runs down to zero and the tyre goes to full slip, where the friction
+    ellipse eats the lateral force and the car stops steering.
+
+    Clamping the applied torque *to* the capacity instead (the obvious-looking
+    guard) quietly makes real lockup impossible: the wheel then always finds an
+    equilibrium slip that balances the torque, so it sat at κ ≈ −0.08, rolling,
+    while still being reported as locked.
+
+    At a standstill `sign(ω)` carries no information, so the opposing direction
+    is taken from the wheel's ground speed instead — otherwise the brake torque
+    vanishes exactly when the wheel is fully locked and the car creeps away
+    from under a full pedal (or rolls off under the parking brake).
+
+    Returns (torque, locked_flags, brake_filtered_new).
+    """
+    p = params
+    tau = max(float(getattr(p, "brake_tau", 0.08)), 1e-3)
+    a = dt / (tau + dt)
+    bf = np.asarray(brake_filtered, dtype=np.float64).reshape(N_WHEELS)
+    bf = bf + a * (np.asarray(brake_cmd, dtype=np.float64).reshape(N_WHEELS) - bf)
+
+    # Half the axle share: brake_torque_max is a whole-vehicle budget.
+    t_demand = bf * float(getattr(p, "brake_torque_max", 12_000.0)) / 2.0
+    r = float(p.tire_radius)
+    omega = np.asarray(wheel_omega, dtype=np.float64).reshape(N_WHEELS)
+    vxw = np.asarray(vx_wheel, dtype=np.float64).reshape(N_WHEELS)
+    fz_arr = np.asarray(fz, dtype=np.float64).reshape(N_WHEELS)
+    mu_arr = np.asarray(mu, dtype=np.float64).reshape(N_WHEELS)
+
+    torque = np.zeros(N_WHEELS)
+    locked = np.zeros(N_WHEELS, dtype=bool)
+    for i in range(N_WHEELS):
+        cap = r * float(mu_arr[i]) * float(fz_arr[i])   # contact-patch capacity
+        # Direction the brake must oppose. Below the spin threshold the wheel
+        # carries no sign, so fall back to the direction it would be dragged.
+        if abs(float(omega[i])) > _BRAKE_SPIN_EPS:
+            sign = math.copysign(1.0, float(omega[i]))
+        elif abs(float(vxw[i])) > _BRAKE_HOLD_EPS:
+            sign = math.copysign(1.0, float(vxw[i]))
+        else:
+            sign = 0.0
+        demand = float(t_demand[i])
+        torque[i] = -sign * demand
+        # Locked = the demand outruns the contact patch, so the wheel cannot
+        # keep rolling. Reported only while the car is actually moving: a wheel
+        # held at rest under the parking brake is parked, not sliding.
+        locked[i] = demand >= cap > 0.0 and abs(float(vxw[i])) > _BRAKE_HOLD_EPS
+    return torque, locked, bf
+
+
 def semi_implicit_wheel_spin(
     *,
     dt: float,
@@ -418,6 +503,7 @@ def semi_implicit_wheel_spin(
     tire,
     tire_radius: float,
     wheel_inertia: float,
+    brake_torque: np.ndarray | None = None,
     min_longitudinal_speed: float = VMIN_SLIP,
 ) -> tuple[np.ndarray, WheelForceSet, np.ndarray]:
     """Advance the wheel-spin ODE one step with a stiff-stable scheme.
@@ -447,6 +533,8 @@ def semi_implicit_wheel_spin(
     fz_arr = np.asarray(fz, dtype=np.float64).reshape(N_WHEELS)
     mu_arr = np.asarray(mu, dtype=np.float64).reshape(N_WHEELS)
     tq = np.asarray(torque, dtype=np.float64).reshape(N_WHEELS)
+    tb = (np.zeros(N_WHEELS) if brake_torque is None
+          else np.asarray(brake_torque, dtype=np.float64).reshape(N_WHEELS))
 
     omega_new = np.empty(N_WHEELS)
     fx_new = np.empty(N_WHEELS)
@@ -466,6 +554,18 @@ def semi_implicit_wheel_spin(
             w = (iw * float(omega[i]) + dt * (float(tq[i]) + r * c_kappa * float(vxw[i]) / d)) / (
                 iw + dt * r * r * c_kappa / d
             )
+        # Brake zero-crossing clamp. A friction brake can bring a wheel to rest
+        # but cannot spin it up backwards — it only ever opposes motion. Without
+        # this the brake makes κ chatter sign→sign across zero every step, and
+        # once the wheel is held at rest the torque would push it into reverse.
+        # Scoped to the brake torque specifically: a *motor* is allowed to drive
+        # a wheel through zero (that is how reversing works).
+        if float(tb[i]) != 0.0:
+            if float(omega[i]) * w < 0.0:
+                w = 0.0                       # overshot through zero this step
+            elif abs(float(omega[i])) <= _BRAKE_SPIN_EPS and w * float(tb[i]) > 0.0:
+                # Already at rest and the brake itself is what would move it.
+                w = 0.0
         k_new = (r * w - float(vxw[i])) / d
         fx_i, fy_i, mz_i = tire.forces(float(al[i]), k_new, float(fz_arr[i]), float(mu_arr[i]))
         omega_new[i] = w

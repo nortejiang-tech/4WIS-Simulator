@@ -126,9 +126,11 @@ def test_free_caster_self_aligns_and_stays_stable() -> None:
         maneuver=Maneuver(steps=[
             ManeuverStep(name="accel", duration=6.0, speed_kmh=60.0, speed_ramp_s=4.0),
             ManeuverStep(name="in", duration=2.0,
-                         steer=SteerProfile(kind="ramp", start=0.0, amplitude=0.05)),
+                         steer=SteerProfile(kind="ramp", start=0.0, amplitude=3.0,
+                                            unit="front_deg")),
             ManeuverStep(name="hold", duration=6.0,
-                         steer=SteerProfile(kind="constant", amplitude=0.05)),
+                         steer=SteerProfile(kind="constant", amplitude=3.0,
+                                            unit="front_deg")),
         ]),
     )
     r = run_experiment(exp)

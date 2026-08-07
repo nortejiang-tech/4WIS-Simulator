@@ -36,7 +36,7 @@ import type { PathCone, PathMark } from "@/types/sim";
 // ---------------------------------------------------------------------------
 
 /** Concatenate geometries into one (position + normal only, non-indexed). */
-function mergeGeoms(geoms: BufferGeometry[]): BufferGeometry {
+export function mergeGeoms(geoms: BufferGeometry[]): BufferGeometry {
   const pos: number[] = [];
   const nrm: number[] = [];
   for (const g of geoms) {
@@ -158,7 +158,7 @@ export function buildCones(cones: PathCone[]): Object3D[] {
 // ---------------------------------------------------------------------------
 
 /** Split a polyline into dash segments of `on` metres every `on + off`. */
-function dashSegments(pts: [number, number][], on: number, off: number): [number, number][][] {
+export function dashSegments(pts: [number, number][], on: number, off: number): [number, number][][] {
   const out: [number, number][][] = [];
   const period = on + off;
   let s = 0;                     // arc length consumed so far

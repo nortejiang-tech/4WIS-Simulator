@@ -38,7 +38,34 @@ class WheelSpeedServo:
     _cmd_prev: float | None = None
     _rate_f: float = 0.0
 
-    def update(self, omega_actual: float, omega_cmd: float, dt: float) -> float:
+    def update(self, omega_actual: float, omega_cmd: float, dt: float,
+               brake_active: bool = False) -> float:
+        """Compute one step of motor torque.
+
+        When `brake_active` is true the friction brake owns this wheel and the
+        servo disengages completely (output 0, integrator cleared).
+
+        Clamping the output to ≤ 0 is NOT enough: this is a *speed* servo, so
+        while the brake pedal drags `ω_cmd` down the servo sees a large
+        negative error and pours its full `torque_limit` of retarding torque in
+        on top of the friction brake. That retarding branch has no pedal
+        dependence, so any non-zero pedal produced the same maximum-effort stop
+        (measured: 0.1 and 1.0 pedal both gave a 22.5 m / 12 s stop from
+        60 km/h with all four wheels locked). Disengaging makes the friction
+        torque the sole longitudinal authority during braking, which is what
+        makes pedal travel mean something.
+
+        The integrator is zeroed rather than frozen so releasing the brake
+        doesn't dump a stale accumulated error back into the drivetrain.
+        """
+        if brake_active:
+            self.integral = 0.0
+            # Keep tracking the command so the feedforward derivative doesn't
+            # spike on the first step after release.
+            self._cmd_prev = omega_cmd
+            self._rate_f = 0.0
+            return 0.0
+
         err = omega_cmd - omega_actual
         # Command-rate feedforward (filtered numerical derivative of ω_cmd).
         if self._cmd_prev is not None and dt > 1e-9:

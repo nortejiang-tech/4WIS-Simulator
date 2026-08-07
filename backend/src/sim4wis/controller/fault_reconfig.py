@@ -71,7 +71,11 @@ from sim4wis.controller.base import (
     ControllerStrategy,
     compute_commands,
 )
-from sim4wis.controller.ideal_ackermann import _max_curvature
+from sim4wis.controller.ideal_ackermann import (
+    _max_curvature,
+    curvature_from_inner_front_angle,
+)
+from sim4wis.controller.longitudinal import speed_command
 from sim4wis.core.state import ControlCommand, DriverInput, VehicleParams, VehicleState
 
 # Same-axle partner: FL<->FR, RL<->RR.
@@ -88,7 +92,7 @@ class FaultReconfigStrategy(ControllerStrategy):
         self._yaw_int = 0.0                   # yaw-error integral [rad]
         self._t_prev: float | None = None
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:
         p = self.params
         mp = driver.mode_params or {}
         wheel = int(mp.get("fault_wheel", 0))
@@ -99,8 +103,19 @@ class FaultReconfigStrategy(ControllerStrategy):
         k_yaw = float(mp.get("k_yaw", 0.5))
         decel_max = float(mp.get("decel_max", 3.0))
 
-        kappa = self._kappa_max * float(driver.steering)
-        v_cmd = p.v_max * float(driver.throttle)
+        # This strategy deliberately does NOT run the driver feel layer: it is a
+        # reconfiguration controller, and the safety study it backs must measure
+        # the vehicle, not the driver mapping. `steer_raw_rad` lets an
+        # experiment command the physical inner-front angle directly
+        # (`unit: front_deg`); otherwise the normalised axis maps to curvature
+        # the way it always has.
+        raw_rad = mp.get("steer_raw_rad")
+        if raw_rad is not None:
+            delta_in = max(-p.steer_limit, min(p.steer_limit, float(raw_rad)))
+            kappa = curvature_from_inner_front_angle(p, delta_in)
+        else:
+            kappa = self._kappa_max * float(driver.steering)
+        v_cmd = speed_command(p, driver, float(state.vx), dt, float(state.mu_avg))
 
         detected = float(state.t) >= t_detect
         if detected:

@@ -17,12 +17,42 @@ export default function Hud({ state }: { state: SimStateMessage }) {
   const psi_deg = (state.pose.psi * 180) / Math.PI;
   const devs = state.wheels.map((w) => w.icr_dev);
   const anyDev = devs.some((d) => d != null);
+  const drv = state.driver;
+  const gear = drv?.gear ?? 1;
+  const gearLabel = gear < 0 ? "R" : gear === 0 ? "N" : "D";
+  const anyLocked = state.wheels.some((w) => w.locked);
+  // Steering-feel readouts. The ratio and the effective front angle come from
+  // the backend rather than being re-derived here: a front-end copy of the
+  // curve drifts the moment a parameter changes (it hard-coded v_ref = 22), and
+  // it cannot show the grip soft limit at all — so it reported a ratio implying
+  // a front angle the vehicle never received. δ_eff is the honest number.
+  const swRange = state.params?.steer_wheel_range ?? 540;
+  const thetaSw = (drv?.steering ?? 0) * (swRange / 2);
+  const ratio = drv?.steer_ratio ?? 0;
+  const deltaEff = drv?.steer_delta_eff_deg ?? 0;
 
   return (
     <div className="canvas-hud">
       <div className="hud-row">
         <span className="hud-label">策略</span>
         <span className="hud-value strong">{state.strategy}</span>
+      </div>
+      <div className="hud-row">
+        <span className="hud-label">档位</span>
+        <span className="hud-value hud-mono strong" style={{ color: gear < 0 ? "#fbbf24" : undefined }}>
+          {gearLabel}
+        </span>
+        {drv && (drv.brake ?? 0) > 0.02 && (
+          <span className="hud-value hud-mono" style={{ color: "#f87171", marginLeft: 8 }}>
+            刹车 {(drv.brake! * 100).toFixed(0)}%
+          </span>
+        )}
+        {drv && drv.handbrake ? (
+          <span className="hud-value hud-mono" style={{ color: "#fbbf24", marginLeft: 8 }}>手刹</span>
+        ) : null}
+        {anyLocked && (
+          <span className="hud-value hud-mono" style={{ color: "#f87171", marginLeft: 8 }}>⚠ 抱死</span>
+        )}
       </div>
       <div className="hud-row">
         <span className="hud-label">vₓ</span>
@@ -42,6 +72,12 @@ export default function Hud({ state }: { state: SimStateMessage }) {
         <span className="hud-label">δ (°)</span>
         <span className="hud-value hud-mono hud-small">
           {state.wheels.map((w) => ((w.delta * 180) / Math.PI).toFixed(1)).join(" / ")}
+        </span>
+      </div>
+      <div className="hud-row">
+        <span className="hud-label">方向盘</span>
+        <span className="hud-value hud-mono hud-small">
+          θ_sw {thetaSw.toFixed(0)}° · i {ratio.toFixed(1)}:1 · δ {deltaEff.toFixed(1)}°
         </span>
       </div>
       <div className="hud-row">

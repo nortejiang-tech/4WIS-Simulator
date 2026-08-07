@@ -43,6 +43,7 @@ from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.model_core import (
     body_resistance_force,
     camber_thrust_alpha_offset,
+    friction_brake_torques,
     rotate_wheel_forces_to_body,
     semi_implicit_wheel_spin,
     static_toe_offsets,
@@ -93,6 +94,8 @@ class MultiBodyModel(VehicleModel):
         self._zu = np.zeros(N_WHEELS)
         self._zu_dot = np.zeros(N_WHEELS)
         self._delta_act = np.zeros(N_WHEELS)  # steering actuator state
+        # Filtered friction-brake command per wheel (first-order, brake_tau).
+        self._brake_f = np.zeros(N_WHEELS)
 
         # Diagnostics
         self.slip_alpha = np.zeros(N_WHEELS)
@@ -163,6 +166,7 @@ class MultiBodyModel(VehicleModel):
 
         # Per-wheel road height + μ at the current planar pose (held over the step).
         road_z, wheel_mus = self._road_and_mu(env)
+        s.mu_avg = float(np.mean(wheel_mus))
         t_motor = self._motor_torques(cmd, s.wheel_omega, dt)
         # Steering actuator: actual δ tracks δ_cmd with lag + rate limit.
         self._delta_act = steer_actuator(
@@ -201,7 +205,9 @@ class MultiBodyModel(VehicleModel):
         # advanced semi-implicitly inside _finalize (stiff-stable).
 
         # Derived / reported quantities (recompute forces at the final state).
-        self._finalize(s, delta_cmd, road_z, wheel_mus, t_motor, dt)
+        # The friction brake is applied inside _finalize, where the transferred
+        # loads and per-wheel ground speeds it needs are available.
+        self._finalize(s, delta_cmd, road_z, wheel_mus, t_motor, dt, cmd)
         s.t += dt
         return s
 
@@ -214,6 +220,7 @@ class MultiBodyModel(VehicleModel):
                 omega_actual=float(omega_actual[i]),
                 omega_cmd=float(cmd.wheel_speed_cmd[i]),
                 dt=dt,
+                brake_active=bool(cmd.brake_cmd[i] > 0.02),
             )
         return out
 
@@ -374,7 +381,7 @@ class MultiBodyModel(VehicleModel):
         dy[IWW] = 0.0
         return dy
 
-    def _finalize(self, s: VehicleState, delta_cmd, road_z, wheel_mus, t_motor, dt) -> None:
+    def _finalize(self, s: VehicleState, delta_cmd, road_z, wheel_mus, t_motor, dt, cmd) -> None:
         # Recompute suspension state + reported Fz / steering torque at final y.
         p = self.params
         y = np.empty(24)
@@ -400,6 +407,17 @@ class MultiBodyModel(VehicleModel):
             tire_radius=p.tire_radius,
         )
         alpha_camber = camber_thrust_alpha_offset(p, f_tire_z)
+        t_brake, locked, self._brake_f = friction_brake_torques(
+            brake_cmd=cmd.brake_cmd,
+            brake_filtered=self._brake_f,
+            wheel_omega=s.wheel_omega,
+            vx_wheel=kin.vx_wheel,
+            fz=f_tire_z,
+            mu=wheel_mus,
+            params=p,
+            dt=dt,
+        )
+        s.wheel_locked = locked
         omega_new, forces, kappa_new = semi_implicit_wheel_spin(
             dt=dt,
             wheel_omega=s.wheel_omega,
@@ -407,7 +425,8 @@ class MultiBodyModel(VehicleModel):
             alpha=kin.alpha + alpha_camber,
             fz=f_tire_z,
             mu=wheel_mus,
-            torque=t_motor,
+            torque=t_motor + t_brake,
+            brake_torque=t_brake,
             tire=self.tire,
             tire_radius=p.tire_radius,
             wheel_inertia=self.iw,

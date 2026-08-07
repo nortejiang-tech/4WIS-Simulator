@@ -20,6 +20,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from sim4wis.controller.longitudinal import apply_brake_command
 from sim4wis.controller.registry import make_strategy
 from sim4wis.core.derived import update_derived_outputs
 from sim4wis.core.state import DriverInput, EnvironmentState, VehicleParams
@@ -29,6 +30,13 @@ from sim4wis.project.params_codec import params_from_dict
 from sim4wis.vehicle.model_registry import make_vehicle_model
 
 WHEELS = ("fl", "fr", "rl", "rr")
+
+# Strategies that honour `mode_params["steer_raw_rad"]` and can therefore run a
+# `unit: front_deg` maneuver. Any other strategy silently ignores the key and
+# would run the experiment with zero steering, so we refuse instead.
+FRONT_DEG_STRATEGIES = frozenset({
+    "ideal_ackermann", "rear_wheel_steer", "fault_reconfig",
+})
 
 # Channels recorded by every headless run (superset of the RT recorder's
 # defaults — batch analysis wants slip + driver inputs too).
@@ -85,6 +93,7 @@ class SimSession:
         self.params = resolve_vehicle_params(exp)
         self.model = make_vehicle_model(self.params, exp.model_type)
         self.strategy = make_strategy(exp.strategy, self.params)
+        self._front_deg_ok = exp.strategy in FRONT_DEG_STRATEGIES
         from sim4wis.project.schema import SceneSection
         scene = SceneSection(**exp.scene).to_scene() if exp.scene else Scene()
         self.env = EnvironmentState(scene=scene, mu=scene.base_mu)
@@ -133,10 +142,48 @@ class SimSession:
                     v_cmd = speed_prev + (speed_target - speed_prev) * (t_local / ramp)
                 else:
                     v_cmd = speed_target
-                driver.throttle = max(-1.0, min(1.0, v_cmd / v_max))
-                driver.steering = max(-1.0, min(1.0, step_def.steer.value(t_local, step_def.duration)))
-                cmd = self.strategy.compute(driver, self.model.state)
+                # Split channels, matching the DriverInput contract: throttle is
+                # unipolar and the sign lives in the gear. Writing a signed
+                # throttle here (the pre-v0.100 form) would ask a car in D for a
+                # negative speed rather than selecting reverse.
+                driver.gear = -1 if v_cmd < 0.0 else 1
+                driver.throttle = min(1.0, abs(v_cmd) / v_max)
+                steer_raw = step_def.steer.value(t_local, step_def.duration)
+                if step_def.steer.unit == "front_deg" and not self._front_deg_ok:
+                    raise ValueError(
+                        f"strategy '{self.exp.strategy}' does not support "
+                        f"steer unit 'front_deg': it ignores "
+                        f"mode_params['steer_raw_rad']. The run would silently "
+                        f"execute with zero steering and produce a straight-line "
+                        f"'baseline'. Use unit 'normalized', or one of: "
+                        f"{sorted(FRONT_DEG_STRATEGIES)}."
+                    )
+                if step_def.steer.unit == "front_deg":
+                    # Bypass the driver feel layer: the amplitude IS the front-
+                    # wheel angle in degrees. Pass it through mode_params as a
+                    # raw radian value so the strategy skips its feel mapping
+                    # and the validation measures the vehicle, not the driver.
+                    #
+                    # Mutate the live dict — do NOT rebuild it from
+                    # `step_def.mode_params`. That drops the experiment-level
+                    # mode_params merged in at construction, which is where
+                    # fault_reconfig reads fault_wheel / fault_time /
+                    # detect_delay / v_limit_kmh from. Losing them silently
+                    # rearmed the mitigation controller with defaults (fault at
+                    # t=0), which read as a huge cross-track error rather than
+                    # as a configuration failure.
+                    driver.mode_params["steer_raw_rad"] = math.radians(steer_raw)
+                    driver.steering = 0.0
+                else:
+                    # Clear any raw angle a previous front_deg step left behind,
+                    # or the strategy keeps bypassing the feel layer.
+                    driver.mode_params.pop("steer_raw_rad", None)
+                    driver.steering = max(-1.0, min(1.0, steer_raw))
+                cmd = self.strategy.compute(driver, self.model.state, dt)
                 self._apply_faults(cmd)
+                # Fill the friction-brake actuator command (same helper the
+                # live loop uses, so the two cannot drift apart).
+                apply_brake_command(cmd, driver, self.params)
                 self.model.step(dt, cmd, self.env)
                 update_derived_outputs(self.model.state, self.params)
                 if n_steps % record_every == 0:

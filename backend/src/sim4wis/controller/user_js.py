@@ -15,6 +15,7 @@ from __future__ import annotations
 import numpy as np
 
 from sim4wis.controller.base import ControlCommand, ControllerStrategy
+from sim4wis.controller.longitudinal import speed_command
 from sim4wis.core.state import DriverInput, N_WHEELS, VehicleParams, VehicleState
 
 
@@ -32,8 +33,8 @@ class UserJsStrategy(ControllerStrategy):
         raw = np.array([fl, fr, rl, rr], dtype=np.float64)
         self._delta_cmd = np.clip(raw, -self.params.steer_limit, self.params.steer_limit)
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:
-        v = driver.throttle * self.params.v_max
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:  # noqa: ARG002
+        v = speed_command(self.params, driver, float(state.vx), dt, float(state.mu_avg))
         omega_wheel = np.full(N_WHEELS, v / max(self.params.tire_radius, 1e-6))
         return ControlCommand(
             delta_cmd=self._delta_cmd.copy(),

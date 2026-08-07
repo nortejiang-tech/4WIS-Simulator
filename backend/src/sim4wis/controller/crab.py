@@ -20,16 +20,17 @@ from sim4wis.controller.base import (
     ControllerStrategy,
     compute_commands,
 )
+from sim4wis.controller.longitudinal import speed_command
 from sim4wis.core.state import ControlCommand, DriverInput, VehicleState
 
 
 class CrabStrategy(ControllerStrategy):
     name = "crab"
 
-    def compute(self, driver: DriverInput, state: VehicleState) -> ControlCommand:  # noqa: ARG002
+    def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:  # noqa: ARG002
         p = self.params
         delta_crab = p.steer_limit * float(driver.steering)
-        v_cmd = p.v_max * float(driver.throttle)
+        v_cmd = speed_command(p, driver, float(state.vx), dt, float(state.mu_avg))
 
         # ω = 0 — ICR at infinity, perpendicular to translation direction.
         target = BodyMotionTarget(

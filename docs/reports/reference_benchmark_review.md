@@ -16,12 +16,12 @@
 
 | Metric | Sim | Reference | Delta | Tolerance | Status |
 |---|---:|---:|---:|---:|---|
-| `yaw_rate_peak_dps` | 7.8559 | 7.8559 | 2.02585e-11 | 0.001 | PASS |
-| `vy_peak_kmh` | 9.99201e-17 | 0 | 9.99201e-17 | 0.001 | PASS |
+| `yaw_rate_peak_dps` | 7.8559 | 7.8559 | 3.3412e-07 | 0.001 | PASS |
+| `vy_peak_kmh` | 1.9984e-16 | 0 | 1.9984e-16 | 0.001 | PASS |
 | `speed_error_rms_kmh` | 6.39488e-15 | 0 | 6.39488e-15 | 0.001 | PASS |
-| `pose_y_peak_abs_m` | 32.9113 | 32.9298 | 0.018519 | 0.05 | PASS |
-| `trajectory_error_rms_m` | 0.0127905 | 0 | 0.0127905 | 0.02 | PASS |
-| `trajectory_error_peak_m` | 0.0216868 | 0 | 0.0216868 | 0.03 | PASS |
+| `pose_y_peak_abs_m` | 32.9113 | 32.9298 | 0.0185202 | 0.05 | PASS |
+| `trajectory_error_rms_m` | 0.0127912 | 0 | 0.0127912 | 0.02 | PASS |
+| `trajectory_error_peak_m` | 0.0216883 | 0 | 0.0216883 | 0.03 | PASS |
 
 ### Reviewer Notes
 
@@ -33,7 +33,7 @@ This benchmark checks the kinematic ideal-Ackermann steady-circle promise agains
 Reference construction:
 
 - Default `VehicleParams()` geometry.
-- `driver_steering = 0.05`, `speed = 30 km/h`.
+- Inner-front-wheel angle = 1.508559° (`unit: front_deg`, v0.100 — bypasses the
 ```
 
 ## analytic_step_steer_30kmh - PASS
@@ -44,15 +44,15 @@ Reference construction:
 
 | Metric | Sim | Reference | Delta | Tolerance | Status |
 |---|---:|---:|---:|---:|---|
-| `yaw_rate_peak_dps` | 7.8559 | 7.8559 | 2.02585e-11 | 0.001 | PASS |
-| `yaw_gain_dps` | 157.118 | 157.118 | 5.68434e-14 | 0.001 | PASS |
+| `yaw_rate_peak_dps` | 7.8559 | 7.8559 | 3.3412e-07 | 0.001 | PASS |
+| `yaw_gain_dps` | 5.20755 | 5.20755 | 2.74722e-11 | 0.001 | PASS |
 | `yaw_rise_time_s` | 0 | 0 | 0 | 0.001 | PASS |
 | `yaw_settling_time_s` | 0 | 0 | 0 | 0.001 | PASS |
-| `vy_peak_kmh` | 9.99201e-17 | 0 | 9.99201e-17 | 0.001 | PASS |
+| `vy_peak_kmh` | 1.9984e-16 | 0 | 1.9984e-16 | 0.001 | PASS |
 | `speed_error_rms_kmh` | 6.39488e-15 | 0 | 6.39488e-15 | 0.001 | PASS |
-| `pose_y_peak_abs_m` | 25.7902 | 25.8072 | 0.0170402 | 0.05 | PASS |
-| `trajectory_error_rms_m` | 0.0105417 | 0 | 0.0105417 | 0.02 | PASS |
-| `trajectory_error_peak_m` | 0.0191987 | 0 | 0.0191987 | 0.03 | PASS |
+| `pose_y_peak_abs_m` | 25.7902 | 25.8072 | 0.0170412 | 0.05 | PASS |
+| `trajectory_error_rms_m` | 0.0105421 | 0 | 0.0105421 | 0.02 | PASS |
+| `trajectory_error_peak_m` | 0.0191998 | 0 | 0.0191998 | 0.03 | PASS |
 
 ### Reviewer Notes
 
@@ -64,5 +64,5 @@ This benchmark checks the kinematic ideal-Ackermann step-steer path against a cl
 Reference construction:
 
 - Default `VehicleParams()` geometry.
-- `driver_steering = 0.05`, `speed = 30 km/h`, `step_time = 1.0 s`.
+- Inner-front-wheel step angle = 1.508559°, `speed = 30 km/h`, `step_time = 1.0 s`.
 ```

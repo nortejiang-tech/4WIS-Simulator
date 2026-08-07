@@ -20,6 +20,7 @@ import { Grid, OrbitControls } from "@react-three/drei";
 import {
   BufferAttribute,
   BufferGeometry,
+  BoxGeometry,
   CylinderGeometry,
   DoubleSide,
   ExtrudeGeometry,
@@ -51,7 +52,7 @@ import {
   nextCamMode,
 } from "@/view/roofCamera";
 import RoofCamera from "./canvas3d/RoofCamera";
-import { buildCones, buildMarks, disposeCourse, ribbon } from "./canvas3d/courseFurniture";
+import { buildCones, buildMarks, dashSegments, disposeCourse, mergeGeoms, ribbon } from "./canvas3d/courseFurniture";
 import {
   WHEEL,
   bodyDimensions,
@@ -551,9 +552,19 @@ function Scenario3D({ sig }: { sig: string }) {
     });
     sc.lines.forEach((ln) => {
       if (ln.points.length >= 2) {
-        const geom = ribbonGeometry(ln.points, Math.max(0.12, ln.width), 0.06);
+        const w = Math.max(0.12, ln.width);
         const mat = new MeshStandardMaterial({ color: ln.color, roughness: 0.8 });
-        out.push(new Mesh(geom, mat));
+        if (ln.dash_pattern) {
+          // Metre-rhythm dashes: reuse the courseFurniture dash splitter + ribbon.
+          const segs = dashSegments(ln.points, ln.dash_pattern[0], ln.dash_pattern[1]);
+          if (segs.length) {
+            const geom = mergeGeoms(segs.filter((s) => s.length >= 2).map((s) => ribbon(s, w, 0.06)));
+            out.push(new Mesh(geom, mat));
+          }
+        } else {
+          const geom = ribbonGeometry(ln.points, w, 0.06);
+          out.push(new Mesh(geom, mat));
+        }
       }
     });
     sc.markers.forEach((m) => {
@@ -578,6 +589,15 @@ function Scenario3D({ sig }: { sig: string }) {
         lamp.position.set(px, 3.1, pz);
         g.add(lamp);
         out.push(g);
+      } else if (m.type === "distance") {
+        // Distance post: a thin upright slab (zero-texture primitive, cheap).
+        const [px, , pz] = w2t(m.x, m.y, 0);
+        const post = new Mesh(
+          new BoxGeometry(0.18, 1.4, 0.06),
+          new MeshStandardMaterial({ color: "#e8e8e8", roughness: 0.7 }),
+        );
+        post.position.set(px, 0.7, pz);
+        out.push(post);
       }
     });
     return out;

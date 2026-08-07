@@ -35,7 +35,7 @@ def _spawn(sim, pose: tuple[float, float, float]) -> None:
 
 
 @router.post("/scenarios/{name}/load")
-async def load_scenario(name: str) -> dict[str, Any]:
+async def load_scenario(name: str, spawn: str | None = None) -> dict[str, Any]:
     try:
         version = scn.load_scenario(name)
     except KeyError as e:
@@ -43,7 +43,9 @@ async def load_scenario(name: str) -> dict[str, Any]:
     active = scn.get_active()
     sim = get_simulator()
     if active is not None:
-        _spawn(sim, active.spawn)
+        # Resolve the requested named spawn; fall back to the scenario's
+        # effective spawn when the name is missing or unknown.
+        _spawn(sim, active.find_spawn(spawn))
     return {"version": version, "scenario": active.serialize() if active else None}
 
 

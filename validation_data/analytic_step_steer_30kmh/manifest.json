@@ -54,9 +54,9 @@
       "reason": "Kinematic ideal Ackermann should match the post-step analytic yaw-rate formula to numerical precision."
     },
     "yaw_gain_dps": {
-      "reference_value": 157.118017317333,
+      "reference_value": 5.2075527253,
       "abs_tol": 0.001,
-      "reason": "Yaw gain is post-step yaw_rate_peak_dps divided by the normalized steering step amplitude."
+      "reason": "Yaw gain is post-step yaw_rate_peak_dps divided by the front-wheel step angle (deg). Pre-v0.100 this was normalised-input (157.118); the front_deg unit (v0.100) re-expresses it per degree of inner-front-wheel angle. The angle is derived with the strategy's own symmetric-4WIS geometry (ICR lever arm L/2), not the bicycle relation."
     },
     "yaw_rise_time_s": {
       "reference_value": 0.0,
