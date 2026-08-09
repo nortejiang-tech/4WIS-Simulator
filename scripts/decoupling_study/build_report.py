@@ -127,7 +127,11 @@ def main() -> int:
     fig_circle = bar_chart(
         [(arch[k]["label"], circles[k]["turning_circle"], ARCH_COLOR[k],
           f'δ_r {circles[k]["delta_r"]:+.1f}°') for k in ladder_keys],
-        "转弯直径 (m)", caption="图 1 — 全锁转弯直径。唯一一项四级严格单调、且末级跃升最大的指标。",
+        "转弯直径 (m)",
+        caption=("图 1 — 全锁转弯直径。三个带后轮转向的架构都顶在共同的 "
+                 f"{arch['L1']['rear_limit_deg']:.0f}° 限幅上，因此挤在一起（相差 "
+                 f"{max(circles[k]['turning_circle'] for k in ('L1','L2','L3')) - min(circles[k]['turning_circle'] for k in ('L1','L2','L3')):.2f} m）；"
+                 "阶梯几乎全部发生在 L0→L1 这一级。"),
         fmt="{:.2f}")
 
     fig_t90 = bar_chart(
@@ -276,9 +280,16 @@ def main() -> int:
         fig_algo_t90=fig_algo_t90, fig_algo_os=fig_algo_os,
         fig_phase_arch=fig_phase_arch, fig_phase_algo=fig_phase_algo,
         fig_beta_v=fig_beta_v,
-        d_circle=circles["L0"]["turning_circle"] - circles["L3"]["turning_circle"],
-        pct_circle=(1 - circles["L3"]["turning_circle"]
+        d_circle=circles["L0"]["turning_circle"] - circles["L1"]["turning_circle"],
+        pct_circle=(1 - min(circles[k]["turning_circle"] for k in ladder_keys)
                     / circles["L0"]["turning_circle"]) * 100,
+        # How the low-speed gain splits: the first rear axle vs everything above it.
+        pct_first=(1 - circles["L1"]["turning_circle"]
+                   / circles["L0"]["turning_circle"]) * 100,
+        rws_spread=(max(circles[k]["turning_circle"] for k in ("L1", "L2", "L3"))
+                    - min(circles[k]["turning_circle"] for k in ("L1", "L2", "L3"))),
+        rear_env=arch["L1"]["rear_limit_deg"],
+        front_env=meta["vehicle"]["steer_limit_deg"],
         t90_fast=S("L2", "transient")["yaw_t90"] * 1000,
         t90_slow=S("L2", "model_follow")["yaw_t90"] * 1000,
         os_fast=S("L2", "transient")["yaw_overshoot"],
@@ -433,10 +444,12 @@ ul.tight li {{ margin:6px 0; }}
 <li><b>控制算法的贡献大于架构的贡献。</b>在同一套 L2 硬件上，六种控制律把横摆响应时间
 从 {t90_slow:.0f} ms 拉到 {t90_fast:.0f} ms，跨度 9 倍；而四级架构在各自最佳律下的跨度不到 3 倍。
 硬件决定上限，算法决定你实际拿到多少。</li>
-<li><b>L2→L3 在常规操控指标上收益接近于零。</b>轴级上 SBW+RWS 与 4WIS 都是二自由度系统，
-在 4 m/s² 的常规工况下后轮权限与带宽都不是瓶颈——两者的标定转角完全相同。
-四轮独立转向的增量价值集中在低速机动性（转弯直径 −{pct_circle:.0f}%）
-和非阿克曼工况（蟹行、原地回转），后者不是「同一指标上分数更高」，而是低阶架构<b>根本没有</b>的能力。</li>
+<li><b>在等角度约束下，L1 以上的架构升级几乎买不到操控收益。</b>把四级统一到
+前轮 ±{front_env:.0f}°、后轮 ±{rear_env:.0f}° 之后，L1／L2／L3 的转弯直径落在
+{rws_spread:.2f} m 的带内，4 m/s² 下 L2 与 L3 的标定转角完全相同。
+低速的全部收益（−{pct_circle:.0f}%）里，<b>{pct_first:.0f} 个百分点来自第一个后轮轴</b>，
+其余来自作动带宽这种二阶效应。换句话说：<b>「有没有后轮转向」是台阶，
+「后轮转向做得多高级」在本文的角度约束内不是。</b></li>
 </ul>
 
 <h2><span class="n">1</span>方法</h2>
@@ -493,10 +506,17 @@ L3 给到平台自身的 ±{steer_limit:.0f}°，应读作「完全解耦能提�
 <tbody>{arch_rows}</tbody></table></div>
 
 {fig_circle}
-<p>低速机动性是唯一一项四级严格单调、且末级出现跃升的指标。
-L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L3 的 ±{steer_limit:.0f}° 权限
-把转弯直径直接砍掉 {d_circle:.2f} m（−{pct_circle:.0f}%）。
-这条曲线的形状说明：<b>后轮转向在低速的收益几乎完全由角度权限决定，而不是由控制律决定</b>。</p>
+<p>这张图在加上等角度约束之后变了样，而且变化本身就是结论。
+L0→L1 一步拿走 {d_circle:.2f} m（−{pct_first:.0f}%）；L1→L2→L3 三级加起来只挪动
+{rws_spread:.2f} m，因为它们全都顶死在共同的 ±{rear_env:.0f}° 限幅上。</p>
+<div class="callout"><h4>约束改变了结论，这一点必须讲明</h4>
+<p>本研究的早期版本给各级不同的后轮权限（0／3／5／{steer_limit:.0f}°），
+测得 L0→L3 的转弯直径改善 33%，读起来像是「四轮独立转向在低速有巨大优势」。
+统一角度包络之后，同一个量只剩 −{pct_circle:.0f}%。
+那 33% 里的绝大部分<b>不是架构带来的，是角度带来的</b>——
+是 L3 被允许用五倍于 L1 的后轮转角。
+这正是把角度包络固定下来的理由：不固定，架构比较就会变成角度比较的伪装。
+角度本身值多少钱，是另一篇报告的题目。</p></div>
 
 {fig_t90}
 <div class="callout"><h4>阶梯在瞬态上不是单调的</h4>
@@ -547,7 +567,11 @@ L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L
     <span class="rd" id="rdC"></span></div>
   <figcaption>动画 3 — 四轮独立转向独有的两种运动：<b>蟹行</b>（四轮同向，
   ICR 在无穷远，车身姿态不变而整体平移）与<b>原地回转</b>（ICR 落在车体中心，
-  vx = vy = 0）。这两种运动在阿克曼几何下<b>无解</b>——不是分数高低，是低阶架构没有这个能力。</figcaption>
+  vx = vy = 0）。这两种运动在阿克曼几何下<b>无解</b>——不是分数高低，是低阶架构没有这个能力。
+  <b>但请注意：这两段动画跑在本文的角度包络之外。</b>蟹行与原地回转都需要远超
+  ±{rear_env:.0f}° 的后轮转角，因此在本文第 2 节的约束下，L3 <b>也做不到</b>。
+  它们展示的是「如果放开后轮角度权限，四轮独立转向能拿到什么」，
+  而这恰好说明：4WIS 的招牌能力买的是<b>角度</b>，不是<b>解耦</b>。</figcaption>
 </div>
 
 <h2><span class="n">4</span>控制算法的贡献</h2>
@@ -592,13 +616,15 @@ L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L
 以及车辆<b>以什么姿态</b>抵达那个极限。在做技术方案论证时，
 把「操稳收益」和「极限收益」分开陈述，是本文数据支持的、也是唯一诚实的讲法。</p>
 
-<h3>5.3 收益递减出现在 L2→L3，而不是更早</h3>
+<h3>5.3 在等角度约束下，收益递减出现得比想象中早得多</h3>
 <p>L2 与 L3 在 4 m/s² 工况下的标定转角<b>完全相同</b>（{d_L2:.2f}°），
-稳态 β 相同，极限 a_y 相同。差别只在瞬态（T90 相差约 5%，来自作动带宽）
-和低速（转弯直径 −{pct_circle:.0f}%，来自角度权限）。
-若一个项目的目标只是常规行驶工况的操稳，从 SBW+RWS 走到四轮独立转向<b>买不到什么</b>。
-四轮独立的理由应当建立在低速机动性、非阿克曼运动能力、
-以及（本文未覆盖的）单轮失效重构上，而不是操稳指标。</p>
+稳态 β 相同，极限 a_y 相同，转弯直径相差 {rws_spread:.2f} m。
+剩下的差别只有瞬态（T90 相差约 5%，来自作动带宽）。
+若一个项目的目标是常规行驶工况的操稳，<b>且后轮角度权限被约束在 ±{rear_env:.0f}° 以内</b>，
+那么从 SBW+RWS 走到四轮独立转向买不到任何可测的东西。</p>
+<p>更进一步：在这个包络下，连 L1→L2 的操稳收益也很薄。SBW 的价值在别处（§5.1）——
+它把后轮转向对方向盘增益的副作用藏起来，这是手感问题，不是本文任何一项动力学指标能捕捉的。
+<b>四轮独立转向的立项理由，在角度受限时不成立；它需要的是角度预算，而不是自由度。</b></p>
 
 <h3>5.4 本研究的局限</h3>
 <ul class="tight">
@@ -614,15 +640,17 @@ L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L
 <h2><span class="n">6</span>结论</h2>
 <ol>
 <li>转向解耦不增加极限附着（本文跨度 &lt; 1%），它重新分配轮胎能力并改变车辆姿态。</li>
-<li>低速机动性的收益由<b>后轮角度权限</b>线性决定，四轮独立转向在此处拿到最大跃升
-    （转弯直径 −{pct_circle:.0f}%）。</li>
+<li>低速机动性的收益由<b>后轮角度权限</b>决定，而不是由转向自由度决定。
+    统一到 ±{rear_env:.0f}° 之后，L1／L2／L3 的转弯直径落在 {rws_spread:.2f} m 带内；
+    全部 −{pct_circle:.0f}% 的收益中，{pct_first:.0f} 个百分点由「装上第一个后轮转向轴」拿走。</li>
 <li>高速稳定性的收益体现为侧偏角收敛，但开环解析零侧偏律在非线性车辆上会<b>过冲</b>，
     需要闭环项修正。</li>
 <li>在固定硬件上，控制律带来的横摆响应差异（9 倍）大于架构带来的差异（&lt; 3 倍）。
     <b>算法投入的边际回报高于硬件投入。</b></li>
 <li>SBW 的独立价值不在车辆动力学指标里，而在于用可变传动比隐藏后轮转向对方向盘增益的副作用。</li>
-<li>L2→L3 在常规操控上收益接近于零；四轮独立转向的立项理由应建立在低速机动性、
-    非阿克曼运动与失效重构上。</li>
+<li>在等角度约束下 L2→L3 的操控收益不可测。四轮独立转向的招牌能力
+    （蟹行、原地回转）需要远超 ±{rear_env:.0f}° 的后轮角度，因此它的立项理由
+    本质上是<b>角度预算</b>加上失效重构，而不是「多两个转向自由度」。</li>
 </ol>
 
 <h2><span class="n">7</span>复现</h2>

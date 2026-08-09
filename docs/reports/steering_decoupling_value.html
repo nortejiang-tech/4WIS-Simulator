@@ -115,10 +115,10 @@ ul.tight li { margin:6px 0; }
   <p class="sub">从单前轮 EPS，到 EPS+RWS，到 SBW+RWS，再到四轮独立转向：
      每增加一个解耦的转向自由度，究竟买到了什么，又付出了什么。</p>
   <div class="meta">
-    <span>生成 <b>2026-08-10 01:06:00 CST</b></span>
-    <span>提交 <b>8c2018e</b></span>
+    <span>生成 <b>2026-08-10 06:51:23 CST</b></span>
+    <span>提交 <b>8e58ad2</b></span>
     <span>模型 <b>多体 14 DOF · RK4 · dt = 2 ms</b></span>
-    <span>机时 <b>149.2 s</b></span>
+    <span>机时 <b>148.2 s</b></span>
   </div>
 </header>
 
@@ -127,15 +127,17 @@ ul.tight li { margin:6px 0; }
 同一组标准工况，量化「转向解耦」的收益。核心结论有三条，其中两条与直觉相反。</p>
 <ul class="tight">
 <li><b>极限附着与转向架构无关。</b>四级架构的极限侧向加速度落在
-8.40–8.42 m/s² 的带内，差异 &lt; 1%。转向系统重新分配轮胎能力，
+8.41–8.42 m/s² 的带内，差异 &lt; 1%。转向系统重新分配轮胎能力，
 但不创造轮胎能力。任何声称后轮转向「提高抓地力」的说法在本模型下不成立。</li>
 <li><b>控制算法的贡献大于架构的贡献。</b>在同一套 L2 硬件上，六种控制律把横摆响应时间
 从 804 ms 拉到 88 ms，跨度 9 倍；而四级架构在各自最佳律下的跨度不到 3 倍。
 硬件决定上限，算法决定你实际拿到多少。</li>
-<li><b>L2→L3 在常规操控指标上收益接近于零。</b>轴级上 SBW+RWS 与 4WIS 都是二自由度系统，
-在 4 m/s² 的常规工况下后轮权限与带宽都不是瓶颈——两者的标定转角完全相同。
-四轮独立转向的增量价值集中在低速机动性（转弯直径 −33%）
-和非阿克曼工况（蟹行、原地回转），后者不是「同一指标上分数更高」，而是低阶架构<b>根本没有</b>的能力。</li>
+<li><b>在等角度约束下，L1 以上的架构升级几乎买不到操控收益。</b>把四级统一到
+前轮 ±35°、后轮 ±7° 之后，L1／L2／L3 的转弯直径落在
+0.23 m 的带内，4 m/s² 下 L2 与 L3 的标定转角完全相同。
+低速的全部收益（−9%）里，<b>7 个百分点来自第一个后轮轴</b>，
+其余来自作动带宽这种二阶效应。换句话说：<b>「有没有后轮转向」是台阶，
+「后轮转向做得多高级」在本文的角度约束内不是。</b></li>
 </ul>
 
 <h2><span class="n">1</span>方法</h2>
@@ -144,7 +146,7 @@ ul.tight li { margin:6px 0; }
 <b>角度权限</b>和<b>作动带宽</b>——而不是我们碰巧在上面跑了什么控制律。
 控制律是另一组扫描的自变量（第 4 节），跑在<b>固定硬件</b>上，
 这样「架构的贡献」和「算法的贡献」不会混在一起。</p>
-<div class="grid4"><div class="card" style="--c:#94a3b8"><div class="ck">L0</div><h4>EPS<small>前轮 EPS</small></h4><p>Mechanical column with electric assist. One steering DOF: the rear axle tracks the body, so yaw and sideslip are rigidly coupled by the chassis.</p><dl><dt>转向自由度</dt><dd>1</dd><dt>后轮权限</dt><dd>±0°</dd><dt>作动器 τ</dt><dd>90 ms</dd></dl></div><div class="card" style="--c:#38bdf8"><div class="ck">L1</div><h4>EPS + RWS<small>EPS + 后轮转向</small></h4><p>A rear-steer actuator adds a second DOF, but the front angle is still whatever the driver's hands did. Rear authority is the +/-3 deg typical of a production rear-axle module.</p><dl><dt>转向自由度</dt><dd>2</dd><dt>后轮权限</dt><dd>±3°</dd><dt>作动器 τ</dt><dd>75 ms</dd></dl></div><div class="card" style="--c:#a78bfa"><div class="ck">L2</div><h4>SBW + RWS<small>线控前轮 + 后轮转向</small></h4><p>Steer-by-wire breaks the mechanical link, so the front angle becomes a controlled variable too: variable ratio, higher bandwidth, and front-axle authority available to the stability controller rather than only to the driver.</p><dl><dt>转向自由度</dt><dd>2</dd><dt>后轮权限</dt><dd>±5°</dd><dt>作动器 τ</dt><dd>45 ms</dd></dl></div><div class="card" style="--c:#fb7185"><div class="ck">L3</div><h4>4WIS<small>四轮独立转向</small></h4><p>Four independently steered wheels. The ICR is no longer constrained to a line through the rear axle, so yaw rate and sideslip become independently commandable — and manoeuvres with no Ackermann solution at all (crab, zero-radius) open up.</p><dl><dt>转向自由度</dt><dd>4</dd><dt>后轮权限</dt><dd>±35°</dd><dt>作动器 τ</dt><dd>30 ms</dd></dl></div></div>
+<div class="grid4"><div class="card" style="--c:#94a3b8"><div class="ck">L0</div><h4>EPS<small>前轮 EPS</small></h4><p>Mechanical column with electric assist. One steering DOF: the rear axle tracks the body, so yaw and sideslip are rigidly coupled by the chassis.</p><dl><dt>转向自由度</dt><dd>1</dd><dt>后轮权限</dt><dd>±0°</dd><dt>作动器 τ</dt><dd>90 ms</dd></dl></div><div class="card" style="--c:#38bdf8"><div class="ck">L1</div><h4>EPS + RWS<small>EPS + 后轮转向</small></h4><p>A rear-steer actuator adds a second DOF, but the front angle is still whatever the driver's hands did. Rear authority is the shared +/-7 deg envelope.</p><dl><dt>转向自由度</dt><dd>2</dd><dt>后轮权限</dt><dd>±7°</dd><dt>作动器 τ</dt><dd>75 ms</dd></dl></div><div class="card" style="--c:#a78bfa"><div class="ck">L2</div><h4>SBW + RWS<small>线控前轮 + 后轮转向</small></h4><p>Steer-by-wire breaks the mechanical link, so the front angle becomes a controlled variable too: variable ratio, higher bandwidth, and front-axle authority available to the stability controller rather than only to the driver. Same rear angle as L1 — what improves is how fast and how precisely it is placed.</p><dl><dt>转向自由度</dt><dd>2</dd><dt>后轮权限</dt><dd>±7°</dd><dt>作动器 τ</dt><dd>45 ms</dd></dl></div><div class="card" style="--c:#fb7185"><div class="ck">L3</div><h4>4WIS<small>四轮独立转向</small></h4><p>Four independently steered wheels. Held to the same angle envelope as L1/L2, so what is left is per-wheel ICR placement and the fastest actuator. Note what the envelope costs it: crab and zero-radius need rear angles far beyond 7 deg, so under this constraint 4WIS cannot perform its signature manoeuvres at all.</p><dl><dt>转向自由度</dt><dd>4</dd><dt>后轮权限</dt><dd>±7°</dd><dt>作动器 τ</dt><dd>30 ms</dd></dl></div></div>
 
 <div class="callout warn"><h4>建模边界</h4>
 <p><code>steer_tau</code> 与 <code>steer_rate_max</code> 是整车级参数，因此每级只有<b>一个</b>
@@ -189,13 +191,20 @@ L3 给到平台自身的 ±35°，应读作「完全解耦能提供什么」，�
 <thead><tr><th>架构</th><th>DOF</th><th>后轮权限</th><th>τ</th>
 <th>转弯直径 m</th><th>δ_f °</th><th>T90 ms</th><th>超调 %</th>
 <th>β/g °</th><th>a_y,max</th><th>低附 T90 ms</th></tr></thead>
-<tbody><tr><th>EPS<small>前轮 EPS</small></th><td>1</td><td>0°</td><td>90 ms</td><td>12.97</td><td>1.54</td><td>326</td><td>3.9</td><td class="neg">-1.67</td><td>8.41</td><td>330</td></tr><tr><th>EPS + RWS<small>EPS + 后轮转向</small></th><td>2</td><td>3°</td><td>75 ms</td><td>12.48</td><td>2.80</td><td>396</td><td>1.7</td><td class="">+1.42</td><td>8.42</td><td>398</td></tr><tr><th>SBW + RWS<small>线控前轮 + 后轮转向</small></th><td>2</td><td>5°</td><td>45 ms</td><td>12.04</td><td>4.96</td><td>804</td><td>3.3</td><td class="">+6.70</td><td>8.40</td><td>820</td></tr><tr><th>4WIS<small>四轮独立转向</small></th><td>4</td><td>35°</td><td>30 ms</td><td>8.67</td><td>4.96</td><td>764</td><td>4.0</td><td class="">+6.70</td><td>8.42</td><td>790</td></tr></tbody></table></div>
+<tbody><tr><th>EPS<small>前轮 EPS</small></th><td>1</td><td>0°</td><td>90 ms</td><td>11.60</td><td>1.54</td><td>326</td><td>3.9</td><td class="neg">-1.67</td><td>8.41</td><td>330</td></tr><tr><th>EPS + RWS<small>EPS + 后轮转向</small></th><td>2</td><td>7°</td><td>75 ms</td><td>10.80</td><td>2.80</td><td>396</td><td>1.7</td><td class="">+1.42</td><td>8.42</td><td>398</td></tr><tr><th>SBW + RWS<small>线控前轮 + 后轮转向</small></th><td>2</td><td>7°</td><td>45 ms</td><td>10.57</td><td>4.96</td><td>804</td><td>3.3</td><td class="">+6.70</td><td>8.42</td><td>820</td></tr><tr><th>4WIS<small>四轮独立转向</small></th><td>4</td><td>7°</td><td>30 ms</td><td>10.66</td><td>4.96</td><td>764</td><td>4.0</td><td class="">+6.70</td><td>8.42</td><td>790</td></tr></tbody></table></div>
 
-<figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">3.826</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">7.652</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">11.48</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">15.3</text><rect x="80.9" y="54.0" width="79.8" height="200.0" fill="#94a3b8" rx="3"/><text class="bval" x="120.8" y="48.0" text-anchor="middle">12.97</text><text class="tick" x="120.8" y="269" text-anchor="middle">EPS</text><text class="sub" x="120.8" y="282" text-anchor="middle">δ_r +0.0°</text><rect x="218.4" y="61.6" width="79.8" height="192.4" fill="#38bdf8" rx="3"/><text class="bval" x="258.2" y="55.6" text-anchor="middle">12.48</text><text class="tick" x="258.2" y="269" text-anchor="middle">EPS + RWS</text><text class="sub" x="258.2" y="282" text-anchor="middle">δ_r -3.0°</text><rect x="355.9" y="68.4" width="79.8" height="185.6" fill="#a78bfa" rx="3"/><text class="bval" x="395.8" y="62.4" text-anchor="middle">12.04</text><text class="tick" x="395.8" y="269" text-anchor="middle">SBW + RWS</text><text class="sub" x="395.8" y="282" text-anchor="middle">δ_r -5.0°</text><rect x="493.4" y="120.3" width="79.8" height="133.7" fill="#fb7185" rx="3"/><text class="bval" x="533.2" y="114.3" text-anchor="middle">8.67</text><text class="tick" x="533.2" y="269" text-anchor="middle">4WIS</text><text class="sub" x="533.2" y="282" text-anchor="middle">δ_r -31.0°</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">转弯直径 (m)</text></svg><figcaption>图 1 — 全锁转弯直径。唯一一项四级严格单调、且末级跃升最大的指标。</figcaption></figure>
-<p>低速机动性是唯一一项四级严格单调、且末级出现跃升的指标。
-L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L3 的 ±35° 权限
-把转弯直径直接砍掉 4.30 m（−33%）。
-这条曲线的形状说明：<b>后轮转向在低速的收益几乎完全由角度权限决定，而不是由控制律决定</b>。</p>
+<figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">3.421</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">6.842</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">10.26</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">13.68</text><rect x="80.9" y="54.0" width="79.8" height="200.0" fill="#94a3b8" rx="3"/><text class="bval" x="120.8" y="48.0" text-anchor="middle">11.60</text><text class="tick" x="120.8" y="269" text-anchor="middle">EPS</text><text class="sub" x="120.8" y="282" text-anchor="middle">δ_r +0.0°</text><rect x="218.4" y="67.8" width="79.8" height="186.2" fill="#38bdf8" rx="3"/><text class="bval" x="258.2" y="61.8" text-anchor="middle">10.80</text><text class="tick" x="258.2" y="269" text-anchor="middle">EPS + RWS</text><text class="sub" x="258.2" y="282" text-anchor="middle">δ_r -7.0°</text><rect x="355.9" y="71.7" width="79.8" height="182.3" fill="#a78bfa" rx="3"/><text class="bval" x="395.8" y="65.7" text-anchor="middle">10.57</text><text class="tick" x="395.8" y="269" text-anchor="middle">SBW + RWS</text><text class="sub" x="395.8" y="282" text-anchor="middle">δ_r -7.0°</text><rect x="493.4" y="70.2" width="79.8" height="183.8" fill="#fb7185" rx="3"/><text class="bval" x="533.2" y="64.2" text-anchor="middle">10.66</text><text class="tick" x="533.2" y="269" text-anchor="middle">4WIS</text><text class="sub" x="533.2" y="282" text-anchor="middle">δ_r -7.0°</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">转弯直径 (m)</text></svg><figcaption>图 1 — 全锁转弯直径。三个带后轮转向的架构都顶在共同的 7° 限幅上，因此挤在一起（相差 0.23 m）；阶梯几乎全部发生在 L0→L1 这一级。</figcaption></figure>
+<p>这张图在加上等角度约束之后变了样，而且变化本身就是结论。
+L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
+0.23 m，因为它们全都顶死在共同的 ±7° 限幅上。</p>
+<div class="callout"><h4>约束改变了结论，这一点必须讲明</h4>
+<p>本研究的早期版本给各级不同的后轮权限（0／3／5／35°），
+测得 L0→L3 的转弯直径改善 33%，读起来像是「四轮独立转向在低速有巨大优势」。
+统一角度包络之后，同一个量只剩 −9%。
+那 33% 里的绝大部分<b>不是架构带来的，是角度带来的</b>——
+是 L3 被允许用五倍于 L1 的后轮转角。
+这正是把角度包络固定下来的理由：不固定，架构比较就会变成角度比较的伪装。
+角度本身值多少钱，是另一篇报告的题目。</p></div>
 
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">237.2</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">474.4</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">711.5</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">948.7</text><rect x="80.9" y="172.9" width="79.8" height="81.1" fill="#94a3b8" rx="3"/><text class="bval" x="120.8" y="166.9" text-anchor="middle">326</text><text class="tick" x="120.8" y="269" text-anchor="middle">EPS</text><text class="sub" x="120.8" y="282" text-anchor="middle">none</text><rect x="218.4" y="155.5" width="79.8" height="98.5" fill="#38bdf8" rx="3"/><text class="bval" x="258.2" y="149.5" text-anchor="middle">396</text><text class="tick" x="258.2" y="269" text-anchor="middle">EPS + RWS</text><text class="sub" x="258.2" y="282" text-anchor="middle">schedule</text><rect x="355.9" y="54.0" width="79.8" height="200.0" fill="#a78bfa" rx="3"/><text class="bval" x="395.8" y="48.0" text-anchor="middle">804</text><text class="tick" x="395.8" y="269" text-anchor="middle">SBW + RWS</text><text class="sub" x="395.8" y="282" text-anchor="middle">model_follow</text><rect x="493.4" y="64.0" width="79.8" height="190.0" fill="#fb7185" rx="3"/><text class="bval" x="533.2" y="58.0" text-anchor="middle">764</text><text class="tick" x="533.2" y="269" text-anchor="middle">4WIS</text><text class="sub" x="533.2" y="282" text-anchor="middle">model_follow</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">横摆 T90 (ms)</text></svg><figcaption>图 2 — 等 a_y = 4 m/s² 下的横摆响应时间，各级采用其硬件能执行的最强控制律。阶梯不是单调变快的——见正文。</figcaption></figure>
 <div class="callout"><h4>阶梯在瞬态上不是单调的</h4>
@@ -246,7 +255,11 @@ L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L
     <span class="rd" id="rdC"></span></div>
   <figcaption>动画 3 — 四轮独立转向独有的两种运动：<b>蟹行</b>（四轮同向，
   ICR 在无穷远，车身姿态不变而整体平移）与<b>原地回转</b>（ICR 落在车体中心，
-  vx = vy = 0）。这两种运动在阿克曼几何下<b>无解</b>——不是分数高低，是低阶架构没有这个能力。</figcaption>
+  vx = vy = 0）。这两种运动在阿克曼几何下<b>无解</b>——不是分数高低，是低阶架构没有这个能力。
+  <b>但请注意：这两段动画跑在本文的角度包络之外。</b>蟹行与原地回转都需要远超
+  ±7° 的后轮转角，因此在本文第 2 节的约束下，L3 <b>也做不到</b>。
+  它们展示的是「如果放开后轮角度权限，四轮独立转向能拿到什么」，
+  而这恰好说明：4WIS 的招牌能力买的是<b>角度</b>，不是<b>解耦</b>。</figcaption>
 </div>
 
 <h2><span class="n">4</span>控制算法的贡献</h2>
@@ -255,7 +268,7 @@ L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L
 <div class="tablewrap"><table>
 <thead><tr><th>控制律</th><th>δ_f °</th><th>T90 ms</th><th>超调 %</th>
 <th>峰值时刻 ms</th><th>β/g °</th><th>横摆增益</th><th>a_y,max</th></tr></thead>
-<tbody><tr><th>仅前轮<small>front only</small></th><td>1.54</td><td>260</td><td>5.3</td><td>484</td><td class="neg">-1.67</td><td>5.357</td><td>8.41</td></tr><tr><th>定比例<small>fixed ratio</small></th><td>1.10</td><td>230</td><td>7.5</td><td>440</td><td class="neg">-2.76</td><td>7.503</td><td>8.39</td></tr><tr><th>速度调度<small>speed schedule</small></th><td>2.80</td><td>354</td><td>2.0</td><td>642</td><td class="">+1.42</td><td>2.948</td><td>8.42</td></tr><tr><th>横摆反馈<small>yaw feedback</small></th><td>2.32</td><td>144</td><td>16.1</td><td>258</td><td class="">+0.20</td><td>3.585</td><td>8.44</td></tr><tr><th>瞬态补偿<small>transient</small></th><td>2.90</td><td>88</td><td>34.2</td><td>198</td><td class="">+1.67</td><td>2.844</td><td>8.42</td></tr><tr><th>模型跟随<small>model following</small></th><td>4.96</td><td>804</td><td>3.3</td><td>1204</td><td class="">+6.70</td><td>1.667</td><td>8.40</td></tr></tbody></table></div>
+<tbody><tr><th>仅前轮<small>front only</small></th><td>1.54</td><td>260</td><td>5.3</td><td>484</td><td class="neg">-1.67</td><td>5.357</td><td>8.41</td></tr><tr><th>定比例<small>fixed ratio</small></th><td>1.10</td><td>230</td><td>7.5</td><td>440</td><td class="neg">-2.76</td><td>7.503</td><td>8.39</td></tr><tr><th>速度调度<small>speed schedule</small></th><td>2.80</td><td>354</td><td>2.0</td><td>642</td><td class="">+1.42</td><td>2.948</td><td>8.42</td></tr><tr><th>横摆反馈<small>yaw feedback</small></th><td>2.32</td><td>144</td><td>16.1</td><td>258</td><td class="">+0.20</td><td>3.585</td><td>8.44</td></tr><tr><th>瞬态补偿<small>transient</small></th><td>2.90</td><td>88</td><td>34.2</td><td>198</td><td class="">+1.67</td><td>2.844</td><td>8.42</td></tr><tr><th>模型跟随<small>model following</small></th><td>4.96</td><td>804</td><td>3.3</td><td>1204</td><td class="">+6.70</td><td>1.667</td><td>8.42</td></tr></tbody></table></div>
 
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">237.2</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">474.4</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">711.5</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">948.7</text><rect x="71.3" y="189.3" width="53.2" height="64.7" fill="#94a3b8" rx="3"/><text class="bval" x="97.8" y="183.3" text-anchor="middle">260</text><text class="tick" x="97.8" y="269" text-anchor="middle">仅前轮</text><rect x="162.9" y="196.8" width="53.2" height="57.2" fill="#f59e0b" rx="3"/><text class="bval" x="189.5" y="190.8" text-anchor="middle">230</text><text class="tick" x="189.5" y="269" text-anchor="middle">定比例</text><rect x="254.6" y="165.9" width="53.2" height="88.1" fill="#38bdf8" rx="3"/><text class="bval" x="281.2" y="159.9" text-anchor="middle">354</text><text class="tick" x="281.2" y="269" text-anchor="middle">速度调度</text><rect x="346.3" y="218.2" width="53.2" height="35.8" fill="#34d399" rx="3"/><text class="bval" x="372.8" y="212.2" text-anchor="middle">144</text><text class="tick" x="372.8" y="269" text-anchor="middle">横摆反馈</text><rect x="437.9" y="232.1" width="53.2" height="21.9" fill="#fb7185" rx="3"/><text class="bval" x="464.5" y="226.1" text-anchor="middle">88</text><text class="tick" x="464.5" y="269" text-anchor="middle">瞬态补偿</text><rect x="529.6" y="54.0" width="53.2" height="200.0" fill="#a78bfa" rx="3"/><text class="bval" x="556.2" y="48.0" text-anchor="middle">804</text><text class="tick" x="556.2" y="269" text-anchor="middle">模型跟随</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">横摆 T90 (ms)</text></svg><figcaption>图 4 — 同一套 L2 硬件上六种控制律的横摆响应时间。跨度 88–804 ms，比整个架构阶梯的跨度还大。</figcaption></figure>
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">10.09</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">20.17</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">30.26</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">40.35</text><rect x="71.3" y="223.1" width="53.2" height="30.9" fill="#94a3b8" rx="3"/><text class="bval" x="97.8" y="217.1" text-anchor="middle">5.3</text><text class="tick" x="97.8" y="269" text-anchor="middle">仅前轮</text><rect x="162.9" y="210.2" width="53.2" height="43.8" fill="#f59e0b" rx="3"/><text class="bval" x="189.5" y="204.2" text-anchor="middle">7.5</text><text class="tick" x="189.5" y="269" text-anchor="middle">定比例</text><rect x="254.6" y="242.4" width="53.2" height="11.6" fill="#38bdf8" rx="3"/><text class="bval" x="281.2" y="236.4" text-anchor="middle">2.0</text><text class="tick" x="281.2" y="269" text-anchor="middle">速度调度</text><rect x="346.3" y="159.6" width="53.2" height="94.4" fill="#34d399" rx="3"/><text class="bval" x="372.8" y="153.6" text-anchor="middle">16.1</text><text class="tick" x="372.8" y="269" text-anchor="middle">横摆反馈</text><rect x="437.9" y="54.0" width="53.2" height="200.0" fill="#fb7185" rx="3"/><text class="bval" x="464.5" y="48.0" text-anchor="middle">34.2</text><text class="tick" x="464.5" y="269" text-anchor="middle">瞬态补偿</text><rect x="529.6" y="235.0" width="53.2" height="19.0" fill="#a78bfa" rx="3"/><text class="bval" x="556.2" y="229.0" text-anchor="middle">3.3</text><text class="tick" x="556.2" y="269" text-anchor="middle">模型跟随</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">横摆超调 (%)</text></svg><figcaption>图 5 — 同一组控制律的横摆超调。图 4 里最快的那个，代价在这里。</figcaption></figure>
@@ -291,13 +304,15 @@ L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L
 以及车辆<b>以什么姿态</b>抵达那个极限。在做技术方案论证时，
 把「操稳收益」和「极限收益」分开陈述，是本文数据支持的、也是唯一诚实的讲法。</p>
 
-<h3>5.3 收益递减出现在 L2→L3，而不是更早</h3>
+<h3>5.3 在等角度约束下，收益递减出现得比想象中早得多</h3>
 <p>L2 与 L3 在 4 m/s² 工况下的标定转角<b>完全相同</b>（4.96°），
-稳态 β 相同，极限 a_y 相同。差别只在瞬态（T90 相差约 5%，来自作动带宽）
-和低速（转弯直径 −33%，来自角度权限）。
-若一个项目的目标只是常规行驶工况的操稳，从 SBW+RWS 走到四轮独立转向<b>买不到什么</b>。
-四轮独立的理由应当建立在低速机动性、非阿克曼运动能力、
-以及（本文未覆盖的）单轮失效重构上，而不是操稳指标。</p>
+稳态 β 相同，极限 a_y 相同，转弯直径相差 0.23 m。
+剩下的差别只有瞬态（T90 相差约 5%，来自作动带宽）。
+若一个项目的目标是常规行驶工况的操稳，<b>且后轮角度权限被约束在 ±7° 以内</b>，
+那么从 SBW+RWS 走到四轮独立转向买不到任何可测的东西。</p>
+<p>更进一步：在这个包络下，连 L1→L2 的操稳收益也很薄。SBW 的价值在别处（§5.1）——
+它把后轮转向对方向盘增益的副作用藏起来，这是手感问题，不是本文任何一项动力学指标能捕捉的。
+<b>四轮独立转向的立项理由，在角度受限时不成立；它需要的是角度预算，而不是自由度。</b></p>
 
 <h3>5.4 本研究的局限</h3>
 <ul class="tight">
@@ -313,15 +328,17 @@ L0→L1→L2 每级只挪动几十厘米（后轮权限 0→3°→5°），而 L
 <h2><span class="n">6</span>结论</h2>
 <ol>
 <li>转向解耦不增加极限附着（本文跨度 &lt; 1%），它重新分配轮胎能力并改变车辆姿态。</li>
-<li>低速机动性的收益由<b>后轮角度权限</b>线性决定，四轮独立转向在此处拿到最大跃升
-    （转弯直径 −33%）。</li>
+<li>低速机动性的收益由<b>后轮角度权限</b>决定，而不是由转向自由度决定。
+    统一到 ±7° 之后，L1／L2／L3 的转弯直径落在 0.23 m 带内；
+    全部 −9% 的收益中，7 个百分点由「装上第一个后轮转向轴」拿走。</li>
 <li>高速稳定性的收益体现为侧偏角收敛，但开环解析零侧偏律在非线性车辆上会<b>过冲</b>，
     需要闭环项修正。</li>
 <li>在固定硬件上，控制律带来的横摆响应差异（9 倍）大于架构带来的差异（&lt; 3 倍）。
     <b>算法投入的边际回报高于硬件投入。</b></li>
 <li>SBW 的独立价值不在车辆动力学指标里，而在于用可变传动比隐藏后轮转向对方向盘增益的副作用。</li>
-<li>L2→L3 在常规操控上收益接近于零；四轮独立转向的立项理由应建立在低速机动性、
-    非阿克曼运动与失效重构上。</li>
+<li>在等角度约束下 L2→L3 的操控收益不可测。四轮独立转向的招牌能力
+    （蟹行、原地回转）需要远超 ±7° 的后轮角度，因此它的立项理由
+    本质上是<b>角度预算</b>加上失效重构，而不是「多两个转向自由度」。</li>
 </ol>
 
 <h2><span class="n">7</span>复现</h2>
@@ -331,7 +348,7 @@ padding:14px;overflow-x:auto;font:12.5px/1.7 var(--mono);margin:16px 0">python s
 python scripts/decoupling_study/trajectories.py
 python scripts/decoupling_study/build_report.py</pre>
 <p class="dim">数据：<code>docs/reports/decoupling_study_data.json</code>、
-<code>decoupling_study_traces.json</code>。本文对应提交 <code>8c2018e</code>。</p>
+<code>decoupling_study_traces.json</code>。本文对应提交 <code>8e58ad2</code>。</p>
 
 <ol class="refs">
 <li>ISO 4138 — Passenger cars — Steady-state circular driving behaviour.</li>
@@ -341,8 +358,8 @@ python scripts/decoupling_study/build_report.py</pre>
 <li>Abe, M. <i>Vehicle Handling Dynamics: Theory and Application</i>（后轮转向零侧偏律）。</li>
 </ol>
 
-<div class="ftr">4WIS Simulator · 提交 8c2018e · 生成于 2026-08-10 01:06:00 CST ·
-仿真机时 149.2 s · 本文所有图表与表格均由 <code>build_report.py</code> 从仿真 JSON 直接渲染。</div>
+<div class="ftr">4WIS Simulator · 提交 8e58ad2 · 生成于 2026-08-10 06:51:23 CST ·
+仿真机时 148.2 s · 本文所有图表与表格均由 <code>build_report.py</code> 从仿真 JSON 直接渲染。</div>
 </div>
 
 <script>

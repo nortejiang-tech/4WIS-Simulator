@@ -8,11 +8,17 @@ the independent variable of a separate sweep (`ALGORITHMS`), run on fixed
 hardware, so that "what the architecture buys" and "what the algorithm buys"
 never get mixed up.
 
+All four are held to ONE angle envelope — front +/-40 deg, rear +/-7 deg — so
+that the comparison is between steering SYSTEMS and not between steering
+ANGLES. What an extra degree of rear authority is worth is a different
+question with its own study (scripts/rear_angle_study).
+
     L0  EPS            front axle only, mechanical column, fixed ratio
-    L1  EPS + RWS      + rear axle, +/-3 deg, slow rear actuator
-    L2  SBW + RWS      front decoupled from the column: variable ratio,
-                       higher bandwidth; rear authority up to +/-5 deg
-    L3  4WIS           four independently steered wheels, full +/-35 deg
+    L1  EPS + RWS      + rear axle within the shared envelope, slow actuator
+    L2  SBW + RWS      front decoupled from the column: variable ratio and
+                       higher bandwidth, same rear angle as L1
+    L3  4WIS           four independently steered wheels, same envelope again:
+                       only per-wheel ICR placement and actuator speed remain
 
 Modelling limitations, stated up front because they bound what the numbers
 mean:
@@ -27,9 +33,11 @@ mean:
     the harness rather than by a per-axle `steer_limit` in the model. The clip
     happens before the actuator, so the limit is on the command, not on a
     mechanical endstop that the actuator would wind up against.
-  * L3 is given the platform's full +/-35 deg on all four wheels. That is this
-    project's own vehicle, not a production 4WIS car; read L3 as "what full
-    decoupling makes available", not as a shipping specification.
+  * The shared envelope deliberately takes away L3's headline manoeuvres. Crab
+    and zero-radius need rear angles several times 7 deg, so under this
+    constraint 4WIS simply cannot do them. That is a real consequence of the
+    constraint, not an oversight, and the report says so rather than quietly
+    reporting 4WIS as "barely better than L2".
 """
 
 from __future__ import annotations
@@ -38,6 +46,18 @@ import math
 from dataclasses import dataclass, field, replace
 
 from sim4wis.core.state import VehicleParams
+
+#: Angle envelope every architecture is held to, so the ladder compares
+#: steering SYSTEMS rather than steering ANGLES. Without this, most of what
+#: looked like an architecture effect at low speed was really just L3 being
+#: allowed five times the rear angle of L1. What each extra degree of rear
+#: authority is worth is a separate question, answered by its own study
+#: (scripts/rear_angle_study).
+#:
+#: L0 keeps 0 deg of rear angle. That is not a limit choice — a front-steer-only
+#: car has no rear actuator to limit.
+FRONT_LIMIT_DEG = 40.0
+REAR_LIMIT_DEG = 7.0
 
 
 @dataclass(frozen=True)
@@ -56,6 +76,7 @@ class Architecture:
     def params(self, base: VehicleParams | None = None) -> VehicleParams:
         """Vehicle parameters carrying this rung's steering hardware."""
         return replace(base or VehicleParams(),
+                       steer_limit=math.radians(FRONT_LIMIT_DEG),
                        steer_tau=self.steer_tau,
                        steer_rate_max=self.steer_rate_max)
 
@@ -75,29 +96,31 @@ LADDER: tuple[Architecture, ...] = (
     ),
     Architecture(
         key="L1", label="EPS + RWS", label_cn="EPS + 后轮转向", dof=2,
-        rear_limit_deg=3.0, steer_tau=0.075, steer_rate_max=7.0,
+        rear_limit_deg=REAR_LIMIT_DEG, steer_tau=0.075, steer_rate_max=7.0,
         variable_ratio=False, per_wheel=False,
         blurb="A rear-steer actuator adds a second DOF, but the front angle is "
               "still whatever the driver's hands did. Rear authority is the "
-              "+/-3 deg typical of a production rear-axle module.",
+              "shared +/-7 deg envelope.",
     ),
     Architecture(
         key="L2", label="SBW + RWS", label_cn="线控前轮 + 后轮转向", dof=2,
-        rear_limit_deg=5.0, steer_tau=0.045, steer_rate_max=12.0,
+        rear_limit_deg=REAR_LIMIT_DEG, steer_tau=0.045, steer_rate_max=12.0,
         variable_ratio=True, per_wheel=False,
         blurb="Steer-by-wire breaks the mechanical link, so the front angle "
               "becomes a controlled variable too: variable ratio, higher "
               "bandwidth, and front-axle authority available to the stability "
-              "controller rather than only to the driver.",
+              "controller rather than only to the driver. Same rear angle as "
+              "L1 — what improves is how fast and how precisely it is placed.",
     ),
     Architecture(
         key="L3", label="4WIS", label_cn="四轮独立转向", dof=4,
-        rear_limit_deg=35.0, steer_tau=0.030, steer_rate_max=15.0,
+        rear_limit_deg=REAR_LIMIT_DEG, steer_tau=0.030, steer_rate_max=15.0,
         variable_ratio=True, per_wheel=True,
-        blurb="Four independently steered wheels. The ICR is no longer "
-              "constrained to a line through the rear axle, so yaw rate and "
-              "sideslip become independently commandable — and manoeuvres with "
-              "no Ackermann solution at all (crab, zero-radius) open up.",
+        blurb="Four independently steered wheels. Held to the same angle "
+              "envelope as L1/L2, so what is left is per-wheel ICR placement "
+              "and the fastest actuator. Note what the envelope costs it: crab "
+              "and zero-radius need rear angles far beyond 7 deg, so under this "
+              "constraint 4WIS cannot perform its signature manoeuvres at all.",
     ),
 )
 

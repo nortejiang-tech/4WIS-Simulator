@@ -4,11 +4,12 @@ Everything runs on the multibody model in torque mode, so the longitudinal
 channel is a real powertrain rather than a speed servo that would quietly hold
 the car at its target through a manoeuvre it should have been slowed by.
 
-The architecture's rear-angle authority is imposed by clipping the rear wheel
-commands after the control law has run. At the authorities involved (0, 3, 5
-deg) the Ackermann spread across a rear pair is under 0.1 deg, so clipping per
-wheel and clipping the axle are the same thing to well inside the resolution of
-anything reported here; at L3's 35 deg the clip never binds.
+All rungs run inside one angle envelope (front +/-40 deg, rear +/-7 deg) so the
+study compares steering systems rather than steering angles. The rear authority
+is imposed by clipping the rear wheel commands after the control law has run.
+At 7 deg the Ackermann spread across a rear pair is under 0.1 deg, so clipping
+per wheel and clipping the axle are the same thing to well inside the resolution
+of anything reported here.
 """
 
 from __future__ import annotations
@@ -259,11 +260,11 @@ def turning_circle(arch, mode_params, v_kmh=10.0, mu=0.90) -> dict:
     """Radius at full lock. The rear-steer benefit here is purely kinematic —
     counter-phase rear steer moves the ICR forward and inboard — so it shows up
     even at a walking pace where no tyre is working hard."""
-    p = VehicleParams()
-    full = math.degrees(p.steer_limit) if arch.per_wheel else 35.0
-    # A non-per-wheel architecture still commands its front axle to the same
-    # mechanical limit; what differs is whether the rear can follow.
-    ss = steady_state(arch, mode_params, v_kmh, min(full, 35.0), mu, hold=12.0)
+    p = arch.params()
+    # Every architecture commands its front axle to the same mechanical limit;
+    # what differs is whether the rear can help and by how much.
+    ss = steady_state(arch, mode_params, v_kmh, math.degrees(p.steer_limit),
+                      mu, hold=12.0)
     R = abs(ss["R"])
     # Wall-to-wall: outer front corner sweeps a larger circle than the CG.
     half_track = p.track_front / 2.0
