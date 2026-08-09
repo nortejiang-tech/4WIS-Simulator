@@ -1,0 +1,1 @@
+[{"arch": "L0", "algo": "none", "delta_deg": 0.955078125, "ay": 2.4937299145117766}, {"arch": "L1", "algo": "schedule", "delta_deg": 1.732421875, "ay": 2.485444898234777}, {"arch": "L2", "algo": "model_follow", "delta_deg": 3.05390625, "ay": 2.4808801423491786}, {"arch": "L3", "algo": "model_follow", "delta_deg": 3.05390625, "ay": 2.480880120380546}]
