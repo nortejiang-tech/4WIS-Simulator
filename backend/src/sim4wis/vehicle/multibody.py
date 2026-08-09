@@ -45,6 +45,10 @@ from sim4wis.vehicle.model_core import (
     axle_cornering_scale,
     camber_thrust_alpha_offset,
     friction_brake_torques,
+    kc_wheel_offsets,
+    load_sensitive_mu,
+    relax_slip,
+    resolve_kc,
     store_grip_state as _store_grip,
     wheel_grip_state,
     rotate_wheel_forces_to_body,
@@ -156,6 +160,20 @@ class MultiBodyModel(VehicleModel):
         self._toe = static_toe_offsets(p)                 # static alignment toe
         # Axle cornering-stiffness split, absorbed as a slip-angle scale.
         self._alpha_scale = axle_cornering_scale(p)
+        # Measured K&C, or a synthesised curve from the legacy bump_steer_coeff.
+        self._kc = resolve_kc(p)
+        # Last step's tyre forces, for the compliance terms (see kc_wheel_offsets
+        # on why a one-step lag is the right call here).
+        self._kc_fx = np.zeros(N_WHEELS)
+        self._kc_fy = np.zeros(N_WHEELS)
+        self._kc_fz = self._corner_static_full.copy()
+        self._kc_mz = np.zeros(N_WHEELS)
+        # K&C increments actually applied this step (diagnostics).
+        self.kc_toe = np.zeros(N_WHEELS)
+        self.kc_camber = np.zeros(N_WHEELS)
+        # Relaxation-lagged slip states (see model_core.relax_slip).
+        self._alpha_lag = np.zeros(N_WHEELS)
+        self._kappa_lag = np.zeros(N_WHEELS)
         # Aero (drag handled via body_resistance_force; lift split per axle).
         self._q_aero = 0.5 * float(p.air_density) * float(p.frontal_area)
         self._cl_f = float(p.aero_lift_coeff_front)
@@ -192,6 +210,15 @@ class MultiBodyModel(VehicleModel):
             getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
         )
         delta_cmd = self._delta_act.astype(float)
+
+        if float(getattr(p, "tire_relax_length", 0.0)) > 0.0:
+            kin0 = wheel_slip_kinematics(
+                vx=s.vx, vy=s.vy, yaw_rate=s.yaw_rate,
+                wheel_omega=s.wheel_omega, delta=s.delta,
+                wheel_positions_body=self._wheels, tire_radius=p.tire_radius)
+            self._alpha_lag = relax_slip(
+                self._alpha_lag, self._alpha_scale * kin0.alpha, kin0.vx_wheel,
+                float(p.tire_relax_length), dt)
 
         y0 = np.empty(24)
         y0[IX], y0[IY], y0[IPSI] = s.x, s.y, s.psi
@@ -323,8 +350,12 @@ class MultiBodyModel(VehicleModel):
         f_spring, f_tire_z, comp = self._suspension_forces(y)
 
         # Static toe + bump-steer from actual suspension compression.
-        delta = delta_cmd + self._toe + self.bump_steer * comp * self._toe_sign
-        delta = np.clip(delta, -p.steer_limit, p.steer_limit)
+        # K&C: kinematic toe/camber from actual suspension travel, plus the
+        # compliance deflection under last step's tyre loads.
+        kc_toe, kc_camber = kc_wheel_offsets(
+            self._kc, jounce=comp, fx=self._kc_fx, fy=self._kc_fy,
+            fz=self._kc_fz, mz=self._kc_mz)
+        delta = np.clip(delta_cmd + self._toe + kc_toe, -p.steer_limit, p.steer_limit)
 
         vx, vy, omega = y[IVX], y[IVY], y[IOMEGA]
         wheel_omega = y[IWW]
@@ -345,13 +376,30 @@ class MultiBodyModel(VehicleModel):
         fy_wheel = np.zeros(N_WHEELS)
         # Camber thrust as an equivalent slip-angle offset (same absorption as
         # the load page / simplified dynamic model); diagnostics keep true α.
-        alpha_camber = camber_thrust_alpha_offset(p, f_tire_z)
+        alpha_camber = camber_thrust_alpha_offset(p, f_tire_z, extra_camber=kc_camber)
+        # Relaxation-lagged slip. When enabled, the slip the tyre works at is
+        # held over the RK4 sub-steps and advanced once per step (the same
+        # treatment wheel spin already gets) rather than being added to the
+        # integrated state vector. At 200 Hz against a ~30 ms lag the
+        # difference is not resolvable, and it keeps the state vector — and the
+        # stiff-mode analysis behind it — unchanged.
+        #
+        # With sigma = 0 the fresh per-stage slip is used exactly as before, so
+        # the feature off is bit-identical to not having it.
+        use_lag = float(getattr(p, "tire_relax_length", 0.0)) > 0.0
+        # μ(Fz) must be applied HERE, on the loads this stage actually sees.
+        # Applying it only in the wheel-spin pass leaves the body force — the
+        # thing that moves the car — running on nominal μ, and then the friction
+        # circle drawn from it reports utilisation above 1.0. k = 0 returns the
+        # input array unchanged, so the feature off stays bit-identical.
+        mu_stage = load_sensitive_mu(p, wheel_mus, f_tire_z)
         for i in range(N_WHEELS):
-            alpha = float(kin.alpha[i])
+            alpha = float(self._alpha_lag[i] / max(float(self._alpha_scale[i]), 1e-9)
+                          if use_lag else kin.alpha[i])
             kappa = float(kin.kappa[i])
             fx, fy, mz = self.tire.forces(
                 float(self._alpha_scale[i]) * alpha + float(alpha_camber[i]),
-                kappa, float(f_tire_z[i]), float(wheel_mus[i])
+                kappa, float(f_tire_z[i]), float(mu_stage[i])
             )
             fx_wheel[i] = fx
             fy_wheel[i] = fy
@@ -450,8 +498,11 @@ class MultiBodyModel(VehicleModel):
         s.fz = f_tire_z
         s.susp_defl = comp
         # Apply static toe + bump-steer to the reported actual steer angle too.
-        delta = np.clip(delta_cmd + self._toe + self.bump_steer * comp * self._toe_sign,
-                        -p.steer_limit, p.steer_limit)
+        kc_toe, kc_camber = kc_wheel_offsets(
+            self._kc, jounce=comp, fx=self._kc_fx, fy=self._kc_fy,
+            fz=self._kc_fz, mz=self._kc_mz)
+        self.kc_toe[:], self.kc_camber[:] = kc_toe, kc_camber
+        delta = np.clip(delta_cmd + self._toe + kc_toe, -p.steer_limit, p.steer_limit)
         s.delta[:] = delta
 
         # Wheel-spin update at the final body state (semi-implicit, stiff-
@@ -462,25 +513,31 @@ class MultiBodyModel(VehicleModel):
             wheel_positions_body=self._wheels,
             tire_radius=p.tire_radius,
         )
-        alpha_camber = camber_thrust_alpha_offset(p, f_tire_z)
+        alpha_camber = camber_thrust_alpha_offset(p, f_tire_z, extra_camber=kc_camber)
+        # Lockup is a friction-limited event, so it must see the same effective
+        # mu the tyre forces do: the heavily loaded front wheel has less grip
+        # than nominal, which is exactly what decides whether it locks first.
+        mu_eff = load_sensitive_mu(p, wheel_mus, f_tire_z)
         t_brake, locked, self._brake_f = friction_brake_torques(
             brake_cmd=cmd.brake_cmd,
             brake_filtered=self._brake_f,
             wheel_omega=s.wheel_omega,
             vx_wheel=kin.vx_wheel,
             fz=f_tire_z,
-            mu=wheel_mus,
+            mu=mu_eff,
             params=p,
             dt=dt,
         )
         s.wheel_locked = locked
+        alpha_fed = (self._alpha_lag if float(getattr(p, "tire_relax_length", 0.0)) > 0.0
+                     else self._alpha_scale * kin.alpha)
         omega_new, forces, kappa_new = semi_implicit_wheel_spin(
             dt=dt,
             wheel_omega=s.wheel_omega,
             vx_wheel=kin.vx_wheel,
-            alpha=self._alpha_scale * kin.alpha + alpha_camber,
+            alpha=alpha_fed + alpha_camber,
             fz=f_tire_z,
-            mu=wheel_mus,
+            mu=mu_eff,
             torque=t_motor + t_brake,
             brake_torque=t_brake,
             tire=self.tire,
@@ -490,9 +547,12 @@ class MultiBodyModel(VehicleModel):
         s.wheel_omega[:] = omega_new
         self.slip_alpha[:] = kin.alpha
         self.slip_kappa[:] = kappa_new
+        # Hand this step's tyre loads to next step's compliance terms.
+        self._kc_fx, self._kc_fy = forces.fx.copy(), forces.fy.copy()
+        self._kc_fz, self._kc_mz = f_tire_z.copy(), forces.mz.copy()
         # Friction budget from the forces that actually moved the vehicle.
         _store_grip(s, wheel_grip_state(
-            fx=forces.fx, fy=forces.fy, fz=f_tire_z, mu=wheel_mus,
+            fx=forces.fx, fy=forces.fy, fz=f_tire_z, mu=mu_eff,
             alpha=kin.alpha, kappa=kappa_new, vx_wheel=kin.vx_wheel, tire=self.tire,
         ))
         self.tire_fx[:] = forces.fx

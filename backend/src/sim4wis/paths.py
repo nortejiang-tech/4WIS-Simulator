@@ -40,6 +40,18 @@ def vehicle_profiles_dir() -> Path:
     return Path(env) if env else data_root() / "vehicle_profiles"
 
 
+def kc_profiles_dir() -> Path:
+    """Measured suspension K&C characteristics (see vehicle/kc.py).
+
+    Kept beside `vehicle_profiles` rather than inside them: one vehicle can be
+    run against several suspension measurements (a rig sweep before and after a
+    change, a supplier's data vs. an estimate), and one measurement can serve
+    several vehicle variants.
+    """
+    env = os.environ.get("SIM4WIS_KC_PROFILES_DIR")
+    return Path(env) if env else data_root() / "kc_profiles"
+
+
 def scripts_lib_dir() -> Path:
     return data_root() / "scripts_lib"
 

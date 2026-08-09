@@ -49,6 +49,10 @@ from sim4wis.vehicle.model_core import (
     axle_cornering_scale,
     camber_thrust_alpha_offset,
     friction_brake_torques,
+    kc_wheel_offsets,
+    load_sensitive_mu,
+    relax_slip,
+    resolve_kc,
     store_grip_state as _store_grip,
     wheel_grip_state,
     fz_with_aero_lift,
@@ -96,6 +100,22 @@ class SimplifiedDynamicModel(VehicleModel):
         self._toe = static_toe_offsets(params)
         # Axle cornering-stiffness split, absorbed as a slip-angle scale.
         self._alpha_scale = axle_cornering_scale(params)
+        # Measured K&C, or a synthesised curve from the legacy bump_steer_coeff.
+        self._kc = resolve_kc(params)
+        self._kc_fx = np.zeros(N_WHEELS)
+        self._kc_fy = np.zeros(N_WHEELS)
+        self._kc_fz = vertical_loads(params, 0.0, 0.0)
+        self._kc_mz = np.zeros(N_WHEELS)
+        # Static corner load, the reference the inferred travel is measured from.
+        self._fz_static = vertical_loads(params, 0.0, 0.0)
+        self._kc_camber = np.zeros(N_WHEELS)
+        self._kc_jounce = np.zeros(N_WHEELS)
+        # K&C increments actually applied this step (diagnostics).
+        self.kc_toe = np.zeros(N_WHEELS)
+        self.kc_camber = np.zeros(N_WHEELS)
+        # Relaxation-lagged slip states (see model_core.relax_slip).
+        self._alpha_lag = np.zeros(N_WHEELS)
+        self._kappa_lag = np.zeros(N_WHEELS)
         # Filtered friction-brake command per wheel (first-order, brake_tau).
         self._brake_f = np.zeros(N_WHEELS)
         # Initialize static vertical loads
@@ -132,21 +152,36 @@ class SimplifiedDynamicModel(VehicleModel):
         wheel_mus, fz_offset, ground_z = self._compute_wheel_env(env)
         s.mu_avg = float(np.mean(wheel_mus))
 
-        # 1b) Bump-steer approximation: a wheel riding over vertical travel toes
-        #     by coeff·z (left wheels +, right wheels −). Engineering stand-in
-        #     for the missing suspension DOF — gives a visible twitch over bumps.
-        bsc = getattr(p, "bump_steer_coeff", 0.0)
-        if bsc and np.any(ground_z):
-            toe_sign = np.sign(p.wheel_positions_body()[:, 1])  # +1 left, −1 right
-            s.delta[:] = np.clip(
-                s.delta + bsc * ground_z * toe_sign, -p.steer_limit, p.steer_limit
-            )
+        # 1b) K&C. This model carries no suspension DOF, so travel is inferred
+        #     from the load it already computes: z = (Fz − Fz_static)/k_spring,
+        #     plus whatever vertical displacement the road itself imposes. That
+        #     is exactly as quasi-static as the rest of this model's vertical
+        #     behaviour, costs nothing extra, and lets one K&C table drive both
+        #     models rather than each having its own approximation.
+        self._kc_jounce = ((self.state.fz - self._fz_static)
+                           / max(float(p.suspension.spring_rate), 1.0)) + ground_z
+        kc_toe, self._kc_camber = kc_wheel_offsets(
+            self._kc, jounce=self._kc_jounce, fx=self._kc_fx, fy=self._kc_fy,
+            fz=self._kc_fz, mz=self._kc_mz)
+        self.kc_toe, self.kc_camber = kc_toe, self._kc_camber
+        if np.any(kc_toe):
+            s.delta[:] = np.clip(s.delta + kc_toe, -p.steer_limit, p.steer_limit)
 
         # 2) RK4 integration of the body DOFs (vx, vy, ω). Wheel spin is
         #    deliberately NOT in the RK4 vector: its linearised mode has
         #    λ·h > RK4's stability limit at low-mid speed (see
         #    model_core.semi_implicit_wheel_spin) — ω is held over the body
         #    step and advanced stiff-stably afterwards.
+        if float(getattr(p, "tire_relax_length", 0.0)) > 0.0:
+            kin0 = wheel_slip_kinematics(
+                vx=s.vx, vy=s.vy, yaw_rate=s.yaw_rate,
+                wheel_omega=s.wheel_omega, delta=s.delta,
+                wheel_positions_body=p.wheel_positions_body(),
+                tire_radius=p.tire_radius)
+            self._alpha_lag = relax_slip(
+                self._alpha_lag, self._alpha_scale * kin0.alpha, kin0.vx_wheel,
+                float(p.tire_relax_length), dt)
+
         y0 = np.array([s.vx, s.vy, s.yaw_rate])
         # Capture the per-wheel motor torques computed at start of step (held over dt).
         t_motor = self._compute_motor_torques(cmd, s.wheel_omega, dt)
@@ -188,32 +223,42 @@ class SimplifiedDynamicModel(VehicleModel):
             tire_radius=p.tire_radius,
         )
         fz_now = np.clip(self.state.fz + fz_offset, 0.0, p.mass * 9.81)
-        alpha_camber = camber_thrust_alpha_offset(p, fz_now)
+        alpha_camber = camber_thrust_alpha_offset(p, fz_now, extra_camber=self._kc_camber)
         # Friction-brake torque (work-package A): added to the motor torque so
         # the wheel-spin ODE sees the net axle torque. Computed here rather than
         # at the top of the step because the lockup test needs the *transferred*
         # loads (fz_now) and the per-wheel ground speed — under hard braking the
         # front axle carries far more than its static share, which is exactly
         # what decides whether it locks.
+        # Lockup is a friction-limited event, so it must see the same effective
+        # mu the tyre forces do: the heavily loaded front wheel has less grip
+        # than nominal, which is exactly what decides whether it locks first.
+        mu_eff = load_sensitive_mu(p, wheel_mus, fz_now)
         t_brake, locked, self._brake_f = friction_brake_torques(
             brake_cmd=cmd.brake_cmd,
             brake_filtered=self._brake_f,
             wheel_omega=wheel_omega_held,
             vx_wheel=kin.vx_wheel,
             fz=fz_now,
-            mu=wheel_mus,
+            mu=mu_eff,
             params=p,
             dt=dt,
         )
         s.wheel_locked = locked
         t_net = t_motor + t_brake
+        # Relaxation: the tyre winds up over a rolling distance, so the slip it
+        # actually works at lags the geometric slip. Applied to the geometric
+        # part only — the camber offset is a force equivalence, not a slip that
+        # has to build.
+        alpha_fed = (self._alpha_lag if float(getattr(p, "tire_relax_length", 0.0)) > 0.0
+                     else self._alpha_scale * kin.alpha)
         omega_new, forces, kappa_new = semi_implicit_wheel_spin(
             dt=dt,
             wheel_omega=wheel_omega_held,
             vx_wheel=kin.vx_wheel,
-            alpha=self._alpha_scale * kin.alpha + alpha_camber,
+            alpha=alpha_fed + alpha_camber,
             fz=fz_now,
-            mu=wheel_mus,
+            mu=mu_eff,
             torque=t_net,
             brake_torque=t_brake,
             tire=self.tire,
@@ -226,10 +271,13 @@ class SimplifiedDynamicModel(VehicleModel):
         self.tire_fx[:] = forces.fx
         self.tire_fy[:] = forces.fy
         self.tire_mz[:] = forces.mz
+        # Hand this step's tyre loads to next step's compliance terms.
+        self._kc_fx, self._kc_fy = forces.fx.copy(), forces.fy.copy()
+        self._kc_fz, self._kc_mz = fz_now.copy(), forces.mz.copy()
         # Friction budget from the forces that actually moved the vehicle this
         # step, so the readout can never disagree with the dynamics.
         _store_grip(s, wheel_grip_state(
-            fx=forces.fx, fy=forces.fy, fz=fz_now, mu=wheel_mus,
+            fx=forces.fx, fy=forces.fy, fz=fz_now, mu=mu_eff,
             alpha=kin.alpha, kappa=kappa_new, vx_wheel=kin.vx_wheel, tire=self.tire,
         ))
 
@@ -370,14 +418,31 @@ class SimplifiedDynamicModel(VehicleModel):
         # Camber thrust (A2): absorbed as an equivalent slip-angle offset so the
         # tyre model's friction limit applies to the combined force — the same
         # absorption the load-analysis page uses. Diagnostics keep the true α.
-        alpha_camber = camber_thrust_alpha_offset(p, fz)
+        alpha_camber = camber_thrust_alpha_offset(p, fz, extra_camber=self._kc_camber)
 
+        # Relaxation-lagged slip. When enabled, the slip the tyre works at is
+        # held over the RK4 sub-steps and advanced once per step (the same
+        # treatment wheel spin already gets) rather than being added to the
+        # integrated state vector. At 200 Hz against a ~30 ms lag the
+        # difference is not resolvable, and it keeps the state vector — and the
+        # stiff-mode analysis behind it — unchanged.
+        #
+        # With sigma = 0 the fresh per-stage slip is used exactly as before, so
+        # the feature off is bit-identical to not having it.
+        use_lag = float(getattr(p, "tire_relax_length", 0.0)) > 0.0
+        # μ(Fz) must be applied HERE, on the loads this stage actually sees.
+        # Applying it only in the wheel-spin pass leaves the body force — the
+        # thing that moves the car — running on nominal μ, and then the friction
+        # circle drawn from it reports utilisation above 1.0. k = 0 returns the
+        # input array unchanged, so the feature off stays bit-identical.
+        mu_stage = load_sensitive_mu(p, wheel_mus, fz)
         for i in range(N_WHEELS):
-            alpha = float(kin.alpha[i])
+            alpha = float(self._alpha_lag[i] / max(float(self._alpha_scale[i]), 1e-9)
+                          if use_lag else kin.alpha[i])
             kappa = float(kin.kappa[i])
             fx, fy, mz = self.tire.forces(
                 float(self._alpha_scale[i]) * alpha + float(alpha_camber[i]),
-                kappa, float(fz[i]), float(wheel_mus[i])
+                kappa, float(fz[i]), float(mu_stage[i])
             )
             fx_wheel_per[i] = fx
             fy_wheel_per[i] = fy

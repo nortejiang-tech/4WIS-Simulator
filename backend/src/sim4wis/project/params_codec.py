@@ -26,10 +26,17 @@ def params_from_dict(data: dict[str, Any] | None, base: VehicleParams | None = N
         raw.setdefault("parking_torque_coeff", legacy)
     susp_raw = raw.pop("suspension", None)
     geom_raw = raw.pop("steering_geometry", None)
+    # K&C is a measured characteristic, not a scalar: it arrives either inline
+    # (a `kc:` section) or by naming a file under kc_profiles/. Either way it is
+    # parsed into the typed VehicleKC before it reaches VehicleParams, so the
+    # models never see raw dicts or engineering units.
+    kc_raw = raw.pop("kc", None)
+    kc_profile = raw.pop("kc_profile", None)
 
     vehicle_fields = {f.name for f in dataclasses.fields(VehicleParams)}
     vehicle_fields.discard("suspension")
     vehicle_fields.discard("steering_geometry")
+    vehicle_fields.discard("kc")
     vehicle_updates = {k: v for k, v in raw.items() if k in vehicle_fields}
 
     susp = base.suspension
@@ -44,9 +51,19 @@ def params_from_dict(data: dict[str, Any] | None, base: VehicleParams | None = N
         geom_updates = {k: v for k, v in geom_raw.items() if k in geom_fields}
         geom = dataclasses.replace(geom, **geom_updates)
 
+    kc = base.kc
+    if kc_profile:
+        from sim4wis.vehicle.kc import load_kc_profile
+        from sim4wis.paths import kc_profiles_dir
+        kc = load_kc_profile(kc_profiles_dir() / f"{kc_profile}.yaml")
+    elif isinstance(kc_raw, dict):
+        from sim4wis.vehicle.kc import kc_from_dict
+        kc = kc_from_dict(kc_raw)
+
     return dataclasses.replace(
         base,
         suspension=susp,
         steering_geometry=geom,
+        kc=kc,
         **vehicle_updates,
     )

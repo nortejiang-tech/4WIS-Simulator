@@ -1,0 +1,55 @@
+profile:
+  name: ls9_estimate
+  label: LS9 悬架 K&C（工程估算）
+  description: >
+    ⚠ 这不是实测数据。智己 LS9 的 K&C 台架数据未公开，本文件是按大型气动悬架 SUV
+    的典型量级构造的一组合理曲线，用来让 K&C 机制有可跑的输入、并作为填写真实台架
+    数据的模板。任何依赖具体数值的结论都不成立，只有「机制是否接通」的结论成立。
+
+    拿到真实台架报告后，直接替换 kinematics 的曲线点和 compliance 的系数即可，
+    单位就是台架报告的单位（deg / mm / kN），装载时自动转 SI。
+
+  source: 工程估算（非实测）
+  conventions: >
+    jounce + = 悬架压缩（车轮相对车身上移）
+    toe    + = 该轴总前束（toe-in）；左右拆分由模型按 static_toe 同一约定处理
+    camber + = 轮胎上缘外倾，与 SuspensionParams.camber 同号
+
+kc:
+  front:
+    name: ls9_front_estimate
+    source: 工程估算
+    kinematics:
+      # 大型 SUV 前悬：压缩时轻微 toe-out（抑制压缩转向过度），外倾负增益
+      jounce_mm:    [-80,   -40,    0,    40,    80]
+      toe_deg:      [0.10,  0.05,  0.0, -0.06, -0.13]
+      camber_deg:   [0.95,  0.47,  0.0, -0.50, -1.05]
+      caster_deg:   [-0.30, -0.15, 0.0,  0.16,  0.33]
+      half_track_mm: [-3.0, -1.4,  0.0,  1.5,   3.2]
+    compliance:
+      # 侧向力柔性转向：前轴取轻微 toe-out（推头趋势，量产车常见的安全取向）
+      toe_per_fy_deg_per_kN:    -0.055
+      toe_per_fx_deg_per_kN:     0.020
+      toe_per_mz_deg_per_kNm:   -0.280
+      camber_per_fy_deg_per_kN: -0.070
+      lat_per_fy_mm_per_kN:      0.55
+      long_per_fx_mm_per_kN:     1.10
+
+  rear:
+    name: ls9_rear_estimate
+    source: 工程估算
+    kinematics:
+      # 后悬：压缩时 toe-in（稳定取向），外倾增益略小于前轴
+      jounce_mm:    [-80,   -40,    0,    40,    80]
+      toe_deg:      [-0.08, -0.04, 0.0,  0.05,  0.11]
+      camber_deg:   [0.80,  0.40,  0.0, -0.42, -0.88]
+      caster_deg:   [0.0,   0.0,   0.0,  0.0,   0.0]
+      half_track_mm: [-2.5, -1.2,  0.0,  1.3,   2.7]
+    compliance:
+      # 后轴柔性取 toe-in 方向：受侧向力时后轴前束增加 = 抗甩尾
+      toe_per_fy_deg_per_kN:     0.030
+      toe_per_fx_deg_per_kN:    -0.012
+      toe_per_mz_deg_per_kNm:   -0.150
+      camber_per_fy_deg_per_kN: -0.055
+      lat_per_fy_mm_per_kN:      0.40
+      long_per_fx_mm_per_kN:     0.85

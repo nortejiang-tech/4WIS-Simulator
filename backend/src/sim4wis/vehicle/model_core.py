@@ -253,6 +253,106 @@ def body_resistance_force(params: VehicleParams, vx: float) -> float:
     return -(f_roll + f_aero)
 
 
+def relax_slip(
+    lagged: np.ndarray,
+    target: np.ndarray,
+    vx_wheel: np.ndarray,
+    sigma: float,
+    dt: float,
+    *,
+    min_speed: float = VMIN_SLIP,
+) -> np.ndarray:
+    """Advance a relaxation-lagged slip quantity one step.
+
+        dα'/dt = (v/σ)·(α − α')
+
+    The tyre winds up over a rolling DISTANCE, not a time, which is why the
+    rate carries v: the same manoeuvre lags more at low speed. Integrated
+    exactly over the step rather than by forward Euler, so a large v·dt/σ
+    (fast, or a short relaxation length) cannot overshoot — with dt = 5 ms,
+    v = 50 m/s and σ = 0.3 m the Euler factor would be 0.83, close enough to
+    the stability edge to matter.
+
+    σ = 0 disables the lag and returns the target untouched.
+    """
+    if sigma <= 0.0:
+        return np.asarray(target, dtype=np.float64).copy()
+    v = np.maximum(np.abs(np.asarray(vx_wheel, dtype=np.float64)), float(min_speed))
+    a = 1.0 - np.exp(-v * float(dt) / float(sigma))
+    lag = np.asarray(lagged, dtype=np.float64)
+    return lag + a * (np.asarray(target, dtype=np.float64) - lag)
+
+
+def load_sensitive_mu(params: VehicleParams, mu: np.ndarray,
+                      fz: np.ndarray) -> np.ndarray:
+    """μ(Fz) = μ0·(1 − k·(Fz/Fz_nom − 1)), clipped to stay positive.
+
+    Real tyres lose friction coefficient as they are loaded. This is the main
+    reason lateral load transfer costs an axle grip: the outer wheel gains load
+    but not proportional capability, so the pair together can do less than two
+    evenly loaded tyres. `c_α ∝ Fz^0.8` already models a weaker version of the
+    same idea for the cornering *stiffness*, but at realistic transfer that is
+    worth under 1% — it is this term that gives roll-couple distribution any
+    authority over handling balance.
+
+    k = 0 disables it.
+    """
+    k = float(getattr(params, "tire_mu_load_sensitivity", 0.0))
+    mu_arr = np.asarray(mu, dtype=np.float64)
+    if k <= 0.0:
+        return mu_arr
+    fz_nom = max(float(params.mass) * G_ACCEL / N_WHEELS, 1.0)
+    ratio = np.asarray(fz, dtype=np.float64) / fz_nom
+    return np.maximum(mu_arr * (1.0 - k * (ratio - 1.0)), 0.05 * mu_arr)
+
+
+def resolve_kc(params: VehicleParams):
+    """The K&C characteristic this vehicle should run with, or None.
+
+    Falls back to synthesising a linear toe curve from the legacy
+    `bump_steer_coeff` so that parameter keeps working through the same code
+    path instead of needing a branch of its own.
+    """
+    from sim4wis.vehicle.kc import VehicleKC, kc_from_bump_steer_coeff
+
+    kc = getattr(params, "kc", None)
+    if isinstance(kc, VehicleKC) and not kc.is_empty:
+        return kc
+    coeff = float(getattr(params, "bump_steer_coeff", 0.0))
+    if coeff:
+        return kc_from_bump_steer_coeff(coeff)
+    return None
+
+
+def kc_wheel_offsets(
+    kc,
+    *,
+    jounce: np.ndarray,
+    fx: np.ndarray,
+    fy: np.ndarray,
+    fz: np.ndarray,
+    mz: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """(Δtoe, Δcamber) per wheel [rad] from the measured K&C characteristic.
+
+    Kinematic terms read off the travel curves; compliance terms from the
+    forces the tyre is currently carrying.
+
+    **One-step lag is deliberate.** Compliance depends on tyre force, which
+    depends on slip angle, which depends on toe, which depends on compliance —
+    an algebraic loop. The caller passes the *previous* step's forces, the same
+    treatment the open differential gets. At 200 Hz a 5 ms lag on a quantity
+    that moves on ~100 ms timescales is not resolvable, and a within-step
+    fixed-point iteration would buy nothing for the convergence risk.
+    """
+    if kc is None:
+        z = np.zeros(N_WHEELS, dtype=np.float64)
+        return z, z
+    toe = kc.per_wheel_toe(jounce) + kc.per_wheel_compliance_toe(fx, fy, mz)
+    camber = kc.per_wheel_camber(jounce) + kc.per_wheel_compliance_camber(fy, fz)
+    return toe, camber
+
+
 def axle_cornering_scale(params: VehicleParams) -> np.ndarray:
     """Per-wheel multiplier on cornering stiffness, as an equivalent slip scale.
 
@@ -271,7 +371,8 @@ def axle_cornering_scale(params: VehicleParams) -> np.ndarray:
     return np.array([sf, sf, sr, sr], dtype=np.float64)
 
 
-def camber_thrust_alpha_offset(params: VehicleParams, fz: np.ndarray) -> np.ndarray:
+def camber_thrust_alpha_offset(params: VehicleParams, fz: np.ndarray,
+                               extra_camber: np.ndarray | None = None) -> np.ndarray:
     """Equivalent slip-angle offset that absorbs camber thrust into the tyre model.
 
     Same absorption the load-analysis page uses (H1): camber thrust
@@ -284,6 +385,11 @@ def camber_thrust_alpha_offset(params: VehicleParams, fz: np.ndarray) -> np.ndar
 
     c_gamma = float(params.camber_thrust_coeff)
     camber = camber_per_wheel(params)
+    if extra_camber is not None:
+        # K&C camber gain rides on top of the static alignment value. Without
+        # it camber is a constant and the outer wheel keeps its static angle
+        # right through a roll — which systematically overstates limit grip.
+        camber = camber + np.asarray(extra_camber, dtype=np.float64).reshape(N_WHEELS)
     fz_arr = np.asarray(fz, dtype=np.float64).reshape(N_WHEELS)
     if getattr(params, "tire_load_sensitivity_time_domain", False):
         c_alpha = np.maximum(load_sensitive_cornering_stiffness(params, fz_arr), 1.0)

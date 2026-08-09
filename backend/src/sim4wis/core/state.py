@@ -143,11 +143,58 @@ class VehicleParams:
     # steering twitch instead of nothing. Real bump-steer needs the multibody
     # model (Phase 3 step 19).
     bump_steer_coeff: float = 0.0
+    # Measured K&C characteristic (vehicle/kc.py). None = rigid suspension with
+    # constant camber, i.e. the platform's behaviour before K&C existed —
+    # `bump_steer_coeff` above then still applies as a linear toe curve.
+    #
+    # This is the interface a chassis department works through: a rig sweeps
+    # each corner and reports toe/camber/caster/track vs travel plus deflection
+    # per unit wheel force. Those curves ARE the suspension as far as handling
+    # is concerned, which is why table lookup beats solving a linkage.
+    kc: Any = None
     # Tire model selection + shared parameters (used by dynamic / multibody).
     # Stiffnesses are shared between linear and pacejka so the small-slip
     # behaviour (and wheel-servo tuning) is identical across models.
     tire_model: str = "linear"          # "linear" | "pacejka"
     tire_c_alpha: float = 120_000.0     # 侧偏刚度 [N/rad]（额定 Fz 处）
+    # Tyre relaxation length [m], 0 = off (force builds instantly).
+    #
+    # A tyre does not develop side force the instant the slip angle appears —
+    # the carcass has to wind up, which takes a distance rolled, not a time:
+    #     dα'/dt = (v/σ)·(α − α')
+    # Typical σ is 0.3–0.8 m, so at 60 km/h the lag is around 30 ms.
+    #
+    # This matters more here than on a conventional car. The `rear_wheel_steer`
+    # transient and model-following modes exist precisely to exploit the phase
+    # between front and rear force build-up; with σ = 0 the rear axle's force
+    # appears the instant its angle does, which flatters any counter-phase
+    # strategy. Conclusions drawn about those modes without a relaxation length
+    # are not safe.
+    tire_relax_length: float = 0.0
+    # Longitudinal relaxation length [m], 0 = off. Usually shorter than the
+    # lateral one; the same first-order wind-up applied to slip ratio.
+    tire_relax_length_long: float = 0.0
+    # Friction falloff with load: μ(Fz) = μ0·(1 − k·(Fz/Fz_nom − 1)), 0 = off.
+    #
+    # A real tyre's friction coefficient drops as it is loaded, typically
+    # 10–20% from nominal to double load. Together with roll-couple
+    # distribution this is what makes lateral load transfer cost an axle
+    # capability AT THE LIMIT: the outer wheel gains load but not proportional
+    # grip, so the pair does less than two evenly loaded tyres.
+    #
+    # Note carefully what it does NOT do. The linear-range understeer gradient
+    #     K = W_f/C_f − W_r/C_r
+    # is a cornering-STIFFNESS quantity; μ never enters it, because below the
+    # limit the tyre is nowhere near its friction cap. Measured: sweeping
+    # `roll_stiffness_front_frac` from 0.35 to 0.75 moves K by 0.054 deg/g with
+    # this term off and by 0.054 deg/g with it on — identical to fifteen
+    # decimals. So this cannot replace the axle stiffness split for setting K;
+    # what it changes is which axle runs out of grip first.
+    #
+    # The levers actually separate as:
+    #     linear-range K  ← axle C ratio, weight split, compliance steer, roll steer
+    #     limit balance   ← μ(Fz), roll-couple distribution, camber gain
+    tire_mu_load_sensitivity: float = 0.0
     # Front/rear cornering-stiffness split, as a multiplier on `tire_c_alpha`.
     #
     # This is what actually sets the understeer gradient in the linear range:
