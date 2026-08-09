@@ -105,6 +105,26 @@ figcaption { color:var(--dim); font-size:13px; margin-top:10px;
 .ftr { margin-top:60px; padding-top:22px; border-top:1px solid var(--line);
   color:var(--dim); font-size:13px; }
 ol.refs { font-size:13.5px; color:var(--dim); padding-left:20px; }
+.eq { background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+  padding:14px 18px; margin:14px 0; font:15px/2 var(--mono); text-align:center;
+  overflow-x:auto; }
+.eq.law { border-left:3px solid var(--c); text-align:left; font-size:16px;
+  font-weight:600; }
+.gains { font-size:13px; color:var(--dim); background:var(--panel);
+  border:1px solid var(--line); border-radius:7px; padding:9px 13px; }
+.tnote { font-size:12.5px; color:var(--dim); padding:10px 12px;
+  border-top:1px solid var(--line); line-height:1.7; }
+.callout.good { border-color:var(--good); }
+.callout.good h4 { color:var(--good); }
+td.bad { color:var(--bad); font-weight:600; }
+td.good { color:var(--good); font-weight:600; }
+td.hi { color:var(--accent); font-weight:600; }
+.toc { background:var(--panel); border:1px solid var(--line); border-radius:11px;
+  padding:16px 22px; margin:26px 0; column-count:2; column-gap:30px; }
+.toc ol { margin:0; padding-left:20px; font-size:14px; }
+.toc li { margin:4px 0; break-inside:avoid; }
+.toc a { color:var(--ink); text-decoration:none; }
+.toc a:hover { color:var(--accent); }
 ol.refs li { margin:7px 0; }
 ul.tight li { margin:6px 0; }
 </style></head><body><div class="wrap">
@@ -140,8 +160,19 @@ ul.tight li { margin:6px 0; }
 「后轮转向做得多高级」在本文的角度约束内不是。</b></li>
 </ul>
 
-<h2><span class="n">1</span>方法</h2>
-<h3>1.1 四级架构如何定义</h3>
+<div class="toc"><ol>
+<li><a href="#s1">四级架构的定义</a></li>
+<li><a href="#s2">理论基础：自行车模型与两条由它导出的控制律</a></li>
+<li><a href="#s3">试验方法与判据</a></li>
+<li><a href="#s4">架构阶梯的结果</a></li>
+<li><a href="#s5">动画：同一条弯，四种姿态</a></li>
+<li><a href="#s6">控制算法的贡献（逐条展开）</a></li>
+<li><a href="#s7">讨论</a></li>
+<li><a href="#s8">结论</a></li>
+</ol></div>
+
+<h2 id="s1"><span class="n">1</span>四级架构的定义</h2>
+<h3>1.1 用硬件而不是用控制律来区分</h3>
 <p>要诚实回答「多一个自由度值多少钱」，四级之间的差别必须是供应商会写进规格书的东西——
 <b>角度权限</b>和<b>作动带宽</b>——而不是我们碰巧在上面跑了什么控制律。
 控制律是另一组扫描的自变量（第 4 节），跑在<b>固定硬件</b>上，
@@ -155,38 +186,173 @@ ul.tight li { margin:6px 0; }
 但不为零。后轮权限是在台架层对指令限幅实现的（作动器之前），不是机械限位。
 L3 给到平台自身的 ±35°，应读作「完全解耦能提供什么」，而非量产规格。</p></div>
 
-<h3>1.2 为什么所有瞬态指标都在「等侧向加速度」下比</h3>
-<p>ISO 7401 用阶跃输入产生的<b>稳态侧向加速度</b>而非转角来定义输入量。
-这一点在本文比通常更关键：阶梯的要害就是各级转向增益不同。
-在等转角下比，会把「响应更快」和「转得更狠」混为一谈。
-本文每个瞬态指标都先用二分法把转角标定到 a_y = 4.0 m/s²（收敛到 ±0.02），再测。
-代价是 L2 需要 4.96° 前轮转角才能达到 L0 用 1.54° 就达到的横摆——
-这个代价本身就是结果之一。</p>
-
-<div class="callout bad"><h4>一处被查出来的测量错误</h4>
-<p>本研究第一版在 μ = 0.4 低附着上报出 L0 的横摆响应时间 2408 ms、L2 为 108 ms，
-相差 20 倍。核查轨迹后发现：低附着上起步是附着受限的，固定 6 s 的直线整定不足以加速到
-100 km/h，「阶跃」是在加速过程中施加的——2408 ms 量的是<b>加速完成时间</b>，
-108 ms 是加速段里的一个瞬态尖峰。两个数都是废的。
-整定改为<b>等速度收敛</b>（并要求保持 1 s）后重测，低附着结果与高附着一致
-（330/398/820/790 ms）。本文所有数据均出自修正后的版本。</p></div>
-
-<h3>1.3 工况与整车</h3>
+<h3>1.2 整车与工况</h3>
 <p>整车：质量 2900 kg，轴距 3.160 m，前轮距 1.565 m，
-质心距前轴 1.550 m，质心高 0.62 m，单轮最大转角 ±35°。
-模型为 14 自由度多体（车身 6 + 悬架 4 + 轮转动 4），固定步长 RK4，dt = 2 ms，
-纵向为<b>转矩模式</b>（真实动力总成，而不是会把车硬拽在目标速度上的速度伺服）。
+质心距前轴 1.550 m，质心高 0.62 m，单轮机械限位 ±35°。
 路面 μ = 0.9，低附着对照 μ = 0.4。</p>
 <ul class="tight">
 <li><b>低速机动性</b> — 10 km/h 全锁稳态回转，取转弯直径。</li>
 <li><b>稳态回转（ISO 4138）</b> — 30…120 km/h 定转角扫描，取 β(v)；
     90 km/h 转角扫描至饱和，取极限 a_y。</li>
 <li><b>阶跃转向（ISO 7401）</b> — 100 km/h，等 a_y，取 T90／超调／峰值时刻／β。</li>
-<li><b>频率响应</b> — 0.2…2.0 Hz 正弦转向，丢弃前两周期后按整周期做相关，取增益与相位。</li>
+<li><b>频率响应</b> — 0.2…2.0 Hz 正弦转向，相关法估计增益与相位。</li>
 <li><b>正弦停留（FMVSS 126）</b> — 0.7 Hz，第二峰保持 500 ms，看车辆是否收敛。</li>
+<li><b>控制律扫描</b> — 六条律 × 四个速度点，固定 L2 硬件（第 6 节）。</li>
 </ul>
 
-<h2><span class="n">2</span>架构阶梯的结果</h2>
+<div id="s2"></div>
+
+<h2><span class="n">2</span>理论基础</h2>
+<p>本文比较的六条控制律里有五条是从同一个模型闭式解出来的。
+不把这个模型讲清楚，第 6 节的排名就只是一张成绩单而不是一个解释。
+本节推导它，并用它去<b>预言</b>仿真结果——预言失败的那一次，
+恰好暴露了平台里一个真实的缺陷。</p>
+
+<h3>2.1 线性二自由度（自行车）模型</h3>
+<p>把左右轮并作一个，忽略侧倾与载荷转移，取车身侧向速度 v_y 与横摆角速度 r 为状态：</p>
+<div class="eq">m (v̇_y + u·r) = F_yf + F_yr<br>
+I_z ṙ = a·F_yf − b·F_yr</div>
+<p>其中 u 为纵向车速，a、b 为质心到前/后轴距离，L = a + b。小角度下轮胎侧偏角为</p>
+<div class="eq">α_f = δ_f − (v_y + a·r)/u &nbsp;&nbsp;&nbsp; α_r = δ_r − (v_y − b·r)/u</div>
+<p>线性轮胎 F_y = C·α，C 为<b>轴</b>侧偏刚度（单胎的两倍）。
+这四个式子构成全部后续推导的基础。</p>
+
+<h3>2.2 稳态解与不足转向梯度</h3>
+<p>令 v̇_y = ṙ = 0，消去 v_y，得到熟悉的稳态转向方程</p>
+<div class="eq">δ_f = L/R + K·a_y &nbsp;&nbsp;&nbsp;&nbsp;
+K = (m/L)·(b/C_f − a/C_r)</div>
+<p>K 即<b>不足转向梯度</b>：K &gt; 0 不足转向，K &lt; 0 过多转向。
+注意它只由质量分配和<b>轴侧偏刚度比</b>决定——μ 不出现在里面。
+这就是姊妹结论「极限附着与转向架构无关」在理论侧的对应：
+K 是刚度量，极限是附着量，两者是不同的物理。</p>
+
+<h3>2.3 零侧偏后轮转向比 k(u)</h3>
+<p>后轮转向引入第二个输入 δ_r，于是 (r, β) 从「一个输入定两个输出」
+变成「两个输入定两个输出」——<b>这就是解耦的全部数学含义</b>。
+用这个自由度去令 β = 0（即 v_y = 0）：代回稳态方程，力矩式给出
+C_r·α_r = (a/b)·C_f·α_f，力平衡式给出 C_f·α_f·L/b = m·u·r，联立消去 r 得</p>
+<div class="eq">k(u) = δ_r/δ_f = [ −b + a·m·u²/(C_r·L) ] / [ a + b·m·u²/(C_f·L) ]</div>
+<p>两个极限值给出全部工程直觉：</p>
+<ul class="tight">
+<li><b>u → 0</b>：k → −b/a，反相且量级接近 1。低速时后轮几乎与前轮等量反打，
+    ICR 前移，转弯半径大幅缩小。</li>
+<li><b>u → ∞</b>：k → +a·C_f/(b·C_r)，同相。高速时后轮与前轮同向，
+    车辆整体「平移」进弯，侧偏角被压向零。</li>
+<li><b>过渡速度</b>：分子为零处，u² = b·C_r·L/(a·m)。
+    本车为 <b>65.0 km/h</b>。在这个速度附近后轮转向<b>无事可做</b>——
+    姊妹报告实测到 60 km/h 时控制律只索取 0.02° 后轮角，正是这个原因。</li>
+</ul>
+
+<h3>2.4 参考横摆角速度 r_ref</h3>
+<p>模型跟随律需要一个「目标车辆」。取 β = 0 的参考车辆，
+由 2.3 节的中间结果 α_f = m·u·r·b/(C_f·L) 代入 α_f = δ_f − a·r/u，解出</p>
+<div class="eq">r_ref = δ_f / [ a/u + m·b·u/(C_f·L) ]</div>
+<p>低速时分母被 a/u 主导，r_ref ≈ u·δ_f/a；高速时被第二项主导，r_ref 随 u 下降。
+这条曲线就是模型跟随律的跟踪目标。</p>
+
+<h3>2.5 理论校验：一次成功的预言和一个被它揪出来的缺陷</h3>
+<p>理论有没有用，要看它能不能预言仿真。用 2.2 节的 K 去预言「关掉后轮转向」的实测不足转向梯度：</p>
+<div class="tablewrap"><table>
+<thead><tr><th>K 的来源</th><th>C_f (N/rad)</th><th>C_r (N/rad)</th>
+<th>K (deg/g)</th><th>与实测偏差</th></tr></thead>
+<tbody>
+<tr><th>控制律所用的 <code>axle_cornering_stiffness()</code></th>
+<td>240000</td><td>240000</td><td>0.129</td>
+<td class="bad">相差 12 倍</td></tr>
+<tr><th>车辆<b>真实</b>轴刚度（含 0.80／1.20 分配）</th>
+<td>192000</td><td>288000</td><td>1.549</td>
+<td class="good">0.7%</td></tr>
+<tr><th>多体仿真实测（仅前轮转向）</th><td>—</td><td>—</td>
+<td>1.559</td><td>—</td></tr>
+</tbody></table></div>
+<div class="callout bad"><h4>发现：控制律解的不是它正在驾驶的那台车</h4>
+<p>喂进<b>真实</b>轴侧偏刚度时，线性自行车模型预言 K = 1.549 deg/g，
+实测 1.559 deg/g，<b>偏差 0.7%</b>——理论是准的。
+但控制律实际调用的 <code>axle_cornering_stiffness()</code> 对前后轴都返回
+2·<code>tire_c_alpha</code>，<b>没有应用</b>车辆刻意设置的
+0.80／1.20 轴刚度分配。用这个错误的刚度，
+同一个公式给出 K = 0.129 deg/g，差了 12 倍。</p>
+<p>后果直接落在 k(u) 上：120 km/h 时控制律索取 k = 0.593，
+而正确值是 0.384——<b>同相后轮转角多给了
+54%</b>。
+过渡速度也随之错位：59.3 km/h 对 65.0 km/h。
+这不是「非线性轮胎导致解析解不够准」——是控制律的对象模型漏了一个已知参数。
+第 6.7 节用一个对照实验证明了这一点。</p></div>
+
+
+<div id="s3"></div>
+
+<h2><span class="n">3</span>试验方法</h2>
+<p>本节写得比通常详细，因为本研究在自查中<b>推翻过自己两次</b>，
+两次都源于方法而非模型。把判据写清楚，读者才能判断哪些数字可信。</p>
+
+<h3>3.1 角度包络：为什么四级必须同框</h3>
+<p>四级架构统一到<b>前轮 ±7°、后轮 ±7°</b>。
+L0 的后轮为 0° 是架构定义（前轮转向车没有后轮作动器），不是限幅选择。
+包络之外的差异只剩三项：转向自由度数、作动器带宽、是否轮级独立。</p>
+<p>这一步是本研究修正自己的第一次。早期版本给各级不同的后轮权限（0／3／5／35°），
+测得 L0→L3 转弯直径改善 33%，读起来像是「四轮独立转向低速优势巨大」。
+统一包络后同一个量只剩 −9%——那 33% 的绝大部分是<b>角度</b>而非<b>架构</b>。
+不固定角度，架构比较就是角度比较的伪装。</p>
+
+<h3>3.2 等侧向加速度标定</h3>
+<p>ISO 7401 用阶跃产生的<b>稳态侧向加速度</b>而非转角定义输入量。
+本文每一个瞬态指标都先用<b>二分法</b>把前轮转角标定到目标 a_y：
+区间 [0.1°, 20°]，每次迭代跑一次完整的稳态回转（整定 + 7 s 保持 + 0.5 s 平均），
+收敛判据 |a_y − a_y*| &lt; 0.02 m/s²，最多 12 次迭代。
+实测九个案例全部落在 4.0 ± 0.02 m/s²。</p>
+<p>为什么不能省：阶梯的要害就是各级转向增益不同。
+等转角下比，会把「响应更快」和「转得更狠」混为一谈。
+代价是 L2 需要 4.96° 前轮转角才能达到 L0 用 1.54° 就达到的横摆——
+<b>这个代价本身就是结果之一</b>（第 7.1 节）。</p>
+
+<h3>3.3 指标定义</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>指标</th><th>定义</th><th>取值方式</th></tr></thead>
+<tbody>
+<tr><th>稳态值</th><td style="text-align:left">阶跃后最后 0.5 s 的算术平均</td>
+<td style="text-align:left">抑制残余极限环被读成稳态值</td></tr>
+<tr><th>T90</th><td style="text-align:left">|r| 首次达到 0.9×稳态值的时刻</td>
+<td style="text-align:left">从阶跃施加瞬间起计；未达到则记 NaN</td></tr>
+<tr><th>超调</th><td style="text-align:left">(max|r| / 稳态 − 1) × 100%</td>
+<td style="text-align:left">全窗口取最大</td></tr>
+<tr><th>峰值时刻</th><td style="text-align:left">|r| 取最大值的时刻</td><td style="text-align:left">—</td></tr>
+<tr><th>TB</th><td style="text-align:left">a_y 的 T90 减去 r 的 T90</td>
+<td style="text-align:left">ISO 7401 的响应时间差；负值表示侧向加速度先于横摆建立</td></tr>
+<tr><th>β/g</th><td style="text-align:left">稳态 β 除以稳态 a_y（以 g 计）</td>
+<td style="text-align:left"><b>保留符号</b>——β 会过零变号，取绝对值会把关键现象藏起来</td></tr>
+</tbody></table></div>
+
+<h3>3.4 频率响应：为什么用相关法而不是 FFT</h3>
+<p>单频正弦转向，丢弃前两个周期（瞬态），
+再对<b>整数个</b>剩余周期做正弦／余弦相关：</p>
+<div class="eq">G(ω) = ⟨y, sin ωt⟩ + j·⟨y, cos ωt⟩ &nbsp;&nbsp; 归一化后除以输入相量</div>
+<p>相关法在整周期上做，因此不受频谱泄漏影响，也不需要加窗；
+丢弃两个周期保证估计的是稳态频响而不是包含起振过程的混合。</p>
+
+<h3>3.5 整定判据：本研究修正自己的第二次</h3>
+<div class="callout bad"><h4>一处被查出来的测量错误</h4>
+<p>第一版在 μ = 0.4 低附着上报出 L0 横摆响应时间 2408 ms、L2 为 108 ms，
+相差 20 倍。核查轨迹发现：低附着上起步是<b>附着受限</b>的，
+固定 6 s 直线整定不足以加速到 100 km/h，「阶跃」施加在加速过程中——
+2408 ms 量的是<b>加速完成时间</b>，108 ms 是加速段里的一个瞬态尖峰。两个数都是废的。</p>
+<p>整定改为<b>等速度收敛</b>：跑到 |v − v*|/v* &lt; 1% 并<b>保持 1 s</b> 才施加阶跃，
+超过 40 s 未收敛则抛错而不是返回一个可疑的数。
+重测后低附着结果与高附着一致（330／398／820／790 ms）。
+本文所有数据均出自修正后的版本。</p></div>
+
+<h3>3.6 后轮限幅的实现位置</h3>
+<p>后轮权限在控制律<b>之后、作动器之前</b>对指令限幅，不是机械限位。
+因此不含作动器顶到限位后的绕线与回弹。在 ±7° 下，
+后轮对的阿克曼张角小于 0.1°，故逐轮限幅与整轴限幅在本文分辨率内等价。</p>
+
+<h3>3.7 整车与模型</h3>
+<p>14 自由度多体（车身 6 + 悬架 4 + 轮转动 4），固定步长 RK4，dt = 2 ms，
+纵向为<b>转矩模式</b>——真实动力总成，而不是会把车硬拽在目标速度上的速度伺服。
+这一点对制动/驱动耦合工况是必要的：速度伺服会掩盖掉纵向与侧向的附着竞争。</p>
+
+
+<h2 id="s4"><span class="n">4</span>架构阶梯的结果</h2>
 <div class="tablewrap"><table>
 <thead><tr><th>架构</th><th>DOF</th><th>后轮权限</th><th>τ</th>
 <th>转弯直径 m</th><th>δ_f °</th><th>T90 ms</th><th>超调 %</th>
@@ -215,10 +381,20 @@ L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
 如果把 L2 硬件配上瞬态补偿律，它的 T90 是 88 ms，反过来比 L0 快 3 倍以上（第 4 节）。</p></div>
 
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">1.977</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">3.955</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">5.932</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">7.909</text><rect x="80.9" y="204.0" width="79.8" height="50.0" fill="#94a3b8" rx="3"/><text class="bval" x="120.8" y="198.0" text-anchor="middle">1.67</text><text class="tick" x="120.8" y="269" text-anchor="middle">EPS</text><text class="sub" x="120.8" y="282" text-anchor="middle">-1.67°</text><rect x="218.4" y="211.6" width="79.8" height="42.4" fill="#38bdf8" rx="3"/><text class="bval" x="258.2" y="205.6" text-anchor="middle">1.42</text><text class="tick" x="258.2" y="269" text-anchor="middle">EPS + RWS</text><text class="sub" x="258.2" y="282" text-anchor="middle">+1.42°</text><rect x="355.9" y="54.0" width="79.8" height="200.0" fill="#a78bfa" rx="3"/><text class="bval" x="395.8" y="48.0" text-anchor="middle">6.70</text><text class="tick" x="395.8" y="269" text-anchor="middle">SBW + RWS</text><text class="sub" x="395.8" y="282" text-anchor="middle">+6.70°</text><rect x="493.4" y="54.0" width="79.8" height="200.0" fill="#fb7185" rx="3"/><text class="bval" x="533.2" y="48.0" text-anchor="middle">6.70</text><text class="tick" x="533.2" y="269" text-anchor="middle">4WIS</text><text class="sub" x="533.2" y="282" text-anchor="middle">+6.70°</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">|β| / a_y (°/g)</text></svg><figcaption>图 3 — 单位侧向加速度的车身侧偏角。数值取绝对值，副标注保留符号：L2/L3 的解析零侧偏律把 β 推过了零点。</figcaption></figure>
+<p><b>读图。</b>这张图是「后轮转向到底买了什么」的正面回答，也是最容易被单看数值误读的一张。
+柱高是 |β|/a_y，副标注保留了符号——两者必须一起读。L0 是 −1.67 °/g：负号意味着
+车头指向弯内、车尾向外滑，这是常规车高速过弯的固有姿态。L1 把它拉到 +1.42，
+L2／L3 到 +6.70。<b>绝对值不但没有变小，反而变大了，而且符号翻了。</b>
+这不是后轮转向做不到零侧偏——第 6.8 节证明只要把控制律的对象模型改对，
+同一条律在 140 km/h 能把 β/g 做到 −0.19。图上看到的是控制律参数错误的后果，
+不是架构能力的上限。</p>
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="266" x2="602" y2="266"/><line class="ax" x1="52" y1="266" x2="52" y2="18"/><line class="grid" x1="52.0" y1="266" x2="52.0" y2="18"/><text class="tick" x="52.0" y="280" text-anchor="middle">30</text><line class="grid" x1="235.3" y1="266" x2="235.3" y2="18"/><text class="tick" x="235.3" y="280" text-anchor="middle">60</text><line class="grid" x1="418.7" y1="266" x2="418.7" y2="18"/><text class="tick" x="418.7" y="280" text-anchor="middle">90</text><line class="grid" x1="602.0" y1="266" x2="602.0" y2="18"/><text class="tick" x="602.0" y="280" text-anchor="middle">120</text><line class="grid" x1="52" y1="250.8" x2="602" y2="250.8"/><text class="tick" x="46" y="253.8" text-anchor="end">-1.9</text><line class="grid" x1="52" y1="144.5" x2="602" y2="144.5"/><text class="tick" x="46" y="147.5" text-anchor="end">0.2</text><line class="grid" x1="52" y1="43.3" x2="602" y2="43.3"/><text class="tick" x="46" y="46.3" text-anchor="end">2.2</text><text class="axlab" x="327" y="296" text-anchor="middle">车速 (km/h)</text><text class="axlab" transform="rotate(-90 12 142)" x="12" y="142" text-anchor="middle">车身侧偏角 β (°)</text><polyline class="ln" points="52.0,98.3 143.7,120.2 235.3,146.8 327.0,175.3 418.7,203.2 510.3,229.8 602.0,249.6" stroke="#94a3b8"/><circle cx="52.0" cy="98.3" r="3" fill="#94a3b8"/><circle cx="143.7" cy="120.2" r="3" fill="#94a3b8"/><circle cx="235.3" cy="146.8" r="3" fill="#94a3b8"/><circle cx="327.0" cy="175.3" r="3" fill="#94a3b8"/><circle cx="418.7" cy="203.2" r="3" fill="#94a3b8"/><circle cx="510.3" cy="229.8" r="3" fill="#94a3b8"/><circle cx="602.0" cy="249.6" r="3" fill="#94a3b8"/><polyline class="ln" points="52.0,155.8 143.7,153.7 235.3,145.8 327.0,141.5 418.7,126.4 510.3,120.9 602.0,109.7" stroke="#38bdf8"/><circle cx="52.0" cy="155.8" r="3" fill="#38bdf8"/><circle cx="143.7" cy="153.7" r="3" fill="#38bdf8"/><circle cx="235.3" cy="145.8" r="3" fill="#38bdf8"/><circle cx="327.0" cy="141.5" r="3" fill="#38bdf8"/><circle cx="418.7" cy="126.4" r="3" fill="#38bdf8"/><circle cx="510.3" cy="120.9" r="3" fill="#38bdf8"/><circle cx="602.0" cy="109.7" r="3" fill="#38bdf8"/><polyline class="ln" points="52.0,154.5 143.7,146.0 235.3,130.7 327.0,110.0 418.7,86.6 510.3,63.4 602.0,42.7" stroke="#a78bfa"/><circle cx="52.0" cy="154.5" r="3" fill="#a78bfa"/><circle cx="143.7" cy="146.0" r="3" fill="#a78bfa"/><circle cx="235.3" cy="130.7" r="3" fill="#a78bfa"/><circle cx="327.0" cy="110.0" r="3" fill="#a78bfa"/><circle cx="418.7" cy="86.6" r="3" fill="#a78bfa"/><circle cx="510.3" cy="63.4" r="3" fill="#a78bfa"/><circle cx="602.0" cy="42.7" r="3" fill="#a78bfa"/><polyline class="ln" points="52.0,154.5 143.7,146.0 235.3,130.7 327.0,110.0 418.7,86.6 510.3,63.4 602.0,42.7" stroke="#fb7185"/><circle cx="52.0" cy="154.5" r="3" fill="#fb7185"/><circle cx="143.7" cy="146.0" r="3" fill="#fb7185"/><circle cx="235.3" cy="130.7" r="3" fill="#fb7185"/><circle cx="327.0" cy="110.0" r="3" fill="#fb7185"/><circle cx="418.7" cy="86.6" r="3" fill="#fb7185"/><circle cx="510.3" cy="63.4" r="3" fill="#fb7185"/><circle cx="602.0" cy="42.7" r="3" fill="#fb7185"/></svg><div class="legend"><span class="key"><i style="background:#94a3b8"></i>EPS</span> <span class="key"><i style="background:#38bdf8"></i>EPS + RWS</span> <span class="key"><i style="background:#a78bfa"></i>SBW + RWS</span> <span class="key"><i style="background:#fb7185"></i>4WIS</span></div><figcaption>图 8 — 固定前轮转角 3°，β 随车速的变化。L0 越快越负（车尾外摆）；带后轮转向的各级把 β 拉向零，并越过零点变正。</figcaption></figure>
-<p>L0 的 β 随车速越来越负——高速转弯时车尾外摆、车头指向弯内，这是常规车辆的典型姿态。
-带后轮转向的各级把 β 拉向零。但要注意 L2/L3 的解析零侧偏律<b>把 β 推过了零点</b>：
-稳态 β/g 达到 1.667 增益下的正值，绝对值反而比 L0 更大。</p>
+<p><b>读图。</b>横轴是车速，固定前轮转角 3°，所以这张图展示的是<b>同一个输入下姿态如何随速度演变</b>。
+L0（灰）单调下行：越快，车尾外摆越多。这正是零侧偏后轮转向要消除的趋势。
+带后轮转向的三条曲线都被抬起来，说明机制方向是对的；
+但它们在中高速段越过零线继续上行，即<b>过度补偿</b>。
+零线是理想曲线——理想的后轮转向应该让这条线贴着零走完全程。
+三条曲线偏离零线的量，就是控制律模型误差的直接可视化。</p>
 
 <div class="callout bad"><h4>开环零侧偏律在非线性车辆上过冲</h4>
 <p><code>zero_sideslip_ratio</code> 由线性二自由度自行车模型闭式解出，
@@ -228,15 +404,22 @@ L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
 这正是<b>闭环律（横摆反馈、模型跟随的反馈项）存在的理由</b>：
 横摆反馈律在同一硬件上把极限侧偏角压到 0.49°，是全部九个案例中最低的。</p></div>
 
-<h2><span class="n">3</span>动画：同一条弯，四种姿态</h2>
+<h2 id="s5"><span class="n">5</span>动画：同一条弯，四种姿态</h2>
 <div class="anim">
   <canvas id="cvA" width="900" height="330"></canvas>
   <div class="ctl"><button id="btnA">暂停</button>
     <input type="range" id="rngA" min="0" max="100" value="0">
     <span class="rd" id="rdA"></span></div>
-  <figcaption>动画 1 — 90 km/h，转角标定到同一侧向加速度 4 m/s²，
-  四种架构沿各自轨迹行进。车身与速度矢量（绿箭头）之间的夹角就是侧偏角 β。
-  注意 L0 车头指向弯内而 L2/L3 指向弯外——β 变号。</figcaption>
+  <figcaption><b>动画 1 — 稳态过弯姿态。</b>90 km/h，转角<b>标定到同一侧向加速度
+  4 m/s²</b>，所以四辆车走的是几乎相同的圆——差别全在<b>姿态</b>而不在轨迹。<br>
+  <b>怎么看：</b>绿箭头是速度矢量（车实际去的方向），车身矩形的长轴是车头朝向，
+  两者的夹角就是侧偏角 β。左上角标注了各级的前轮转角与稳态 β。<br>
+  <b>看什么：</b>(1) L0 的车头<b>偏向圆心一侧</b>（β 为负），这是常规车在高速弯里的样子——
+  车尾在往外滑，驾驶员靠车头指向弯内来补偿。(2) L2／L3 的车头<b>偏向圆外</b>（β 为正），
+  方向反了。零侧偏的理想状态是车身长轴与绿箭头完全重合，四辆车<b>都没有做到</b>，
+  L0 差在一侧、L2／L3 差在另一侧。(3) 各级的前轮转角差别很大
+  （L0 1.76° 到 L2／L3 4.22°），这就是「等 a_y 比较」的代价——
+  同样的弯，装了后轮转向的车要打更多方向盘。</figcaption>
 </div>
 
 <div class="anim">
@@ -244,8 +427,19 @@ L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
   <div class="ctl"><button id="btnB">暂停</button>
     <input type="range" id="rngB" min="0" max="100" value="0">
     <span class="rd" id="rdB"></span></div>
-  <figcaption>动画 2 — 正弦停留（FMVSS 126），80 km/h。0.7 Hz 正弦，
-  第二峰保持 500 ms 后撤回。四级架构全部收敛，无一例残余横摆。</figcaption>
+  <figcaption><b>动画 2 — 正弦停留（FMVSS 126），80 km/h。</b>0.7 Hz 正弦转向，
+  在第二个峰值处<b>保持 500 ms</b> 再撤回。这个「停留」是工况的关键：
+  它要求车辆先建立一个大的姿态，然后一次性交还，专门用来暴露横摆发散。<br>
+  <b>怎么看：</b>四条轨迹叠在同一坐标系里，每条淡色尾迹是走过的路径，
+  实心车身是当前位置。左上角是各级的峰值横摆角速度与最大 β。<br>
+  <b>看什么：</b>(1) <b>四级全部收敛</b>——输入结束 1 s 后残余横摆均低于峰值 0.3%，
+  没有一级失稳。这个工况在本文参数下不具备区分度，但它的价值是<b>排除</b>：
+  第 6 节那些「更快」的控制律没有以稳定性为代价。
+  (2) 峰值横摆从 L0 的 20.0 °/s 降到 L3 的 10.8 °/s，几乎减半——
+  同样的方向盘输入，带后轮转向的车<b>转得少得多</b>，
+  这再次是转向增益被同相后轮压低的表现，不是稳定性提升。
+  (3) 轨迹的横向位移 L0 最大：在真实避障中这意味着 L0 绕开障碍所需的方向盘更少。
+  「更稳」和「更好避障」在这里是矛盾的。</figcaption>
 </div>
 
 <div class="anim">
@@ -257,35 +451,236 @@ L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
   ICR 在无穷远，车身姿态不变而整体平移）与<b>原地回转</b>（ICR 落在车体中心，
   vx = vy = 0）。这两种运动在阿克曼几何下<b>无解</b>——不是分数高低，是低阶架构没有这个能力。
   <b>但请注意：这两段动画跑在本文的角度包络之外。</b>蟹行与原地回转都需要远超
-  ±7° 的后轮转角，因此在本文第 2 节的约束下，L3 <b>也做不到</b>。
+  ±7° 的后轮转角，因此在本文第 1 节的约束下，L3 <b>也做不到</b>。
   它们展示的是「如果放开后轮角度权限，四轮独立转向能拿到什么」，
-  而这恰好说明：4WIS 的招牌能力买的是<b>角度</b>，不是<b>解耦</b>。</figcaption>
+  而这恰好说明：4WIS 的招牌能力买的是<b>角度</b>，不是<b>解耦</b>。<br>
+  <b>怎么看：</b>左半幅是蟹行，右半幅是原地回转，淡色车影是每隔约 0.5 s 的历史位置。<br>
+  <b>看什么：</b>(1) 蟹行中<b>车身朝向始终不变</b>而位置在斜向平移——
+  历史车影全部平行。这在阿克曼几何下无解：常规车要横向移动必须先转头。
+  (2) 原地回转中<b>轨迹退化为一个点</b>，车身绕自身中心旋转，vx = vy = 0。
+  ICR 落在车体内部，这同样是阿克曼几何无法表达的状态。
+  (3) 这两者的共同点是 ICR 被放到了「后轴延长线」之外——
+  第 2.3 节的 k(u) 公式在这里已经不适用，因为它假设 ICR 在后轴延长线上。
+  非阿克曼运动需要的是完整的四轮独立指令，而不是一个前后轴比值。</figcaption>
 </div>
 
-<h2><span class="n">4</span>控制算法的贡献</h2>
-<p>本节固定 L2 硬件，只换控制律。这样得到的差异全部来自算法。</p>
+<div id="s6"></div>
+
+<h2><span class="n">6</span>控制算法的贡献</h2>
+<p>本节固定 L2 硬件，只换控制律，因此全部差异来自算法。
+六条律逐一给出：<b>实现方程</b>、<b>理论出处</b>、<b>所需信号</b>、
+<b>四个速度点的完整数据</b>、以及一段读解。</p>
+<div class="callout"><h4>为什么必须跨速度看</h4>
+<p>六条律里有四条的后前轮比 δ_r/δ_f 是速度的函数，其中两条<b>在扫描区间内变号</b>。
+在单一速度上排名会得到与另一速度相反的结论——
+例如定比例律在 40 km/h 是最快的，在 140 km/h 超调 21.5% 已不可接受。
+本节所有表格因此都是四速度的。</p></div>
+
+<h3>6.1 仅前轮 <span class="dim">front only</span></h3>
+<div class="eq law" style="--c:#94a3b8">δ_r = 0</div>
+<p class="gains"><b>参数</b>：— &nbsp;·&nbsp;
+<b>需要的信号</b>：无 &nbsp;·&nbsp; <b>代价</b>：无</p>
+<p>参考基准，不是一条控制律。后轴不转向，车辆退化为常规前轮转向车，横摆角速度与侧偏角由底盘固有特性唯一决定，二者<b>刚性耦合</b>：给定 δ_f 和车速，稳态 r 和 β 同时被确定，没有任何自由度去单独调整其中一个。本文所有「后轮转向买到了什么」的说法，都是相对这一行数据讲的。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>车速 km/h</th><th>δ_f °</th><th>δ_r/δ_f</th><th>T90 ms</th>
+<th>超调 %</th><th>β/g °</th><th>δ_r 峰值 °</th></tr></thead>
+<tbody><tr><th>40</th><td>4.84</td><td>+0.000</td><td>230</td><td>0.0</td><td class="">+4.44</td><td>0.00</td></tr><tr><th>60</th><td>2.39</td><td>+0.000</td><td>262</td><td>0.2</td><td class="">+0.41</td><td>0.00</td></tr><tr><th>100</th><td>1.15</td><td>+0.000</td><td>262</td><td>5.0</td><td class="neg">-1.67</td><td>0.00</td></tr><tr><th>140</th><td>0.82</td><td>+0.000</td><td>228</td><td>16.7</td><td class="neg">-2.27</td><td>0.00</td></tr></tbody></table>
+<div class="tnote">等 a_y = 3.0 m/s²，载体固定为 L2 硬件。
+正弦停留（80 km/h）：峰值横摆 20.22 °/s，最大 β 0.98°，
+后轮峰值 0.00°，输入结束 1.0 s／1.75 s 后残余
+0.000／0.000。
+噪声：后轮 RMS 0.000°（放大 0.00×），
+角速率 RMS 0.00 °/s。</div></div>
+<p><b>读解：</b>高速时 β 为负且随车速单调变负（车尾外摆、车头指向弯内），这是常规车辆在高速弯中的典型姿态，也是后轮转向要去消除的东西。</p>
+
+<h3>6.2 定比例 <span class="dim">fixed ratio</span></h3>
+<div class="eq law" style="--c:#f59e0b">δ_r = k · δ_f,   k = 常数</div>
+<p class="gains"><b>参数</b>：k = −0.4 &nbsp;·&nbsp;
+<b>需要的信号</b>：方向盘转角 &nbsp;·&nbsp; <b>代价</b>：后轮 RMS 放大 0.20×；无速度信号需求</p>
+<p>最便宜的一条：一个常数，除方向盘转角外不需要任何传感。负号表示反相——后轮与前轮反向，把瞬时转动中心 ICR 从后轴延长线上<b>向前移</b>，从而缩小转弯半径。这在低速是对的，在高速是错的：高速需要的是<b>同相</b>后轮转向来压低侧偏角。一个常数无法同时满足两端，因此定比例律必然在某一端付出代价。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>车速 km/h</th><th>δ_f °</th><th>δ_r/δ_f</th><th>T90 ms</th>
+<th>超调 %</th><th>β/g °</th><th>δ_r 峰值 °</th></tr></thead>
+<tbody><tr><th>40</th><td>3.48</td><td>-0.400</td><td>212</td><td>0.0</td><td class="neg">-0.11</td><td>1.39</td></tr><tr><th>60</th><td>1.71</td><td>-0.400</td><td>240</td><td>0.6</td><td class="neg">-1.84</td><td>0.69</td></tr><tr><th>100</th><td>0.82</td><td>-0.400</td><td>232</td><td>7.1</td><td class="neg">-2.75</td><td>0.33</td></tr><tr><th>140</th><td>0.59</td><td>-0.400</td><td>202</td><td>21.5</td><td class="neg">-3.04</td><td>0.23</td></tr></tbody></table>
+<div class="tnote">等 a_y = 3.0 m/s²，载体固定为 L2 硬件。
+正弦停留（80 km/h）：峰值横摆 28.54 °/s，最大 β 5.08°，
+后轮峰值 1.60°，输入结束 1.0 s／1.75 s 后残余
+0.020／0.000。
+噪声：后轮 RMS 0.020°（放大 0.20×），
+角速率 RMS 0.75 °/s。</div></div>
+<p><b>读解：</b>本文数据里它是<b>横摆响应最快的定常律</b>（100 km/h T90 232 ms），因为反相后轮直接加大了等效转向增益——同样的 a_y 只需 1.10° 前轮转角，是全部六条律里最小的。代价全部落在高速：140 km/h 超调 21.5%，β/g 达到 −3.04，比不用后轮转向（−2.27）<b>更差</b>。</p>
+
+<h3>6.3 速度调度 <span class="dim">speed schedule</span></h3>
+<div class="eq law" style="--c:#38bdf8">δ_r = k(v) · δ_f</div>
+<p class="gains"><b>参数</b>：k(v) 采样自解析零侧偏比，7 个速度点线性插值 &nbsp;·&nbsp;
+<b>需要的信号</b>：方向盘转角 + 车速 &nbsp;·&nbsp; <b>代价</b>：后轮 RMS 放大 0.23×；开环，不需要横摆传感器</p>
+<p>把定比例的常数换成速度的函数，用第 2.3 节推导的解析零侧偏比 k(u) 采样得到。低速 k→−b/a（反相，机动性），高速 k→+a·C_f/(b·C_r)（同相，稳定性），中间存在一个<b>过渡速度</b>使 k=0。这是整个后轮转向工程学的骨架：<b>一条曲线同时买到低速机动性和高速稳定性</b>，而这是定比例律做不到的。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>车速 km/h</th><th>δ_f °</th><th>δ_r/δ_f</th><th>T90 ms</th>
+<th>超调 %</th><th>β/g °</th><th>δ_r 峰值 °</th></tr></thead>
+<tbody><tr><th>40</th><td>3.52</td><td>-0.384</td><td>212</td><td>0.0</td><td class="">+0.03</td><td>1.35</td></tr><tr><th>60</th><td>2.43</td><td>+0.008</td><td>264</td><td>0.2</td><td class="">+0.47</td><td>0.02</td></tr><tr><th>100</th><td>2.08</td><td>+0.450</td><td>354</td><td>1.9</td><td class="">+1.41</td><td>0.94</td></tr><tr><th>140</th><td>2.45</td><td>+0.663</td><td>482</td><td>5.3</td><td class="">+3.06</td><td>1.63</td></tr></tbody></table>
+<div class="tnote">等 a_y = 3.0 m/s²，载体固定为 L2 硬件。
+正弦停留（80 km/h）：峰值横摆 14.92 °/s，最大 β 0.96°，
+后轮峰值 1.04°，输入结束 1.0 s／1.75 s 后残余
+0.000／0.000。
+噪声：后轮 RMS 0.023°（放大 0.23×），
+角速率 RMS 0.85 °/s。</div></div>
+<p><b>读解：</b>全速域表现最均衡的开环律：超调在四个速度点上都低于 5.3%，β/g 在 40 km/h 处只有 +0.03。但它是<b>开环</b>的——其精度完全取决于 k(v) 所依据的车辆模型是否正确，而第 2.5 节说明本项目里它<b>不正确</b>。</p>
+
+<h3>6.4 横摆反馈 <span class="dim">yaw feedback</span></h3>
+<div class="eq law" style="--c:#34d399">δ_r = g₁ · δ_f + g₂ · r̂</div>
+<p class="gains"><b>参数</b>：g₁ = −0.10, g₂ = +0.12 s；r̂ 为一阶低通滤波的实测横摆角速度（τ = 0.08 s） &nbsp;·&nbsp;
+<b>需要的信号</b>：方向盘转角 + 横摆角速度传感器 &nbsp;·&nbsp; <b>代价</b>：后轮 RMS 放大 0.15×（六条律中<b>最低</b>）；需要横摆传感器</p>
+<p>唯一一条<b>闭环</b>律：后轮角由实测横摆角速度反馈决定，因此它<b>不需要知道</b>侧偏刚度、质心位置或质量。前馈项 g₁·δ_f 提供初始反相以保留低速机动性，反馈项 g₂·r̂ 在车辆开始转动后加入同相分量抑制横摆。反馈信号必须滤波：在运动学模型上未滤波的横摆反馈是一个代数环，环增益超过 1 即在限幅间振荡。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>车速 km/h</th><th>δ_f °</th><th>δ_r/δ_f</th><th>T90 ms</th>
+<th>超调 %</th><th>β/g °</th><th>δ_r 峰值 °</th></tr></thead>
+<tbody><tr><th>40</th><td>6.09</td><td>+0.205</td><td>138</td><td>6.5</td><td class="">+8.53</td><td>1.25</td></tr><tr><th>60</th><td>3.29</td><td>+0.275</td><td>146</td><td>9.0</td><td class="">+3.38</td><td>0.92</td></tr><tr><th>100</th><td>1.73</td><td>+0.331</td><td>144</td><td>16.0</td><td class="">+0.20</td><td>0.62</td></tr><tr><th>140</th><td>1.23</td><td>+0.331</td><td>136</td><td>26.2</td><td class="neg">-0.93</td><td>0.48</td></tr></tbody></table>
+<div class="tnote">等 a_y = 3.0 m/s²，载体固定为 L2 硬件。
+正弦停留（80 km/h）：峰值横摆 14.29 °/s，最大 β 0.68°，
+后轮峰值 1.29°，输入结束 1.0 s／1.75 s 后残余
+0.000／0.000。
+噪声：后轮 RMS 0.015°（放大 0.15×），
+角速率 RMS 0.24 °/s。</div></div>
+<p><b>读解：</b>本文的<b>综合最优</b>。响应快（T90 在四个速度点上稳定在 136–146 ms），且因为不依赖车辆参数，它是唯一一条不受第 2.5 节对象模型缺陷影响的律——极限侧偏角 0.49°，是全部九个案例中最低的。代价是超调随速度上升（140 km/h 达 26.2%）和一个额外传感器。</p>
+
+<h3>6.5 瞬态补偿 <span class="dim">transient</span></h3>
+<div class="eq law" style="--c:#fb7185">δ_r = k(v) · δ_f − c · d̂δ_f/dt</div>
+<p class="gains"><b>参数</b>：c = 0.10 s；dδ_f/dt 经同一 τ = 0.08 s 低通滤波 &nbsp;·&nbsp;
+<b>需要的信号</b>：方向盘转角 + 车速 + 转角导数 &nbsp;·&nbsp; <b>代价</b>：后轮 RMS 放大 0.32×，角速率 RMS 1.41 °/s（是速度调度的 1.7 倍）</p>
+<p>在速度调度的基础上叠加一个<b>对转向速率的反相修正</b>。物理含义：阶跃转向瞬间，前轮已产生侧向力而后轮尚未建立，此时短暂地把后轮反打，可以立刻制造一个额外的横摆力矩，把横摆响应「踢」起来；待瞬态过去、导数项归零，控制律自动退化为纯速度调度，稳态不受影响。这是一个<b>纯瞬态</b>整形项——它不改变任何稳态量。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>车速 km/h</th><th>δ_f °</th><th>δ_r/δ_f</th><th>T90 ms</th>
+<th>超调 %</th><th>β/g °</th><th>δ_r 峰值 °</th></tr></thead>
+<tbody><tr><th>40</th><td>3.52</td><td>-0.384</td><td>102</td><td>11.3</td><td class="">+0.03</td><td>3.15</td></tr><tr><th>60</th><td>2.43</td><td>+0.009</td><td>108</td><td>14.3</td><td class="">+0.48</td><td>1.44</td></tr><tr><th>100</th><td>2.16</td><td>+0.469</td><td>88</td><td>33.9</td><td class="">+1.67</td><td>1.01</td></tr><tr><th>140</th><td>2.55</td><td>+0.677</td><td>66</td><td>73.3</td><td class="">+3.39</td><td>1.72</td></tr></tbody></table>
+<div class="tnote">等 a_y = 3.0 m/s²，载体固定为 L2 硬件。
+正弦停留（80 km/h）：峰值横摆 16.03 °/s，最大 β 0.86°，
+后轮峰值 1.66°，输入结束 1.0 s／1.75 s 后残余
+0.001／0.000。
+噪声：后轮 RMS 0.032°（放大 0.32×），
+角速率 RMS 1.41 °/s。</div></div>
+<p><b>读解：</b><b>响应速度的极限</b>：100 km/h T90 88 ms，是不用后轮转向的 3.0 倍快，0.5 Hz 处相位滞后接近零。但代价在高速急剧恶化——140 km/h 超调 73.3%，已经不是一台可以交付的车。它适合作为一个<b>可调权重</b>（c 随速度衰减），而不是全速域固定投入。</p>
+
+<h3>6.6 模型跟随 <span class="dim">model following</span></h3>
+<div class="eq law" style="--c:#a78bfa">δ_r = k(v) · δ_f + g · (r_ref − r̂)</div>
+<p class="gains"><b>参数</b>：g = 0.08 s；r_ref 为零侧偏参考模型的稳态横摆角速度 &nbsp;·&nbsp;
+<b>需要的信号</b>：方向盘转角 + 车速 + 横摆角速度 + 完整车辆参数 &nbsp;·&nbsp; <b>代价</b>：后轮 RMS 放大 0.42×（六条律中<b>最高</b>），角速率 RMS 1.54 °/s，后轮角需求最大</p>
+<p>前馈加反馈的标准结构：前馈项负责稳态（解析零侧偏比），反馈项把实际横摆角速度拉向<b>参考模型</b>的输出 r_ref（第 2.4 节推导）。理论上这是六条里最完备的一条——它同时约束了侧偏角（前馈）和横摆响应（反馈），而且参考模型给了设计者一个显式的「目标车辆」。代价是它需要知道的车辆参数最多：质量、质心位置、前后轴侧偏刚度全都进入公式。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>车速 km/h</th><th>δ_f °</th><th>δ_r/δ_f</th><th>T90 ms</th>
+<th>超调 %</th><th>β/g °</th><th>δ_r 峰值 °</th></tr></thead>
+<tbody><tr><th>40</th><td>3.60</td><td>-0.342</td><td>372</td><td>0.0</td><td class="">+0.39</td><td>1.23</td></tr><tr><th>60</th><td>2.70</td><td>+0.112</td><td>524</td><td>0.0</td><td class="">+1.39</td><td>1.01</td></tr><tr><th>100</th><td>3.71</td><td>+0.688</td><td>804</td><td>3.0</td><td class="">+6.67</td><td>3.12</td></tr><tr><th>140</th><td>7.83</td><td>+0.893</td><td>820</td><td>11.9</td><td class="">+20.59</td><td>7.00</td></tr></tbody></table>
+<div class="tnote">等 a_y = 3.0 m/s²，载体固定为 L2 硬件。
+正弦停留（80 km/h）：峰值横摆 10.65 °/s，最大 β 2.81°，
+后轮峰值 2.83°，输入结束 1.0 s／1.75 s 后残余
+0.001／0.001。
+噪声：后轮 RMS 0.042°（放大 0.42×），
+角速率 RMS 1.54 °/s。</div></div>
+<p><b>读解：</b>理论最强、本文实测<b>最差</b>——这个反差是全文最有信息量的一处。100 km/h T90 804 ms，140 km/h 的 β/g 达到 +20.6°，远差于完全不用后轮转向。原因不在结构而在参数：它对车辆参数的依赖最重，因此第 2.5 节那个对象模型缺陷对它伤害最大。<b>依赖模型最深的控制律，被模型误差伤得最狠。</b></p>
+
+
+<h3>6.7 横向对比</h3>
+<figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="266" x2="602" y2="266"/><line class="ax" x1="52" y1="266" x2="52" y2="18"/><line class="grid" x1="52.0" y1="266" x2="52.0" y2="18"/><text class="tick" x="52.0" y="280" text-anchor="middle">40</text><line class="grid" x1="162.0" y1="266" x2="162.0" y2="18"/><text class="tick" x="162.0" y="280" text-anchor="middle">60</text><line class="grid" x1="382.0" y1="266" x2="382.0" y2="18"/><text class="tick" x="382.0" y="280" text-anchor="middle">100</text><line class="grid" x1="602.0" y1="266" x2="602.0" y2="18"/><text class="tick" x="602.0" y="280" text-anchor="middle">140</text><line class="grid" x1="52" y1="318.2" x2="602" y2="318.2"/><text class="tick" x="46" y="321.2" text-anchor="end">-200</text><line class="grid" x1="52" y1="263.4" x2="602" y2="263.4"/><text class="tick" x="46" y="266.4" text-anchor="end">0</text><line class="grid" x1="52" y1="208.6" x2="602" y2="208.6"/><text class="tick" x="46" y="211.6" text-anchor="end">200</text><line class="grid" x1="52" y1="153.8" x2="602" y2="153.8"/><text class="tick" x="46" y="156.8" text-anchor="end">400</text><line class="grid" x1="52" y1="99.0" x2="602" y2="99.0"/><text class="tick" x="46" y="102.0" text-anchor="end">600</text><line class="grid" x1="52" y1="44.1" x2="602" y2="44.1"/><text class="tick" x="46" y="47.1" text-anchor="end">800</text><text class="axlab" x="327" y="296" text-anchor="middle">车速 (km/h)</text><text class="axlab" transform="rotate(-90 12 142)" x="12" y="142" text-anchor="middle">横摆 T90 (ms)</text><polyline class="ln" points="52.0,200.4 162.0,191.6 382.0,191.6 602.0,200.9" stroke="#94a3b8"/><circle cx="52.0" cy="200.4" r="3" fill="#94a3b8"/><circle cx="162.0" cy="191.6" r="3" fill="#94a3b8"/><circle cx="382.0" cy="191.6" r="3" fill="#94a3b8"/><circle cx="602.0" cy="200.9" r="3" fill="#94a3b8"/><polyline class="ln" points="52.0,205.3 162.0,197.6 382.0,199.8 602.0,208.1" stroke="#f59e0b"/><circle cx="52.0" cy="205.3" r="3" fill="#f59e0b"/><circle cx="162.0" cy="197.6" r="3" fill="#f59e0b"/><circle cx="382.0" cy="199.8" r="3" fill="#f59e0b"/><circle cx="602.0" cy="208.1" r="3" fill="#f59e0b"/><polyline class="ln" points="52.0,205.3 162.0,191.1 382.0,166.4 602.0,131.3" stroke="#38bdf8"/><circle cx="52.0" cy="205.3" r="3" fill="#38bdf8"/><circle cx="162.0" cy="191.1" r="3" fill="#38bdf8"/><circle cx="382.0" cy="166.4" r="3" fill="#38bdf8"/><circle cx="602.0" cy="131.3" r="3" fill="#38bdf8"/><polyline class="ln" points="52.0,225.6 162.0,223.4 382.0,224.0 602.0,226.1" stroke="#34d399"/><circle cx="52.0" cy="225.6" r="3" fill="#34d399"/><circle cx="162.0" cy="223.4" r="3" fill="#34d399"/><circle cx="382.0" cy="224.0" r="3" fill="#34d399"/><circle cx="602.0" cy="226.1" r="3" fill="#34d399"/><polyline class="ln" points="52.0,235.5 162.0,233.8 382.0,239.3 602.0,245.3" stroke="#fb7185"/><circle cx="52.0" cy="235.5" r="3" fill="#fb7185"/><circle cx="162.0" cy="233.8" r="3" fill="#fb7185"/><circle cx="382.0" cy="239.3" r="3" fill="#fb7185"/><circle cx="602.0" cy="245.3" r="3" fill="#fb7185"/><polyline class="ln" points="52.0,161.5 162.0,119.8 382.0,43.1 602.0,38.7" stroke="#a78bfa"/><circle cx="52.0" cy="161.5" r="3" fill="#a78bfa"/><circle cx="162.0" cy="119.8" r="3" fill="#a78bfa"/><circle cx="382.0" cy="43.1" r="3" fill="#a78bfa"/><circle cx="602.0" cy="38.7" r="3" fill="#a78bfa"/></svg><div class="legend"><span class="key"><i style="background:#94a3b8"></i>仅前轮</span> <span class="key"><i style="background:#f59e0b"></i>定比例</span> <span class="key"><i style="background:#38bdf8"></i>速度调度</span> <span class="key"><i style="background:#34d399"></i>横摆反馈</span> <span class="key"><i style="background:#fb7185"></i>瞬态补偿</span> <span class="key"><i style="background:#a78bfa"></i>模型跟随</span></div><figcaption>图 9 — 六条控制律的横摆响应时间随车速。三条趋势要一起看：闭环的横摆反馈律几乎与速度无关（136–146 ms，最平的一条）；瞬态补偿律越快越猛（140 km/h 已到 66 ms）；而模型跟随律随速度<b>迅速变慢</b>——这不是结构问题，是第 6.8 节那个对象模型缺陷随速度放大的直接后果。</figcaption></figure>
+<figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="266" x2="602" y2="266"/><line class="ax" x1="52" y1="266" x2="52" y2="18"/><line class="grid" x1="52.0" y1="266" x2="52.0" y2="18"/><text class="tick" x="52.0" y="280" text-anchor="middle">40</text><line class="grid" x1="162.0" y1="266" x2="162.0" y2="18"/><text class="tick" x="162.0" y="280" text-anchor="middle">60</text><line class="grid" x1="382.0" y1="266" x2="382.0" y2="18"/><text class="tick" x="382.0" y="280" text-anchor="middle">100</text><line class="grid" x1="602.0" y1="266" x2="602.0" y2="18"/><text class="tick" x="602.0" y="280" text-anchor="middle">140</text><line class="grid" x1="52" y1="306.2" x2="602" y2="306.2"/><text class="tick" x="46" y="309.2" text-anchor="end">-10</text><line class="grid" x1="52" y1="218.7" x2="602" y2="218.7"/><text class="tick" x="46" y="221.7" text-anchor="end">0</text><line class="grid" x1="52" y1="131.3" x2="602" y2="131.3"/><text class="tick" x="46" y="134.3" text-anchor="end">10</text><line class="grid" x1="52" y1="43.8" x2="602" y2="43.8"/><text class="tick" x="46" y="46.8" text-anchor="end">20</text><text class="axlab" x="327" y="296" text-anchor="middle">车速 (km/h)</text><text class="axlab" transform="rotate(-90 12 142)" x="12" y="142" text-anchor="middle">β / a_y (°/g，带符号)</text><polyline class="ln" points="52.0,179.9 162.0,215.2 382.0,233.4 602.0,238.6" stroke="#94a3b8"/><circle cx="52.0" cy="179.9" r="3" fill="#94a3b8"/><circle cx="162.0" cy="215.2" r="3" fill="#94a3b8"/><circle cx="382.0" cy="233.4" r="3" fill="#94a3b8"/><circle cx="602.0" cy="238.6" r="3" fill="#94a3b8"/><polyline class="ln" points="52.0,219.7 162.0,234.8 382.0,242.8 602.0,245.3" stroke="#f59e0b"/><circle cx="52.0" cy="219.7" r="3" fill="#f59e0b"/><circle cx="162.0" cy="234.8" r="3" fill="#f59e0b"/><circle cx="382.0" cy="242.8" r="3" fill="#f59e0b"/><circle cx="602.0" cy="245.3" r="3" fill="#f59e0b"/><polyline class="ln" points="52.0,218.5 162.0,214.6 382.0,206.4 602.0,192.0" stroke="#38bdf8"/><circle cx="52.0" cy="218.5" r="3" fill="#38bdf8"/><circle cx="162.0" cy="214.6" r="3" fill="#38bdf8"/><circle cx="382.0" cy="206.4" r="3" fill="#38bdf8"/><circle cx="602.0" cy="192.0" r="3" fill="#38bdf8"/><polyline class="ln" points="52.0,144.1 162.0,189.2 382.0,217.0 602.0,226.9" stroke="#34d399"/><circle cx="52.0" cy="144.1" r="3" fill="#34d399"/><circle cx="162.0" cy="189.2" r="3" fill="#34d399"/><circle cx="382.0" cy="217.0" r="3" fill="#34d399"/><circle cx="602.0" cy="226.9" r="3" fill="#34d399"/><polyline class="ln" points="52.0,218.5 162.0,214.6 382.0,204.2 602.0,189.1" stroke="#fb7185"/><circle cx="52.0" cy="218.5" r="3" fill="#fb7185"/><circle cx="162.0" cy="214.6" r="3" fill="#fb7185"/><circle cx="382.0" cy="204.2" r="3" fill="#fb7185"/><circle cx="602.0" cy="189.1" r="3" fill="#fb7185"/><polyline class="ln" points="52.0,215.4 162.0,206.6 382.0,160.4 602.0,38.7" stroke="#a78bfa"/><circle cx="52.0" cy="215.4" r="3" fill="#a78bfa"/><circle cx="162.0" cy="206.6" r="3" fill="#a78bfa"/><circle cx="382.0" cy="160.4" r="3" fill="#a78bfa"/><circle cx="602.0" cy="38.7" r="3" fill="#a78bfa"/></svg><div class="legend"><span class="key"><i style="background:#94a3b8"></i>仅前轮</span> <span class="key"><i style="background:#f59e0b"></i>定比例</span> <span class="key"><i style="background:#38bdf8"></i>速度调度</span> <span class="key"><i style="background:#34d399"></i>横摆反馈</span> <span class="key"><i style="background:#fb7185"></i>瞬态补偿</span> <span class="key"><i style="background:#a78bfa"></i>模型跟随</span></div><figcaption>图 10 — 单位侧向加速度的车身侧偏角，<b>保留符号</b>。零线是理想值。不用后轮转向（灰）随速度单调变负，这是常规车的姿态；带后轮转向的各条律把它抬向零，但速度调度与模型跟随<b>冲过了零点</b>，在高速端变成大幅正值。模型跟随律在 140 km/h 达到 +20.6°/g，比完全不控后轮还差一个量级——这是全文最刺眼的一个数。</figcaption></figure>
+<figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="266" x2="602" y2="266"/><line class="ax" x1="52" y1="266" x2="52" y2="18"/><line class="grid" x1="52.0" y1="266" x2="52.0" y2="18"/><text class="tick" x="52.0" y="280" text-anchor="middle">40</text><line class="grid" x1="162.0" y1="266" x2="162.0" y2="18"/><text class="tick" x="162.0" y="280" text-anchor="middle">60</text><line class="grid" x1="382.0" y1="266" x2="382.0" y2="18"/><text class="tick" x="382.0" y="280" text-anchor="middle">100</text><line class="grid" x1="602.0" y1="266" x2="602.0" y2="18"/><text class="tick" x="602.0" y="280" text-anchor="middle">140</text><line class="grid" x1="52" y1="341.2" x2="602" y2="341.2"/><text class="tick" x="46" y="344.2" text-anchor="end">-1</text><line class="grid" x1="52" y1="261.3" x2="602" y2="261.3"/><text class="tick" x="46" y="264.3" text-anchor="end">-0.5</text><line class="grid" x1="52" y1="181.4" x2="602" y2="181.4"/><text class="tick" x="46" y="184.4" text-anchor="end">0</text><line class="grid" x1="52" y1="101.5" x2="602" y2="101.5"/><text class="tick" x="46" y="104.5" text-anchor="end">0.5</text><line class="grid" x1="52" y1="21.6" x2="602" y2="21.6"/><text class="tick" x="46" y="24.6" text-anchor="end">1</text><text class="axlab" x="327" y="296" text-anchor="middle">车速 (km/h)</text><text class="axlab" transform="rotate(-90 12 142)" x="12" y="142" text-anchor="middle">稳态 δ_r / δ_f</text><polyline class="ln" points="52.0,181.4 162.0,181.4 382.0,181.4 602.0,181.4" stroke="#94a3b8"/><circle cx="52.0" cy="181.4" r="3" fill="#94a3b8"/><circle cx="162.0" cy="181.4" r="3" fill="#94a3b8"/><circle cx="382.0" cy="181.4" r="3" fill="#94a3b8"/><circle cx="602.0" cy="181.4" r="3" fill="#94a3b8"/><polyline class="ln" points="52.0,245.3 162.0,245.3 382.0,245.3 602.0,245.3" stroke="#f59e0b"/><circle cx="52.0" cy="245.3" r="3" fill="#f59e0b"/><circle cx="162.0" cy="245.3" r="3" fill="#f59e0b"/><circle cx="382.0" cy="245.3" r="3" fill="#f59e0b"/><circle cx="602.0" cy="245.3" r="3" fill="#f59e0b"/><polyline class="ln" points="52.0,242.7 162.0,180.1 382.0,109.5 602.0,75.5" stroke="#38bdf8"/><circle cx="52.0" cy="242.7" r="3" fill="#38bdf8"/><circle cx="162.0" cy="180.1" r="3" fill="#38bdf8"/><circle cx="382.0" cy="109.5" r="3" fill="#38bdf8"/><circle cx="602.0" cy="75.5" r="3" fill="#38bdf8"/><polyline class="ln" points="52.0,148.6 162.0,137.5 382.0,128.5 602.0,128.5" stroke="#34d399"/><circle cx="52.0" cy="148.6" r="3" fill="#34d399"/><circle cx="162.0" cy="137.5" r="3" fill="#34d399"/><circle cx="382.0" cy="128.5" r="3" fill="#34d399"/><circle cx="602.0" cy="128.5" r="3" fill="#34d399"/><polyline class="ln" points="52.0,242.7 162.0,180.0 382.0,106.4 602.0,73.3" stroke="#fb7185"/><circle cx="52.0" cy="242.7" r="3" fill="#fb7185"/><circle cx="162.0" cy="180.0" r="3" fill="#fb7185"/><circle cx="382.0" cy="106.4" r="3" fill="#fb7185"/><circle cx="602.0" cy="73.3" r="3" fill="#fb7185"/><polyline class="ln" points="52.0,236.1 162.0,163.6 382.0,71.4 602.0,38.7" stroke="#a78bfa"/><circle cx="52.0" cy="236.1" r="3" fill="#a78bfa"/><circle cx="162.0" cy="163.6" r="3" fill="#a78bfa"/><circle cx="382.0" cy="71.4" r="3" fill="#a78bfa"/><circle cx="602.0" cy="38.7" r="3" fill="#a78bfa"/></svg><div class="legend"><span class="key"><i style="background:#94a3b8"></i>仅前轮</span> <span class="key"><i style="background:#f59e0b"></i>定比例</span> <span class="key"><i style="background:#38bdf8"></i>速度调度</span> <span class="key"><i style="background:#34d399"></i>横摆反馈</span> <span class="key"><i style="background:#fb7185"></i>瞬态补偿</span> <span class="key"><i style="background:#a78bfa"></i>模型跟随</span></div><figcaption>图 11 — 各律实际执行的后前轮转角比。定比例律是一条水平线（−0.4，按定义）；其余各律都随速度上升，其中三条<b>穿过零线</b>由反相转为同相。这张图解释了为什么单速度排名不可靠：在 40 km/h 与 140 km/h，同一条律做的是<b>方向相反</b>的事。</figcaption></figure>
+<figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="266" x2="602" y2="266"/><line class="ax" x1="52" y1="266" x2="52" y2="18"/><line class="grid" x1="52.0" y1="266" x2="52.0" y2="18"/><text class="tick" x="52.0" y="280" text-anchor="middle">40</text><line class="grid" x1="162.0" y1="266" x2="162.0" y2="18"/><text class="tick" x="162.0" y="280" text-anchor="middle">60</text><line class="grid" x1="382.0" y1="266" x2="382.0" y2="18"/><text class="tick" x="382.0" y="280" text-anchor="middle">100</text><line class="grid" x1="602.0" y1="266" x2="602.0" y2="18"/><text class="tick" x="602.0" y="280" text-anchor="middle">140</text><line class="grid" x1="52" y1="301.7" x2="602" y2="301.7"/><text class="tick" x="46" y="304.7" text-anchor="end">-20</text><line class="grid" x1="52" y1="245.3" x2="602" y2="245.3"/><text class="tick" x="46" y="248.3" text-anchor="end">0</text><line class="grid" x1="52" y1="188.9" x2="602" y2="188.9"/><text class="tick" x="46" y="191.9" text-anchor="end">20</text><line class="grid" x1="52" y1="132.5" x2="602" y2="132.5"/><text class="tick" x="46" y="135.5" text-anchor="end">40</text><line class="grid" x1="52" y1="76.1" x2="602" y2="76.1"/><text class="tick" x="46" y="79.1" text-anchor="end">60</text><line class="grid" x1="52" y1="19.7" x2="602" y2="19.7"/><text class="tick" x="46" y="22.7" text-anchor="end">80</text><text class="axlab" x="327" y="296" text-anchor="middle">车速 (km/h)</text><text class="axlab" transform="rotate(-90 12 142)" x="12" y="142" text-anchor="middle">横摆超调 (%)</text><polyline class="ln" points="52.0,245.3 162.0,244.8 382.0,231.4 602.0,198.3" stroke="#94a3b8"/><circle cx="52.0" cy="245.3" r="3" fill="#94a3b8"/><circle cx="162.0" cy="244.8" r="3" fill="#94a3b8"/><circle cx="382.0" cy="231.4" r="3" fill="#94a3b8"/><circle cx="602.0" cy="198.3" r="3" fill="#94a3b8"/><polyline class="ln" points="52.0,245.3 162.0,243.8 382.0,225.3 602.0,184.8" stroke="#f59e0b"/><circle cx="52.0" cy="245.3" r="3" fill="#f59e0b"/><circle cx="162.0" cy="243.8" r="3" fill="#f59e0b"/><circle cx="382.0" cy="225.3" r="3" fill="#f59e0b"/><circle cx="602.0" cy="184.8" r="3" fill="#f59e0b"/><polyline class="ln" points="52.0,245.3 162.0,244.8 382.0,240.0 602.0,230.3" stroke="#38bdf8"/><circle cx="52.0" cy="245.3" r="3" fill="#38bdf8"/><circle cx="162.0" cy="244.8" r="3" fill="#38bdf8"/><circle cx="382.0" cy="240.0" r="3" fill="#38bdf8"/><circle cx="602.0" cy="230.3" r="3" fill="#38bdf8"/><polyline class="ln" points="52.0,227.0 162.0,220.1 382.0,200.2 602.0,171.5" stroke="#34d399"/><circle cx="52.0" cy="227.0" r="3" fill="#34d399"/><circle cx="162.0" cy="220.1" r="3" fill="#34d399"/><circle cx="382.0" cy="200.2" r="3" fill="#34d399"/><circle cx="602.0" cy="171.5" r="3" fill="#34d399"/><polyline class="ln" points="52.0,213.4 162.0,204.9 382.0,149.7 602.0,38.7" stroke="#fb7185"/><circle cx="52.0" cy="213.4" r="3" fill="#fb7185"/><circle cx="162.0" cy="204.9" r="3" fill="#fb7185"/><circle cx="382.0" cy="149.7" r="3" fill="#fb7185"/><circle cx="602.0" cy="38.7" r="3" fill="#fb7185"/><polyline class="ln" points="52.0,245.3 162.0,245.3 382.0,236.9 602.0,211.8" stroke="#a78bfa"/><circle cx="52.0" cy="245.3" r="3" fill="#a78bfa"/><circle cx="162.0" cy="245.3" r="3" fill="#a78bfa"/><circle cx="382.0" cy="236.9" r="3" fill="#a78bfa"/><circle cx="602.0" cy="211.8" r="3" fill="#a78bfa"/></svg><div class="legend"><span class="key"><i style="background:#94a3b8"></i>仅前轮</span> <span class="key"><i style="background:#f59e0b"></i>定比例</span> <span class="key"><i style="background:#38bdf8"></i>速度调度</span> <span class="key"><i style="background:#34d399"></i>横摆反馈</span> <span class="key"><i style="background:#fb7185"></i>瞬态补偿</span> <span class="key"><i style="background:#a78bfa"></i>模型跟随</span></div><figcaption>图 12 — 超调随车速。这是图 9「谁最快」的代价页。瞬态补偿律在 140 km/h 超调 73.3%——横摆角速度冲到稳态值的 1.73 倍再回落，这已经不是一台可交付的车。任何以 T90 为单一目标的标定都会走到这里。</figcaption></figure>
+
+<h3>6.8 对象模型缺陷的对照实验</h3>
+<p>第 2.5 节指出控制律用的轴侧偏刚度漏掉了车辆的
+0.80／1.20 分配。
+如果这是 β 过冲的原因，那么<b>只把 k(v) 曲线换成用真实刚度重算的版本</b>、
+其余一概不动，就应当把稳态侧偏角拉回零。这是一个可证伪的预言，下表是结果。</p>
+<div class="tablewrap"><table>
+<thead><tr><th rowspan="2">车速 km/h</th><th colspan="3">默认 k(v)（Cf = Cr）</th>
+<th colspan="3">修正 k(v)（真实轴刚度）</th></tr>
+<tr><th>δ_f °</th><th>β/g °</th><th>T90 ms</th>
+<th>δ_f °</th><th>β/g °</th><th>T90 ms</th></tr></thead>
+<tbody><tr><th>40</th><td>3.52</td><td class="bad">+0.03</td><td>212</td><td>3.44</td><td class="good">-0.13</td><td>212</td></tr><tr><th>60</th><td>2.43</td><td class="bad">+0.47</td><td>264</td><td>2.24</td><td class="good">-0.09</td><td>258</td></tr><tr><th>100</th><td>2.08</td><td class="bad">+1.41</td><td>354</td><td>1.60</td><td class="good">-0.22</td><td>304</td></tr><tr><th>140</th><td>2.45</td><td class="bad">+3.06</td><td>482</td><td>1.46</td><td class="good">-0.19</td><td>322</td></tr></tbody></table></div>
+<div class="callout good"><h4>预言成立</h4>
+<p>换一张表，β/g 在四个速度点上全部回到零附近（140 km/h：+3.06 → −0.19），
+而且<b>横摆响应还顺带变快了</b>（482 → 322 ms）——因为过量的同相后轮转角
+本来就在拖慢横摆建立。前轮转角需求同时下降（2.45° → 1.46°），
+意味着驾驶员要打的方向盘也变少了。</p>
+<p>结论因此是明确的：<b>速度调度律与模型跟随律在本文中的糟糕表现，
+不是这两种结构的固有缺陷，而是它们的对象模型漏了一个参数。</b>
+这也解释了为什么横摆反馈律不受影响——它根本不用车辆参数。
+<b>依赖模型越深的控制律，被模型误差伤得越狠</b>，这是本文对控制方案选型最实用的一条经验。</p></div>
+
+<h3>6.9 噪声敏感度：一次被实测推翻的断言</h3>
+<div class="callout warn"><h4>更正</h4>
+<p>本报告早期版本断言瞬态补偿律「对 dδ_f/dt 求导，因此放大转角传感器噪声」，
+并注明该断言在无噪声仿真中<b>未经检验</b>。现在检验了，结论要修正两处：</p>
+<ul class="tight">
+<li>噪声放大最严重的<b>不是</b>瞬态补偿律（0.32×），
+    而是<b>模型跟随律</b>（0.42×）——后者的横摆误差反馈同样在放大噪声，
+    且增益更高。</li>
+<li>六条律的放大倍数<b>全部小于 1</b>，即都是净衰减。
+    原因是控制律内部统一带一个 τ = 0.08 s 的一阶低通，
+    对 12 Hz 带限噪声已有足够压制。原断言隐含「求导必然放大」是不成立的——
+    求导之后有没有滤波才是决定性的。</li>
+</ul>
+<p>成立的部分是：求导确实抬高了<b>作动器角速率</b>需求——
+瞬态补偿律 1.41 °/s，
+是同底座速度调度律（0.85 °/s）的
+1.7 倍。
+代价是真的，只是落在作动器功率而不是横摆品质上。</p></div>
+<div class="tablewrap"><table>
+<thead><tr><th>控制律</th><th>后轮角 RMS °</th><th>噪声放大 ×</th>
+<th>后轮角速率 RMS °/s</th><th>横摆 RMS °/s</th></tr></thead>
+<tbody><tr><th>仅前轮</th><td>0.000</td><td class="hi">0.00</td><td>0.00</td><td>0.1798</td></tr><tr><th>横摆反馈</th><td>0.015</td><td class="hi">0.15</td><td>0.24</td><td>0.1645</td></tr><tr><th>定比例</th><td>0.020</td><td class="hi">0.20</td><td>0.75</td><td>0.2649</td></tr><tr><th>速度调度</th><td>0.023</td><td class="hi">0.23</td><td>0.85</td><td>0.0870</td></tr><tr><th>瞬态补偿</th><td>0.032</td><td class="hi">0.32</td><td>1.41</td><td>0.1696</td></tr><tr><th>模型跟随</th><td>0.042</td><td class="hi">0.42</td><td>1.54</td><td>0.0475</td></tr></tbody></table>
+<div class="tnote">直线行驶 100 km/h，在转向通道注入 0.10° RMS、
+12 Hz 带限噪声，12 s。
+六条律使用<b>同一条噪声序列</b>（固定随机种子），因此差异纯粹来自控制律。</div></div>
+<figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">0.1224</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">0.2449</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">0.3673</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">0.4898</text><rect x="71.3" y="254.0" width="53.2" height="0.0" fill="#94a3b8" rx="3"/><text class="bval" x="97.8" y="248.0" text-anchor="middle">0.00</text><text class="tick" x="97.8" y="269" text-anchor="middle">仅前轮</text><text class="sub" x="97.8" y="282" text-anchor="middle">0.00 °/s</text><rect x="162.9" y="156.7" width="53.2" height="97.3" fill="#f59e0b" rx="3"/><text class="bval" x="189.5" y="150.7" text-anchor="middle">0.20</text><text class="tick" x="189.5" y="269" text-anchor="middle">定比例</text><text class="sub" x="189.5" y="282" text-anchor="middle">0.75 °/s</text><rect x="254.6" y="144.4" width="53.2" height="109.6" fill="#38bdf8" rx="3"/><text class="bval" x="281.2" y="138.4" text-anchor="middle">0.23</text><text class="tick" x="281.2" y="269" text-anchor="middle">速度调度</text><text class="sub" x="281.2" y="282" text-anchor="middle">0.85 °/s</text><rect x="346.3" y="182.6" width="53.2" height="71.4" fill="#34d399" rx="3"/><text class="bval" x="372.8" y="176.6" text-anchor="middle">0.15</text><text class="tick" x="372.8" y="269" text-anchor="middle">横摆反馈</text><text class="sub" x="372.8" y="282" text-anchor="middle">0.24 °/s</text><rect x="437.9" y="98.5" width="53.2" height="155.5" fill="#fb7185" rx="3"/><text class="bval" x="464.5" y="92.5" text-anchor="middle">0.32</text><text class="tick" x="464.5" y="269" text-anchor="middle">瞬态补偿</text><text class="sub" x="464.5" y="282" text-anchor="middle">1.41 °/s</text><rect x="529.6" y="54.0" width="53.2" height="200.0" fill="#a78bfa" rx="3"/><text class="bval" x="556.2" y="48.0" text-anchor="middle">0.42</text><text class="tick" x="556.2" y="269" text-anchor="middle">模型跟随</text><text class="sub" x="556.2" y="282" text-anchor="middle">1.54 °/s</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">噪声放大倍数 (×)</text></svg><figcaption>图 13 — 转向通道噪声到后轮转角的放大倍数，副标注为后轮角速率 RMS。全部小于 1（净衰减），因为六条律内部统一带 τ = 0.08 s 低通。最高的是模型跟随律而<b>不是</b>求导的瞬态补偿律——这一条推翻了本报告早期版本的断言，见 6.9 节。</figcaption></figure>
+
+<h3>6.10 正弦停留：稳定性而非响应</h3>
+<figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">1.5</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">2.999</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">4.499</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">5.999</text><rect x="71.3" y="215.3" width="53.2" height="38.7" fill="#94a3b8" rx="3"/><text class="bval" x="97.8" y="209.3" text-anchor="middle">0.98</text><text class="tick" x="97.8" y="269" text-anchor="middle">仅前轮</text><text class="sub" x="97.8" y="282" text-anchor="middle">峰值 20.2°/s</text><rect x="162.9" y="54.0" width="53.2" height="200.0" fill="#f59e0b" rx="3"/><text class="bval" x="189.5" y="48.0" text-anchor="middle">5.08</text><text class="tick" x="189.5" y="269" text-anchor="middle">定比例</text><text class="sub" x="189.5" y="282" text-anchor="middle">峰值 28.5°/s</text><rect x="254.6" y="216.3" width="53.2" height="37.7" fill="#38bdf8" rx="3"/><text class="bval" x="281.2" y="210.3" text-anchor="middle">0.96</text><text class="tick" x="281.2" y="269" text-anchor="middle">速度调度</text><text class="sub" x="281.2" y="282" text-anchor="middle">峰值 14.9°/s</text><rect x="346.3" y="227.2" width="53.2" height="26.8" fill="#34d399" rx="3"/><text class="bval" x="372.8" y="221.2" text-anchor="middle">0.68</text><text class="tick" x="372.8" y="269" text-anchor="middle">横摆反馈</text><text class="sub" x="372.8" y="282" text-anchor="middle">峰值 14.3°/s</text><rect x="437.9" y="220.0" width="53.2" height="34.0" fill="#fb7185" rx="3"/><text class="bval" x="464.5" y="214.0" text-anchor="middle">0.86</text><text class="tick" x="464.5" y="269" text-anchor="middle">瞬态补偿</text><text class="sub" x="464.5" y="282" text-anchor="middle">峰值 16.0°/s</text><rect x="529.6" y="143.5" width="53.2" height="110.5" fill="#a78bfa" rx="3"/><text class="bval" x="556.2" y="137.5" text-anchor="middle">2.81</text><text class="tick" x="556.2" y="269" text-anchor="middle">模型跟随</text><text class="sub" x="556.2" y="282" text-anchor="middle">峰值 10.6°/s</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">正弦停留最大 |β| (°)</text></svg><figcaption>图 14 — 正弦停留（FMVSS 126，80 km/h）中的最大车身侧偏角，副标注为峰值横摆角速度。定比例律最差（5.08°），印证「常数反相比在高速是错的」；横摆反馈律最好（0.68°）。全部六条律输入结束 1 s 后的残余横摆均低于峰值 2%，无一失稳。</figcaption></figure>
+<p>全部六条律在输入结束 1.0 s 后的残余横摆都低于峰值的 2%，
+即<b>没有一条律让车辆失稳</b>——这个工况在本文的参数下不具备区分度，
+它的价值在于确认「快」的那几条律没有以稳定性为代价换来速度。
+唯一值得注意的是定比例律：峰值横摆 28.54 °/s，
+最大 β 5.08°，两项都是六条中最高，
+再次印证「常数反相比在高速是错的」。</p>
+
+
+<h3>6.11 六条律在 100 km/h 的汇总</h3>
 <div class="grid3"><div class="acard" style="--c:#94a3b8"><h4>仅前轮<small>front only</small></h4><p>Rear axle held straight — the L0 control law, run on whatever hardware, as the reference point.</p></div><div class="acard" style="--c:#f59e0b"><h4>定比例<small>fixed ratio</small></h4><p>delta_r = k*delta_f with k constant. The cheapest law: one number, no sensing beyond steering angle.</p></div><div class="acard" style="--c:#38bdf8"><h4>速度调度<small>speed schedule</small></h4><p>k = k(v), sampled from the analytic zero-sideslip ratio. Counter-phase below the crossover, in-phase above it. Open loop, so it is only as good as the model it was sampled from.</p></div><div class="acard" style="--c:#34d399"><h4>横摆反馈<small>yaw feedback</small></h4><p>delta_r = g1*delta_f + g2*yaw. Closed loop on the measured yaw rate, so it does not depend on knowing C_alpha.</p></div><div class="acard" style="--c:#fb7185"><h4>瞬态补偿<small>transient</small></h4><p>Steady-state schedule plus a counter-steer term on d(delta_f)/dt — targets the phase lag specifically, at the cost of amplifying steering-sensor noise.</p></div><div class="acard" style="--c:#a78bfa"><h4>模型跟随<small>model following</small></h4><p>Zero-sideslip feed-forward plus feedback on the error against a reference yaw rate. The most capable of the five, and the one that needs the most vehicle knowledge.</p></div></div>
 <div class="tablewrap"><table>
 <thead><tr><th>控制律</th><th>δ_f °</th><th>T90 ms</th><th>超调 %</th>
 <th>峰值时刻 ms</th><th>β/g °</th><th>横摆增益</th><th>a_y,max</th></tr></thead>
-<tbody><tr><th>仅前轮<small>front only</small></th><td>1.54</td><td>260</td><td>5.3</td><td>484</td><td class="neg">-1.67</td><td>5.357</td><td>8.41</td></tr><tr><th>定比例<small>fixed ratio</small></th><td>1.10</td><td>230</td><td>7.5</td><td>440</td><td class="neg">-2.76</td><td>7.503</td><td>8.39</td></tr><tr><th>速度调度<small>speed schedule</small></th><td>2.80</td><td>354</td><td>2.0</td><td>642</td><td class="">+1.42</td><td>2.948</td><td>8.42</td></tr><tr><th>横摆反馈<small>yaw feedback</small></th><td>2.32</td><td>144</td><td>16.1</td><td>258</td><td class="">+0.20</td><td>3.585</td><td>8.44</td></tr><tr><th>瞬态补偿<small>transient</small></th><td>2.90</td><td>88</td><td>34.2</td><td>198</td><td class="">+1.67</td><td>2.844</td><td>8.42</td></tr><tr><th>模型跟随<small>model following</small></th><td>4.96</td><td>804</td><td>3.3</td><td>1204</td><td class="">+6.70</td><td>1.667</td><td>8.42</td></tr></tbody></table></div>
+<tbody><tr><th>仅前轮<small>front only</small></th><td>1.54</td><td>260</td><td>5.3</td><td>484</td><td class="neg">-1.67</td><td>5.357</td><td>8.41</td></tr><tr><th>定比例<small>fixed ratio</small></th><td>1.10</td><td>230</td><td>7.5</td><td>440</td><td class="neg">-2.76</td><td>7.503</td><td>8.39</td></tr><tr><th>速度调度<small>speed schedule</small></th><td>2.80</td><td>354</td><td>2.0</td><td>642</td><td class="">+1.42</td><td>2.948</td><td>8.42</td></tr><tr><th>横摆反馈<small>yaw feedback</small></th><td>2.32</td><td>144</td><td>16.1</td><td>258</td><td class="">+0.20</td><td>3.585</td><td>8.44</td></tr><tr><th>瞬态补偿<small>transient</small></th><td>2.90</td><td>88</td><td>34.2</td><td>198</td><td class="">+1.67</td><td>2.844</td><td>8.42</td></tr><tr><th>模型跟随<small>model following</small></th><td>4.96</td><td>804</td><td>3.3</td><td>1204</td><td class="">+6.70</td><td>1.667</td><td>8.42</td></tr></tbody></table>
+<div class="tnote">载体 L2 硬件，100 km/h，等 a_y = 4.0 m/s²。
+横摆增益为稳态横摆角速度除以前轮转角 [1/s]，越大表示同样转角转得越急。
+注意 a_y,max 一列：六条律的极限侧向加速度全部落在 0.6% 带内——
+<b>控制律不改变轮胎能给的东西，只改变车辆用它的方式</b>。</div></div>
 
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">237.2</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">474.4</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">711.5</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">948.7</text><rect x="71.3" y="189.3" width="53.2" height="64.7" fill="#94a3b8" rx="3"/><text class="bval" x="97.8" y="183.3" text-anchor="middle">260</text><text class="tick" x="97.8" y="269" text-anchor="middle">仅前轮</text><rect x="162.9" y="196.8" width="53.2" height="57.2" fill="#f59e0b" rx="3"/><text class="bval" x="189.5" y="190.8" text-anchor="middle">230</text><text class="tick" x="189.5" y="269" text-anchor="middle">定比例</text><rect x="254.6" y="165.9" width="53.2" height="88.1" fill="#38bdf8" rx="3"/><text class="bval" x="281.2" y="159.9" text-anchor="middle">354</text><text class="tick" x="281.2" y="269" text-anchor="middle">速度调度</text><rect x="346.3" y="218.2" width="53.2" height="35.8" fill="#34d399" rx="3"/><text class="bval" x="372.8" y="212.2" text-anchor="middle">144</text><text class="tick" x="372.8" y="269" text-anchor="middle">横摆反馈</text><rect x="437.9" y="232.1" width="53.2" height="21.9" fill="#fb7185" rx="3"/><text class="bval" x="464.5" y="226.1" text-anchor="middle">88</text><text class="tick" x="464.5" y="269" text-anchor="middle">瞬态补偿</text><rect x="529.6" y="54.0" width="53.2" height="200.0" fill="#a78bfa" rx="3"/><text class="bval" x="556.2" y="48.0" text-anchor="middle">804</text><text class="tick" x="556.2" y="269" text-anchor="middle">模型跟随</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">横摆 T90 (ms)</text></svg><figcaption>图 4 — 同一套 L2 硬件上六种控制律的横摆响应时间。跨度 88–804 ms，比整个架构阶梯的跨度还大。</figcaption></figure>
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="254" x2="602" y2="254"/><line class="ax" x1="52" y1="254" x2="52" y2="18"/><line class="grid" x1="52" y1="254.0" x2="602" y2="254.0"/><text class="tick" x="46" y="257.0" text-anchor="end">0</text><line class="grid" x1="52" y1="195.0" x2="602" y2="195.0"/><text class="tick" x="46" y="198.0" text-anchor="end">10.09</text><line class="grid" x1="52" y1="136.0" x2="602" y2="136.0"/><text class="tick" x="46" y="139.0" text-anchor="end">20.17</text><line class="grid" x1="52" y1="77.0" x2="602" y2="77.0"/><text class="tick" x="46" y="80.0" text-anchor="end">30.26</text><line class="grid" x1="52" y1="18.0" x2="602" y2="18.0"/><text class="tick" x="46" y="21.0" text-anchor="end">40.35</text><rect x="71.3" y="223.1" width="53.2" height="30.9" fill="#94a3b8" rx="3"/><text class="bval" x="97.8" y="217.1" text-anchor="middle">5.3</text><text class="tick" x="97.8" y="269" text-anchor="middle">仅前轮</text><rect x="162.9" y="210.2" width="53.2" height="43.8" fill="#f59e0b" rx="3"/><text class="bval" x="189.5" y="204.2" text-anchor="middle">7.5</text><text class="tick" x="189.5" y="269" text-anchor="middle">定比例</text><rect x="254.6" y="242.4" width="53.2" height="11.6" fill="#38bdf8" rx="3"/><text class="bval" x="281.2" y="236.4" text-anchor="middle">2.0</text><text class="tick" x="281.2" y="269" text-anchor="middle">速度调度</text><rect x="346.3" y="159.6" width="53.2" height="94.4" fill="#34d399" rx="3"/><text class="bval" x="372.8" y="153.6" text-anchor="middle">16.1</text><text class="tick" x="372.8" y="269" text-anchor="middle">横摆反馈</text><rect x="437.9" y="54.0" width="53.2" height="200.0" fill="#fb7185" rx="3"/><text class="bval" x="464.5" y="48.0" text-anchor="middle">34.2</text><text class="tick" x="464.5" y="269" text-anchor="middle">瞬态补偿</text><rect x="529.6" y="235.0" width="53.2" height="19.0" fill="#a78bfa" rx="3"/><text class="bval" x="556.2" y="229.0" text-anchor="middle">3.3</text><text class="tick" x="556.2" y="269" text-anchor="middle">模型跟随</text><text class="axlab" transform="rotate(-90 12 136)" x="12" y="136" text-anchor="middle">横摆超调 (%)</text></svg><figcaption>图 5 — 同一组控制律的横摆超调。图 4 里最快的那个，代价在这里。</figcaption></figure>
-<p>图 4 与图 5 必须一起看。瞬态补偿律把 T90 压到 88 ms，
-是不控后轮的 3 倍快；但超调从 5.3% 涨到 34.2%。
-它对 dδ_f/dt 求导，因此也放大转角传感器噪声——这个代价在无噪声仿真里看不见，
-在实车上是要付的。</p>
+<p><b>读图。</b>这两张必须成对读，它们是同一件事的收益页和代价页。
+瞬态补偿律把 T90 压到 88 ms，是不控后轮的 3 倍快；
+代价是超调从 5.3% 涨到 34.2%。
+如果只看图 4 会得出「瞬态补偿律最好」，只看图 5 会得出「它最差」——
+两张图合起来的结论是：<b>它把一个可调的权衡推到了一端</b>，
+而这个权衡在 140 km/h 会失控（图 12，超调 73.3%）。</p>
 
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="266" x2="602" y2="266"/><line class="ax" x1="52" y1="266" x2="52" y2="18"/><line class="grid" x1="52.0" y1="266" x2="52.0" y2="18"/><text class="tick" x="52.0" y="280" text-anchor="middle">0.2</text><line class="grid" x1="143.7" y1="266" x2="143.7" y2="18"/><text class="tick" x="143.7" y="280" text-anchor="middle">0.5</text><line class="grid" x1="296.4" y1="266" x2="296.4" y2="18"/><text class="tick" x="296.4" y="280" text-anchor="middle">1</text><line class="grid" x1="449.2" y1="266" x2="449.2" y2="18"/><text class="tick" x="449.2" y="280" text-anchor="middle">1.5</text><line class="grid" x1="602.0" y1="266" x2="602.0" y2="18"/><text class="tick" x="602.0" y="280" text-anchor="middle">2</text><line class="grid" x1="52" y1="49.0" x2="602" y2="49.0"/><text class="tick" x="46" y="52.0" text-anchor="end">0</text><line class="grid" x1="52" y1="118.8" x2="602" y2="118.8"/><text class="tick" x="46" y="121.8" text-anchor="end">-45</text><line class="grid" x1="52" y1="188.5" x2="602" y2="188.5"/><text class="tick" x="46" y="191.5" text-anchor="end">-90</text><line class="grid" x1="52" y1="258.2" x2="602" y2="258.2"/><text class="tick" x="46" y="261.2" text-anchor="end">-135</text><text class="axlab" x="327" y="296" text-anchor="middle">频率 (Hz)</text><text class="axlab" transform="rotate(-90 12 142)" x="12" y="142" text-anchor="middle">横摆相位 (°)</text><polyline class="ln" points="52.0,63.0 97.8,74.4 143.7,86.9 204.8,104.9 296.4,132.3 418.7,162.8 602.0,194.1" stroke="#94a3b8"/><circle cx="52.0" cy="63.0" r="3" fill="#94a3b8"/><circle cx="97.8" cy="74.4" r="3" fill="#94a3b8"/><circle cx="143.7" cy="86.9" r="3" fill="#94a3b8"/><circle cx="204.8" cy="104.9" r="3" fill="#94a3b8"/><circle cx="296.4" cy="132.3" r="3" fill="#94a3b8"/><circle cx="418.7" cy="162.8" r="3" fill="#94a3b8"/><circle cx="602.0" cy="194.1" r="3" fill="#94a3b8"/><polyline class="ln" points="52.0,69.5 97.8,85.3 143.7,101.6 204.8,123.4 296.4,154.3 418.7,186.5 602.0,219.2" stroke="#38bdf8"/><circle cx="52.0" cy="69.5" r="3" fill="#38bdf8"/><circle cx="97.8" cy="85.3" r="3" fill="#38bdf8"/><circle cx="143.7" cy="101.6" r="3" fill="#38bdf8"/><circle cx="204.8" cy="123.4" r="3" fill="#38bdf8"/><circle cx="296.4" cy="154.3" r="3" fill="#38bdf8"/><circle cx="418.7" cy="186.5" r="3" fill="#38bdf8"/><circle cx="602.0" cy="219.2" r="3" fill="#38bdf8"/><polyline class="ln" points="52.0,56.2 97.8,61.5 143.7,67.0 204.8,74.8 296.4,89.3 418.7,116.2 602.0,165.5" stroke="#34d399"/><circle cx="52.0" cy="56.2" r="3" fill="#34d399"/><circle cx="97.8" cy="61.5" r="3" fill="#34d399"/><circle cx="143.7" cy="67.0" r="3" fill="#34d399"/><circle cx="204.8" cy="74.8" r="3" fill="#34d399"/><circle cx="296.4" cy="89.3" r="3" fill="#34d399"/><circle cx="418.7" cy="116.2" r="3" fill="#34d399"/><circle cx="602.0" cy="165.5" r="3" fill="#34d399"/><polyline class="ln" points="52.0,48.6 97.8,47.8 143.7,47.6 204.8,51.2 296.4,66.6 418.7,95.3 602.0,133.3" stroke="#fb7185"/><circle cx="52.0" cy="48.6" r="3" fill="#fb7185"/><circle cx="97.8" cy="47.8" r="3" fill="#fb7185"/><circle cx="143.7" cy="47.6" r="3" fill="#fb7185"/><circle cx="204.8" cy="51.2" r="3" fill="#fb7185"/><circle cx="296.4" cy="66.6" r="3" fill="#fb7185"/><circle cx="418.7" cy="95.3" r="3" fill="#fb7185"/><circle cx="602.0" cy="133.3" r="3" fill="#fb7185"/></svg><div class="legend"><span class="key"><i style="background:#94a3b8"></i>仅前轮</span> <span class="key"><i style="background:#38bdf8"></i>速度调度</span> <span class="key"><i style="background:#34d399"></i>横摆反馈</span> <span class="key"><i style="background:#fb7185"></i>瞬态补偿</span></div><figcaption>图 7 — 同一套 L2 硬件上四种控制律的相频特性。瞬态补偿律在 0.5 Hz 处几乎零相位滞后。</figcaption></figure>
-<p>相频特性给出了同一件事更完整的图景：瞬态补偿律在 0.5 Hz 附近做到接近<b>零相位滞后</b>，
-即车辆几乎与方向盘同步。横摆反馈律以更温和的代价拿到大部分收益。
-而模型跟随律（图 6）的相位滞后最大——它换来的是侧偏角，不是响应速度。</p>
+<p><b>读图。</b>相频特性给出比阶跃响应更完整的图景，因为它覆盖整个频段而不是一个瞬态。
+纵轴是横摆角速度相对方向盘输入的相位滞后，越接近 0 越「跟手」。
+瞬态补偿律（红）在 0.2–0.7 Hz——正是驾驶员日常操作的频段——做到接近<b>零相位滞后</b>，
+车辆几乎与手同步；这是它 88 ms 的 T90 在频域里的对应。
+横摆反馈律（绿）以温和得多的代价拿到大部分收益：1 Hz 处 −26°，
+而不控后轮是 −67.5°。速度调度（蓝）反而<b>比不控后轮更滞后</b>，
+因为它命令的同相后轮转角在压低横摆增益的同时也拖慢了相位。</p>
 
 <figure><svg viewBox="0 0 620 300" class="chart"><line class="ax" x1="52" y1="266" x2="602" y2="266"/><line class="ax" x1="52" y1="266" x2="52" y2="18"/><line class="grid" x1="52.0" y1="266" x2="52.0" y2="18"/><text class="tick" x="52.0" y="280" text-anchor="middle">0.2</text><line class="grid" x1="143.7" y1="266" x2="143.7" y2="18"/><text class="tick" x="143.7" y="280" text-anchor="middle">0.5</text><line class="grid" x1="296.4" y1="266" x2="296.4" y2="18"/><text class="tick" x="296.4" y="280" text-anchor="middle">1</text><line class="grid" x1="449.2" y1="266" x2="449.2" y2="18"/><text class="tick" x="449.2" y="280" text-anchor="middle">1.5</text><line class="grid" x1="602.0" y1="266" x2="602.0" y2="18"/><text class="tick" x="602.0" y="280" text-anchor="middle">2</text><line class="grid" x1="52" y1="42.8" x2="602" y2="42.8"/><text class="tick" x="46" y="45.8" text-anchor="end">0</text><line class="grid" x1="52" y1="98.6" x2="602" y2="98.6"/><text class="tick" x="46" y="101.6" text-anchor="end">-45</text><line class="grid" x1="52" y1="154.4" x2="602" y2="154.4"/><text class="tick" x="46" y="157.4" text-anchor="end">-90</text><line class="grid" x1="52" y1="210.2" x2="602" y2="210.2"/><text class="tick" x="46" y="213.2" text-anchor="end">-135</text><line class="grid" x1="52" y1="266.0" x2="602" y2="266.0"/><text class="tick" x="46" y="269.0" text-anchor="end">-180</text><text class="axlab" x="327" y="296" text-anchor="middle">频率 (Hz)</text><text class="axlab" transform="rotate(-90 12 142)" x="12" y="142" text-anchor="middle">横摆相位 (°)</text><polyline class="ln" points="52.0,58.0 97.8,70.0 143.7,82.7 204.8,100.5 296.4,126.5 418.7,154.8 602.0,182.8" stroke="#94a3b8"/><circle cx="52.0" cy="58.0" r="3" fill="#94a3b8"/><circle cx="97.8" cy="70.0" r="3" fill="#94a3b8"/><circle cx="143.7" cy="82.7" r="3" fill="#94a3b8"/><circle cx="204.8" cy="100.5" r="3" fill="#94a3b8"/><circle cx="296.4" cy="126.5" r="3" fill="#94a3b8"/><circle cx="418.7" cy="154.8" r="3" fill="#94a3b8"/><circle cx="602.0" cy="182.8" r="3" fill="#94a3b8"/><polyline class="ln" points="52.0,61.9 97.8,76.4 143.7,91.3 204.8,111.1 296.4,138.8 418.7,167.6 602.0,196.3" stroke="#38bdf8"/><circle cx="52.0" cy="61.9" r="3" fill="#38bdf8"/><circle cx="97.8" cy="76.4" r="3" fill="#38bdf8"/><circle cx="143.7" cy="91.3" r="3" fill="#38bdf8"/><circle cx="204.8" cy="111.1" r="3" fill="#38bdf8"/><circle cx="296.4" cy="138.8" r="3" fill="#38bdf8"/><circle cx="418.7" cy="167.6" r="3" fill="#38bdf8"/><circle cx="602.0" cy="196.3" r="3" fill="#38bdf8"/><polyline class="ln" points="52.0,93.0 97.8,130.8 143.7,167.2 204.8,209.1 296.4,254.5 418.7,-155.4 602.0,-125.7" stroke="#a78bfa"/><circle cx="52.0" cy="93.0" r="3" fill="#a78bfa"/><circle cx="97.8" cy="130.8" r="3" fill="#a78bfa"/><circle cx="143.7" cy="167.2" r="3" fill="#a78bfa"/><circle cx="204.8" cy="209.1" r="3" fill="#a78bfa"/><circle cx="296.4" cy="254.5" r="3" fill="#a78bfa"/><circle cx="418.7" cy="-155.4" r="3" fill="#a78bfa"/><circle cx="602.0" cy="-125.7" r="3" fill="#a78bfa"/><polyline class="ln" points="52.0,90.7 97.8,127.0 143.7,162.4 204.8,203.9 296.4,249.0 418.7,-161.9 602.0,-134.3" stroke="#fb7185"/><circle cx="52.0" cy="90.7" r="3" fill="#fb7185"/><circle cx="97.8" cy="127.0" r="3" fill="#fb7185"/><circle cx="143.7" cy="162.4" r="3" fill="#fb7185"/><circle cx="204.8" cy="203.9" r="3" fill="#fb7185"/><circle cx="296.4" cy="249.0" r="3" fill="#fb7185"/><circle cx="418.7" cy="-161.9" r="3" fill="#fb7185"/><circle cx="602.0" cy="-134.3" r="3" fill="#fb7185"/></svg><div class="legend"><span class="key"><i style="background:#94a3b8"></i>EPS</span> <span class="key"><i style="background:#38bdf8"></i>EPS + RWS</span> <span class="key"><i style="background:#a78bfa"></i>SBW + RWS</span> <span class="key"><i style="background:#fb7185"></i>4WIS</span></div><figcaption>图 6 — 架构阶梯的横摆相频特性。相位滞后越小，车对方向盘越「跟手」。L2/L3 的零侧偏律在这里是最差的。</figcaption></figure>
+<p><b>读图。</b>同一张图换成按架构分组，用的是各级硬件能执行的最强律。
+L2／L3 的曲线在 1.4 Hz 处已越过 −180° 进入正相位区（图上表现为跳到 +160°），
+这是相位缠绕，不是不稳定——但它说明这两级在该频段的横摆响应已严重滞后于输入。
+把这张图和图 7 并排看是本节的要点：<b>同一套 L2 硬件，
+换一条控制律就能从最滞后变成最跟手</b>。架构决定了可能性，算法决定了实际拿到多少。</p>
 
-<h2><span class="n">5</span>讨论</h2>
-<h3>5.1 「不足转向梯度」在带主动后轮转向时不再是底盘属性</h3>
+<h2 id="s7"><span class="n">7</span>讨论</h2>
+<h3>7.1 「不足转向梯度」在带主动后轮转向时不再是底盘属性</h3>
 <p>按 ISO 4138 定义拟合出的 K，在 L1/L2 的速度调度律下高达 14 deg/g——
 远超常规车辆的 1–4 deg/g。这不是底盘变了，而是测量对象变了：
 带主动后轮转向时，K 量到的是<b>系统级</b>转向增益，包含控制律在内，
@@ -298,13 +693,13 @@ L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
 系统可以一边用后轮买稳定性，一边用传动比把方向盘手感维持不变。
 这才是 L1→L2 的核心增量，它不体现在任何一项本文测的车辆动力学指标上。</p>
 
-<h3>5.2 极限附着不是转向系统能改变的东西</h3>
+<h3>7.2 极限附着不是转向系统能改变的东西</h3>
 <p>9 个案例的极限 a_y 全部落在 8.39–8.44 m/s²，跨度 0.6%。
 四轮独立转向不会让轮胎多出摩擦。转向解耦改变的是<b>四个轮胎的能力如何被分配和使用</b>，
 以及车辆<b>以什么姿态</b>抵达那个极限。在做技术方案论证时，
 把「操稳收益」和「极限收益」分开陈述，是本文数据支持的、也是唯一诚实的讲法。</p>
 
-<h3>5.3 在等角度约束下，收益递减出现得比想象中早得多</h3>
+<h3>7.3 在等角度约束下，收益递减出现得比想象中早得多</h3>
 <p>L2 与 L3 在 4 m/s² 工况下的标定转角<b>完全相同</b>（4.96°），
 稳态 β 相同，极限 a_y 相同，转弯直径相差 0.23 m。
 剩下的差别只有瞬态（T90 相差约 5%，来自作动带宽）。
@@ -314,7 +709,7 @@ L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
 它把后轮转向对方向盘增益的副作用藏起来，这是手感问题，不是本文任何一项动力学指标能捕捉的。
 <b>四轮独立转向的立项理由，在角度受限时不成立；它需要的是角度预算，而不是自由度。</b></p>
 
-<h3>5.4 本研究的局限</h3>
+<h3>7.4 本研究的局限</h3>
 <ul class="tight">
 <li>每级只有一个整车级作动带宽（§1.1），前后轴不能分设。</li>
 <li>轮胎为 Pacejka 魔术公式配摩擦圆／椭圆饱和，未含胎温、磨损、
@@ -325,7 +720,7 @@ L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
 <li>未覆盖制动与转向的耦合工况，以及单轮失效重构。</li>
 </ul>
 
-<h2><span class="n">6</span>结论</h2>
+<h2 id="s8"><span class="n">8</span>结论</h2>
 <ol>
 <li>转向解耦不增加极限附着（本文跨度 &lt; 1%），它重新分配轮胎能力并改变车辆姿态。</li>
 <li>低速机动性的收益由<b>后轮角度权限</b>决定，而不是由转向自由度决定。
@@ -341,7 +736,7 @@ L0→L1 一步拿走 0.80 m（−7%）；L1→L2→L3 三级加起来只挪动
     本质上是<b>角度预算</b>加上失效重构，而不是「多两个转向自由度」。</li>
 </ol>
 
-<h2><span class="n">7</span>复现</h2>
+<h2><span class="n">9</span>复现</h2>
 <p>本报告全部数字由脚本生成，无手写数据：</p>
 <pre style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;
 padding:14px;overflow-x:auto;font:12.5px/1.7 var(--mono);margin:16px 0">python scripts/decoupling_study/run_study.py
