@@ -24,6 +24,13 @@ import { useEffect, useRef } from "react";
 import { resetSim, setDriver, setStrategy } from "@/api/ws";
 import { computeGamepadOutput, firstGamepad, GamepadConfig } from "@/input/gamepadConfig";
 import { useSimStore } from "@/store/sim";
+import {
+  initialIntentState,
+  releaseBackward,
+  releaseForward,
+  resolveIntent,
+  shapePedal,
+} from "@/input/driveIntent";
 
 const PUSH_INTERVAL_MS = 20;     // 50 Hz to backend
 const TAU_RAMP = 0.18;           // s
@@ -31,8 +38,6 @@ const TAU_RETURN = 0.25;         // s
 // Steering auto-return: max decay rate [1/s] at slider=1 (= 1.5× the baseline
 // 1/TAU_RETURN ≈ 4/s). slider=0 → 0 = hold (no return).
 const STEER_RETURN_RATE_MAX = 1.5 / TAU_RETURN;
-// A vehicle is "stopped" below this speed; direction changes only engage then.
-const STOP_SPEED = 0.3;          // m/s
 // Hold-speed: how fast a held key drives the *persistent* target (units/sec).
 const HOLD_RATE = 0.6;
 
@@ -40,20 +45,15 @@ const HOTKEYS_STRATEGY: Record<string, number> = {
   Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4,
 };
 
-type Direction = 1 | -1;   // forward | reverse
-
 export default function KeyboardInput() {
   const pressed = useRef<Record<string, boolean>>({});
   // Smoothed drive (throttle ∈ [0,1]) and brake (∈ [0,1]) channels.
   const throttle = useRef(0);
   const brake = useRef(0);
   const steering = useRef(0);
-  // Direction-intent state machine.
-  const direction = useRef<Direction>(1);
-  // Track whether the "other" intent key has been released since stopping, so
-  // a held brake doesn't auto-flip into reverse — only a fresh press does.
-  const fwdKeyArmed = useRef(true);   // W may engage forward from a stop
-  const revKeyArmed = useRef(true);   // S may engage reverse from a stop
+  // Direction-intent state machine — the logic lives in input/driveIntent.ts
+  // as a pure function so it can be unit-tested; this only holds its state.
+  const intent = useRef(initialIntentState());
   const last = useRef(performance.now());
   const lastPush = useRef(performance.now());
 
@@ -67,6 +67,7 @@ export default function KeyboardInput() {
   const cruiseSpeedRef = useRef(5);
   const vMaxRef = useRef(20);
   const vxRef = useRef(0);            // current longitudinal speed (m/s)
+  const pedalExpoRef = useRef(0);     // throttle curve shaping (0 = linear)
   const gamepadEnabledRef = useRef(true);
   const gamepadCfgRef = useRef<GamepadConfig>(useSimStore.getState().gamepadConfig);
   useEffect(() => useSimStore.subscribe((st) => {
@@ -77,6 +78,7 @@ export default function KeyboardInput() {
     cruiseSpeedRef.current = st.cruiseSpeed;
     vMaxRef.current = st.state?.params.v_max ?? 20;
     vxRef.current = st.state?.velocity.vx ?? 0;
+    pedalExpoRef.current = st.pedalExpo;
     gamepadEnabledRef.current = st.gamepadEnabled;
     gamepadCfgRef.current = st.gamepadConfig;
     // A bump in zeroRequest = UI asked us to zero the persistent targets.
@@ -110,8 +112,8 @@ export default function KeyboardInput() {
     const up = (e: KeyboardEvent) => {
       pressed.current[e.code] = false;
       // Releasing a direction key re-arms it for a fresh from-stop engagement.
-      if (e.code === "KeyW") fwdKeyArmed.current = true;
-      if (e.code === "KeyS") revKeyArmed.current = true;
+      if (e.code === "KeyW") releaseForward(intent.current);
+      if (e.code === "KeyS") releaseBackward(intent.current);
     };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
@@ -137,46 +139,6 @@ export default function KeyboardInput() {
       window.removeEventListener("gamepaddisconnected", sync);
     };
   }, []);
-
-  // Resolve (W-held, S-held, current vx) → (throttle target, brake target,
-  // direction). This is the single source of truth for longitudinal intent;
-  // the gamepad feeds the same (forwardIntent, backwardIntent) booleans.
-  function resolveIntent(fwdIntent: boolean, backIntent: boolean, vx: number,
-                        ): { thrTgt: number; brkTgt: number; gear: number } {
-    const stopped = Math.abs(vx) < STOP_SPEED;
-    // ── Direction engagement (only from a stop, on a fresh press) ──
-    if (stopped) {
-      if (fwdIntent && fwdKeyArmed.current) { direction.current = 1; revKeyArmed.current = true; }
-      if (backIntent && revKeyArmed.current) { direction.current = -1; fwdKeyArmed.current = true; }
-    }
-    // Disarm the opposite key once we're committed to a direction so a held
-    // opposite key keeps braking (not flipping) until released. The re-arm
-    // only happens on key release (handled in keyup).
-    if (direction.current === 1 && backIntent) revKeyArmed.current = false;
-    if (direction.current === -1 && fwdIntent) fwdKeyArmed.current = false;
-
-    const dir = direction.current;
-    // "Rolling in the selected direction" — the case where the opposite key
-    // has something to brake. Both branches ask the same question, so both
-    // use movingWith: in R the car is rolling backwards (vx < 0), which is
-    // movingWith, not movingAgainst. Testing movingAgainst in the reverse
-    // branch made it permanently false, so W did nothing at all while
-    // reversing.
-    const movingWith = dir === 1 ? vx > STOP_SPEED : vx < -STOP_SPEED;
-
-    // ── Resolve target channels ──
-    if (dir === 1) {
-      // Forward direction.
-      if (fwdIntent) return { thrTgt: 1, brkTgt: 0, gear: 1 };          // W = drive
-      if (backIntent) return { thrTgt: 0, brkTgt: movingWith ? 1 : 0, gear: 1 }; // S = brake
-      return { thrTgt: 0, brkTgt: 0, gear: 1 };                          // coast
-    } else {
-      // Reverse direction.
-      if (backIntent) return { thrTgt: 1, brkTgt: 0, gear: -1 };        // S = reverse drive
-      if (fwdIntent) return { thrTgt: 0, brkTgt: movingWith ? 1 : 0, gear: -1 }; // W = brake
-      return { thrTgt: 0, brkTgt: 0, gear: -1 };                         // coast
-    }
-  }
 
   // Integration loop with rAF
   useEffect(() => {
@@ -236,14 +198,15 @@ export default function KeyboardInput() {
         // S past zero rolls into reverse instead of clamping at a standstill.
         if (fwdIntent) throttle.current = clamp01(throttle.current + HOLD_RATE * dt);
         if (backIntent) throttle.current = clamp01(throttle.current - HOLD_RATE * dt);
-        if (throttle.current <= 0 && backIntent) direction.current = -1;
-        if (throttle.current <= 0 && fwdIntent) direction.current = 1;
+        if (throttle.current <= 0 && backIntent) intent.current.direction = -1;
+        if (throttle.current <= 0 && fwdIntent) intent.current.direction = 1;
         // Space is the parking brake now, so the old "Space = quick stop"
         // shortcut is gone; the brake channel carries it instead.
         brake.current = ramp(brake.current, handbrake ? 1 : 0, TAU_RAMP);
         if (brake.current < 0.005) brake.current = 0;
       } else {
-        const { thrTgt, brkTgt } = resolveIntent(fwdIntent, backIntent, vxRef.current);
+        const { thrTgt, brkTgt } = resolveIntent(intent.current, fwdIntent, backIntent,
+                                                vxRef.current);
         throttle.current = ramp(throttle.current, thrTgt * thrScale,
                                 thrTgt === 0 ? TAU_RETURN : TAU_RAMP);
         brake.current = ramp(brake.current, brkTgt, brkTgt === 0 ? TAU_RETURN : TAU_RAMP);
@@ -268,9 +231,15 @@ export default function KeyboardInput() {
       }
 
       if (now - lastPush.current >= PUSH_INTERVAL_MS) {
-        const gear = direction.current;
+        const gear = intent.current.direction;
+        // Pedal curve, applied to the value actually sent rather than to the
+        // ramp state — so the shaping is a lens on the pedal, not something the
+        // smoothing has to integrate through. expo 0 = linear; higher values
+        // stretch the low end, which is where nearly all driving happens when
+        // the axis spans 0…200 km/h.
+        const shaped = shapePedal(throttle.current, pedalExpoRef.current);
         if (out && cfg.mode === "direct") {
-          setDriver(throttle.current, 0, { wheel_norm: out.wheelNorm },
+          setDriver(shaped, 0, { wheel_norm: out.wheelNorm },
             { brake: brake.current, gear, handbrake });
         } else if (out && cfg.mode === "holonomic") {
           const b = out.body!;
@@ -278,7 +247,7 @@ export default function KeyboardInput() {
           // it must clamp to [-1,1] — clamping to [0,1] removed holonomic
           // reverse translation entirely. The keyboard contribution follows
           // the selected direction rather than always adding forwards.
-          const kbd = gear < 0 ? -throttle.current : throttle.current;
+          const kbd = gear < 0 ? -shaped : shaped;
           setDriver(0, 0,
             { vx_frac: clampUnit(b.vx + kbd), vy_frac: b.vy, yaw_frac: b.yaw },
             { brake: brake.current, gear, handbrake });
@@ -286,7 +255,7 @@ export default function KeyboardInput() {
           // Assisted: gamepad steering merges additively with the keyboard.
           let outSteering = steering.current;
           if (out) outSteering = clampUnit(outSteering + (out.steering ?? 0));
-          setDriver(throttle.current, outSteering, undefined,
+          setDriver(shaped, outSteering, undefined,
             { brake: brake.current, gear, handbrake });
         }
         lastPush.current = now;

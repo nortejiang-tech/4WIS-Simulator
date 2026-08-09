@@ -73,7 +73,10 @@ interface SimStore {
   zeroRequest: number;
   // Fixed-speed cruise: when on, KeyboardInput holds throttle at cruiseSpeed.
   cruiseOn: boolean;
-  cruiseSpeed: number;        // target speed [m/s]
+  cruiseSpeed: number;      // target speed [m/s]
+  // Throttle curve shaping, 0 = linear. Higher values stretch the low end of
+  // the pedal, where nearly all driving happens on a 0…200 km/h axis.
+  pedalExpo: number;
   // Gamepad input (Web Gamepad API, standard mapping). `gamepadId` is set by
   // connect/disconnect events; when enabled, gamepad axes merge additively
   // with the keyboard axes in KeyboardInput's single-writer loop.
@@ -130,6 +133,7 @@ interface SimStore {
   setSteerReturn: (v: number) => void;
   setCruiseOn: (b: boolean) => void;
   setCruiseSpeed: (ms: number) => void;
+  setPedalExpo: (v: number) => void;
   setGamepadEnabled: (b: boolean) => void;
   setGamepadId: (id: string | null) => void;
   setGamepadConfig: (c: GamepadConfig) => void;
@@ -193,6 +197,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   zeroRequest: 0,
   cruiseOn: false,
   cruiseSpeed: 5,       // m/s (≈ 18 km/h)
+  pedalExpo: 0,
   gamepadEnabled: true,
   gamepadId: null,
   gamepadConfig: loadGamepadConfig(),
@@ -267,6 +272,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   setSteerReturn: (v) => set({ steerReturn: Math.max(0, Math.min(1, v)) }),
   setCruiseOn: (b) => set({ cruiseOn: b }),
   setCruiseSpeed: (ms) => set({ cruiseSpeed: Math.max(0, ms) }),
+  setPedalExpo: (v) => set({ pedalExpo: Math.max(0, Math.min(2, v)) }),
   setGamepadEnabled: (b) => set({ gamepadEnabled: b }),
   setGamepadId: (id) => set({ gamepadId: id }),
   setGamepadConfig: (c) => { saveGamepadConfig(c); set({ gamepadConfig: c }); },

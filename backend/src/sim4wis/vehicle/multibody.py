@@ -42,8 +42,11 @@ from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.model_core import (
     body_resistance_force,
+    axle_cornering_scale,
     camber_thrust_alpha_offset,
     friction_brake_torques,
+    store_grip_state as _store_grip,
+    wheel_grip_state,
     rotate_wheel_forces_to_body,
     semi_implicit_wheel_spin,
     static_toe_offsets,
@@ -125,6 +128,19 @@ class MultiBodyModel(VehicleModel):
         self.k_s = p.suspension.spring_rate
         self.c_s = p.suspension.damper_rate
         self.arb = p.suspension.anti_roll_rate
+        # Roll-couple distribution. With the fraction unset the bar stays a
+        # pure body moment (legacy: it damps roll but transfers no load, so it
+        # cannot affect handling balance); with it set, the same total stiffness
+        # is delivered per corner and split between the axles.
+        eps_f = float(getattr(p.suspension, "roll_stiffness_front_frac", 0.0))
+        if eps_f > 0.0:
+            eps_f = min(max(eps_f, 0.0), 1.0)
+            self._arb_f = self.arb * eps_f
+            self._arb_r = self.arb * (1.0 - eps_f)
+            self._arb_body = 0.0          # the corner forces carry it now
+        else:
+            self._arb_f = self._arb_r = 0.0
+            self._arb_body = self.arb
         self.k_t = getattr(p, "tire_vertical_stiffness", 280_000.0)
         self.bump_steer = getattr(p, "bump_steer_coeff", 0.0)
 
@@ -138,6 +154,8 @@ class MultiBodyModel(VehicleModel):
         self._wheels = p.wheel_positions_body()           # (4,2)
         self._toe_sign = np.sign(self._wheels[:, 1])      # +1 left, −1 right
         self._toe = static_toe_offsets(p)                 # static alignment toe
+        # Axle cornering-stiffness split, absorbed as a slip-angle scale.
+        self._alpha_scale = axle_cornering_scale(p)
         # Aero (drag handled via body_resistance_force; lift split per axle).
         self._q_aero = 0.5 * float(p.air_density) * float(p.frontal_area)
         self._cl_f = float(p.aero_lift_coeff_front)
@@ -196,6 +214,9 @@ class MultiBodyModel(VehicleModel):
         s.x, s.y, s.psi = float(y1[IX]), float(y1[IY]), float(y1[IPSI])
         s.z, s.roll, s.pitch = float(y1[IZ]), float(y1[IROLL]), float(y1[IPITCH])
         self._zu = y1[IZU]
+        # Body-frame specific force (accelerometer reading at the CG).
+        s.ax = float(y1[IVX] - y0[IVX]) / dt - float(y1[IOMEGA]) * float(y1[IVY])
+        s.ay = float(y1[IVY] - y0[IVY]) / dt + float(y1[IOMEGA]) * float(y1[IVX])
         s.vx, s.vy, s.yaw_rate = float(y1[IVX]), float(y1[IVY]), float(y1[IOMEGA])
         self._vz = float(y1[IVZ])
         self._roll_rate = float(y1[IROLLR])
@@ -214,6 +235,13 @@ class MultiBodyModel(VehicleModel):
     # ---- internals ---------------------------------------------------------
 
     def _motor_torques(self, cmd: ControlCommand, omega_actual: np.ndarray, dt: float) -> np.ndarray:
+        """Drive torque per wheel (mirrors the dynamic model — see there)."""
+        if str(getattr(self.params, "longitudinal_mode", "speed_servo")) == "torque":
+            for servo in self.servos:
+                servo.reset()
+            drive = np.asarray(cmd.drive_torque_cmd, dtype=np.float64).reshape(N_WHEELS)
+            return np.where(np.asarray(cmd.brake_cmd) > 0.02, 0.0, drive)
+
         out = np.zeros(N_WHEELS)
         for i in range(N_WHEELS):
             out[i] = self.servos[i].update(
@@ -254,10 +282,37 @@ class MultiBodyModel(VehicleModel):
         z_corner_rate = vz + xw * pr + yw * rr
         comp = z_u - z_corner                      # suspension compression vs static
         comp_rate = zu_dot - z_corner_rate
-        f_spring = np.maximum(self._W + self.k_s * comp + self.c_s * comp_rate, 0.0)
+        f_spring = self._W + self.k_s * comp + self.c_s * comp_rate
+
+        # Anti-roll bars, as per-corner forces rather than a bare body moment.
+        #
+        # A bar of roll stiffness K_φ at an axle delivers its couple as ±K_φ·φ/t
+        # at the two wheels. Summing the moment back gives Σ y·f_arb = −K_φ·φ,
+        # i.e. exactly the body-level term this replaces — but now the force
+        # travels down through the unsprung mass into the tyre load, which is
+        # the whole point: a bar that only ever appears as a body moment damps
+        # roll without transferring any load, so it cannot influence handling
+        # balance at all.
+        if self._arb_f > 0.0 or self._arb_r > 0.0:
+            f_spring = f_spring + self._arb_corner(roll)
+
+        f_spring = np.maximum(f_spring, 0.0)
 
         f_tire_z = np.maximum(self._corner_static_full + self.k_t * (self._road_z - z_u), 0.0)
         return f_spring, f_tire_z, comp
+
+    def _arb_corner(self, roll: float) -> np.ndarray:
+        """Per-corner anti-roll-bar force [N], same sign convention as f_spring.
+
+        f_i = −K_φ,axle · φ · sign(y_i) / t_axle, so that
+        Σ y_i·f_i = −K_φ·φ — the same restoring couple the body-level term
+        produced, now routed through the corners.
+        """
+        tf = max(float(self.params.track_front), 1e-6)
+        tr = max(float(self.params.track_rear), 1e-6)
+        k = np.array([self._arb_f / tf, self._arb_f / tf,
+                      self._arb_r / tr, self._arb_r / tr])
+        return -k * float(roll) * self._toe_sign
 
     def _derivatives(self, y, delta_cmd, wheel_mus, road_z) -> np.ndarray:
         self._road_z = road_z  # used inside _suspension_forces
@@ -295,7 +350,8 @@ class MultiBodyModel(VehicleModel):
             alpha = float(kin.alpha[i])
             kappa = float(kin.kappa[i])
             fx, fy, mz = self.tire.forces(
-                alpha + float(alpha_camber[i]), kappa, float(f_tire_z[i]), float(wheel_mus[i])
+                float(self._alpha_scale[i]) * alpha + float(alpha_camber[i]),
+                kappa, float(f_tire_z[i]), float(wheel_mus[i])
             )
             fx_wheel[i] = fx
             fy_wheel[i] = fy
@@ -344,7 +400,7 @@ class MultiBodyModel(VehicleModel):
         # Roll: spring moment + lateral-accel roll moment − ARB.
         q_roll = float(np.sum(yw * f_spring))
         m_roll_ext = self.m_s * ay_body * self.h_cg
-        roll_dd = (q_roll + m_roll_ext - self.arb * y[IROLL]) / self.I_roll
+        roll_dd = (q_roll + m_roll_ext - self._arb_body * y[IROLL]) / self.I_roll
 
         # Pitch: spring moment − gravity pitch moment + long-accel pitch moment
         # + per-axle aero lift moment (front lift at +L/2 pitches nose up).
@@ -422,7 +478,7 @@ class MultiBodyModel(VehicleModel):
             dt=dt,
             wheel_omega=s.wheel_omega,
             vx_wheel=kin.vx_wheel,
-            alpha=kin.alpha + alpha_camber,
+            alpha=self._alpha_scale * kin.alpha + alpha_camber,
             fz=f_tire_z,
             mu=wheel_mus,
             torque=t_motor + t_brake,
@@ -434,6 +490,11 @@ class MultiBodyModel(VehicleModel):
         s.wheel_omega[:] = omega_new
         self.slip_alpha[:] = kin.alpha
         self.slip_kappa[:] = kappa_new
+        # Friction budget from the forces that actually moved the vehicle.
+        _store_grip(s, wheel_grip_state(
+            fx=forces.fx, fy=forces.fy, fz=f_tire_z, mu=wheel_mus,
+            alpha=kin.alpha, kappa=kappa_new, vx_wheel=kin.vx_wheel, tire=self.tire,
+        ))
         self.tire_fx[:] = forces.fx
         self.tire_fy[:] = forces.fy
         self.tire_mz[:] = forces.mz

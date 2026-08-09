@@ -27,6 +27,27 @@ export interface WheelState {
   slip_alpha?: number;           // side-slip angle α [rad]
   slip_kappa?: number;           // longitudinal slip ratio κ [-]
   locked?: boolean;              // friction-brake lockup flag (v0.100)
+  // Friction budget (v0.101). The operating point itself is (tire_fx, tire_fy)
+  // above; these are the parts the client cannot derive on its own.
+  grip_capacity?: number;        // μ·Fz — radius of the friction circle [N]
+  grip_util?: number;            // |F| / (μ·Fz) ∈ [0,1]
+  grip_margin_lat?: number;      // extra |Fy| still available at this Fx [N]
+  grip_margin_long?: number;     // extra |Fx| still available at this Fy [N]
+  grip_alpha_peak?: number;      // |α| at peak lateral force [rad]
+  grip_kappa_peak?: number;      // |κ| at peak longitudinal force [-]
+  // Past the peak the tyre is not just "nearly out of grip" — it is on the
+  // falling side, where more slip returns LESS force. Utilisation alone cannot
+  // tell the two apart, which is why these ride alongside it.
+  grip_beyond_peak_lat?: boolean;
+  grip_beyond_peak_long?: boolean;
+}
+
+/** Vehicle-level grip: body specific force vs the μ·g envelope (g-g diagram). */
+export interface AccelState {
+  ax: number;         // body longitudinal specific force [m/s²]
+  ay: number;         // body lateral specific force [m/s²]
+  envelope: number;   // μ_avg · g — radius of the g-g envelope [m/s²]
+  valid: boolean;     // false on models without tyres (kinematic)
 }
 
 export interface Pose { x: number; y: number; psi: number }
@@ -113,6 +134,7 @@ export interface SimStateMessage {
   pose: Pose;
   attitude?: Attitude;   // z/roll/pitch — nonzero only for the multibody model
   velocity: Velocity;
+  accel?: AccelState;    // body specific force + μ·g envelope (v0.101)
   wheels: WheelState[];  // length 4 — FL, FR, RL, RR
   side_force_summary?: SideForceSummary;
   icr_vehicle_body: [number | null, number | null];

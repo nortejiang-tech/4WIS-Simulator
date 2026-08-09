@@ -106,10 +106,47 @@ def pacejka_combined_forces(
     return friction_ellipse_clip(fx0, fy0, fz=fz, mu=mu)
 
 
+def _magic_formula_peak_x(c: float, e: float) -> float:
+    """Slip argument x = B·slip at which D·sin(C·atan(y(x))) peaks.
+
+    With y(x) = x − E·(x − atan x), the derivative vanishes where
+    cos(C·atan y) = 0, i.e. y(x*) = tan(π/(2C)). C and E are fixed shape
+    factors, so x* is a constant of the tyre — solved once at construction and
+    reused, which is what makes the peak-slip query cheap enough to run every
+    step on every wheel.
+    """
+    if c <= 1e-6:
+        return float("inf")
+    target = math.tan(math.pi / (2.0 * c))
+    x = max(target, 0.1)
+    for _ in range(64):                      # Newton, converges in a handful
+        y = x - e * (x - math.atan(x))
+        dy = 1.0 - e * (1.0 - 1.0 / (1.0 + x * x))
+        if abs(dy) < 1e-12:
+            break
+        step = (y - target) / dy
+        x -= step
+        if abs(step) < 1e-14:
+            break
+    return abs(x)
+
+
 class TireModel(ABC):
     @abstractmethod
     def forces(self, alpha: float, kappa: float, fz: float, mu: float) -> tuple[float, float, float]:
         """Return (Fx, Fy, Mz_self_aligning) in wheel-aligned frame."""
+
+    @abstractmethod
+    def peak_slips(self, fz: float, mu: float) -> tuple[float, float]:
+        """Return (|α| , |κ|) at which pure-slip force stops rising [rad, -].
+
+        This is what separates "using 95% of the grip on the way up" from
+        "using 95% on the way down". Both report the same utilisation, but the
+        first is controllable and the second is departing — utilisation alone
+        cannot tell a driver or a log which one they are in, so every grip
+        readout in the platform pairs it with a beyond-peak flag derived from
+        these.
+        """
 
 
 @dataclass
@@ -159,6 +196,20 @@ class LinearTireModel(TireModel):
         # Self-aligning torque (linear with lateral force, opposes turning)
         mz = -fy * self.t_pneumatic
         return fx, fy, mz
+
+    def peak_slips(self, fz: float, mu: float) -> tuple[float, float]:
+        """Saturation slips: where the linear rise meets the friction circle.
+
+        This model has no falling side — past saturation the force is flat, not
+        decreasing. So "beyond peak" here means "on the plateau", which is
+        still the information that matters: more slip buys nothing. The
+        distinction between plateau and true drop-off only appears with the
+        Pacejka model.
+        """
+        cap = max(float(mu) * float(fz), 0.0)
+        alpha_peak = cap / max(self.c_alpha_eff(fz), 1e-6)
+        kappa_peak = cap / max(self.c_kappa, 1e-6)
+        return alpha_peak, kappa_peak
 
 
 @dataclass
@@ -213,6 +264,27 @@ class PacejkaTireModel(TireModel):
         trail = self.t_pneumatic * max(0.0, 1.0 - abs(alpha) / self.alpha_sl)
         mz = -fy0 * trail
         return fx0, fy0, mz
+
+    def peak_slips(self, fz: float, mu: float) -> tuple[float, float]:
+        """True Magic-Formula peaks, past which the force genuinely falls.
+
+        The peak sits at a fixed slip *argument* x* = B·slip set only by the
+        shape factors, and B = stiffness/(C·D) with D = μ·Fz — so the peak slip
+        itself scales linearly with μ·Fz:
+
+            slip_peak = x* · C · μ·Fz / stiffness
+
+        which is why this needs no per-step root finding.
+        """
+        d = max(float(mu) * float(fz), 1e-9)
+        alpha_peak = self._x_peak_y * self.cy * d / max(self.c_alpha_eff(fz), 1e-6)
+        kappa_peak = self._x_peak_x * self.cx * d / max(self.c_kappa, 1e-6)
+        return alpha_peak, kappa_peak
+
+    def __post_init__(self) -> None:
+        # Shape-factor constants — solved once, reused every step.
+        self._x_peak_x = _magic_formula_peak_x(self.cx, self.ex)
+        self._x_peak_y = _magic_formula_peak_x(self.cy, self.ey)
 
 
 def make_tire(params: object) -> TireModel:

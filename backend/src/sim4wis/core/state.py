@@ -57,6 +57,21 @@ class SuspensionParams:
     spring_rate: float = 70_000.0       # 悬架弹簧刚度 [N/m]（估算，~1.6Hz ride）
     damper_rate: float = 4_000.0        # 减振器阻尼 [N·s/m]（估算，ζ≈0.3）
     anti_roll_rate: float = 30_000.0    # 防倾杆等效横摆刚度 [N·m/rad]（估算，整车）
+    # Front share of the vehicle's ROLL stiffness, i.e. how the roll couple is
+    # split between the axles. This is the primary lever a chassis engineer
+    # uses to set understeer: a front-biased split puts more lateral load
+    # transfer on the front axle, and because cornering stiffness grows slower
+    # than load (c_α ∝ Fz^0.8), that axle loses proportionally more grip —
+    # so the car pushes.
+    #
+    # 0.0 = legacy: split lateral transfer by static axle weight instead, and
+    # treat the anti-roll bar as a pure body moment that never reaches the tyre
+    # loads. That configuration has no roll-couple distribution at all, which
+    # measured out at an understeer gradient of 0.07 deg/g — essentially
+    # neutral, where a production car sits at 1–4.
+    # 0.60 = front-biased, the conventional understeering setup. Set to 0 to
+    # get the legacy behaviour (weight-share split, bar as a pure body moment).
+    roll_stiffness_front_frac: float = 0.60
     # Kinematic model's placeholder kingpin friction coefficient (the dynamic
     # models compute the real Reimpell/Pacejka moment instead).
     kingpin_mu: float = 0.6
@@ -133,6 +148,29 @@ class VehicleParams:
     # behaviour (and wheel-servo tuning) is identical across models.
     tire_model: str = "linear"          # "linear" | "pacejka"
     tire_c_alpha: float = 120_000.0     # 侧偏刚度 [N/rad]（额定 Fz 处）
+    # Front/rear cornering-stiffness split, as a multiplier on `tire_c_alpha`.
+    #
+    # This is what actually sets the understeer gradient in the linear range:
+    #
+    #     K = W_f/C_f − W_r/C_r
+    #
+    # With one stiffness for all four wheels and a 51/49 weight split, K comes
+    # out at 0.07 deg/g — a neutral car. Production cars are deliberately set
+    # up understeering (1–4 deg/g) so that running out of grip shows up as the
+    # nose washing wide, which a driver can read and correct, rather than as
+    # the tail leaving.
+    #
+    # Note this is NOT achievable through roll-couple distribution here: with
+    # c_α ∝ Fz^0.8, realistic lateral transfer costs an axle under 1% of its
+    # cornering capability, so `roll_stiffness_front_frac` moves K by ~0.01
+    # deg/g. Roll distribution matters at the limit, not in the linear range.
+    # Defaults chosen to give K ≈ 1.5 deg/g — production-car understeer. This
+    # is a TUNING CHOICE, not a measurement: the OEM does not publish the axle
+    # cornering stiffnesses, and 1.0/1.0 (a single stiffness for all four
+    # wheels) produced a car that was neutral to within measurement noise.
+    # ±20% front/rear is large but within what a staggered tyre fitment gives.
+    tire_c_alpha_front_scale: float = 0.80
+    tire_c_alpha_rear_scale: float = 1.20
     tire_c_kappa: float = 100_000.0     # 纵滑刚度 [N]
     tire_t_pneumatic: float = 0.03      # 气胎拖距 [m]
     # Load sensitivity: c_alpha(Fz) = c_alpha0·(Fz/Fz_nom)^p
@@ -182,6 +220,45 @@ class VehicleParams:
     # between axles (0.65 front keeps the rear from locking first — stable).
     # brake_tau is the hydraulic/EMB first-order response. v_max_reverse caps
     # the reverse speed (gear R).
+    # How the driver's throttle reaches the wheels.
+    #
+    #   "speed_servo" (default) — throttle is a *speed* demand: strategies emit
+    #       wheel_speed_cmd and a per-wheel PI servo produces the torque. This
+    #       is the pre-v0.101 behaviour and what every golden baseline was
+    #       promoted against, so it stays the default.
+    #   "torque" — throttle is a *torque* demand fed straight into the wheel
+    #       spin ODE. Required for drive-form dynamics (power oversteer,
+    #       lift-off oversteer, differential effects): a speed servo backs off
+    #       to drag level once it reaches the target, so it can never be asked
+    #       for more drive torque than the tyres will hold.
+    #
+    # KinematicModel has no torque concept and always follows wheel_speed_cmd;
+    # "torque" needs simplified_dynamic or multibody.
+    longitudinal_mode: str = "speed_servo"
+    # ---- drivetrain (torque mode only — see vehicle/powertrain.py) ---------
+    # Front share of the drive demand: 1.0 = pure front drive, 0.0 = pure rear,
+    # 0.5 = even all-wheel. Continuous, so FWD/RWD/AWD are three presets on one
+    # axis rather than three separate modes.
+    drive_front_ratio: float = 0.5
+    # Total mechanical power at the wheels [W]. Shared bus across all four
+    # motors, applied after the per-motor torque cap. Without it a 0–200 km/h
+    # run is limited only by grip and drag, which is not a vehicle.
+    motor_power_max: float = 400_000.0
+    # "independent" = 4WID, each wheel takes its own torque (the platform's
+    # pre-existing behaviour). "open" = open differential per axle: equal
+    # torque both sides, axle limited by the weaker contact patch.
+    diff_type: str = "independent"
+    # Driver speed limit [m/s], 0 = off. Rescales the throttle's usable range
+    # rather than clipping the top of it: with v_max = 200 km/h a fifth of
+    # pedal travel is already 40 km/h, which is why fine speed control by hand
+    # is awkward. Setting a limit gives the whole pedal to the range actually
+    # being driven — the "chill mode" a real EV ships with.
+    #
+    # Enforced in BOTH longitudinal modes: as a rescale of the speed command in
+    # speed_servo, and as a torque taper approaching the limit in torque mode.
+    # The validation speed channel (`speed_target_ms`) deliberately ignores it —
+    # an experiment states the speed it wants.
+    driver_speed_limit: float = 0.0
     brake_torque_max: float = 12_000.0  # 整车最大摩擦制动力矩 [N·m]
     brake_bias_front: float = 0.65      # 前轴制动力分配比例 [-]
     brake_tau: float = 0.08             # 制动执行器一阶时间常数 [s]
@@ -304,6 +381,12 @@ class ControlCommand:
     # these from DriverInput after the strategy runs.
     brake_cmd: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
     handbrake: int = 0
+    # Drive torque per wheel [N·m], used when `longitudinal_mode == "torque"`.
+    # Sibling of brake_cmd and filled the same way (by the loop, after the
+    # strategy): how the drivetrain splits a pedal demand across the wheels is
+    # a vehicle concern, not a strategy concern. In the default "speed_servo"
+    # mode this stays zero and `wheel_speed_cmd` drives the wheel servos.
+    drive_torque_cmd: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
 
     @staticmethod
     def zero() -> ControlCommand:
@@ -382,6 +465,31 @@ class VehicleState:
     # rate) read this so they degrade on ice instead of assuming dry asphalt —
     # they run *before* the tyre model, so they cannot query it themselves.
     mu_avg: float = 0.85
+
+    # Body-frame specific force (what an accelerometer at the CG would read):
+    #   ax = v̇x − ω·vy      ay = v̇y + ω·vx
+    # Kept on the state because the g-g envelope is a vehicle-level readout and
+    # every host needs the same number.
+    ax: float = 0.0
+    ay: float = 0.0
+
+    # ---- friction budget (see vehicle/model_core.wheel_grip_state) ----------
+    # Only the quantities that are NOT already derivable from the telemetry the
+    # state frame carries: Fx/Fy/Fz/μ/α/κ are all published, so the operating
+    # point and the raw utilisation can be reconstructed. These cannot.
+    # Zero-filled on models without a tyre (KinematicModel), which report
+    # grip_valid = False rather than a misleading full circle.
+    grip_valid: bool = False
+    grip_capacity: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))      # μ·Fz [N]
+    grip_util: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))          # |F|/(μFz)
+    grip_margin_lat: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))    # spare |Fy| at this Fx [N]
+    grip_margin_long: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))   # spare |Fx| at this Fy [N]
+    grip_alpha_peak: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))    # [rad]
+    grip_kappa_peak: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))    # [-]
+    grip_beyond_peak_lat: np.ndarray = field(
+        default_factory=lambda: np.zeros(N_WHEELS, dtype=bool))
+    grip_beyond_peak_long: np.ndarray = field(
+        default_factory=lambda: np.zeros(N_WHEELS, dtype=bool))
 
     # Derived geometry
     vehicle_icr_body: np.ndarray = field(default_factory=lambda: np.full(2, np.nan))

@@ -20,7 +20,7 @@ import math
 import time
 from typing import Any
 
-from sim4wis.controller.longitudinal import apply_brake_command
+from sim4wis.controller.longitudinal import apply_brake_command, apply_drive_command
 from sim4wis.controller.registry import available_strategies, make_strategy
 from sim4wis.controller.steering_feel import front_steer_angle as _front_steer_angle
 from sim4wis.controller.steering_feel import gear_ratio as _gear_ratio
@@ -214,6 +214,7 @@ class Simulator:
                 # Fill the friction-brake actuator command from the driver
                 # (strategies don't touch braking — it's a vehicle concern).
                 apply_brake_command(cmd, self.driver, self.params)
+                apply_drive_command(cmd, self.driver, self.params, self.model.state)
                 self.last_cmd = cmd
                 self.model.step(self.dt_sim, cmd, self.env)
                 # Per-wheel steering centre + split-rack force chain (shared
@@ -316,6 +317,16 @@ class Simulator:
             "pose": {"x": s.x, "y": s.y, "psi": s.psi},
             "attitude": {"z": s.z, "roll": s.roll, "pitch": s.pitch},
             "velocity": {"vx": s.vx, "vy": s.vy, "yaw_rate": s.yaw_rate},
+            # Vehicle-level grip: body specific force plus the μ·g envelope it
+            # is drawn against (the g-g diagram). `valid` is False on models
+            # without tyres, so the UI can say so instead of drawing an empty
+            # circle that looks like "no grip used".
+            "accel": {
+                "ax": float(s.ax),
+                "ay": float(s.ay),
+                "envelope": float(s.mu_avg) * 9.81,
+                "valid": bool(s.grip_valid),
+            },
             "wheels": [
                 {
                     "delta": float(reported_delta[i]),
@@ -345,6 +356,17 @@ class Simulator:
                     "linkage_efficiency": float(s.linkage_efficiency[i]),
                     "tire_fx": _force(self.model, "tire_fx", i),
                     "tire_fy": _force(self.model, "tire_fy", i),
+                    # Friction budget (see model_core.wheel_grip_state). The
+                    # operating point itself is tire_fx/tire_fy above; these are
+                    # the quantities the client cannot derive on its own.
+                    "grip_capacity": float(s.grip_capacity[i]),
+                    "grip_util": float(s.grip_util[i]),
+                    "grip_margin_lat": float(s.grip_margin_lat[i]),
+                    "grip_margin_long": float(s.grip_margin_long[i]),
+                    "grip_alpha_peak": float(s.grip_alpha_peak[i]),
+                    "grip_kappa_peak": float(s.grip_kappa_peak[i]),
+                    "grip_beyond_peak_lat": bool(s.grip_beyond_peak_lat[i]),
+                    "grip_beyond_peak_long": bool(s.grip_beyond_peak_long[i]),
                     "side_force_body_y": float(side_forces[i]),
                     "force_source": force_source,
                 }

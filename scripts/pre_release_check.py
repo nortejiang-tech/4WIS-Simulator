@@ -208,6 +208,11 @@ def main() -> int:
         failures += command(readiness_cmd, ROOT)
 
     failures += command([npm, "run", "type-check"], FRONTEND)
+    # Front-end unit tests (vitest). The e2e suite exercises the app shell; this
+    # covers the pure logic underneath it — the input state machine and display
+    # maths, which had no coverage at all until three blocking defects were
+    # found there by inspection.
+    failures += command([npm, "run", "test"], FRONTEND)
 
     if not args.skip_build:
         failures += command([npm, "run", "build"], FRONTEND)

@@ -35,6 +35,14 @@ function chunkBudgetPlugin(): Plugin {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Unit tests (vitest) cover the pure front-end logic — the input state
+  // machine and display maths. `tests/e2e` belongs to Playwright and must be
+  // excluded, or vitest tries to collect it and Playwright's `test()` throws.
+  test: {
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    exclude: ["node_modules/**", "tests/e2e/**"],
+    environment: "node",
+  },
   plugins: [react(), chunkBudgetPlugin()],
   resolve: {
     alias: {

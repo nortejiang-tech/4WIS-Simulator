@@ -253,6 +253,24 @@ def body_resistance_force(params: VehicleParams, vx: float) -> float:
     return -(f_roll + f_aero)
 
 
+def axle_cornering_scale(params: VehicleParams) -> np.ndarray:
+    """Per-wheel multiplier on cornering stiffness, as an equivalent slip scale.
+
+    Scaling c_α by s is exactly equivalent to feeding the tyre s·α: the linear
+    model has Fy = −c_α·α, and the Magic Formula only ever uses the product
+    B·α with B ∝ c_α. So an axle stiffness split needs no change to the tyre
+    API — the same absorption trick `camber_thrust_alpha_offset` uses.
+
+    Callers must apply it to the *kinematic* slip only and add the camber
+    offset afterwards, i.e. `α_fed = scale·α_kin + Δα_camber`; the camber
+    offset is already expressed against the unscaled c_α, so scaling it too
+    would double-count.
+    """
+    sf = float(getattr(params, "tire_c_alpha_front_scale", 1.0))
+    sr = float(getattr(params, "tire_c_alpha_rear_scale", 1.0))
+    return np.array([sf, sf, sr, sr], dtype=np.float64)
+
+
 def camber_thrust_alpha_offset(params: VehicleParams, fz: np.ndarray) -> np.ndarray:
     """Equivalent slip-angle offset that absorbs camber thrust into the tyre model.
 
@@ -409,6 +427,134 @@ def steady_state_slip_angles(
     denom = np.maximum(np.abs(vx_wheel), float(min_longitudinal_speed))
     alpha = np.arctan2(vy_wheel, denom)
     return alpha, SteadyStateBody(beta=0.0, yaw_rate=0.0, used_bicycle=False)
+
+
+@dataclass
+class GripState:
+    """Per-wheel friction-budget state — the quantities behind every grip readout.
+
+    All force fields are in newtons, in the wheel-aligned frame, so `used_long`
+    and `used_lat` are directly comparable against `capacity`.
+
+    Definitions (isotropic friction circle, matching the tyre models' own
+    combined-slip clipping):
+
+        capacity   = μ·Fz                     radius of the circle
+        used       = √(Fx² + Fy²)             distance of the operating point
+        utilisation= used / capacity          ∈ [0, 1]
+        margin     = 1 − utilisation
+
+    `margin_lat` / `margin_long` answer the question an engineer actually asks
+    at the wheel — "how much MORE can I have in this direction, given what the
+    other one is already spending":
+
+        margin_lat  = √(capacity² − Fx²) − |Fy|
+        margin_long = √(capacity² − Fy²) − |Fx|
+
+    Note these are not interchangeable with `margin`: at Fx = 0.9·capacity the
+    overall margin still reads 0.1, but the remaining *lateral* force is only
+    √(1−0.81) − 0 = 0.44·capacity — and it collapses far faster than the scalar
+    margin suggests as Fx grows. That asymmetry is the whole reason a driven
+    axle understeers under power.
+
+    `beyond_peak_*` mark the falling (or, for the linear tyre, flat) side of the
+    slip curve. Utilisation cannot distinguish the two sides on its own — see
+    `TireModel.peak_slips`.
+    """
+
+    capacity: np.ndarray        # μ·Fz [N]
+    used: np.ndarray            # |F| [N]
+    used_long: np.ndarray       # |Fx| [N]
+    used_lat: np.ndarray        # |Fy| [N]
+    utilization: np.ndarray     # |F| / (μ·Fz), clipped to [0, ~1]
+    margin: np.ndarray          # 1 − utilization
+    margin_lat: np.ndarray      # extra |Fy| available at the current Fx [N]
+    margin_long: np.ndarray     # extra |Fx| available at the current Fy [N]
+    alpha_peak: np.ndarray      # |α| at peak force [rad]
+    kappa_peak: np.ndarray      # |κ| at peak force [-]
+    beyond_peak_lat: np.ndarray     # bool
+    beyond_peak_long: np.ndarray    # bool
+
+
+def wheel_grip_state(
+    *,
+    fx: np.ndarray,
+    fy: np.ndarray,
+    fz: np.ndarray,
+    mu: np.ndarray,
+    alpha: np.ndarray,
+    kappa: np.ndarray,
+    vx_wheel: np.ndarray,
+    tire,
+    min_longitudinal_speed: float = VMIN_SLIP,
+) -> GripState:
+    """Per-wheel friction-budget state from the forces the model just produced.
+
+    Derived from the *same* Fx/Fy the tyre model returned, not recomputed from
+    slips — so the readout can never disagree with the forces that actually
+    moved the vehicle.
+
+    `vx_wheel` is needed only to suppress the beyond-peak flags at a standstill.
+    Both slip quantities divide by max(|vx_wheel|, VMIN_SLIP), so below that
+    floor α and κ are numerical placeholders, not physical slips — a parked car
+    would otherwise report all four tyres past the peak. The forces are still
+    real down there, so utilisation and the margins stay meaningful.
+    """
+    fx_a = np.asarray(fx, dtype=np.float64).reshape(N_WHEELS)
+    fy_a = np.asarray(fy, dtype=np.float64).reshape(N_WHEELS)
+    fz_a = np.asarray(fz, dtype=np.float64).reshape(N_WHEELS)
+    mu_a = np.asarray(mu, dtype=np.float64).reshape(N_WHEELS)
+    al_a = np.asarray(alpha, dtype=np.float64).reshape(N_WHEELS)
+    ka_a = np.asarray(kappa, dtype=np.float64).reshape(N_WHEELS)
+
+    capacity = np.maximum(mu_a * fz_a, 0.0)
+    safe = np.maximum(capacity, 1e-6)
+    used_long = np.abs(fx_a)
+    used_lat = np.abs(fy_a)
+    used = np.hypot(fx_a, fy_a)
+    utilization = np.where(capacity > 1e-6, used / safe, 0.0)
+
+    # Remaining force in one direction given what the other already spends.
+    rem_lat = np.sqrt(np.maximum(capacity ** 2 - fx_a ** 2, 0.0)) - used_lat
+    rem_long = np.sqrt(np.maximum(capacity ** 2 - fy_a ** 2, 0.0)) - used_long
+
+    alpha_peak = np.empty(N_WHEELS)
+    kappa_peak = np.empty(N_WHEELS)
+    for i in range(N_WHEELS):
+        alpha_peak[i], kappa_peak[i] = tire.peak_slips(float(fz_a[i]), float(mu_a[i]))
+
+    # Slip is only meaningful above the denominator floor the tyre model uses.
+    rolling = np.abs(
+        np.asarray(vx_wheel, dtype=np.float64).reshape(N_WHEELS)
+    ) > float(min_longitudinal_speed)
+
+    return GripState(
+        capacity=capacity,
+        used=used,
+        used_long=used_long,
+        used_lat=used_lat,
+        utilization=utilization,
+        margin=1.0 - utilization,
+        margin_lat=np.maximum(rem_lat, 0.0),
+        margin_long=np.maximum(rem_long, 0.0),
+        alpha_peak=alpha_peak,
+        kappa_peak=kappa_peak,
+        beyond_peak_lat=rolling & (np.abs(al_a) > alpha_peak),
+        beyond_peak_long=rolling & (np.abs(ka_a) > kappa_peak),
+    )
+
+
+def store_grip_state(state, grip: GripState) -> None:
+    """Copy a `GripState` onto the flat VehicleState fields the wire carries."""
+    state.grip_valid = True
+    state.grip_capacity = grip.capacity
+    state.grip_util = grip.utilization
+    state.grip_margin_lat = grip.margin_lat
+    state.grip_margin_long = grip.margin_long
+    state.grip_alpha_peak = grip.alpha_peak
+    state.grip_kappa_peak = grip.kappa_peak
+    state.grip_beyond_peak_lat = grip.beyond_peak_lat
+    state.grip_beyond_peak_long = grip.beyond_peak_long
 
 
 def friction_brake_torques(

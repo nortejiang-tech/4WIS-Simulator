@@ -56,6 +56,8 @@ export default function ControlPanel() {
   const setHoldSpeed = useSimStore((s) => s.setHoldSpeed);
   const cruiseOn = useSimStore((s) => s.cruiseOn);
   const cruiseSpeed = useSimStore((s) => s.cruiseSpeed);
+  const pedalExpo = useSimStore((s) => s.pedalExpo);
+  const setPedalExpo = useSimStore((s) => s.setPedalExpo);
   const setCruiseOn = useSimStore((s) => s.setCruiseOn);
   const setCruiseSpeed = useSimStore((s) => s.setCruiseSpeed);
   const steerReturn = useSimStore((s) => s.steerReturn);
@@ -200,6 +202,29 @@ export default function ControlPanel() {
             定速保持 {Math.round(toKmh(cruiseSpeed))} km/h（覆盖 W/S；转向仍可手动/策略控制）
           </div>
         )}
+
+        {/* Pedal curve. The axis spans 0…v_max (200 km/h by default), so a
+            fifth of pedal travel is already 40 km/h — expo buys back
+            resolution where the driving actually happens. The speed limit,
+            which rescales the range instead of shaping it, is the other half
+            of this and lives in the vehicle params. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+          <span className="panel-small" style={{ minWidth: 72 }}>油门曲线</span>
+          <input
+            type="range" min={0} max={2} step={0.1} value={pedalExpo}
+            onChange={(e) => setPedalExpo(Number(e.target.value))}
+            style={{ flex: 1 }}
+          />
+          <span className="panel-small hud-mono" style={{ width: 30, textAlign: "right" }}>
+            {pedalExpo.toFixed(1)}
+          </span>
+        </div>
+        <div className="panel-small" style={{ color: "var(--muted)", marginTop: 2 }}>
+          {pedalExpo === 0
+            ? "线性：半油门 = 半速。低速段不好控就往右调。"
+            : `半油门 ≈ ${Math.round(toKmh(Math.pow(0.5, 1 + pedalExpo) * vMax))} km/h`
+              + `（线性时是 ${Math.round(toKmh(0.5 * vMax))}）`}
+        </div>
 
         <div style={{ marginTop: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--muted)" }}>

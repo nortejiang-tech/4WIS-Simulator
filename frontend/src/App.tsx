@@ -32,6 +32,7 @@ const StrategyDesignerPanel = lazy(() => import("@/components/StrategyDesignerPa
 const ScenarioPanel = lazy(() => import("@/components/ScenarioPanel"));
 const ExcitationPanel = lazy(() => import("@/components/ExcitationPanel"));
 const ScorePanel = lazy(() => import("@/components/ScorePanel"));
+const GripPanel = lazy(() => import("@/components/GripPanel"));
 
 // Workbench sidebar tab groups (scene editing moved to the 场景 page).
 // Non-default groups load the first time they are opened, then stay mounted
@@ -275,6 +276,7 @@ export default function App() {
                       <Suspense fallback={<PanelLoader label="验证工具" />}>
                         <ExcitationPanel />
                         <ScorePanel />
+                        <GripPanel />
                         <ComparePanel />
                       </Suspense>
                     )}

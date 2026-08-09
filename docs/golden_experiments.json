@@ -8,12 +8,12 @@
       "n_samples": 600,
       "duration_s": 12.0,
       "kpis": {
-        "yaw_rate_peak_dps": 15.753943890961803,
-        "speed_error_rms_kmh": 0.19751833206848435,
-        "yaw_gain_dps": 10.393054131516944,
-        "yaw_rise_time_s": 0.2416549295595649,
-        "yaw_overshoot_pct": 0.48096675934936933,
-        "slip_alpha_peak_deg": 1.6584184141324734
+        "yaw_rate_peak_dps": 13.230845354494749,
+        "speed_error_rms_kmh": 0.13813423290118504,
+        "yaw_gain_dps": 8.617425658806086,
+        "yaw_rise_time_s": 0.1822255815580327,
+        "yaw_overshoot_pct": 1.776555268026064,
+        "slip_alpha_peak_deg": 1.693779589439783
       }
     },
     "iso3888_dlc_60kmh": {
@@ -21,12 +21,12 @@
       "n_samples": 800,
       "duration_s": 16.0,
       "kpis": {
-        "yaw_rate_peak_dps": 18.54780171879088,
-        "vy_peak_kmh": 1.9271608206826831,
-        "speed_error_rms_kmh": 0.11160822663260633,
-        "steer_energy_nms": 69.91796658731556,
-        "rack_force_peak_n": 3550.9311183515606,
-        "slip_alpha_peak_deg": 1.9355698527137797
+        "yaw_rate_peak_dps": 15.481117229443354,
+        "vy_peak_kmh": 1.6652453260930928,
+        "speed_error_rms_kmh": 0.0839601906478572,
+        "steer_energy_nms": 60.57372617564809,
+        "rack_force_peak_n": 2952.4178712158573,
+        "slip_alpha_peak_deg": 1.9488959018088226
       }
     },
     "sw_straight100_rl_stuck_value_baseline": {
@@ -40,11 +40,11 @@
       "duration_s": 16.0,
       "c_class": "C3",
       "kpis": {
-        "xtrack_react": 2.396332620619272,
-        "xtrack_2_5s": 16.625076525199507,
-        "ttld_s": 0.9050000000001486,
-        "dyaw_peak_dps": 26.174958532250905,
-        "dpsi_2s_deg": 35.73833523019592
+        "xtrack_react": 2.2033229843997177,
+        "xtrack_2_5s": 16.005888196114135,
+        "ttld_s": 0.9350000000001533,
+        "dyaw_peak_dps": 21.266822598133423,
+        "dpsi_2s_deg": 30.6114732361223
       }
     },
     "sw_straight100_rl_stuck_value_mitigated": {
@@ -58,11 +58,11 @@
       "duration_s": 16.0,
       "c_class": "C2",
       "kpis": {
-        "xtrack_react": 0.03247087301606268,
-        "xtrack_2_5s": 0.7365614681970061,
-        "ttld_s": 2.7150000000004315,
-        "dyaw_peak_dps": 6.555208961400731,
-        "dpsi_2s_deg": 3.439612909341676
+        "xtrack_react": 0.062037723256796774,
+        "xtrack_2_5s": 0.7805612168951197,
+        "ttld_s": 2.6450000000004206,
+        "dyaw_peak_dps": 6.7776665075819045,
+        "dpsi_2s_deg": 3.9344491696545454
       }
     },
     "sw_curve60_fl_free_caster_baseline": {
@@ -76,11 +76,11 @@
       "duration_s": 16.0,
       "c_class": "C2",
       "kpis": {
-        "xtrack_react": 0.5972291585114616,
-        "xtrack_2_5s": 2.7567091219077016,
-        "dyaw_peak_dps": 3.9571118535104364,
-        "dyaw_resid_dps": 0.5043978924383238,
-        "beta_peak_deg": 1.7588635203184917
+        "xtrack_react": 0.5107431842552078,
+        "xtrack_2_5s": 2.3402494665004583,
+        "dyaw_peak_dps": 3.1817748970101136,
+        "dyaw_resid_dps": 0.44266389630937836,
+        "beta_peak_deg": 1.5112896777027904
       }
     }
   },

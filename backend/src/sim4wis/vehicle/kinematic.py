@@ -83,7 +83,12 @@ class KinematicModel(VehicleModel):
                 base_mu = local.mu_override
         s.mu_avg = float(base_mu)
 
-        # 1. Adopt commanded steer angles and wheel speeds (Phase-1 assumption)
+        # 1. Adopt commanded steer angles and wheel speeds (Phase-1 assumption).
+        #    This model is geometric — it has no wheel-spin ODE and therefore no
+        #    torque concept, so `longitudinal_mode == "torque"` does not apply
+        #    here and `drive_torque_cmd` is ignored. Drive-form behaviour needs
+        #    simplified_dynamic or multibody; the state frame reports the
+        #    effective mode so the UI can say so.
         s.delta[:] = cmd.delta_cmd
         s.wheel_omega[:] = cmd.wheel_speed_cmd
 
@@ -112,6 +117,22 @@ class KinematicModel(VehicleModel):
 
         sol, *_ = np.linalg.lstsq(A, b, rcond=None)
         s.vx, s.vy, s.yaw_rate = float(sol[0]), float(sol[1]), float(sol[2])
+        # Specific force is deliberately NOT reported by this model.
+        #
+        # It solves body velocity algebraically from the commanded wheel
+        # speeds, so it has no acceleration of its own: any step in the command
+        # teleports the velocity and a finite difference of that goes with it —
+        # a standing start reads 5560 m/s² (≈570 g). Low-passing only scales
+        # the artefact (still 505 m/s² at τ = 50 ms) because the input is
+        # genuinely unbounded, and a plausible-looking number is worse than
+        # none: it would be recorded, plotted on the g-g chart and read as
+        # measurement.
+        #
+        # ax/ay therefore stay at zero here, consistent with `grip_valid`
+        # remaining False — this model reports what it can support and nothing
+        # more. Use simplified_dynamic or multibody for anything force-based.
+        s.ax = 0.0
+        s.ay = 0.0
 
         # 3. Integrate world-frame pose (forward Euler — adequate at 200 Hz)
         cp = np.cos(s.psi)

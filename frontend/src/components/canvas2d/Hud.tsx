@@ -7,11 +7,16 @@ import { useSimStore } from "@/store/sim";
 import type { SimStateMessage } from "@/types/sim";
 import { fmtKmh } from "@/ui/units";
 import { muTextColor } from "./colors";
+import GripBudget from "./GripBudget";
+import Speedometer from "./Speedometer";
 import "@/components/CanvasHud.css";
 
 export default function Hud({ state }: { state: SimStateMessage }) {
   const pxm = useSimStore((s) => s.view2dPxm);
   const setPxm = useSimStore((s) => s.setView2dPxm);
+  const cruiseOn = useSimStore((s) => s.cruiseOn);
+  const cruiseSpeed = useSimStore((s) => s.cruiseSpeed);
+  const holdSpeed = useSimStore((s) => s.holdSpeed);
 
   const yaw_rate_deg = (state.velocity.yaw_rate * 180) / Math.PI;
   const psi_deg = (state.pose.psi * 180) / Math.PI;
@@ -31,8 +36,18 @@ export default function Hud({ state }: { state: SimStateMessage }) {
   const ratio = drv?.steer_ratio ?? 0;
   const deltaEff = drv?.steer_delta_eff_deg ?? 0;
 
+  // Speed target, if an assist is holding one — drawn as a tick on the gauge
+  // so closing on it needs no mental arithmetic.
+  const vMaxKmh = (state.params?.v_max ?? 20) * 3.6;
+  const targetKmh = cruiseOn ? cruiseSpeed * 3.6
+    : holdSpeed ? (drv?.throttle ?? 0) * vMaxKmh : null;
+  const targetLabel = cruiseOn ? `巡航 ${Math.round(cruiseSpeed * 3.6)}`
+    : holdSpeed ? `保持 ${Math.round((targetKmh ?? 0))}` : null;
+
   return (
     <div className="canvas-hud">
+      <Speedometer speedKmh={state.velocity.vx * 3.6} maxKmh={vMaxKmh}
+                   targetKmh={targetKmh} label={targetLabel} />
       <div className="hud-row">
         <span className="hud-label">策略</span>
         <span className="hud-value strong">{state.strategy}</span>
@@ -90,6 +105,7 @@ export default function Hud({ state }: { state: SimStateMessage }) {
           ))}
         </span>
       </div>
+      {(state.accel?.valid ?? false) && <GripBudget wheels={state.wheels} />}
       <div className="hud-row">
         <span className="hud-label">ICR偏差</span>
         <span className="hud-value hud-mono hud-small">

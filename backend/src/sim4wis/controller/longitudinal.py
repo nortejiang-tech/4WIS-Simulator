@@ -36,7 +36,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from sim4wis.core.state import ControlCommand, DriverInput, N_WHEELS, VehicleParams
+from sim4wis.core.state import (
+    ControlCommand,
+    DriverInput,
+    N_WHEELS,
+    VehicleParams,
+    VehicleState,
+)
 
 # A brake/launch only counts once the vehicle is slower than this; above it a
 # brake command still brakes (toward 0) but a direction change cannot engage.
@@ -95,6 +101,20 @@ def speed_command(params: VehicleParams, driver: DriverInput,
             return min(0.0, v_actual + dv)
         return 0.0
 
+    # Validation bypass — the longitudinal twin of `steer_raw_rad`.
+    #
+    # An experiment commands a speed in m/s directly, skipping the pedal
+    # mapping entirely, so a regression baseline measures the *vehicle* and not
+    # the driver-input model. Without it the experiment layer has to round-trip
+    # its target through the pedal (`throttle = v/v_max`), which only cancels
+    # while that mapping stays exactly linear over exactly [0, v_max] — every
+    # future pedal curve, speed limiter or powertrain envelope would silently
+    # re-baseline every golden. Handled here rather than per-strategy because
+    # every strategy already routes through this one function.
+    target = driver.mode_params.get("speed_target_ms") if driver.mode_params else None
+    if target is not None:
+        return float(target)
+
     if gear == 0:
         # Neutral: no drive, no engine brake — target holds current speed so
         # the vehicle coasts (drag/rolling resistance still act in the model).
@@ -102,6 +122,13 @@ def speed_command(params: VehicleParams, driver: DriverInput,
 
     gear_sign = -1.0 if gear < 0 else 1.0
     v_cap = float(params.v_max) if gear > 0 else float(getattr(params, "v_max_reverse", 5.0))
+    # Driver speed limit rescales the pedal's range instead of clipping its
+    # top: full travel then means the limit, so the whole pedal is spent on the
+    # speeds actually being driven. Clipping would leave most of the travel
+    # dead and make the control problem worse, not better.
+    limit = float(getattr(params, "driver_speed_limit", 0.0))
+    if limit > 0.0:
+        v_cap = min(v_cap, limit)
     return gear_sign * throttle * v_cap
 
 
@@ -126,4 +153,34 @@ def apply_brake_command(cmd: ControlCommand, driver: DriverInput,
         rear = max(rear, 1.0 - bias)
     cmd.brake_cmd = np.array([front, front, rear, rear], dtype=np.float64)
     cmd.handbrake = int(driver.handbrake)
+    return cmd
+
+
+def apply_drive_command(cmd: ControlCommand, driver: DriverInput,
+                        params: VehicleParams,
+                        state: VehicleState | None = None) -> ControlCommand:
+    """Fill the drive-torque actuator channels on `cmd` from the driver.
+
+    Only meaningful when `longitudinal_mode == "torque"`; in the default
+    "speed_servo" mode the channel stays zero and the wheel-speed servos do the
+    work from `wheel_speed_cmd`.
+
+    The split itself lives in `vehicle/powertrain.py` — this is just the seam
+    where the loop and the experiment session agree on where drive torque comes
+    from, mirroring `apply_brake_command`.
+
+    `state` supplies wheel speed (for the power bus) and last step's friction
+    capacity (for the open differential). Without it the drivetrain falls back
+    to the torque cap alone, which is what a caller with no state can honestly
+    ask for.
+    """
+    if str(getattr(params, "longitudinal_mode", "speed_servo")) != "torque":
+        cmd.drive_torque_cmd = np.zeros(N_WHEELS)
+        return cmd
+
+    from sim4wis.vehicle.powertrain import drive_torques  # local: avoids a cycle
+
+    if state is None:
+        state = VehicleState()
+    cmd.drive_torque_cmd = drive_torques(params, driver, state)
     return cmd

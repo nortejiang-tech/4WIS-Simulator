@@ -20,7 +20,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from sim4wis.controller.longitudinal import apply_brake_command
+from sim4wis.controller.longitudinal import apply_brake_command, apply_drive_command
 from sim4wis.controller.registry import make_strategy
 from sim4wis.core.derived import update_derived_outputs
 from sim4wis.core.state import DriverInput, EnvironmentState, VehicleParams
@@ -44,10 +44,15 @@ SCALAR_CHANNELS = (
     "pose_x", "pose_y", "pose_psi",
     "vx", "vy", "yaw_rate",
     "driver_steering", "driver_throttle",
+    # Body specific force — the g-g trace for post-run analysis.
+    "ax", "ay",
 )
 WHEEL_CHANNELS = (
     "delta", "delta_cmd", "omega", "fz", "torque_steer",
     "rack_force", "motor_torque", "slip_alpha", "slip_kappa", "icr_dev",
+    # Friction budget, so a run can be reviewed for where grip ran out and
+    # whether the tyre was still on the rising side when it did.
+    "grip_util", "grip_margin_lat", "grip_margin_long",
 )
 
 
@@ -142,10 +147,19 @@ class SimSession:
                     v_cmd = speed_prev + (speed_target - speed_prev) * (t_local / ramp)
                 else:
                     v_cmd = speed_target
-                # Split channels, matching the DriverInput contract: throttle is
-                # unipolar and the sign lives in the gear. Writing a signed
-                # throttle here (the pre-v0.100 form) would ask a car in D for a
-                # negative speed rather than selecting reverse.
+                # Command the speed DIRECTLY, not through the pedal.
+                #
+                # The old form (`throttle = v_cmd / v_max`) round-trips the
+                # target through the driver-input model and only cancels while
+                # that mapping stays exactly linear over exactly [0, v_max].
+                # A pedal curve, a speed limiter or a powertrain envelope would
+                # each silently move every golden baseline. This is the
+                # longitudinal twin of the `steer_raw_rad` decoupling: a
+                # validation run measures the vehicle, not the driver model.
+                #
+                # throttle/gear are still set so telemetry and any strategy that
+                # reads them sees a coherent driver state.
+                driver.mode_params["speed_target_ms"] = float(v_cmd)
                 driver.gear = -1 if v_cmd < 0.0 else 1
                 driver.throttle = min(1.0, abs(v_cmd) / v_max)
                 steer_raw = step_def.steer.value(t_local, step_def.duration)
@@ -184,6 +198,7 @@ class SimSession:
                 # Fill the friction-brake actuator command (same helper the
                 # live loop uses, so the two cannot drift apart).
                 apply_brake_command(cmd, driver, self.params)
+                apply_drive_command(cmd, driver, self.params, self.model.state)
                 self.model.step(dt, cmd, self.env)
                 update_derived_outputs(self.model.state, self.params)
                 if n_steps % record_every == 0:
@@ -264,6 +279,8 @@ class SimSession:
         chans["yaw_rate"].append(float(s.yaw_rate))
         chans["driver_steering"].append(float(driver.steering))
         chans["driver_throttle"].append(float(driver.throttle))
+        chans["ax"].append(_finite(s.ax))
+        chans["ay"].append(_finite(s.ay))
         slip_a = getattr(self.model, "slip_alpha", None)
         slip_k = getattr(self.model, "slip_kappa", None)
         for i, w in enumerate(WHEELS):
@@ -276,6 +293,9 @@ class SimSession:
             chans[f"motor_torque_{w}"].append(float(s.motor_torque_demand[i]))
             chans[f"slip_alpha_{w}"].append(_finite(slip_a[i]) if slip_a is not None else 0.0)
             chans[f"slip_kappa_{w}"].append(_finite(slip_k[i]) if slip_k is not None else 0.0)
+            chans[f"grip_util_{w}"].append(_finite(s.grip_util[i]))
+            chans[f"grip_margin_lat_{w}"].append(_finite(s.grip_margin_lat[i]))
+            chans[f"grip_margin_long_{w}"].append(_finite(s.grip_margin_long[i]))
             dev = float(s.wheel_icr_dev[i])
             chans[f"icr_dev_{w}"].append(dev if math.isfinite(dev) else math.nan)
 

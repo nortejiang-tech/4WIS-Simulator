@@ -27,6 +27,50 @@ Every entry must explain why the baseline moved. Do not update the JSON only.
 - Review notes:
 ```
 
+## 2026-08-09 - 底盘调校：让默认车辆具备量产车的不足转向
+
+- Commit / branch: 驾驶动态真实性迭代
+- 触发：新增的 `scripts/driving_dynamics_review.py`（18 项标准客观指标对照
+  该车型级别的公开典型区间）测出**不足转向梯度 K = 0.07 deg/g**，即中性转向。
+  量产乘用车按设计都是 1–4 deg/g 的不足转向——极限时先推头（可读、可修正），
+  而不是先甩尾。K≈0 还意味着横摆增益 r/δ = v/(L+K·v²) 随车速**线性增长不封顶**，
+  高速会发贼。
+- 根因：线性区的 K 由 `K = W_f/C_f − W_r/C_r` 决定。这台车 51/49 的轴荷配上
+  四轮同一个 `tire_c_alpha` ⇒ K ≈ 0。**这不是 bug，是参数没调过。**
+- 改动（两项都是新增能力 + 默认值调整）：
+  - `tire_c_alpha_front_scale = 0.80` / `tire_c_alpha_rear_scale = 1.20`
+    （新增）。前后侧偏刚度差，等效吸收进滑移角（与外倾推力同一手法，对线性和
+    Pacejka 都精确）。实测 K = **1.49 deg/g**，与解析式 1.55 相差 0.06——那 0.06
+    是载荷转移的二阶贡献。**这是调校选择，不是实测**：OEM 不公布轴侧偏刚度。
+  - `roll_stiffness_front_frac = 0.60`（新增）。侧向载荷转移改按**侧倾刚度**分配
+    而非静态轴荷；多体模型的防倾杆从「纯整车力矩」改为每角的力，这样它才真的转移
+    载荷（此前它只阻侧倾、不影响操稳平衡，是项目遗留清单上的
+    「防倾杆刚度分配横向载荷转移」）。注意：**这一项对线性区的 K 几乎没有影响**
+    （c_α ∝ Fz^0.8 下现实转移量只让轴损失不到 1% 能力，K 只动 0.01 deg/g）——
+    它影响的是极限行为，不是线性区平衡。设为 0 可回到旧行为。
+- 基线影响：五组全动。方向一致——车更稳了：
+  - `step_steer` / `iso3888`：横摆峰值 −16%，齿条力 −17%，响应更快（rise time −25%）。
+    不足转向让同样的前轮角产生更小的横摆，符合预期。
+  - `sw_curve60` baseline：xtrack −15%、dyaw_peak −20%、beta_peak −14%。刚度更高的
+    后轴抵抗单轮故障引起的横摆更好。
+  - `sw_straight100` mitigated：xtrack_react +91%（0.032→0.062 m，绝对值仍极小）、
+    dpsi_2s +14%。缓解控制器的增益是按旧平衡整定的，新平衡下略有失配。
+  - **安全研究的所有 C 等级不变**，报告与 metrics.json 已重算。
+- Reason:
+  - [ ] Model correction
+  - [x] Parameter correction（底盘调校）
+  - [x] Model correction（防倾杆载荷转移，此前该机制缺失）
+  - [ ] Experiment definition change
+- Evidence:
+  - `backend/.venv/bin/python scripts/driving_dynamics_review.py` → 18/18
+  - `backend/.venv/bin/python scripts/check_golden_experiments.py --update`
+  - `backend/.venv/bin/python scripts/study_single_wheel_failure.py`（C 等级逐项比对）
+- Review notes:
+  - 关闭这两项（`*_scale = 1.0`、`roll_stiffness_front_frac = 0`）可完整回到
+    2026-08-07 的基线，已验证 golden 逐位不变。
+  - `sw_straight100` mitigated 的退化提示 `fault_reconfig` 的 `k_yaw` 是按中性车
+    整定的，值得随平衡一起重调——**未做**，留作后续。
+
 ## 2026-08-07 - Correct the front_deg geometry; restore the safety baseline
 
 Supersedes the 2026-08-06 entry below, which promoted values produced by a

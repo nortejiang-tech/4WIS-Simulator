@@ -46,8 +46,11 @@ from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.load_transfer import vertical_loads
 from sim4wis.vehicle.model_core import (
     body_resistance_force,
+    axle_cornering_scale,
     camber_thrust_alpha_offset,
     friction_brake_torques,
+    store_grip_state as _store_grip,
+    wheel_grip_state,
     fz_with_aero_lift,
     rotate_wheel_forces_to_body,
     semi_implicit_wheel_spin,
@@ -91,6 +94,8 @@ class SimplifiedDynamicModel(VehicleModel):
         # Static toe (A3, same convention as the load page): the physical wheel
         # angle is the actuator angle plus the per-wheel alignment offset.
         self._toe = static_toe_offsets(params)
+        # Axle cornering-stiffness split, absorbed as a slip-angle scale.
+        self._alpha_scale = axle_cornering_scale(params)
         # Filtered friction-brake command per wheel (first-order, brake_tau).
         self._brake_f = np.zeros(N_WHEELS)
         # Initialize static vertical loads
@@ -164,6 +169,12 @@ class SimplifiedDynamicModel(VehicleModel):
         k4 = f(y0 + h * k3)
         y1 = y0 + (h / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
 
+        # Body-frame specific force (what an accelerometer at the CG reads).
+        # Taken from the RK4 slope at the accepted state rather than from a
+        # finite difference of vx/vy, so it stays clean at 200 Hz.
+        s.ax = float(y1[0] - y0[0]) / dt - float(y1[2]) * float(y1[1])
+        s.ay = float(y1[1] - y0[1]) / dt + float(y1[2]) * float(y1[0])
+
         s.vx = float(y1[0])
         s.vy = float(y1[1])
         s.yaw_rate = float(y1[2])
@@ -200,7 +211,7 @@ class SimplifiedDynamicModel(VehicleModel):
             dt=dt,
             wheel_omega=wheel_omega_held,
             vx_wheel=kin.vx_wheel,
-            alpha=kin.alpha + alpha_camber,
+            alpha=self._alpha_scale * kin.alpha + alpha_camber,
             fz=fz_now,
             mu=wheel_mus,
             torque=t_net,
@@ -215,6 +226,12 @@ class SimplifiedDynamicModel(VehicleModel):
         self.tire_fx[:] = forces.fx
         self.tire_fy[:] = forces.fy
         self.tire_mz[:] = forces.mz
+        # Friction budget from the forces that actually moved the vehicle this
+        # step, so the readout can never disagree with the dynamics.
+        _store_grip(s, wheel_grip_state(
+            fx=forces.fx, fy=forces.fy, fz=fz_now, mu=wheel_mus,
+            alpha=kin.alpha, kappa=kappa_new, vx_wheel=kin.vx_wheel, tire=self.tire,
+        ))
 
         # Reflect the disturbance vertical load (SpeedBump) in the reported Fz
         # so the transient is visible in telemetry / CSV / 3D — clamped to the
@@ -251,10 +268,15 @@ class SimplifiedDynamicModel(VehicleModel):
     def _compute_motor_torques(
         self, cmd: ControlCommand, omega_actual: np.ndarray, dt: float,
     ) -> np.ndarray:
-        """Run all 4 wheel-speed servos for one step; return motor torque per wheel.
+        """Drive torque per wheel for one step.
+
+        In `longitudinal_mode == "torque"` the command IS the torque and the
+        servos sit out (their state is reset so switching modes mid-run doesn't
+        dump a stale integrator into the drivetrain). Otherwise the wheel-speed
+        servos turn `wheel_speed_cmd` into torque, as below.
 
         The friction-brake command is read from `cmd.brake_cmd` and turned into
-        an opposing torque in `_compute_brake_torques` (added to the motor
+        an opposing torque in `friction_brake_torques` (added to the drive
         torque before the wheel-spin ODE). Here we only pass the per-wheel
         brake-active flag to the servo so it does not fight the brake.
 
@@ -263,6 +285,13 @@ class SimplifiedDynamicModel(VehicleModel):
         slip-dependent Fx is a positive feedback loop that causes wheelspin.
         The bare PI's residual asymmetry during hard accel is small and stable.
         """
+        if str(getattr(self.params, "longitudinal_mode", "speed_servo")) == "torque":
+            for servo in self.servos:
+                servo.reset()
+            drive = np.asarray(cmd.drive_torque_cmd, dtype=np.float64).reshape(N_WHEELS)
+            # The brake still owns the wheel it is applied to.
+            return np.where(np.asarray(cmd.brake_cmd) > 0.02, 0.0, drive)
+
         torques = np.zeros(N_WHEELS)
         for i in range(N_WHEELS):
             torques[i] = self.servos[i].update(
@@ -347,7 +376,8 @@ class SimplifiedDynamicModel(VehicleModel):
             alpha = float(kin.alpha[i])
             kappa = float(kin.kappa[i])
             fx, fy, mz = self.tire.forces(
-                alpha + float(alpha_camber[i]), kappa, float(fz[i]), float(wheel_mus[i])
+                float(self._alpha_scale[i]) * alpha + float(alpha_camber[i]),
+                kappa, float(fz[i]), float(wheel_mus[i])
             )
             fx_wheel_per[i] = fx
             fy_wheel_per[i] = fy
