@@ -54,7 +54,7 @@
 }
 
 .roofcam-presets button:hover {
-  background: #2a3a52;
+  filter: brightness(1.25);
 }
 
 .roofcam-presets button.on {

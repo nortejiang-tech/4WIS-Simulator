@@ -17,6 +17,15 @@
   --bad: #ef4444;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-size-xs: 11px;
+
+  /* Aliases for names used at a handful of call sites. They are defined as
+     var() references, so a theme that overrides --bg-0 / --bg-2 gets the right
+     value for free. Without them `var(--surface)` is an invalid substitution
+     and the property falls back to `unset` — i.e. a transparent background,
+     silently. Same class of bug as the speedometer's black digits: an
+     undefined custom property fails open, not loud. */
+  --surface: var(--bg-2);
+  --bg: var(--bg-0);
 }
 
 :root[data-theme="light"] {

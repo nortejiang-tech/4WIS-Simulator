@@ -1,3 +1,8 @@
+/* The panel background used to be hard-coded dark while every colour inside it
+   came from the theme tokens. In the light theme that put --text (#0f172a,
+   near-black) on a near-black panel — the whole HUD, speed readout included,
+   went unreadable. The panel now follows the theme, so panel and text always
+   move together. */
 .canvas-hud {
   position: absolute;
   top: 12px;
@@ -7,11 +12,17 @@
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 12px;
+  color: var(--text);
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 220px;
   backdrop-filter: blur(4px);
+}
+
+:root[data-theme="light"] .canvas-hud {
+  background: rgba(248, 250, 252, 0.9);
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12);
 }
 
 .hud-row {
@@ -70,5 +81,5 @@
 }
 
 .hud-zoom button:hover {
-  background: #2a3a52;
+  filter: brightness(1.25);
 }

@@ -16,8 +16,9 @@
  * resolves (forward-intent, backward-intent) into (throttle, brake, gear) and
  * sends the resolved physical channels; the backend stays pure-physics.
  *
- * Steering still ramps W/A/S/D-style toward ±1 with τ_ramp ~ 0.18 s and
- * returns to 0 with τ_return ~ 0.25 s.
+ * Steering is rate-limited rather than lagged — see input/steerRamp.ts for why
+ * a first-order ramp is the wrong shape for a steering wheel. Self-centring is
+ * still an exponential decay at the user's 转向回正速度 rate.
  */
 
 import { useEffect, useRef } from "react";
@@ -31,9 +32,15 @@ import {
   resolveIntent,
   shapePedal,
 } from "@/input/driveIntent";
+import {
+  initialSteerRamp,
+  stepSteerReturn,
+  stepSteerToward,
+  zeroSteerRamp,
+} from "@/input/steerRamp";
 
 const PUSH_INTERVAL_MS = 20;     // 50 Hz to backend
-const TAU_RAMP = 0.18;           // s
+const TAU_RAMP = 0.18;           // s — pedals only; steering is rate-limited
 const TAU_RETURN = 0.25;         // s
 // Steering auto-return: max decay rate [1/s] at slider=1 (= 1.5× the baseline
 // 1/TAU_RETURN ≈ 4/s). slider=0 → 0 = hold (no return).
@@ -50,7 +57,8 @@ export default function KeyboardInput() {
   // Smoothed drive (throttle ∈ [0,1]) and brake (∈ [0,1]) channels.
   const throttle = useRef(0);
   const brake = useRef(0);
-  const steering = useRef(0);
+  // Steering carries a rate as well as an angle — the ramp is second-order.
+  const steer = useRef(initialSteerRamp());
   // Direction-intent state machine — the logic lives in input/driveIntent.ts
   // as a pure function so it can be unit-tested; this only holds its state.
   const intent = useRef(initialIntentState());
@@ -86,7 +94,7 @@ export default function KeyboardInput() {
       zeroReqRef.current = st.zeroRequest;
       throttle.current = 0;
       brake.current = 0;
-      steering.current = 0;
+      zeroSteerRamp(steer.current);
     }
   }), []);
 
@@ -215,19 +223,16 @@ export default function KeyboardInput() {
       }
 
       // --- Steering ---
-      // While A/D held: ramp toward ±1. Released: decay toward 0 at the
-      // adjustable return rate (0 = hold, 1 = 1.5× the baseline rate).
+      // While A/D held: wind toward ±1 under a rate limit, so the wheel starts
+      // from rest instead of snapping (input/steerRamp.ts). Released: decay
+      // toward 0 at the adjustable return rate (0 = hold, 1 = 1.5× baseline).
       let targetSteer = 0;
       if (p["KeyA"]) targetSteer += 1;
       if (p["KeyD"]) targetSteer -= 1;
       if (targetSteer !== 0) {
-        steering.current = ramp(steering.current, targetSteer, TAU_RAMP);
+        stepSteerToward(steer.current, targetSteer, dt);
       } else {
-        const rate = steerReturnRef.current * STEER_RETURN_RATE_MAX;
-        if (rate > 0) {
-          steering.current *= Math.exp(-rate * dt);
-          if (Math.abs(steering.current) < 0.005) steering.current = 0;
-        }
+        stepSteerReturn(steer.current, steerReturnRef.current * STEER_RETURN_RATE_MAX, dt);
       }
 
       if (now - lastPush.current >= PUSH_INTERVAL_MS) {
@@ -253,7 +258,7 @@ export default function KeyboardInput() {
             { brake: brake.current, gear, handbrake });
         } else {
           // Assisted: gamepad steering merges additively with the keyboard.
-          let outSteering = steering.current;
+          let outSteering = steer.current.angle;
           if (out) outSteering = clampUnit(outSteering + (out.steering ?? 0));
           setDriver(shaped, outSteering, undefined,
             { brake: brake.current, gear, handbrake });

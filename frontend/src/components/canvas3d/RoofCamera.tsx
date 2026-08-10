@@ -24,6 +24,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { PerspectiveCamera, Vector3 } from "three";
 
 import { useSimStore } from "@/store/sim";
+import { egoPose } from "@/view/renderPose";
 
 const DEG = Math.PI / 180;
 
@@ -47,15 +48,20 @@ export default function RoofCamera() {
     };
   }, [camera]);
 
-  useFrame((_, dt) => {
+  useFrame((rs, dt) => {
     const store = useSimStore.getState();
     const st = store.state;
     if (!st) return;
     const cfg = store.roofCam;
     const cam = camera as PerspectiveCamera;
 
+    // The rig is welded to the body, so it inherits every artefact of the pose
+    // it is given. Reading the raw 66.7 Hz sample made each packet boundary a
+    // whole-screen jump; the reconstruction in view/renderPose puts the rig on
+    // the render clock instead.
+    const { x, y, psi } = egoPose.sample(st, rs.clock.elapsedTime, dt);
+
     // --- heading filter ----------------------------------------------------
-    const { x, y, psi } = st.pose;
     const cx = Math.cos(psi), sy = Math.sin(psi);
     const h0 = head.current;
     if (!h0) {

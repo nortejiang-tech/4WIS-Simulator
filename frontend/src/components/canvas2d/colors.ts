@@ -11,9 +11,13 @@ export function wheelMuColor(mu?: number): string {
   return "#4c1d95";                  // icy (indigo)
 }
 
-/** Text colour for μ readouts. */
+/**
+ * Text colour for μ readouts. The nominal case defers to the theme's text
+ * token rather than a fixed near-white — the HUD panel follows the theme, and
+ * a hard-coded #e2e8f0 disappeared on the light panel.
+ */
 export function muTextColor(mu?: number): string {
-  if (mu == null || mu >= 0.85) return "#e2e8f0";
+  if (mu == null || mu >= 0.85) return "var(--text, #e2e8f0)";
   if (mu >= 0.5) return "#fbbf24";
   if (mu >= 0.3) return "#f87171";
   return "#a78bfa";

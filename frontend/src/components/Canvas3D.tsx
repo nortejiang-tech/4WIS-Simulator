@@ -12,6 +12,13 @@
  *   JSON signature of the scene). Per-frame live state (pose, wheels, ICR) is
  *   read imperatively inside useFrame via useSimStore.getState() and applied to
  *   mesh refs — so the React tree does not re-render at 60 Hz.
+ *
+ * Motion:
+ *   The pose the body, the wheels, the ICR markers and the cameras are drawn
+ *   at comes from `view/renderPose`, which rebuilds it on the render clock
+ *   instead of stepping it whenever a WebSocket packet lands. See that module
+ *   for why — in short, the state stream is 66.7 Hz and the display is not,
+ *   and in the roof camera every sample boundary is a full-screen hitch.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -42,6 +49,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useSimStore } from "@/store/sim";
 import type { DisturbanceMsg, PathCone, PathMark } from "@/types/sim";
 import { fmtKmh } from "@/ui/units";
+import { egoPose } from "@/view/renderPose";
 import {
   CAM_MODE_LABEL,
   CamMode3d,
@@ -152,13 +160,18 @@ function Vehicle({ geom }: { geom: Geom }) {
   // Dispose extruded geometries when the vehicle size changes.
   useEffect(() => () => { shellGeom.dispose(); cabinGeom.dispose(); }, [shellGeom, cabinGeom]);
 
-  useFrame((_, dt) => {
+  // Start the render-clock reconstruction from wherever the car is now — the
+  // 3D view may have been unmounted for a while (2D tab) and the car has moved.
+  useEffect(() => { egoPose.reset(); }, []);
+
+  useFrame((rs, dt) => {
     const st = useSimStore.getState().state;
     const g = root.current;
     if (!st || !g) return;
-    const [px, py, pz] = w2t(st.pose.x, st.pose.y, 0);
+    const pose = egoPose.sample(st, rs.clock.elapsedTime, dt);
+    const [px, py, pz] = w2t(pose.x, pose.y, 0);
     g.position.set(px, py, pz);
-    g.rotation.y = st.pose.psi;
+    g.rotation.y = pose.psi;
     // Sprung-body attitude (multibody): heave z, roll about forward (x),
     // pitch about lateral (z). Exaggerate heave ×4 so cm-scale motion reads.
     const sg = sprung.current;
@@ -171,7 +184,11 @@ function Vehicle({ geom }: { geom: Geom }) {
     for (let i = 0; i < 4; i++) {
       const sg = steerRefs.current[i];
       const sp = spinRefs.current[i];
-      if (sg) sg.rotation.y = st.wheels[i]?.delta ?? 0;
+      // Steer angle comes from the render-clock reconstruction too: raw δ steps
+      // once per packet, and at turn-in (where δ̇ is largest) those steps are
+      // several degrees each — the "wheels move in jerks" half of the
+      // steering-feel report.
+      if (sg) sg.rotation.y = pose.delta[i];
       if (sp) {
         spin.current[i] += (st.wheels[i]?.omega ?? 0) * dt;
         // Roll about the lateral axis (three +Z = sim right). For forward motion
@@ -316,13 +333,16 @@ function IcrMarkers() {
   const actual = useRef<Mesh>(null);
   const target = useRef<Mesh>(null);
 
-  useFrame(() => {
+  useFrame((rs, dt) => {
     const st = useSimStore.getState().state;
     if (!st) return;
+    // Same reconstructed pose as the body, or the markers would shimmer
+    // against a car that no longer steps with them.
+    const pose = egoPose.sample(st, rs.clock.elapsedTime, dt);
     const [ax, ay] = st.icr_vehicle_body;
     if (actual.current) {
       if (ax != null && ay != null) {
-        const [wx, wy] = bodyToWorld(st.pose.x, st.pose.y, st.pose.psi, ax, ay);
+        const [wx, wy] = bodyToWorld(pose.x, pose.y, pose.psi, ax, ay);
         const [tx, ty, tz] = w2t(wx, wy, 0.05);
         actual.current.position.set(tx, ty, tz);
         actual.current.visible = true;
@@ -333,7 +353,7 @@ function IcrMarkers() {
     const [bx, by] = st.icr_target_body;
     if (target.current) {
       if (bx != null && by != null) {
-        const [wx, wy] = bodyToWorld(st.pose.x, st.pose.y, st.pose.psi, bx, by);
+        const [wx, wy] = bodyToWorld(pose.x, pose.y, pose.psi, bx, by);
         const [tx, ty, tz] = w2t(wx, wy, 0.05);
         target.current.position.set(tx, ty, tz);
         target.current.visible = true;
@@ -471,11 +491,24 @@ function ReferencePath({ pathSig }: { pathSig: string }) {
  * into background colour — there is no horizon line, so distance and speed have
  * nothing to read against. Sits at −0.05 m so it can never z-fight the road
  * surfaces (0.00 … 0.06).
+ *
+ * It follows the camera in the ground plane, which is what lets the disc be
+ * 900 m rather than 1400 m across: the ground never runs out however far the
+ * car drives, and the near/far ratio the whole scene is drawn with can stay
+ * tight. That ratio is the thing that decides whether a 16-bit depth buffer
+ * (some Windows D3D fallbacks — see scripts/render_verify/README.md) can still
+ * separate the ground stack of horizon / grid / road / paint / trail at
+ * distance, or resolves it as shimmer.
  */
 function Horizon({ dark }: { dark: boolean }) {
+  const ref = useRef<Mesh>(null);
+  useFrame(({ camera }) => {
+    const m = ref.current;
+    if (m) { m.position.x = camera.position.x; m.position.z = camera.position.z; }
+  });
   return (
-    <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow={false}>
-      <circleGeometry args={[1400, 64]} />
+    <mesh ref={ref} position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow={false}>
+      <circleGeometry args={[900, 64]} />
       <meshBasicMaterial color={dark ? "#0d1526" : "#dde5ee"} />
     </mesh>
   );
@@ -711,12 +744,13 @@ function FollowCamera({ follow }: { follow: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useFrame(() => {
+  useFrame((rs, dt) => {
     const c = controls.current;
     if (!c) return;
     const st = useSimStore.getState().state;
     if (follow && st) {
-      const [tx, ty, tz] = w2t(st.pose.x, st.pose.y, 0);
+      const pose = egoPose.sample(st, rs.clock.elapsedTime, dt);
+      const [tx, ty, tz] = w2t(pose.x, pose.y, 0);
       const last = lastPos.current;
       if (last) {
         // Shift camera by the same delta so the orbit offset is preserved.
@@ -792,7 +826,16 @@ export default function Canvas3D() {
     <div className="canvas-container">
       <Canvas
         shadows
-        camera={{ position: [-8, 7, 8], fov: 50, near: 0.3, far: 2000, up: [0, 1, 0] }}
+        // near/far set the depth resolution the whole scene has to share. At
+        // 0.3 / 2000 the ratio was 6667:1, and the ground is a stack of
+        // near-coplanar surfaces (horizon −0.05, grid 0, road 0.01, sidewalk
+        // 0.02, paint 0.05, trail 0.06) viewed almost edge-on from the roof
+        // camera — the worst case there is. A 24-bit depth buffer (Metal, and
+        // ANGLE→D3D11) absorbs it; the 16-bit fallback some Windows drivers
+        // still take does not, and resolves the stack as shimmer. 0.4 / 1200
+        // is 3000:1 — 2.2× the headroom — and still clears both the bodywork
+        // at the closest roof-rig setting and a kilometre of orbit zoom-out.
+        camera={{ position: [-8, 7, 8], fov: 50, near: 0.4, far: 1200, up: [0, 1, 0] }}
         gl={{ antialias: true }}
       >
         <color attach="background" args={[dark ? "#0a0f1c" : "#eef2f7"]} />
@@ -843,7 +886,9 @@ export default function Canvas3D() {
 // ---------- HUD overlay (DOM) ----------
 
 function mu3dTextColor(mu?: number): string {
-  if (mu == null || mu >= 0.85) return "#e2e8f0";
+  // Nominal grip defers to the theme token — the HUD panel is light in the
+  // light theme, where a fixed near-white would vanish.
+  if (mu == null || mu >= 0.85) return "var(--text, #e2e8f0)";
   if (mu >= 0.5) return "#fbbf24";
   if (mu >= 0.3) return "#f87171";
   return "#a78bfa";

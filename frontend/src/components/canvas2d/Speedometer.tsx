@@ -14,6 +14,13 @@
  * Most driving happens in the bottom third of that, which is exactly the
  * complaint behind the speed-control work — the gauge shows the problem
  * honestly rather than hiding it behind a rescaled dial.
+ *
+ * Colour note: everything here must come from a *defined* theme token. The
+ * digits used to be `fill: var(--fg)` — a token that exists nowhere in the
+ * stylesheet, so the substitution failed and SVG's initial fill (pure black)
+ * took over. Black on the dark HUD panel is invisible; on the light panel it
+ * merely looked like a styling choice. `var(--text)` carries a literal fallback
+ * for the same reason.
  */
 
 const SIZE = 132;
@@ -52,7 +59,7 @@ export default function Speedometer({
     const [xa, ya] = polar(c, c, R - 6, deg);
     const [xb, yb] = polar(c, c, R, deg);
     ticks.push(<line key={i} x1={xa} y1={ya} x2={xb} y2={yb}
-                     stroke="var(--border)" strokeWidth={1.2} />);
+                     stroke="var(--muted, #94a3b8)" strokeWidth={1.2} opacity={0.7} />);
   }
 
   let targetMark = null;
@@ -70,7 +77,7 @@ export default function Speedometer({
       <svg width={SIZE} height={SIZE * 0.78} viewBox={`0 0 ${SIZE} ${SIZE * 0.78}`}
            role="img" aria-label={`车速 ${Math.round(speedKmh)} km/h`}>
         <path d={arcPath(c, c, R, START, START + SWEEP)} fill="none"
-              stroke="var(--border)" strokeWidth={7} strokeLinecap="round" opacity={0.45} />
+              stroke="var(--muted, #94a3b8)" strokeWidth={7} strokeLinecap="round" opacity={0.28} />
         {frac > 0.001 && (
           <path d={arcPath(c, c, R, START, end)} fill="none"
                 stroke="var(--accent, #38bdf8)" strokeWidth={7} strokeLinecap="round" />
@@ -78,12 +85,12 @@ export default function Speedometer({
         {ticks}
         {targetMark}
         <text x={c} y={c + 4} textAnchor="middle"
-              style={{ fontSize: 30, fontWeight: 650, fill: "var(--fg)",
+              style={{ fontSize: 30, fontWeight: 650, fill: "var(--text, #e2e8f0)",
                        fontVariantNumeric: "tabular-nums" }}>
           {Math.round(Math.abs(speedKmh))}
         </text>
         <text x={c} y={c + 20} textAnchor="middle"
-              style={{ fontSize: 10, fill: "var(--muted)", letterSpacing: 0.5 }}>
+              style={{ fontSize: 10, fill: "var(--muted, #94a3b8)", letterSpacing: 0.5 }}>
           km/h
         </text>
       </svg>

@@ -3,7 +3,13 @@
 This is the single application-wide instance accessed by the REST and
 WebSocket endpoints. It runs an asyncio task that integrates the model at
 `dt_sim` (default 5 ms / 200 Hz) and broadcasts a serialised state snapshot
-to all subscribers at `dt_push` (default ~16.7 ms / 60 Hz).
+to all subscribers every `round(dt_push / dt_sim)` steps.
+
+Note that the push cadence is quantised to `dt_sim`: the default dt_push of
+1/60 s rounds to 3 steps, so the real stream is **15 ms / 66.7 Hz**, not 60 Hz.
+Clients must not assume it matches any display refresh rate — the 3D viewport
+reconstructs motion on its own render clock for exactly this reason (see
+frontend `src/view/renderPose.ts`).
 
 Concurrency model:
     * One background task per Simulator (the loop).
