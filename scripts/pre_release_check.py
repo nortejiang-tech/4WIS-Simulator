@@ -4,6 +4,13 @@
 The script is intentionally mechanical: it checks version consistency first,
 then runs the same local commands used before packaging and publishing a
 release. It does not build portable zips or upload anything.
+
+The one thing it *writes* is the pair of generated reports under docs/reports
+(v1 readiness, reference-benchmark review). Those are derived artifacts, so a
+stale one says nothing about the release — it only means the last release
+forgot to rerun the generator. The gate regenerates them and tells you to
+commit the result; `--no-refresh-reports` restores the old verify-only
+behaviour for CI, where the gate must not touch the tree.
 """
 
 from __future__ import annotations
@@ -74,6 +81,40 @@ def command(cmd: list[str], cwd: Path) -> int:
     return proc.returncode
 
 
+def refresh_report(py: str, script: str, report: str, refresh: bool) -> tuple[int, bool]:
+    """Bring a tracked, generated report up to date — or verify it, if asked.
+
+    `docs/reports/v1_readiness.md` and `docs/reports/reference_benchmark_review.md`
+    are pure generated artifacts: their content is a function of the repository,
+    so "stale" is never a finding about the release. It only means the previous
+    release forgot to rerun the generator. Failing the gate on that stopped a
+    release to demand a command the gate could run itself — which is exactly how
+    v0.101.0 shipped with a readiness report still pinned to v0.100.0, reporting
+    its own `release_delivery` check as FAIL.
+
+    So by default the gate writes them. It still says loudly when a file moved,
+    because the new content has to be committed for the release to carry it, and
+    `--strict-git` (the "everything is already committed" mode) treats a moved
+    report as a failure.
+
+    Returns (exit code, whether the file changed).
+    """
+    path = ROOT / report
+    if not refresh:
+        return command([py, script, "--check-report", report], ROOT), False
+
+    before = path.read_text(encoding="utf-8") if path.exists() else None
+    code = command([py, script, "--report", report], ROOT)
+    if code != 0:
+        return code, False
+    after = path.read_text(encoding="utf-8") if path.exists() else None
+    if after == before:
+        log(f"{report}: already up to date")
+        return 0, False
+    log(f"{report}: REGENERATED (was {'missing' if before is None else 'stale'}) — commit it before tagging")
+    return 0, True
+
+
 def backend_python() -> str:
     venv_python = BACKEND / ".venv" / "bin" / "python"
     if venv_python.exists():
@@ -128,7 +169,15 @@ def main() -> int:
     parser.add_argument(
         "--strict-git",
         action="store_true",
-        help="fail if the working tree is dirty",
+        help="fail if the working tree is dirty, or if a generated report had to be rewritten",
+    )
+    parser.add_argument(
+        "--no-refresh-reports",
+        action="store_true",
+        help=(
+            "verify the generated readiness/benchmark reports instead of rewriting them "
+            "(for CI, where the gate must not modify the tree)"
+        ),
     )
     parser.add_argument(
         "--require-portable-zips",
@@ -143,6 +192,7 @@ def main() -> int:
     args = parser.parse_args()
 
     failures = 0
+    regenerated = 0
     failures += check_versions()
     py = backend_python()
 
@@ -171,15 +221,14 @@ def main() -> int:
         if args.require_independent_reference:
             ref_cmd.append("--require-independent-source")
         failures += command(ref_cmd, ROOT)
-        failures += command(
-            [
-                py,
-                "scripts/check_reference_benchmarks.py",
-                "--check-report",
-                "docs/reports/reference_benchmark_review.md",
-            ],
-            ROOT,
+        code, moved = refresh_report(
+            py,
+            "scripts/check_reference_benchmarks.py",
+            "docs/reports/reference_benchmark_review.md",
+            refresh=not args.no_refresh_reports,
         )
+        failures += code
+        regenerated += moved
         if args.check_incoming_audit:
             failures += command(
                 [
@@ -191,15 +240,14 @@ def main() -> int:
                 ],
                 ROOT,
             )
-        failures += command(
-            [
-                py,
-                "scripts/check_v1_readiness.py",
-                "--check-report",
-                "docs/reports/v1_readiness.md",
-            ],
-            ROOT,
+        code, moved = refresh_report(
+            py,
+            "scripts/check_v1_readiness.py",
+            "docs/reports/v1_readiness.md",
+            refresh=not args.no_refresh_reports,
         )
+        failures += code
+        regenerated += moved
 
     if args.strict_v1:
         readiness_cmd = [py, "scripts/check_v1_readiness.py", "--strict-v1"]
@@ -219,6 +267,17 @@ def main() -> int:
 
     if not args.skip_e2e:
         failures += command([npm, "run", "e2e:prod"], FRONTEND)
+
+    if regenerated:
+        # The dirty-tree check above ran before these were written, so say it
+        # again at the end where it will not scroll past unread.
+        log(f"{regenerated} generated report(s) rewritten — commit them before tagging")
+        if args.strict_git:
+            print(
+                "generated reports were out of date; commit the rewritten files and rerun",
+                file=sys.stderr,
+            )
+            failures += 1
 
     if failures:
         log(f"failed with {failures} failing step(s)")
