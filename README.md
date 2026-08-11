@@ -140,6 +140,19 @@ cd frontend && npm run e2e       # 先生产构建，再跑 Playwright，避免 
 cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 ```
 
+## 研究与转向系统（v2 进行中）
+
+- **study 层** — 把"一个研究问题"变成可入 repo 的 spec：网格扫描 → 指标 → 跨 run 对比
+  → 判据 PASS/FAIL → 报告。`sim4wis study run <spec.yaml>`，见
+  [`docs/study_guide.md`](docs/study_guide.md)。
+- **转向系统被控对象层** — 扭杆/扭矩传感器/助力曲线/电机包络/齿条摩擦，以及八种架构
+  （C/P/DP/R-EPS · SBW · EPS+RWS · SBW+RWS · 4WIS）。**默认关闭**，关闭时行为逐位不变。
+  见 [`docs/steering_system_guide.md`](docs/steering_system_guide.md)。
+
+> **适用边界**：本工具经解析闭式解与内部一致性验证、golden 基线逐位可复现，
+> **尚未与实车或台架数据做相关性验证**；转向系统参数为工程估计值。
+> 做趋势判断、架构对比、敏感度分析成立；用绝对值定验收指标不成立。
+
 当前 `v0.101.1` 验证基线：
 
 - 后端：`245 passed`

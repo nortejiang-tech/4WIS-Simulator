@@ -177,6 +177,18 @@ export default function App() {
             v{version}
           </span>
         )}
+        {/* Validity boundary, stated in the product rather than only in a
+            document. Until a bench or vehicle dataset lands, a colleague
+            handed a tool this complete will otherwise assume it has been
+            correlated against a real car. Non-dismissible on purpose. */}
+        <span
+          className="validity-badge"
+          title="本工具经解析闭式解与内部一致性验证（golden 基线逐位可复现），
+但尚未与实车或台架数据做相关性验证。转向系统参数为工程估计值。
+详见 docs/v2_steering_platform_plan.md §6。"
+        >
+          未经实车验证
+        </span>
         <span className="page-title">{RAIL.find((r) => r.id === page)?.label ?? ""}</span>
         <div className="header-summary" aria-label="当前状态摘要">
           <span className="hs-item">

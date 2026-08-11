@@ -104,6 +104,14 @@ def render_html(spec: StudySpec, result: StudyResult) -> str:
         ],
     )))
 
+    # Every report says what its numbers are worth. Cheap to add, and the
+    # alternative is a reader assuming correlation that does not exist.
+    parts.append(_section("适用边界", (
+        "<p class='note'>本结果由 4WIS Simulator 产生，经解析闭式解与内部一致性验证，"
+        "golden 基线逐位可复现；<b>尚未与实车或台架数据做相关性验证</b>。"
+        "启用转向系统被控对象层时，其参数为工程估计值而非实测硬件。</p>"
+    )))
+
     axes = list(spec.sweep)
     headers = [*axes, "run", *result.metric_names]
     rows: list[list[Any]] = []
