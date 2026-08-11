@@ -56,16 +56,19 @@ def test_disabled_plant_changes_nothing(cls):
 
 @pytest.mark.parametrize("cls", MODELS)
 def test_a_by_wire_architecture_does_not_take_the_mechanical_path(cls):
-    """SBW has no column, so enabling the plant must be inert for it.
+    """SBW steers, but never through a column it does not have.
 
-    Producing a torque-sensor signal for hardware that has none would be worse
-    than producing nothing: a plausible number in a report about a car that
-    cannot generate it.
+    Producing a torque-sensor signal for hardware without a torsion bar would
+    be worse than producing nothing: a plausible number in a report about a car
+    that cannot generate it. So the by-wire axle gets its own plant, and that
+    plant has no torque-sensor channel at all.
     """
-    _, baseline = _run(cls, _params())
-    model, sbw = _run(cls, _params(enabled=True, architecture="sbw"))
-    assert model._steering is None
-    assert baseline == sbw
+    from sim4wis.steering.bywire import ByWirePlant
+
+    model, _ = _run(cls, _params(enabled=True, architecture="sbw"))
+    assert isinstance(model._steering, ByWirePlant)
+    assert not hasattr(model._steering.state, "torque_sensor")
+    assert "steer_torque_sensor" not in model._steering.state.to_channels()
 
 
 @pytest.mark.parametrize("cls", MODELS)

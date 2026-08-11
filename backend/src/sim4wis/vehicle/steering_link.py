@@ -11,12 +11,14 @@ keep producing `delta_cmd` and none of them need to know a steering system
 appeared underneath. What changes is that reaching the commanded angle now
 costs assist, fights friction, and can run into a motor limit.
 
-**Only mechanical front axles.** By-wire architectures have no column, no
-torsion bar and no assist. Running them through this path would produce a
-torque-sensor signal for hardware that does not have one, which is worse than
-producing nothing: it would be a plausible number in a report about a car that
-cannot generate it. They return None here and keep the actuator model until
-the by-wire path (angle tracking plus road-feel synthesis) exists.
+**Two different plants, one interface.** A mechanical axle maps a hand-wheel
+angle onto a wheel angle through a torsion bar and assist. A by-wire axle
+tracks a commanded wheel angle with one actuator and synthesises hand torque
+with another, and the two are connected only by software. `front_axle_step`
+hides that difference from the vehicle models, which only ever want a front
+wheel angle back — but nothing else is shared, and in particular a by-wire
+configuration never produces a torque-sensor signal, because the hardware has
+no torsion bar to produce one with.
 
 **The rack force is one step old.** `update_derived_outputs` fills
 `state.rack_force` *after* `model.step()` returns, so what the plant sees is
@@ -33,13 +35,18 @@ import numpy as np
 from sim4wis.core.state import VehicleParams
 from sim4wis.steering import architecture as arch
 from sim4wis.steering.assist import get as get_assist_map
+from sim4wis.steering.bywire import ByWirePlant
 from sim4wis.steering.plant import SteeringPlant
 
 
-def make_steering_plant(params: VehicleParams) -> tuple[SteeringPlant | None, float]:
-    """Build the plant for this vehicle, or (None, ratio) when it does not apply.
+def make_steering_plant(
+    params: VehicleParams,
+) -> tuple[SteeringPlant | ByWirePlant | None, float]:
+    """Build the plant this vehicle's architecture calls for.
 
-    Returns the mechanical ratio alongside it so callers do not re-derive it.
+    Returns (plant, mechanical ratio). The ratio is returned alongside so
+    callers do not re-derive it; it is meaningless for a by-wire axle, where
+    the ratio is a software choice rather than a gear.
     """
     from sim4wis.controller.steering_feel import low_speed_gear_ratio
 
@@ -53,7 +60,7 @@ def make_steering_plant(params: VehicleParams) -> tuple[SteeringPlant | None, fl
     except arch.ArchitectureError:
         return None, ratio
     if architecture.front_path != "mechanical":
-        return None, ratio
+        return ByWirePlant(), ratio
 
     plant = SteeringPlant(
         params=sys_params,
@@ -63,6 +70,40 @@ def make_steering_plant(params: VehicleParams) -> tuple[SteeringPlant | None, fl
     )
     plant.reset()
     return plant, ratio
+
+
+def front_axle_step(
+    plant: SteeringPlant | ByWirePlant,
+    mech_ratio: float,
+    delta_cmd: np.ndarray,
+    dt: float,
+    *,
+    prev_hand: float,
+    rack_force: float,
+    speed_ms: float,
+) -> tuple[float, float]:
+    """One front-axle step, whichever kind of plant this is."""
+    if isinstance(plant, ByWirePlant):
+        # The hand wheel is an independent input. Until a real hand-wheel
+        # signal is plumbed through, it follows the commanded angle through the
+        # nominal ratio — which is what a driver holding that angle would have
+        # done, and keeps the feel calibration exercised.
+        delta_f_cmd = 0.5 * (float(delta_cmd[0]) + float(delta_cmd[1]))
+        hand = delta_f_cmd * mech_ratio
+        hand_rate = (hand - prev_hand) / max(dt, 1e-9)
+        state = plant.step(
+            dt,
+            hand_angle=hand,
+            hand_rate=hand_rate,
+            delta_cmd=delta_f_cmd,
+            rack_force=rack_force,
+            speed_ms=speed_ms,
+        )
+        return state.road_wheel_angle, hand
+    return plant_front_angle(
+        plant, mech_ratio, delta_cmd, dt,
+        prev_hand=prev_hand, rack_force=rack_force, speed_ms=speed_ms,
+    )
 
 
 def plant_front_angle(

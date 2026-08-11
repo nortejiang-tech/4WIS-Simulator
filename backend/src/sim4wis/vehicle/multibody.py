@@ -39,7 +39,7 @@ from sim4wis.core.state import (
 )
 from sim4wis.vehicle.base import VehicleModel
 from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
-from sim4wis.vehicle.steering_link import make_steering_plant, plant_front_angle
+from sim4wis.vehicle.steering_link import front_axle_step, make_steering_plant
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.model_core import (
     body_resistance_force,
@@ -225,7 +225,7 @@ class MultiBodyModel(VehicleModel):
                 self._delta_act[2:], cmd.delta_cmd[2:], dt,
                 getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
             )
-            delta_f, self._prev_hand = plant_front_angle(
+            delta_f, self._prev_hand = front_axle_step(
                 self._steering, self._mech_ratio, cmd.delta_cmd, dt,
                 prev_hand=self._prev_hand, rack_force=float(np.sum(s.rack_force[:2])),
                 speed_ms=float(s.vx),
