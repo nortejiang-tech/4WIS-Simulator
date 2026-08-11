@@ -1,0 +1,142 @@
+"""Steering-system parameters — the hardware the assist control acts on.
+
+What this adds, and what it deliberately does not
+-------------------------------------------------
+The repository already carries the *static* force path: tyre forces → kingpin
+moment (`vehicle/kingpin.py`, Reimpell) → rack force through the hardpoint
+linkage → motor torque demand (`wheel_rack_force_from_linkage`), with
+`steering_arm_length`, `pinion_radius`, `rack_mech_efficiency` and
+`motor_gear_ratio` already on `SteeringGeometryParams`. That path is good and
+this module does not duplicate any of it.
+
+What was missing is everything *between the driver's hands and the pinion*, and
+everything about how the motor actually responds:
+
+    hand wheel ──column J,c,friction── torsion bar K ──┬── pinion ── rack ── (existing path)
+                                                       │
+                                    torque sensor  τ_tb ┘  → assist map → motor
+
+Without a torsion bar there is no torque-sensor signal, and without that there
+is no input for any EPS control law and no hand-wheel torque to report. That is
+the gap this package closes; see docs/v2_steering_platform_plan.md §2.
+
+Defaults describe the LS9-class vehicle the rest of the repository is
+calibrated for: 2.9 t SUV, 3.16 m wheelbase, 540° lock-to-lock, 20 mm pinion.
+They are *plausible engineering estimates, not measured hardware* — the same
+status the suspension geometry carries, and stated here for the same reason.
+
+Units are SI throughout: N·m, rad, kg·m², N·m·s/rad. Anything in degrees or
+km/h carries it in the field name.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+
+@dataclass
+class ColumnParams:
+    """Hand wheel, column shaft and the torsion bar that senses driver effort.
+
+    `torsion_stiffness` is the single most consequential number here: it sets
+    the torque-sensor gain, and with the pinion-side inertia it sets the
+    frequency of the column mode. Production torsion bars run 1.5–2.5 N·m/deg;
+    softer gives a finer torque signal and a vaguer feel, stiffer the reverse.
+    """
+
+    inertia: float = 0.05                   # J_c 方向盘+柱转动惯量 [kg·m²]
+    damping: float = 0.30                   # c_c 柱粘性阻尼 [N·m·s/rad]
+    coulomb_friction: float = 0.15          # 柱库仑摩擦 [N·m]
+    torsion_stiffness_nm_per_deg: float = 2.0   # 扭杆刚度 [N·m/deg]
+    torsion_damping: float = 0.05           # 扭杆内阻 [N·m·s/rad]
+    #: Sensor saturation — a real torque sensor clips, and a control law that
+    #: assumes it does not will behave differently at the stops.
+    sensor_range_nm: float = 10.0
+
+    @property
+    def torsion_stiffness(self) -> float:
+        """K_tb [N·m/rad] — the form every equation here wants."""
+        import math
+
+        return self.torsion_stiffness_nm_per_deg * 180.0 / math.pi
+
+
+@dataclass
+class MotorParams:
+    """Assist motor, as a torque source with the limits that actually bite.
+
+    Modelled at torque level rather than as a full field-oriented drive: at
+    vehicle-dynamics timescales the current loop is an order of magnitude
+    faster than anything it feeds, so a first-order torque response with the
+    right *limits* reproduces the behaviour that matters. The limits are the
+    point — a motor sized by its continuous torque and then run into its
+    speed limit during an evasive manoeuvre is the failure this exists to show.
+    """
+
+    torque_constant: float = 0.055          # K_t [N·m/A]
+    inertia: float = 1.2e-4                 # J_m 转子惯量 [kg·m²]
+    bandwidth_hz: float = 40.0              # 转矩响应带宽 [Hz]
+    peak_torque: float = 5.5                # 峰值转矩 [N·m]
+    continuous_torque: float = 3.0          # 连续转矩 [N·m]（热降额目标）
+    #: No-load speed; torque falls linearly to zero there (back-EMF envelope).
+    no_load_speed_rpm: float = 1600.0
+    #: Time constant of the thermal state that drives derating [s]. Minutes,
+    #: not seconds — this is winding-to-housing, and it is why parking
+    #: manoeuvres repeated back-to-back behave differently from the first one.
+    thermal_tau_s: float = 120.0
+    #: Derate factor applied once the thermal state is fully saturated.
+    thermal_derate: float = 0.65
+
+
+@dataclass
+class RackParams:
+    """Rack inertia and friction, referred to the rack (N, kg, m).
+
+    Coulomb friction is the term that makes on-centre feel what it is: it sets
+    the torque deadband and most of the hysteresis loop that ISO 13674
+    measures. It is also the term most often left out of a simple model, which
+    is why such models cannot reproduce on-centre behaviour at all.
+    """
+
+    mass: float = 3.2                       # 齿条+拉杆等效质量 [kg]
+    coulomb_friction_n: float = 260.0       # 齿条库仑摩擦 [N]
+    viscous_n_per_mps: float = 900.0        # 齿条粘性阻尼 [N/(m/s)]
+    #: Reverse (back-drive) efficiency. Forward efficiency already lives on
+    #: SteeringGeometryParams as `rack_mech_efficiency`; the reverse path is a
+    #: separate number and is what decides how much road feel survives and how
+    #: well the wheel returns. Worm gears are markedly worse backwards than
+    #: forwards; ball screws are nearly symmetric.
+    reverse_efficiency: float = 0.75
+
+
+@dataclass
+class SteeringSystemParams:
+    """The steering system as a plant. Off by default.
+
+    `enabled = False` means every equation here is bypassed and the vehicle
+    behaves exactly as it did before this package existed — the same
+    convention `k = 0` and `sigma = 0` already use in the tyre model. That is
+    a hard requirement, not a nicety: the golden baselines must not move
+    because a new subsystem was added.
+    """
+
+    enabled: bool = False
+    column: ColumnParams = field(default_factory=ColumnParams)
+    motor: MotorParams = field(default_factory=MotorParams)
+    rack: RackParams = field(default_factory=RackParams)
+    #: Named assist calibration; resolved against the assist-map library.
+    assist_map: str = "default"
+
+    def describe(self) -> dict[str, object]:
+        """Flat summary for reports and the capability endpoint."""
+        return {
+            "enabled": self.enabled,
+            "torsion_stiffness_nm_per_deg": self.column.torsion_stiffness_nm_per_deg,
+            "sensor_range_nm": self.column.sensor_range_nm,
+            "motor_peak_torque_nm": self.motor.peak_torque,
+            "motor_continuous_torque_nm": self.motor.continuous_torque,
+            "motor_no_load_speed_rpm": self.motor.no_load_speed_rpm,
+            "rack_coulomb_friction_n": self.rack.coulomb_friction_n,
+            "rack_reverse_efficiency": self.rack.reverse_efficiency,
+            "assist_map": self.assist_map,
+        }
