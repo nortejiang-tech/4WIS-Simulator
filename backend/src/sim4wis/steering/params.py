@@ -128,6 +128,10 @@ class SteeringSystemParams:
     column: ColumnParams = field(default_factory=ColumnParams)
     motor: MotorParams = field(default_factory=MotorParams)
     rack: RackParams = field(default_factory=RackParams)
+    #: Which architecture this system is. Decides whether there is a
+    #: mechanical front axle to run the plant on at all, and the reduction
+    #: ratio — see sim4wis.steering.architecture.
+    architecture: str = "r_eps"
     #: Named assist calibration; resolved against the assist-map library.
     assist_map: str = "default"
 
@@ -177,6 +181,7 @@ class SteeringSystemParams:
             "motor_no_load_speed_rpm": self.motor.no_load_speed_rpm,
             "rack_coulomb_friction_n": self.rack.coulomb_friction_n,
             "rack_reverse_efficiency": self.rack.reverse_efficiency,
+            "architecture": self.architecture,
             "assist_map": self.assist_map,
             "motor_gear_ratio": self.motor_gear_ratio,
         }

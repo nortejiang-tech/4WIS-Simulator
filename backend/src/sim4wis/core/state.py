@@ -23,6 +23,9 @@ from typing import Any
 
 import numpy as np
 
+# The steering plant's parameter block. sim4wis.steering.params imports nothing
+# from core, so this cannot cycle.
+from sim4wis.steering.params import SteeringSystemParams
 
 N_WHEELS = 4
 
@@ -336,6 +339,11 @@ class VehicleParams:
     rack_mech_efficiency: float = 0.92   # 齿条正效率 η（典型 0.85~0.95）
     motor_gear_ratio: float = 10.0       # 电机到齿条减速比 i
     steering_geometry: SteeringGeometryParams = field(default_factory=SteeringGeometryParams)
+
+    # Steering system as a plant (v2). Off by default: with `enabled = False`
+    # nothing in sim4wis.steering runs and the command path is exactly what it
+    # was, which is what keeps the golden baselines bit-identical.
+    steering_system: SteeringSystemParams = field(default_factory=SteeringSystemParams)
 
     def wheel_positions_body(self) -> np.ndarray:
         """Return a (4, 2) array of wheel center positions in body frame.

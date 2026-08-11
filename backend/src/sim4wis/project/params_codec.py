@@ -6,6 +6,12 @@ import dataclasses
 from typing import Any
 
 from sim4wis.core.state import SteeringGeometryParams, SuspensionParams, VehicleParams
+from sim4wis.steering.params import (
+    ColumnParams,
+    MotorParams,
+    RackParams,
+    SteeringSystemParams,
+)
 
 
 def params_to_dict(params: VehicleParams) -> dict[str, Any]:
@@ -26,6 +32,7 @@ def params_from_dict(data: dict[str, Any] | None, base: VehicleParams | None = N
         raw.setdefault("parking_torque_coeff", legacy)
     susp_raw = raw.pop("suspension", None)
     geom_raw = raw.pop("steering_geometry", None)
+    steer_raw = raw.pop("steering_system", None)
     # K&C is a measured characteristic, not a scalar: it arrives either inline
     # (a `kc:` section) or by naming a file under kc_profiles/. Either way it is
     # parsed into the typed VehicleKC before it reaches VehicleParams, so the
@@ -37,6 +44,7 @@ def params_from_dict(data: dict[str, Any] | None, base: VehicleParams | None = N
     vehicle_fields.discard("suspension")
     vehicle_fields.discard("steering_geometry")
     vehicle_fields.discard("kc")
+    vehicle_fields.discard("steering_system")
     vehicle_updates = {k: v for k, v in raw.items() if k in vehicle_fields}
 
     susp = base.suspension
@@ -51,10 +59,27 @@ def params_from_dict(data: dict[str, Any] | None, base: VehicleParams | None = N
         geom_updates = {k: v for k, v in geom_raw.items() if k in geom_fields}
         geom = dataclasses.replace(geom, **geom_updates)
 
+    steer = base.steering_system
+    if isinstance(steer_raw, dict):
+        # Same shape as suspension/steering_geometry above, one level deeper:
+        # the sub-blocks are dataclasses too.
+        sub = {"column": ColumnParams, "motor": MotorParams, "rack": RackParams}
+        nested = {}
+        for key, cls in sub.items():
+            block = steer_raw.get(key)
+            if isinstance(block, dict):
+                names = {f.name for f in dataclasses.fields(cls)}
+                nested[key] = dataclasses.replace(
+                    getattr(steer, key), **{k: v for k, v in block.items() if k in names}
+                )
+        flat_names = {f.name for f in dataclasses.fields(SteeringSystemParams)} - set(sub)
+        flat = {k: v for k, v in steer_raw.items() if k in flat_names}
+        steer = dataclasses.replace(steer, **nested, **flat)
+
     kc = base.kc
     if kc_profile:
-        from sim4wis.vehicle.kc import load_kc_profile
         from sim4wis.paths import kc_profiles_dir
+        from sim4wis.vehicle.kc import load_kc_profile
         kc = load_kc_profile(kc_profiles_dir() / f"{kc_profile}.yaml")
     elif isinstance(kc_raw, dict):
         from sim4wis.vehicle.kc import kc_from_dict
@@ -64,6 +89,7 @@ def params_from_dict(data: dict[str, Any] | None, base: VehicleParams | None = N
         base,
         suspension=susp,
         steering_geometry=geom,
+        steering_system=steer,
         kc=kc,
         **vehicle_updates,
     )

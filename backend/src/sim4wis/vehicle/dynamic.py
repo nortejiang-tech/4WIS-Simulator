@@ -42,6 +42,7 @@ from sim4wis.core.state import (
 )
 from sim4wis.vehicle.base import VehicleModel
 from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
+from sim4wis.vehicle.steering_link import make_steering_plant, plant_front_angle
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.load_transfer import vertical_loads
 from sim4wis.vehicle.model_core import (
@@ -95,6 +96,11 @@ class SimplifiedDynamicModel(VehicleModel):
         self.tire_mz = np.zeros(N_WHEELS)
         # Actual steer angle (tracks command through the steering actuator).
         self._delta_act = np.zeros(N_WHEELS)
+        # Steering system as a plant. None unless enabled AND the architecture
+        # has a mechanical front axle — by-wire front axles do not steer through
+        # a column and must not take this path.
+        self._steering, self._mech_ratio = make_steering_plant(params)
+        self._prev_hand = 0.0
         # Static toe (A3, same convention as the load page): the physical wheel
         # angle is the actuator angle plus the per-wheel alignment offset.
         self._toe = static_toe_offsets(params)
@@ -142,10 +148,26 @@ class SimplifiedDynamicModel(VehicleModel):
         p = self.params
 
         # 1) Steering actuator: δ tracks δ_cmd with first-order lag + rate limit.
-        self._delta_act = steer_actuator(
-            self._delta_act, cmd.delta_cmd, dt,
-            getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
-        )
+        if self._steering is None:
+            self._delta_act = steer_actuator(
+                self._delta_act, cmd.delta_cmd, dt,
+                getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
+            )
+        else:
+            # Front axle goes through the real steering system: the strategy
+            # still decides where the wheels should point, the plant decides how
+            # they get there — with assist, friction, inertia and motor limits.
+            # The rear axle keeps the actuator model.
+            self._delta_act[2:] = steer_actuator(
+                self._delta_act[2:], cmd.delta_cmd[2:], dt,
+                getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
+            )
+            delta_f, self._prev_hand = plant_front_angle(
+                self._steering, self._mech_ratio, cmd.delta_cmd, dt,
+                prev_hand=self._prev_hand, rack_force=float(np.sum(s.rack_force[:2])),
+                speed_ms=float(s.vx),
+            )
+            self._delta_act[0] = self._delta_act[1] = delta_f
         s.delta[:] = np.clip(self._delta_act + self._toe, -p.steer_limit, p.steer_limit)
 
         # Per-wheel surface mu cache (re-evaluated using world wheel positions at start)

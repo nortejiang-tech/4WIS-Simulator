@@ -39,6 +39,7 @@ from sim4wis.core.state import (
 )
 from sim4wis.vehicle.base import VehicleModel
 from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
+from sim4wis.vehicle.steering_link import make_steering_plant, plant_front_angle
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.model_core import (
     body_resistance_force,
@@ -101,6 +102,10 @@ class MultiBodyModel(VehicleModel):
         self._zu = np.zeros(N_WHEELS)
         self._zu_dot = np.zeros(N_WHEELS)
         self._delta_act = np.zeros(N_WHEELS)  # steering actuator state
+        # See vehicle/steering_link.py — None unless enabled and the
+        # architecture has a mechanical front axle.
+        self._steering, self._mech_ratio = make_steering_plant(params)
+        self._prev_hand = 0.0
         # Filtered friction-brake command per wheel (first-order, brake_tau).
         self._brake_f = np.zeros(N_WHEELS)
 
@@ -191,6 +196,9 @@ class MultiBodyModel(VehicleModel):
         self._zu = np.zeros(N_WHEELS)
         self._zu_dot = np.zeros(N_WHEELS)
         self._delta_act = np.zeros(N_WHEELS)
+        if self._steering is not None:
+            self._steering.reset()
+        self._prev_hand = 0.0
         self.slip_alpha[:] = 0.0
         self.slip_kappa[:] = 0.0
         self.state.fz = self._corner_static_full.copy()
@@ -205,10 +213,24 @@ class MultiBodyModel(VehicleModel):
         s.mu_avg = float(np.mean(wheel_mus))
         t_motor = self._motor_torques(cmd, s.wheel_omega, dt)
         # Steering actuator: actual δ tracks δ_cmd with lag + rate limit.
-        self._delta_act = steer_actuator(
-            self._delta_act, cmd.delta_cmd, dt,
-            getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
-        )
+        # With a mechanical front axle and the plant enabled the front pair goes
+        # through the real steering system instead — see vehicle/steering_link.py.
+        if self._steering is None:
+            self._delta_act = steer_actuator(
+                self._delta_act, cmd.delta_cmd, dt,
+                getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
+            )
+        else:
+            self._delta_act[2:] = steer_actuator(
+                self._delta_act[2:], cmd.delta_cmd[2:], dt,
+                getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
+            )
+            delta_f, self._prev_hand = plant_front_angle(
+                self._steering, self._mech_ratio, cmd.delta_cmd, dt,
+                prev_hand=self._prev_hand, rack_force=float(np.sum(s.rack_force[:2])),
+                speed_ms=float(s.vx),
+            )
+            self._delta_act[0] = self._delta_act[1] = delta_f
         delta_cmd = self._delta_act.astype(float)
 
         if float(getattr(p, "tire_relax_length", 0.0)) > 0.0:
