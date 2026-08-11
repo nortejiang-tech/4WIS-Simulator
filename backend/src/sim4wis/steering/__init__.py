@@ -12,6 +12,8 @@ here runs and the vehicle behaves exactly as it did before.
 See docs/v2_steering_platform_plan.md.
 """
 
+from sim4wis.steering import architecture
+from sim4wis.steering.architecture import Architecture, ArchitectureError
 from sim4wis.steering.assist import AssistMap, AssistMapError
 from sim4wis.steering.params import (
     ColumnParams,
@@ -21,7 +23,10 @@ from sim4wis.steering.params import (
 )
 
 __all__ = [
+    "Architecture",
+    "ArchitectureError",
     "AssistMap",
+    "architecture",
     "AssistMapError",
     "ColumnParams",
     "MotorParams",

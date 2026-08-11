@@ -35,6 +35,7 @@ from fastapi.responses import FileResponse
 
 from sim4wis.controller.registry import available_strategies
 from sim4wis.experiment import store as run_store
+from sim4wis.steering import architecture as steering_arch
 from sim4wis.study import runner, store
 from sim4wis.study.metrics import describe_metrics
 from sim4wis.study.spec import StudySpec
@@ -109,6 +110,7 @@ async def capabilities() -> dict[str, Any]:
             for m in model_infos()
         ],
         "metrics": describe_metrics(),
+        "steering_architectures": steering_arch.describe_all(),
         "strategies": available_strategies(),
         "steer_kinds": ["constant", "step", "ramp", "sine", "sweep", "dlc"],
         "steer_units": ["normalized", "front_deg"],
@@ -121,6 +123,9 @@ async def capabilities() -> dict[str, Any]:
             "than refused.",
             "solver axes (sweep[*].solve_for) are declared in the schema but not "
             "implemented yet.",
+            "steering_architectures describes what each configuration has and how it "
+            "can fail. The steering plant is not wired into the vehicle yet, so these "
+            "are declarations the guard can already use, not behaviour you can run.",
         ],
     }
 

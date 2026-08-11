@@ -274,11 +274,13 @@ def cmd_capabilities(args: argparse.Namespace) -> int:
         caps = _get(args.backend, "/api/study/capabilities")
     else:
         from sim4wis.controller.registry import available_strategies
+        from sim4wis.steering import architecture as steering_arch
         from sim4wis.study.metrics import describe_metrics
         from sim4wis.study.runner import expected_channels
         from sim4wis.vehicle.model_registry import model_infos
 
         caps = {
+            "steering_architectures": steering_arch.describe_all(),
             "models": [{"id": m.id, "label": m.label, "layer": m.layer,
                         "description": m.description} for m in model_infos()],
             "metrics": describe_metrics(),
@@ -295,6 +297,12 @@ def cmd_capabilities(args: argparse.Namespace) -> int:
     print(_table(["name", "unit", "requires", "solvable", "description"],
                  [[m["name"], m["unit"], m["requires"], m["solvable"], m["description"]]
                   for m in caps["metrics"]]))
+    if caps.get("steering_architectures"):
+        print("\nsteering architectures:")
+        print(_table(["id", "front", "assist at", "rear", "ratio", "label"],
+                     [[a["id"], a["front_path"], a["assist_at"], a["rear_axle"],
+                       a["motor_gear_ratio"], a["label"]]
+                      for a in caps["steering_architectures"]]))
     print("\nstrategies: " + ", ".join(caps["strategies"]))
     return 0
 
