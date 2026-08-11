@@ -146,12 +146,50 @@ report:
   形式，跑完给 PASS/FAIL，而不是让 Agent 事后从一堆数里叙述一个故事。
 - **`model` 必填、不给默认值**。默认值会让 Agent 无意识地在运动学上问动力学问题。
 
-### 未定 (open)
+### 标定扫描 `solve_for`（决策 a）
 
-- `sweep` 是否需要非笛卡尔的成对扫描（zip 而非 product）？decoupling study 里"每个控制律
-  在等 a_y 下扫四个速度"需要按 a_y 反解转角，是个**带求解的**扫描，笛卡尔积表达不了。
-  倾向：先只支持 product，把带求解的扫描留给 `precompute` 钩子（见 §7），P2 再决定要不要
-  进 schema。
+有一类扫描的取值**跑之前不知道**，要先解出来。decoupling study 的核心比较就是这种：六个控制律
+在四个速度上比，必须比在**等侧向加速度**下——按等转角比是不公平的，因为各律增益本就不同。
+所以每个 (律, 速度) 格子都要先反解出"能产生 4 m/s² 的前轮转角是多少"。
+
+这在 schema 里表达成一根**求解轴**：
+
+```yaml
+sweep:
+  law:        { values: [yaw_fb, zero_beta, model_follow], bind: strategy.mode_params.law }
+  speed_kmh:  { values: [40, 80, 120, 140], bind: maneuver.steps.0.speed_kmh }
+  steer_deg:                                     # ← 值由求解决定，不由你给
+    solve_for: { metric: ay_steady_ms2, target: 4.0, tol: 0.02 }
+    bind:      maneuver.steps.0.steer.amplitude
+    bracket:   [0.2, 8.0]                        # 只在上升支内搜索，见下
+    max_iter:  12
+    cache:     docs/reports/<study>/cal.json     # 复用既有做法
+```
+
+语义：对其它扫描轴的**每一个组合**，在 `bracket` 内对 `bind` 的参数做一维求根，直到 `metric`
+落到 `target ± tol`。解出的值成为该格子的轴取值，并**逐格记进结果表**——结论依赖它，就必须
+看得见。
+
+#### 三个必须处理的坑
+
+1. **a_y 对转角不单调。** 过了附着峰，转角再加 a_y 反而**下降**。所以"解 a_y = 4"在极限附近
+   可能有两个解、也可能无解。求解器必须：只在**上升支**内搜索（用现有的
+   `grip_util` / 过峰判据判断是否已越峰），若 `target` 超过该工况能达到的最大值，返回
+   `unreachable` 并附上实际达到的峰值——**绝不能悄悄收敛到下降支上的那个解**，那会让整张
+   对比表看起来正常而实际每个格子比的都不是同一件事。
+2. **成本要报出来。** 一次求解 ≈ 8–12 次探针 run。6 律 × 4 速 = 24 次求解 ≈ 240 个额外 run。
+   `--dry-run` 必须把这个数算出来告诉调用方，别让 Agent 一句话点着几百个 run 才发现。
+3. **必须能缓存复用。** 标定只跟（params 哈希, model, strategy, 工况, target）有关，与被比较的
+   量无关。现有研究已经在这么做了（`docs/reports/decoupling_study_data/cal.json`）。缓存键里
+   **必须**含 params 哈希，否则改了轮胎参数还在用旧标定，是最隐蔽的一类错。
+
+#### 可解性要声明
+
+不是所有指标都能拿来求解——必须是每 run 一个标量，且在 `bracket` 内单调。指标注册表里因此
+要有 `solvable: bool` 与建议 `bracket`；对不可解的指标写 `solve_for` 直接在 `--dry-run` 阶段拒绝。
+
+这套机制不是给 a_y 特化的：解转角以达到目标横摆角速度、解车速以在固定转角下达到目标 a_y，
+都是同一根轴。所以按通用的求解轴做，而不是加一个 `equal_ay` 开关。
 
 ---
 
@@ -375,7 +413,9 @@ sim4wis realtime acquire|release|drive|observe
 | **P0** | 本设计文档 | 评审通过 | — |
 | **P1** | study 层核心 + `/api/study/*` + CLI：StudySpec、sweep 展开、指标注册表（内置 + 表达式档）、compare、默认 sweep 报告模板 | **用 spec 复刻「后轮转角范围」研究的 sweep 部分，数值与现有报告一致** | 1.5–2.5 天 |
 | **P2** | 能力边界守卫 + 出处字段 + `--dry-run` | 模型能力矩阵有测试守着；对运动学问 `grip_util` 被拒绝且给出 `use_instead` | 0.5–1 天 |
+| **P2.5** | 求解轴 `solve_for`（§4）：一维求根、上升支约束与 `unreachable`、标定缓存、`--dry-run` 报成本 | 目标 a_y 超过该工况极限时返回 `unreachable` 并给出实际峰值，**不**收敛到下降支；改车辆参数后缓存自动失效 | 0.5–1 天 |
 | **P3** | MCP server（独立进程 / stdio，§13）：工具面、后端自动拉起与回收、版本协商 | 在 Claude Code 里端到端跑通一次真实研究；后端未启动时能自己拉起，退出时不误杀用户的后端 | 0.5–1 天 |
+| **P3.5** | 随便携版分发（§13）：打包、`print-mcp-config`、说明书一节、发布门禁一条 | 解压一份新包，粘贴生成的配置，Agent 能直接跑通一次 study | 0.5 天 |
 | **P4** | 实时租约 + Script 驱动 + GUI 让位提示 | 人在 Agent 持租约时点一下 GUI，租约立即吊销且状态被恢复 | 1 天 |
 | **P5** | Python 插件档：自定义指标插件 + `in_loop` 钩子 + 多命名策略插件 | **用 spec 复刻 decoupling study 的六控制律阶梯** | 1–1.5 天 |
 
@@ -385,6 +425,12 @@ sim4wis realtime acquire|release|drive|observe
 P1 比初稿多了半天：决策 b 把 `/api/study/*` 从 P3 提到了 P1——MCP server 既然只发 HTTP，
 服务端契约就得先有。好处是 CLI 和 MCP 从第一天起就共用同一条路，不会出现"CLI 能做但 MCP
 做不到"的分叉。
+
+P2.5 排在 P2 之后不是随意的：求解轴要靠过峰判据判断上升支，而那属于能力边界那一族的东西，
+边界守卫先立起来，求解器才有可依据的裁决面。P5 依赖 P2.5——没有等 a_y 标定就复刻不了
+decoupling study。
+
+合计 **5–7.5 天**（初稿 4–6.5 天，a 与 c 各加约半天到一天）。
 
 ---
 
@@ -403,16 +449,16 @@ P1 比初稿多了半天：决策 b 把 `/api/study/*` 从 P3 提到了 P1——
 
 ### 已定
 
-- **b. MCP server 走独立进程（stdio）。** 详见 §13。选它的决定性理由是**可逆**：study 层不变，
+- **a. sweep 支持求解轴 `solve_for`**，进 schema，不走钩子。详见 §4「标定扫描」。理由：等 a_y
+  比较是这类研究的**基本手法**而不是个例，交给钩子等于每份研究各写一遍，还各自漏掉非单调性
+  这个坑。
+- **b. MCP server 走独立进程（stdio）。** 详见 §13。决定性理由是**可逆**：study 层不变，
   A 做完想再挂一个 `/mcp` 到 FastAPI 上很容易，反过来要拆。而且它对已经能跑的东西零风险。
+- **c. 便携版 zip 带上 MCP server。** 详见 §13「随便携版分发」。
 
-### 未决（需要你的意见）
+### 未决
 
-- **a.** sweep 要不要支持"等 a_y 反解转角"这类带求解的扫描（decoupling study 需要）？
-  还是统一交给 `precompute` 钩子？
-- **c.** 便携版 zip 要不要带上 MCP server？选了 A 之后这件事变得很便宜——stdio server 就是几个
-  Python 文件，便携包本来就内嵌 Python 3.12，等于只多打包几十 KB。带上意味着同事拿到包也能让
-  自己的 Agent 用；不带则只是你本机的开发工具。
+暂无。实现中若发现新的分叉再回来记。
 
 ---
 
@@ -447,7 +493,22 @@ MCP server 与后端可能不同版本（同事更新了包但没更新 MCP serv
 和自己声明的契约版本比对，不匹配就在 `describe_capabilities` 的返回里带一条显式告警——不阻断，
 但让 Agent 知道自己可能在用一个对不上的接口。
 
+### 随便携版分发（决策 c）
+
+同事拿到 zip 也能让自己的 Agent 用。便携包本来就内嵌 Python 3.12，所以增量只是几个 Python
+文件 + 依赖。要处理的是这几件：
+
+1. **依赖体积。** MCP Python SDK 要进 vendor 集。若体积不可接受，退路是**手写 JSON-RPC over
+   stdio**——协议本身不复杂，但要自己维护 schema 序列化与生命周期，风险更高。**先按引 SDK 做，
+   量出来再评估**，不要为了省几 MB 提前上手写。
+2. **路径是每台机器不同的。** 用户解压到哪都行，配置里得写绝对路径。所以包里要带一个
+   `print-mcp-config` 之类的小命令，直接打印一段可粘贴的 `.mcp.json`，路径已经填好。
+   让人手抄路径是必错的。
+3. **说明书要写。** iCloud 的 `4WIS_Simulator_便携版_说明.txt` 加一节，讲怎么把这段配置贴进
+   Claude Code / 其它宿主，以及"Agent 会自己拉起后端，不用你先开"。
+4. **发布门禁要覆盖。** `check_release_assets.py` 加一条：便携包内必须存在 MCP server 入口，
+   且 `print-mcp-config` 能跑通。否则某次打包漏了没人会发现。
+
 ### 配置形态
 
-对 Claude Code 是一条 `.mcp.json` 记录；对便携版用户（若 **c** 选带上）应该给一段可复制粘贴的
-配置片段，放进 iCloud 的说明 txt 里。
+对本仓库开发是一条 `.mcp.json` 记录；对便携版用户是上面第 2 条生成的那段。
