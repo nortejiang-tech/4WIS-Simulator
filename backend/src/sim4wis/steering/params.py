@@ -79,7 +79,11 @@ class MotorParams:
     peak_torque: float = 5.5                # 峰值转矩 [N·m]
     continuous_torque: float = 3.0          # 连续转矩 [N·m]（热降额目标）
     #: No-load speed; torque falls linearly to zero there (back-EMF envelope).
-    no_load_speed_rpm: float = 1600.0
+    #: A brisk parking turn is ~110°/s at the hand wheel, which through a
+    #: production R-EPS reduction is ~2300 rpm — so anything much below this
+    #: makes the motor run out of speed during ordinary parking rather than
+    #: during the evasive manoeuvre the envelope is meant to expose.
+    no_load_speed_rpm: float = 2800.0
     #: Time constant of the thermal state that drives derating [s]. Minutes,
     #: not seconds — this is winding-to-housing, and it is why parking
     #: manoeuvres repeated back-to-back behave differently from the first one.
@@ -127,6 +131,24 @@ class SteeringSystemParams:
     #: Named assist calibration; resolved against the assist-map library.
     assist_map: str = "default"
 
+    #: Motor-to-pinion reduction of the *physical* drive.
+    #:
+    #: Deliberately separate from `SteeringGeometryParams.motor_gear_ratio`,
+    #: which defaults to 10 and feeds the existing `motor_torque_demand`
+    #: diagnostic. The two disagree by an order of magnitude and both cannot be
+    #: right: at ratio 10 a 10.4 kN parking rack force needs a 20.8 N·m motor,
+    #: where production EPS motors are 3–6 N·m. A real R-EPS ball-screw plus
+    #: belt drive works out near 63, derived rather than guessed:
+    #:     F_rack/tau_m = 2*pi*i_belt/lead = 2*pi*2.5/0.005 = 3142 N per N*m
+    #:     N = (F_rack/tau_m) * r_pinion = 3142 * 0.020 = 63
+    #: which needs 3.3 N*m for a 10.4 kN parking force — inside a 5.5 N*m peak.
+    #:
+    #: Changing the legacy field would move an existing output, so the plant
+    #: carries its own and the two get reconciled when the architecture layer
+    #: defines the reduction chain per architecture (v2 V2). Recorded in
+    #: docs/v2_steering_platform_plan.md §5.
+    motor_gear_ratio: float = 63.0
+
     def describe(self) -> dict[str, object]:
         """Flat summary for reports and the capability endpoint."""
         return {
@@ -139,4 +161,5 @@ class SteeringSystemParams:
             "rack_coulomb_friction_n": self.rack.coulomb_friction_n,
             "rack_reverse_efficiency": self.rack.reverse_efficiency,
             "assist_map": self.assist_map,
+            "motor_gear_ratio": self.motor_gear_ratio,
         }
