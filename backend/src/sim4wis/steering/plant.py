@@ -34,35 +34,32 @@ torque and the pinion stays put.
 measures twist. Feeding the damping term into the assist map as well would be
 free phase lead the hardware does not have, and would flatter the control law.
 
-STATUS — NOT YET VALIDATED
+Damping is not optional
+-----------------------
+Assist is proportional feedback on twist, so it multiplies the effective
+stiffness the pinion inertia works against. On the default map that is 59x at
+parking, which leaves the loop at zeta = 0.0036 on mechanical damping alone.
+Built without a damping term, this model did exactly what the hardware would:
+the pinion overshot the hand wheel, twist went negative, assist reversed, and
+it diverged until the torque sensor sat pinned at saturation with 87 degrees of
+twist. Assist *raised* parking effort from 96.5 to 174.3 N.m.
+
+That is why every production EPS carries a damping function. The gain here is
+scheduled on the local boost so the loop damping ratio holds; a real
+calibration uses a table, and this is the shape that table approximates.
+
+Bench probe, current state
 --------------------------
-Nothing integrates this module yet, and it must not be wired into the vehicle
-until the defect below is resolved.
+    full-lock parking, 10 kN rack load
+        assist off   96.5 N.m at the hand wheel
+        assist on     4.9 N.m          — 20x reduction, right direction
+        peak motor    3.1 N.m          — inside the 5.5 N.m peak
+    100 km/h, +/-10 deg
+        peak hand     1.3 N.m          — plausible on-centre effort
+        hysteresis loop has area, and the stick logic engages
 
-Bench probe, full-lock parking against a 10 kN rack load:
-
-    assist off   peak hand torque  96.5 N.m      (plausible for an unassisted
-                                                  2.9 t SUV at full lock)
-    assist on    peak hand torque 174.3 N.m      (WRONG — assist must reduce
-                                                  effort, never raise it)
-
-The on-centre behaviour is right: at 100 km/h with +/-10 deg the peak hand
-torque is 1.3 N.m, the stick logic engages, and the hysteresis loop has area,
-which is the mechanism ISO 13674 measures.
-
-Sub-stepping was needed and is not the whole story. The assist loop multiplies
-the effective torsion stiffness by the boost ratio (~59x at parking), moving
-the column mode from 2.5 Hz to roughly 19 Hz, which a 5 ms step cannot carry;
-sub-stepping at 0.2 ms fixed the 100 km/h case (2.42 -> 1.30 N.m) but left
-parking unchanged, so a second, non-numerical defect remains. Suspects, in
-order: the motor speed envelope saturating assist right where the load peaks
-(available torque falls to 3.14 N.m against a 3.97 N.m demand), the sensor
-saturation interacting with the map's edge-hold, and the sign or referral of
-the load term at large pinion angle.
-
-Resolve by instrumenting one parking sweep step by step rather than by
-adjusting parameters — the numbers above are self-consistent under several
-wrong hypotheses, which is why guessing has not worked.
+Plausible, not validated: no bench or vehicle data backs these numbers, and
+the parameters are engineering estimates. See docs/v2_steering_platform_plan.md
 """
 
 from __future__ import annotations
@@ -200,7 +197,15 @@ class SteeringPlant:
         # Assist: map → motor (with its envelope) → back to the pinion.
         assist_pinion = 0.0
         if assist_enabled:
-            want_pinion = self.assist_map.assist_torque(sensor, speed_ms)
+            # Boost curve, plus the damping that makes the loop stable at all.
+            # Scheduled on the local boost so the loop damping ratio holds:
+            # c = 2*zeta*sqrt(K_eff*J) with K_eff = K_tb*(1 + boost).
+            boost = self.assist_map.boost_ratio(sensor, speed_ms)
+            k_eff = k_tb * (1.0 + boost)
+            c_damp = (2.0 * p.assist_damping_ratio
+                      * math.sqrt(max(k_eff * self.equivalent_inertia, 0.0)))
+            want_pinion = (self.assist_map.assist_torque(sensor, speed_ms)
+                           - c_damp * s.pinion_rate)
             motor_cmd = want_pinion / n
             m = self._motor.step(dt, motor_cmd, s.pinion_rate * n)
             assist_pinion = m.torque * n

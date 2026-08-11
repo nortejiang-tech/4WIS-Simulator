@@ -131,6 +131,23 @@ class SteeringSystemParams:
     #: Named assist calibration; resolved against the assist-map library.
     assist_map: str = "default"
 
+    #: Target damping ratio of the assist loop.
+    #:
+    #: Assist is proportional feedback on torsion-bar twist, so it multiplies
+    #: the effective stiffness the pinion inertia works against — by the boost
+    #: ratio, which is ~59x at parking on the default map. The mechanical
+    #: damping present (torsion-bar internal plus rack viscous, 0.41 N*m*s/rad)
+    #: leaves that loop at zeta = 0.0036, i.e. undamped: the pinion overshoots
+    #: the hand wheel, twist goes negative, assist reverses, and it diverges.
+    #: Measured before this term existed: assist *raised* parking effort from
+    #: 96.5 to 174.3 N*m.
+    #:
+    #: This is not a modelling artefact. It is why every production EPS carries
+    #: a damping function in the ECU. The damping gain is scheduled to hold
+    #: this ratio as boost varies; a real calibration uses a table, and this is
+    #: the shape that table approximates.
+    assist_damping_ratio: float = 0.6
+
     #: Motor-to-pinion reduction of the *physical* drive.
     #:
     #: Deliberately separate from `SteeringGeometryParams.motor_gear_ratio`,
