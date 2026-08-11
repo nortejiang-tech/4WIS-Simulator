@@ -230,3 +230,51 @@ def test_the_plant_is_off_by_default():
     """The whole compatibility promise in one assertion."""
     assert SteeringSystemParams().enabled is False
     assert SteeringSystemParams().describe()["enabled"] is False
+
+
+class TestDriverTorqueLimit:
+    """The hand wheel is held by something with finite strength.
+
+    Without this the imposed-angle convention keeps asserting "the wheel is
+    here" long after nothing could hold it there, and the model answers an
+    impossible request by ringing.
+    """
+
+    def _park(self, peak_nm: float):
+        p = SteeringSystemParams(enabled=True)
+        p.motor.peak_torque = peak_nm
+        plant = SteeringPlant(params=p, assist_map=get("default"), motor_gear_ratio=63.0)
+        return _sweep(plant, rack_n=20_658.0, speed_ms=0.0, amp_deg=90.0)
+
+    def test_hand_torque_is_bounded_by_what_a_driver_can_apply(self):
+        run = self._park(3.0)                      # clearly undersized
+        limit = SteeringSystemParams().column.hand_torque_limit_nm
+        peak = max(abs(s.hand_torque) for _, s in run)
+        assert peak < limit * 1.2, f"{peak:.1f} N.m — nobody can hold that"
+        assert any(s.hand_limited for _, s in run)
+
+    def test_an_undersized_motor_says_so_through_the_limit_flag(self):
+        small = self._park(3.0)
+        ample = self._park(12.0)
+        assert sum(s.hand_limited for _, s in small) > 0
+        assert sum(s.hand_limited for _, s in ample) == 0
+
+    def test_an_ample_motor_gives_a_clean_parking_effort(self):
+        run = self._park(12.0)
+        assert max(abs(s.hand_torque) for _, s in run) < 12.0
+        # And no numerical excursion: motor speed stays in a real range.
+        assert max(abs(s.motor_speed) for _, s in run) * 60 / (2 * math.pi) < 6000
+
+    def test_the_damping_schedule_does_not_chase_motor_speed(self):
+        """Regression guard for a feedback loop of my own making.
+
+        Scheduling the assist damping on the torque available *at this
+        instant* made the gain depend on motor speed, which depends on the
+        damping. It chattered precisely at the motor size that almost holds the
+        load — 5.5 N.m rang at 85 000 rpm while both 3.0 and 8.0 were fine.
+        Capping by the static capability instead removes the loop.
+        """
+        for peak in (2.0, 3.0, 4.0):
+            run = self._park(peak)
+            rpm = max(abs(s.motor_speed) for _, s in run) * 60 / (2 * math.pi)
+            assert rpm < 8000, f"{peak} N.m motor reached {rpm:.0f} rpm"

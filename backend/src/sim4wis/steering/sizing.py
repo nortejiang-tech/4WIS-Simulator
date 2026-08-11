@@ -40,14 +40,30 @@ from sim4wis.steering.assist import get as get_assist_map
 from sim4wis.steering.plant import SteeringPlant
 from sim4wis.vehicle.load_analysis import sweep_load_analysis
 
-#: Above this saturated fraction the scenario's numbers stop meaning anything.
+#: Above this saturated (or driver-limited) fraction a scenario's numbers stop
+#: meaning anything.
 #:
-#: The plant is a faithful steering system *within actuator capability*. Past
-#: it, asked to hold an angle the motor cannot hold, it rings rather than going
-#: heavy — 48 000 rpm and 399 N.m at the hand wheel on the run that exposed
-#: this. A sizing pass drives past capability on purpose, so the honest
-#: behaviour is to report "this motor does not cover this case" and refuse to
-#: quantify by how much, rather than to publish the oscillation.
+#: KNOWN LIMITATION, and it lands squarely on this module.
+#:
+#: The plant behaves in two of the three regimes. Where the actuator
+#: comfortably covers the load it is clean (7.95 N.m at the hand wheel, 1639
+#: rpm for full-lock parking on the default vehicle). Where it clearly cannot,
+#: the driver-torque limit bounds it and the answer "this motor cannot do it"
+#: comes out cleanly. In the **marginal band between** — a motor that almost
+#: holds the load — it still rings, and that is exactly the band a sizing pass
+#: operates in, so this is not a corner case here.
+#:
+#: Two contributors have been removed already: the imposed-angle convention
+#: asserting an angle nothing could hold (fixed by the driver-torque limit),
+#: and a damping schedule that read the torque available at this instant and so
+#: depended on the motor speed it was controlling (fixed by capping on static
+#: capability). What remains is the plant entering and leaving assist
+#: saturation within a manoeuvre.
+#:
+#: The likely fix is to solve the torsion/load equilibrium when assist is
+#: saturated rather than integrating through it. Until then this flag is the
+#: guard: report that the motor does not cover the case, and refuse to say by
+#: how much.
 SATURATION_TRUST_LIMIT = 0.05
 
 
@@ -106,6 +122,9 @@ class ScenarioResult:
     peak_hand_torque: float = 0.0
     #: Fraction of the run where the motor could not deliver what was asked.
     saturated_fraction: float = 0.0
+    #: Fraction of the run where holding the commanded angle needed more than
+    #: the driver-torque limit — i.e. the manoeuvre was not performed as asked.
+    hand_limited_fraction: float = 0.0
     #: True when the run spent long enough past capability that the trace is
     #: not physical. See `SATURATION_TRUST_LIMIT`.
     beyond_capability: bool = False
@@ -123,6 +142,7 @@ class ScenarioResult:
             "peak_rack_force_n": round(self.peak_rack_force, 1),
             "peak_hand_torque_nm": round(self.peak_hand_torque, 2),
             "saturated_fraction": round(self.saturated_fraction, 3),
+            "hand_limited_fraction": round(self.hand_limited_fraction, 3),
             "beyond_capability": self.beyond_capability,
             **({"note": "电机能力不足，饱和后的数值不可信 —— 只能读出"
                         "「不够」，读不出「差多少」"} if self.beyond_capability else {}),
@@ -207,6 +227,7 @@ def run_scenario(
     res = ScenarioResult(scenario=scenario)
     sq_sum = 0.0
     saturated = 0
+    limited = 0
     speed_ms = scenario.speed_kmh / 3.6
 
     for i in range(n):
@@ -249,10 +270,17 @@ def run_scenario(
         res.peak_power_w = max(res.peak_power_w, abs(s.motor_torque * s.motor_speed))
         sq_sum += s.motor_torque ** 2
         saturated += 1 if s.motor_saturated else 0
+        limited += 1 if s.hand_limited else 0
 
     res.rms_motor_torque = math.sqrt(sq_sum / n)
     res.saturated_fraction = saturated / n
-    res.beyond_capability = res.saturated_fraction > SATURATION_TRUST_LIMIT
+    res.hand_limited_fraction = limited / n
+    # Either signal means the run did not do what was asked: the motor could
+    # not deliver, or nothing could hold the wheel there.
+    res.beyond_capability = (
+        res.saturated_fraction > SATURATION_TRUST_LIMIT
+        or res.hand_limited_fraction > SATURATION_TRUST_LIMIT
+    )
     return res
 
 

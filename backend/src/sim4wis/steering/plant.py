@@ -91,6 +91,7 @@ class SteeringPlantState:
     motor_heat: float = 0.0
     motor_saturated: bool = False
     stuck: bool = False                # 静摩擦锁死（中心区死区的来源）
+    hand_limited: bool = False         # 保持该角度所需手力矩超出人/机器人能力
 
     def to_channels(self) -> dict[str, float]:
         return {
@@ -187,6 +188,14 @@ class SteeringPlant:
 
         k_tb = p.column.torsion_stiffness
         twist = float(hand_angle) - s.pinion_angle
+        # A driver cannot apply unlimited torque, so the hand wheel cannot be
+        # imposed at an angle that would require it. Clamping the twist is the
+        # same statement: past this the wheel stops advancing rather than the
+        # model inventing an equilibrium nothing can hold.
+        twist_limit = p.column.hand_torque_limit_nm / max(k_tb, 1e-9)
+        hand_limited = abs(twist) > twist_limit
+        if hand_limited:
+            twist = math.copysign(twist_limit, twist)
         rate_diff = float(hand_rate) - s.pinion_rate
         torsion = k_tb * twist + p.column.torsion_damping * rate_diff
 
@@ -209,7 +218,15 @@ class SteeringPlant:
             # drives past capability on purpose, so this path is normal, not
             # exceptional.
             boost = self.assist_map.boost_ratio(sensor, speed_ms)
-            ceiling = self._motor.available_torque(s.pinion_rate * n, self._motor.state.heat) * n
+            # Cap by the motor's *static* capability, not by what is available
+            # at this instant. Using the instantaneous ceiling made the damping
+            # gain depend on motor speed, which depends on the damping — a
+            # feedback loop of my own making, and it chattered exactly at the
+            # motor size that almost holds the load (5.5 N.m rang at 85 000 rpm
+            # while both 3.0 and 8.0 were well behaved). A damping schedule
+            # exists to keep zeta sane across the operating range; it has no
+            # business reacting within a step.
+            ceiling = self.params.motor.peak_torque * n
             if abs(sensor) > 1e-9:
                 boost = min(boost, ceiling / abs(sensor))
             k_eff = k_tb * (1.0 + boost)
@@ -275,6 +292,7 @@ class SteeringPlant:
             motor_heat=m.heat,
             motor_saturated=m.saturated,
             stuck=stuck,
+            hand_limited=hand_limited,
         )
         return self.state
 

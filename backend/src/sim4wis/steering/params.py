@@ -52,6 +52,20 @@ class ColumnParams:
     #: Sensor saturation — a real torque sensor clips, and a control law that
     #: assumes it does not will behave differently at the stops.
     sensor_range_nm: float = 10.0
+    #: What the thing holding the wheel can actually apply [N·m].
+    #:
+    #: The imposed-angle convention says "the wheel is here now", which stops
+    #: being physical once holding it there needs more than a person or a
+    #: steering robot can produce. Without this limit the model answers an
+    #: impossible request by ringing: past assist saturation it produced
+    #: 48 000 rpm and 399 N.m at the hand wheel, because it was being told to
+    #: hold an angle nothing could hold. With it, the wheel simply stops
+    #: advancing — which is what happens in the car park.
+    #:
+    #: 25 N.m is above any sustained human effort (a strong driver two-handed
+    #: is ~15) and below a test robot's capability, so it bounds the model
+    #: without truncating anything a real test would measure.
+    hand_torque_limit_nm: float = 25.0
 
     @property
     def torsion_stiffness(self) -> float:
