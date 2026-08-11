@@ -228,3 +228,64 @@ study 层的 `criteria` 升级为"目标符合性报告"——一张表回答**�
 试验工程师的工具，往后放一期不挡他们。
 
 V6 的角色入口也据此排：**系统工程师视图为默认入口**。
+
+---
+
+## 9. 进度与交接（2026-08-11）
+
+### 已完成
+
+| 项 | commit | 状态 |
+|---|---|---|
+| V1 参数面 / 助力曲线 | `cdfc52e` | ✅ |
+| V1 电机包络 / 机械链 | `1c8bbfe` → `54f37bc` | ✅（含阻尼缺陷修复） |
+| V1 测试（26 项） | `b5e762f` | ✅ |
+| V2 架构注册表（8 种）+ 能力/故障守卫 | `326acf7` | ✅ |
+| **V2 接入车辆** | — | ⏸ **未开始，见下** |
+
+后端测试 613 → 659。转向被控对象层**尚未接入命令通路**，因此对现有行为零影响。
+
+### 下一步：把 plant 接进前轴
+
+这是 v2 里风险最高的一步——它动的是全仓最容易悄悄改变既有行为的地方。**先立护栏，再动通路。**
+
+**第 0 步（必须最先做）**：写一个 golden 不变性门禁测试——`steering_system.enabled = False` 时，
+`dynamic` 与 `multibody` 的输出必须与接入前逐位一致。没有这个测试，后面每一步都在盲改。
+
+**接入点**：`vehicle/dynamic.py` 第 1 步（`steer_actuator` 调用处），`multibody.py` 同名位置。
+
+**设计**（保持"策略决定轮往哪指、转向系统决定怎么到达"的语义）：
+
+```
+架构为机械前轴（c/p/dp/r_eps、eps_rws）且 enabled：
+    δ_f_cmd = mean(cmd.delta_cmd[:2])
+    θ_sw    = δ_f_cmd × i_mech            i_mech = low_speed_gear_ratio(params) ≈ 7.71
+    plant.step(hand_angle=θ_sw, hand_rate=Δ/dt,
+               rack_force=s.rack_force[0] + s.rack_force[1],   ← 上一步的值，滞后一步，5 ms 下可接受
+               speed_ms=s.vx)
+    δ_f = pinion_angle / i_mech           前两轮
+    后两轮仍走 steer_actuator
+否则：
+    完全走今天的 steer_actuator 路径 —— 逐位不变
+```
+
+**要改的四处**：
+
+1. `core/state.py` — `VehicleParams` 加 `steering_system: SteeringSystemParams` 字段
+2. `project/params_codec.py` — 按 `suspension` / `steering_geometry` / `kc` 的既有模式
+   pop、解析、从扁平字段集里 discard（`params_from_dict` 里已有这个套路）
+3. `vehicle/dynamic.py` — 上面的分支
+4. `vehicle/multibody.py` — 同样的分支
+
+**已知坑**：
+
+- `s.rack_force` 由 `update_derived_outputs` 在 `model.step()` **之后**填充，所以拿到的是
+  上一步的值。这是正常的耦合滞后，但要在注释里写明，别让后来的人以为是 bug。
+- 首步 `rack_force` 为 0，plant 会从无负载起步——不影响稳态，但阶跃工况的前 1–2 步要看一眼。
+- 架构为线控（sbw / sbw_rws / 4wis）时**不要**走这条通路：它们没有机械前轴，
+  应当走角度跟踪 + 路感合成，那是另一段（V2 第二部分）。
+
+### 仍然成立的边界
+
+被控对象层的数值是**合理但未验证**——没有台架或实车数据背书，参数是工程估计。
+按 §8 决定 b，这条边界必须在接入的同时进入产品界面，而不是只写在文档里。
