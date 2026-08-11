@@ -1,0 +1,403 @@
+# Agent 研究接口设计 — study 层 + MCP/CLI 双门面
+
+> 状态：**设计稿，待评审**　·　基线：v0.101.1　·　2026-08-10
+>
+> 目标：让 Agent 能按人的研究需求高效驱动这个仿真器，同时完整保留人自己用 GUI 的能力。
+> 范围经确认为**全量**，含实时驾驶控制；形态为**共享 study 层 + MCP + CLI 两个薄门面**。
+> 本文只定形状与语义，不含实现。
+
+---
+
+## 1. 先说结论
+
+**缺的不是 API，是 API 之上的"研究层"，外加两条硬约束。**
+
+`backend/src/sim4wis/experiment/` 已经是一套很干净的地基：`Experiment`（声明式）→ `SimSession`
+（无头、确定性、快于实时）→ `compute_kpis` → `save_run` → `POST /api/batch`（带点路径 variants
+的笛卡尔展开 + 作业轮询）。批跑走 `asyncio.to_thread`，**实时仿真回路不受影响**；`SimSession`
+自己 new 模型，不碰全局单例。
+
+所以有一个关键性质**今天就已经成立**：Agent 跑批量实验与人在 GUI 里开车互不干扰，且 Agent 产出的
+run 会直接出现在人的「分析」页。人机共存的地基是对的，不需要重建。
+
+真正缺的是三块，加两条约束：
+
+| 缺口 | 证据 |
+|---|---|
+| **自定义指标** | `compute_kpis` 是固定指标集；decoupling study 需要稳态比例、相关法估相位、稳定判据、注入噪声测敏感度 |
+| **跨 run 聚合** | 批跑只还 runs，"架构 × 控制律 × 车速"的对比、找符号翻转全是手写的 |
+| **环内注入** | study harness 在控制律跑完后夹后轮指令（架构的后轮权限），`Experiment` 表达不了 |
+| **约束 A：能力边界** | 运动学模型 `ax = ay = 0` 是故意的；Agent 会拿到 0 并写进结论 |
+| **约束 B：token 预算** | 一次 10 s run ≈ 667 采样 × 35 通道 ≈ 10 万 token；一次 15 变体 sweep 直接爆上下文 |
+
+**不要包装那七十来个 REST 端点。** 那是给 GUI 用的 CRUD，Agent 拿到只会先烧两万 token 学 API，
+然后调错。
+
+---
+
+## 2. 设计目标与非目标
+
+### 目标
+
+1. **一次调用 = 一个研究问题**，而不是一个 HTTP 动作。
+2. **答不了就拒绝**，绝不返回一个语义上无效的数（这是 Agent 做研究最容易产出的垃圾）。
+3. **默认返回汇总**，原始数据靠显式索取且强制降采样，大产物一律回文件路径。
+4. **人永远优先**。人碰 GUI 的那一刻，Agent 对实时仿真的控制立即失效，无需协商。
+5. **每个结论可复现**：spec 摘要 + git sha + params 哈希 + 模型 + 判据，都随结果返回。
+6. **现有三份研究能被重写成 spec**。这是验收标准，也是"这层是否真的够用"的唯一诚实检验。
+
+### 非目标
+
+- **不自动生成论文级报告**。现有两份研究的报告层是 2 200 行 bespoke 代码，跑在 126 行共享
+  helper 之上。这个比例说明报告结构本身就是研究的一部分，不该被过度泛化。study 层提供
+  标准汇总表 + 图元 + 默认模板；真要出 `steering_decoupling_value.html` 那种东西，仍然写
+  专门的 `build_report.py`，只是数据来源换成 study 层。
+- **不替代 `Experiment`**。StudySpec 里的单次运行**就是**一个 `Experiment`，复用现有 schema、
+  存储、KPI、GUI 展示。
+- **不做多租户/鉴权**。后端 `host="127.0.0.1"`，单机单人，本文所有"权限"讨论都是防误伤，
+  不是防攻击。
+
+---
+
+## 3. 分层
+
+```
+        ┌──────────────┐   ┌──────────────┐
+        │  MCP server  │   │     CLI      │      ← 薄门面，只做协议适配
+        │  (~9 tools)  │   │ sim4wis study│
+        └──────┬───────┘   └──────┬───────┘
+               └────────┬─────────┘
+                 ┌──────▼───────┐
+                 │  study 层     │              ← 本设计的主体
+                 │ spec → runs → metrics
+                 │  → compare → report
+                 │ + capability envelope
+                 │ + realtime lease
+                 └──────┬───────┘
+        ┌───────────────┼────────────────┐
+   ┌────▼─────┐   ┌─────▼──────┐  ┌──────▼──────┐
+   │ Experiment│   │ Simulator  │  │ run store   │  ← 已存在，不动
+   │ SimSession│   │ (realtime) │  │ runs/*/meta │
+   │ batch     │   │ ScriptRunner│ │ + GUI 分析页 │
+   └───────────┘   └────────────┘  └─────────────┘
+```
+
+study 层住在 `backend/src/sim4wis/study/`，是普通 Python 包。MCP server 与 CLI 都只是它的调用方，
+**没有任何逻辑住在门面里**——这是"多花一个门面几乎不要钱"的前提。
+
+---
+
+## 4. StudySpec
+
+一次研究的完整声明。YAML 或 JSON，可入 repo、可 diff、可回归。
+
+```yaml
+study: rear_angle_authority
+question: 后轮转角上限 2°→10°，横摆响应与稳态侧偏角怎么变？拐点在哪？
+
+model: multibody                 # 显式声明 → 边界守卫据此裁决
+baseline:                        # 就是一个 Experiment（复用现有 schema）
+  vehicle: { profile: ls9 }
+  strategy: rear_wheel_steer
+  maneuver:
+    steps:
+      - duration: 8
+        speed_kmh: 80
+        steer: { kind: step, amplitude: 3, unit: front_deg }
+
+sweep:                           # 笛卡尔积 → 现有 variants 点路径覆盖
+  rear_limit_deg:
+    values: [2, 4, 6, 8, 10]
+    bind: vehicle.overrides.rear_steer_limit_deg
+  speed_kmh:
+    values: [60, 100, 140]
+    bind: maneuver.steps.0.speed_kmh
+
+metrics:                         # 内置 KPI + 自定义
+  - yaw_gain_dps
+  - yaw_overshoot_pct
+  - yaw_rise_time_s
+  - beta_steady_deg              # 自定义，见 §7
+
+compare:
+  group_by: rear_limit_deg
+  against: { rear_limit_deg: 2 } # 相对基准列出 Δ 与 Δ%
+
+criteria:                        # 判据 —— 让结论可证伪
+  - { metric: yaw_overshoot_pct, must: "< 20", at: all }
+  - { metric: beta_steady_deg,  must: "abs < 1.0", at: "speed_kmh == 140" }
+
+report:
+  template: sweep                # 默认模板；bespoke 报告另写
+  out: docs/reports/rear_angle_authority.html
+```
+
+### 设计说明
+
+- **`sweep` 的 `bind` 是必需的**，因为研究变量名（`rear_limit_deg`）和 `Experiment` 的点路径
+  （`vehicle.overrides.rear_steer_limit_deg`）不是一回事。让 Agent 直接写点路径可读性太差，
+  出了错也难查；显式 `bind` 一次，后面所有表格、分组、判据都用研究变量名。
+- **`criteria` 是这份 spec 里最反 Agent 幻觉的字段**。它逼着"结论"在跑之前就被写成可判定的
+  形式，跑完给 PASS/FAIL，而不是让 Agent 事后从一堆数里叙述一个故事。
+- **`model` 必填、不给默认值**。默认值会让 Agent 无意识地在运动学上问动力学问题。
+
+### 未定 (open)
+
+- `sweep` 是否需要非笛卡尔的成对扫描（zip 而非 product）？decoupling study 里"每个控制律
+  在等 a_y 下扫四个速度"需要按 a_y 反解转角，是个**带求解的**扫描，笛卡尔积表达不了。
+  倾向：先只支持 product，把带求解的扫描留给 `precompute` 钩子（见 §7），P2 再决定要不要
+  进 schema。
+
+---
+
+## 5. 能力边界守卫（最重要的一节）
+
+### 问题
+
+`vehicle/kinematic.py` 里明写着：
+
+> ax/ay therefore stay at zero here, consistent with `grip_valid` remaining False — this model
+> reports what it can support and nothing more. Use simplified_dynamic or multibody for anything
+> force-based.
+
+一个傻包装会让 Agent 问运动学要侧向加速度、拿到 `0.0`、然后一本正经写进报告。同类的还有：
+运动学的 `torque_steer` 是"Phase-1 静态占位"（`µ·Fz·scrub·sign(δ)`，不是真力矩链）、没有轮胎
+所以没有侧偏角、没有姿态。
+
+### 设计
+
+**能力矩阵由模型自己声明，不写在文档里。** `VehicleModelInfo` 已经有 `id/label/layer/description`，
+加一个字段：
+
+```python
+@dataclass(frozen=True)
+class VehicleModelInfo:
+    id: str
+    label: str
+    layer: ModelLayer
+    description: str
+    provides: frozenset[Capability]      # 新增
+```
+
+`Capability` 是一个受控枚举，指标注册表里每个指标声明自己 `requires` 哪些能力：
+
+| Capability | kinematic | simplified_dynamic | multibody |
+|---|---|---|---|
+| `pose_kinematics`（轨迹 / ICR 偏差 / 横摆角速度） | ✅ | ✅ | ✅ |
+| `body_accel`（a_x / a_y、g-g、摩擦圆利用率） | ❌ | ✅ | ✅ |
+| `tyre_slip`（侧偏角、滑移率） | ❌ | ✅ | ✅ |
+| `steering_effort`（齿条力、电机力矩需求） | ⚠️ 占位 | ✅ | ✅ |
+| `attitude`（侧倾 / 俯仰 / 载荷转移） | ❌ | 部分 | ✅ |
+| `drivetrain`（驱动形式、差速器、扭矩模式） | ❌ | ✅ | ✅ |
+
+> 上表是**示意**。实现时必须逐模型对着代码核，并加一个测试：任何模型新增/删除能力，
+> 若与它实际写入的 state 字段不符则测试失败。**文档会漂，测试不会。**
+
+### 裁决语义
+
+`run_study` 在**跑之前**做一次静态检查：spec 里每个 metric 的 `requires` ⊆ 声明模型的 `provides`。
+不满足时**直接拒绝整份 spec**，返回：
+
+```json
+{
+  "error": "capability_mismatch",
+  "model": "kinematic",
+  "unsupported": [
+    {"metric": "grip_util_peak", "requires": "body_accel",
+     "why": "运动学模型代数解算车身速度，没有自己的加速度；ax/ay 恒为 0 且 grip_valid=False",
+     "use_instead": ["simplified_dynamic", "multibody"]}
+  ]
+}
+```
+
+三点都重要：**跑之前**（不浪费几分钟算出废数据）、**整份拒绝**（不部分成功让 Agent 拿一半
+结果硬凑）、**带 `use_instead`**（让 Agent 能自己修复而不是放弃或编造）。
+
+`⚠️ 占位` 这一档不拒绝但**必须在结果里带 `degraded` 标记**，且报告模板会把它渲染成显式告警。
+
+---
+
+## 6. 实时仿真的并发与让位
+
+批跑是隔离的；**实时仿真是全局单例**，`POST /api/params|strategy|model|scene|faults` 都在改
+人正在用的那台车。既然范围含实时驾驶控制，就必须有明确语义。
+
+### 租约（lease）
+
+```
+acquire_realtime(owner="agent:研究后轮权限", ttl_s=300) -> {token, snapshot_id}
+    · 快照当前 params / strategy / model / scene / faults
+    · 拿到 token 后，所有实时改动调用必须带 token
+release_realtime(token)
+    · 恢复快照 —— 人回来时不会发现车重变成 2400 kg 还挂着故障注入
+```
+
+### 三条铁律
+
+1. **人永远赢，且不需要协商。** 任何来自 GUI 的输入（WS driver 指令、任何 REST 改动）
+   **立即吊销**租约。Agent 下一次调用得到 `lease_revoked`，附吊销时刻与原因。不排队、不重试、
+   不询问 —— 人不该为了用自己的仿真器去跟 Agent 抢。
+2. **TTL 必须有。** Agent 崩了不能把仿真器锁死。到期自动 release + 恢复快照。
+3. **Agent 不通过 WS 开车。** 已经有 `ScriptRunner`：声明式、按仿真时间排序、带 ramp 和
+   `wait_until`（t / distance / speed_below）谓词。Agent 要驾驶就提交一个 Script，而不是
+   以 50 Hz 推 driver 指令 —— 后者既费 token 又不可复现。
+
+### GUI 侧（新增工作）
+
+- 顶栏出现「Agent 正在控制：<owner>」+ 一个**夺回**按钮。
+- 租约被吊销时给 Agent 的错误信息里要能说清是谁在什么时候夺回的，这样 Agent 能在报告里
+  如实写"该段实验被人工中断"，而不是把半截数据当完整结果。
+
+### 未定 (open)
+
+- 是否允许 Agent 在**持有租约**时改 `model`（切模型会 `_make_model` 重建，人正在开的车会瞬移）？
+  倾向：允许但必须先 `reset`，且在 GUI 上明示。
+
+---
+
+## 7. 自定义指标与自定义控制律
+
+### 现状
+
+`user_python` 是 `plugins/strategies/user_strategy.py` 的 mtime 热重载，**没有沙箱**，
+`compute()` 直接在后端进程里执行。出错时回落到全零转向并把错误挂到 `/api/user_python/status` ——
+可靠性设计是有的，隔离没有。
+
+由于后端只绑 `127.0.0.1`，而人本来就有这个权限，**安全姿态不变；变的是可靠性姿态**：Agent 能
+以人做不到的频率写出会把仿真循环卡死的代码。
+
+### 分两档
+
+| 档 | 用途 | 执行面 | 约束 |
+|---|---|---|---|
+| **表达式指标** | 绝大多数派生指标（`beta_steady_deg = atan2(vy, vx)` 的稳态段均值） | 受限 eval：只暴露 numpy 子集 + 通道数组 | 默认档，无副作用，可安全给 Agent |
+| **Python 插件** | 相关法估相位、注入噪声测敏感度、环内夹后轮指令 | 与 `user_python` 同等 | 仅允许在 `SimSession`（批跑，隔离、可超时终止）里用；进实时需显式开关 |
+
+### 环内注入（`precompute` / `in_loop` 钩子）
+
+decoupling study 需要"控制律跑完后夹后轮"。这是 `Experiment` 表达不了的那一类。提议在
+`SimSession` 加一个可选钩子点，签名固定：
+
+```python
+def in_loop(cmd: ControlCommand, state: VehicleState, params: VehicleParams, t: float) -> None:
+    """就地修改 cmd。在 strategy.compute 之后、apply_*_command 之前调用。"""
+```
+
+这一个钩子就能覆盖"架构后轮权限""作动器饱和""传感器噪声注入"三类需求，且不引入新概念。
+代价是它是 Python 插件档 —— 必须走上表右列的约束。
+
+### 多命名插件
+
+现在 `user_python` 只认一个固定文件名，批跑里没法一个变体一个控制律。提议扩成
+`plugins/strategies/<name>.py`，`Experiment.strategy` 可直接命名。这是个小改动，但**会影响
+现有 GUI 的「Python 策略」面板语义**，需要一并想清楚。
+
+---
+
+## 8. Token 预算与返回形状
+
+一次 10 s 机动 ≈ 667 采样 × ~35 通道 ≈ 2.3 万个浮点 ≈ **10 万 token**。一次 15 变体的 sweep
+就是 150 万 token。这不是"注意一下"的问题，是设计约束。
+
+| 调用 | 默认返回 | 量级 |
+|---|---|---|
+| `run_study` | spec 摘要 + N 行 × M 指标表 + 判据裁决 + run_ids + 产物路径 | 0.5–2 k token |
+| `compare` | 分组聚合 + Δ/Δ% + 拐点/符号翻转标注 | < 1 k |
+| `get_trace` | **必须显式给** channels 与 `max_points`（默认 200），返回降采样序列 | 按需 |
+| `emit_report` | 只回文件路径 + 摘要 | < 200 |
+
+原则：**Agent 永远不该在上下文里看到完整轨迹。** 需要看波形就出图（文件路径），需要算东西就
+定义指标（在服务端算完只回标量）。
+
+---
+
+## 9. 出处与可复现
+
+`save_run` 现在只记 `sim4wis_version`。Agent 研究要可信，run meta 至少还需要：
+
+- `git_sha`（脏树时标 `-dirty`）
+- `params_hash`（完全解析后的 `VehicleParams` 的稳定哈希 —— profile + overrides 展开后）
+- `model_type` / `strategy` / `dt_sim`
+- `study_id` + `spec_digest` + 该 run 对应的 sweep 坐标
+- `capability_degraded`（若命中 §5 的 ⚠️ 档）
+
+以及一条纪律，写进报告模板而不是靠自觉：**报告不得出现该次 study 没有测量的结论**。判据
+（`criteria`）是唯一被允许升格为"结论"的东西。
+
+---
+
+## 10. 工具面
+
+### MCP（9 个）
+
+| 工具 | 作用 |
+|---|---|
+| `describe_capabilities` | 模型 × 能力矩阵、策略清单、内置指标及其 `requires`、工况模板。Agent 的第一站 |
+| `run_study` | 提交 StudySpec，展开 → 批跑 → 指标 → 聚合。返回汇总表 + 判据裁决 |
+| `get_study` | 轮询/取回既往 study 结果 |
+| `compare` | 跨 run/跨 study 聚合对比 |
+| `get_trace` | 显式降采样取通道 |
+| `list_runs` | 检索既往 run（也能看到人在 GUI 里跑的） |
+| `emit_report` | 用模板出 HTML，回路径 |
+| `verify_against_golden` | 跑 golden 回归，确认这次改动没动到基线 |
+| `realtime` | 子命令式：`acquire` / `release` / `drive`（提交 Script）/ `observe` |
+
+`realtime` 刻意收成一个工具，因为它是**危险面**——集中一处便于加确认与审计。
+
+### CLI
+
+同一层的另一门面，命令面一一对应：
+
+```
+sim4wis study run    spec.yaml [--dry-run]     # --dry-run 只做边界守卫与展开，不跑
+sim4wis study show   <study_id> [--metrics ...]
+sim4wis study compare <a> <b> --group-by ...
+sim4wis study trace  <run_id> --channels ay,delta.fl --max-points 200
+sim4wis study report <study_id> --template sweep -o out.html
+sim4wis capabilities [--model multibody]
+sim4wis realtime acquire|release|drive|observe
+```
+
+`--dry-run` 值得单独指出：它让 Agent 能**零成本验证一份 spec 是否合法**（边界守卫 + sweep
+展开 + 判据可解析），再决定要不要花几分钟真跑。
+
+---
+
+## 11. 分期
+
+| 期 | 内容 | 验收 | 粗估 |
+|---|---|---|---|
+| **P0** | 本设计文档 | 评审通过 | — |
+| **P1** | study 层核心 + CLI：StudySpec、sweep 展开、指标注册表（内置 + 表达式档）、compare、默认 sweep 报告模板 | **用 spec 复刻「后轮转角范围」研究的 sweep 部分，数值与现有报告一致** | 1–2 天 |
+| **P2** | 能力边界守卫 + 出处字段 + `--dry-run` | 模型能力矩阵有测试守着；对运动学问 `grip_util` 被拒绝且给出 `use_instead` | 0.5–1 天 |
+| **P3** | MCP server | 在 Claude Code 里端到端跑通一次真实研究 | 0.5–1 天 |
+| **P4** | 实时租约 + Script 驱动 + GUI 让位提示 | 人在 Agent 持租约时点一下 GUI，租约立即吊销且状态被恢复 | 1 天 |
+| **P5** | Python 插件档：自定义指标插件 + `in_loop` 钩子 + 多命名策略插件 | **用 spec 复刻 decoupling study 的六控制律阶梯** | 1–1.5 天 |
+
+估时是粗估，且假设不返工。P1 的验收标准是刻意挑的：能复刻既有研究，这层才算真的够用；
+复刻不了就说明抽象错了，越早发现越好。
+
+---
+
+## 12. 风险与未决
+
+### 风险
+
+1. **Agent 能以人做不到的速度产出看起来很像回事的结论。** 这是本设计最大的风险，
+   §5（边界守卫）、`criteria`（可证伪判据）、§9（出处 + 报告纪律）三处都是针对它的。
+   但没有任何机制能挡住"跑对了但解释错了"，所以**人对结论的评审不可省**。
+2. **`in_loop` 钩子是个后门。** 它让 spec 不再是纯声明式的——一份带钩子的 spec 的行为要看
+   Python 文件。缓解：钩子代码随 study 存档并计入 `spec_digest`。
+3. **多命名策略插件会改动现有 GUI 语义**，需要和「Python 策略」面板一起想。
+4. **实时租约要碰 `Simulator` 单例**，是全项目最热的一段状态。P4 单独成期就是为了不和前面
+   的只读工作混在一起。
+
+### 未决（需要你的意见）
+
+- **a.** sweep 要不要支持"等 a_y 反解转角"这类带求解的扫描（decoupling study 需要）？
+  还是统一交给 `precompute` 钩子？
+- **b.** MCP server 走独立进程（stdio，HTTP 调后端）还是挂进 FastAPI 同一进程（`/mcp`）？
+  独立进程零风险、现在就能用；同进程更贴合便携版"单进程单端口"的架构，但客户端支持面较窄。
+  倾向前者，可后补。
+- **c.** 便携版 zip 要不要带上 MCP server？带上意味着同事拿到包也能让自己的 Agent 用；
+  不带则只是本机开发工具。
