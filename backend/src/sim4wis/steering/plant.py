@@ -200,7 +200,18 @@ class SteeringPlant:
             # Boost curve, plus the damping that makes the loop stable at all.
             # Scheduled on the local boost so the loop damping ratio holds:
             # c = 2*zeta*sqrt(K_eff*J) with K_eff = K_tb*(1 + boost).
+            # Schedule on the boost the motor can actually *deliver*, not the
+            # one the map asks for. Past saturation the map keeps promising
+            # more gain while the loop gain has stopped rising, so scheduling
+            # on the map over-damps in one direction and mis-tunes the loop in
+            # the other — which is how a request the hardware cannot meet turns
+            # into an oscillation instead of into heavy steering. A sizing pass
+            # drives past capability on purpose, so this path is normal, not
+            # exceptional.
             boost = self.assist_map.boost_ratio(sensor, speed_ms)
+            ceiling = self._motor.available_torque(s.pinion_rate * n, self._motor.state.heat) * n
+            if abs(sensor) > 1e-9:
+                boost = min(boost, ceiling / abs(sensor))
             k_eff = k_tb * (1.0 + boost)
             c_damp = (2.0 * p.assist_damping_ratio
                       * math.sqrt(max(k_eff * self.equivalent_inertia, 0.0)))

@@ -37,15 +37,27 @@ DEFAULT_SPEED_BP: tuple[float, ...] = (0.0, 20.0, 60.0, 120.0)
 
 #: Assist torque at the pinion [N·m], table[speed][torque].
 #:
-#: Calibrated so the LS9-class default (2.9 t, 20 mm pinion) needs ~3.5 N·m at
-#: the hand wheel for full-lock parking on high grip: 3.5 + 205 = 208.5 N·m at
-#: the pinion, i.e. ~10.4 kN of rack force. That is a plausible heavy-SUV
-#: parking effort, and it is an *estimate* — no bench data backs it.
+#: Calibrated against the platform's own load model rather than against a
+#: guess. `sweep_load_analysis` puts full-lock parking at mu = 0.9 for the
+#: LS9-class default (2.9 t, 20 mm pinion) at 10.3 kN per wheel — 20.7 kN on
+#: the rack, 413 N.m at the pinion. The saturation end covers that with the
+#: driver left holding ~3.5 N.m.
+#:
+#: The first version of this table was sized from an assumed 10.4 kN and
+#: saturated at 250 N.m, leaving 163 N.m of the real load on the driver's
+#: hands. The actuator-sizing pass found it on its first run: asking the
+#: steering system to hold an angle it could not hold produced 707 N.m at the
+#: hand wheel and 27 000 rpm at the motor. Two models in one tool disagreeing
+#: by 1.65x is exactly the failure this tool exists to catch, so the fix was to
+#: ask the load model rather than to keep guessing.
+#:
+#: Still an estimate in the sense that matters: no bench data backs the *shape*
+#: or the speed schedule, only the parking end point is now anchored.
 DEFAULT_TABLE: tuple[tuple[float, ...], ...] = (
-    (0.0, 0.0, 25.0, 75.0, 150.0, 205.0, 235.0, 250.0),   #   0 km/h
-    (0.0, 0.0, 20.0, 62.0, 125.0, 172.0, 200.0, 215.0),   #  20 km/h
-    (0.0, 0.0, 10.0, 32.0,  68.0,  96.0, 115.0, 128.0),   #  60 km/h
-    (0.0, 0.0,  5.0, 17.0,  36.0,  52.0,  64.0,  72.0),   # 120 km/h
+    (0.0, 0.0, 41.0, 124.0, 248.0, 338.0, 388.0, 413.0),  #   0 km/h
+    (0.0, 0.0, 33.0, 102.0, 206.0, 284.0, 330.0, 355.0),  #  20 km/h
+    (0.0, 0.0, 17.0,  53.0, 112.0, 158.0, 190.0, 211.0),  #  60 km/h
+    (0.0, 0.0,  8.0,  28.0,  59.0,  86.0, 106.0, 119.0),  # 120 km/h
 )
 
 

@@ -76,14 +76,20 @@ class MotorParams:
     torque_constant: float = 0.055          # K_t [N·m/A]
     inertia: float = 1.2e-4                 # J_m 转子惯量 [kg·m²]
     bandwidth_hz: float = 40.0              # 转矩响应带宽 [Hz]
-    peak_torque: float = 5.5                # 峰值转矩 [N·m]
-    continuous_torque: float = 3.0          # 连续转矩 [N·m]（热降额目标）
-    #: No-load speed; torque falls linearly to zero there (back-EMF envelope).
-    #: A brisk parking turn is ~110°/s at the hand wheel, which through a
-    #: production R-EPS reduction is ~2300 rpm — so anything much below this
-    #: makes the motor run out of speed during ordinary parking rather than
-    #: during the evasive manoeuvre the envelope is meant to expose.
-    no_load_speed_rpm: float = 2800.0
+    #: Sized against the platform's own load model, not chosen. Full-lock
+    #: parking at mu = 0.9 needs 413 N.m at the pinion; through the R-EPS
+    #: reduction of 63 that is 6.6 N.m at the motor, so 5.5 does not cover this
+    #: vehicle — the first sizing run said so, and the default now reflects it.
+    peak_torque: float = 8.0                # 峰值转矩 [N·m]
+    continuous_torque: float = 4.5          # 连续转矩 [N·m]（热降额目标）
+    #: No-load speed; torque falls **linearly to zero** there, which is the
+    #: part that is easy to get wrong. A brisk parking turn of ~190°/s at the
+    #: hand wheel is ~2000 rpm through the R-EPS reduction, and an earlier
+    #: default of 2800 rpm looked like ample headroom — but at 2000 of 2800 the
+    #: motor has only 28% of its torque left, so it saturated through every
+    #: parking scenario while its *peak* rating was never the problem.
+    #: Production EPS BLDCs are rated several times their working speed.
+    no_load_speed_rpm: float = 8000.0
     #: Time constant of the thermal state that drives derating [s]. Minutes,
     #: not seconds — this is winding-to-housing, and it is why parking
     #: manoeuvres repeated back-to-back behave differently from the first one.

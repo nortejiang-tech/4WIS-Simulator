@@ -63,10 +63,25 @@ class TestAssistMap:
         speeds = [m.assist_torque(2.5, v / 3.6) for v in (0, 20, 60, 120)]
         assert all(b < a for a, b in zip(speeds, speeds[1:], strict=False))
 
-    def test_parking_effort_lands_where_the_hardware_would(self):
-        # 3.5 N.m at the hand wheel -> 208.5 N.m at a 20 mm pinion -> 10.4 kN.
-        total = 3.5 + get("default").assist_torque(3.5, 0.0)
-        assert total / 0.020 == pytest.approx(10_425.0, rel=0.01)
+    def test_parking_effort_is_anchored_to_the_platforms_load_model(self):
+        """Not to a guess.
+
+        `sweep_load_analysis` puts full-lock parking at mu = 0.9 at 20.7 kN on
+        the rack for the default vehicle. The first version of this map was
+        sized from an assumed 10.4 kN and left 163 N.m of the real load on the
+        driver; the sizing pass found it. The two models must agree.
+        """
+        from sim4wis.core.state import VehicleParams
+        from sim4wis.vehicle.load_analysis import sweep_load_analysis
+
+        p = VehicleParams()
+        row = sweep_load_analysis(
+            p, speeds=[0.0], angles=[p.steer_limit], wheel_index=0, mu=0.9,
+        )["rows"][0]
+        needed = 2.0 * abs(row["rack_force"]) * p.pinion_radius
+        delivered = 3.5 + get("default").assist_torque(3.5, 0.0)
+        # Within a hand-wheel effort of each other, which is the calibration.
+        assert delivered == pytest.approx(needed, rel=0.2)
 
     def test_the_unassisted_baseline_gives_nothing(self):
         assert get("none").assist_torque(8.0, 0.0) == 0.0
@@ -124,7 +139,7 @@ class TestMotor:
         m = Motor(SteeringSystemParams().motor)
         cold = m.available_torque(0.0, 0.0)
         for _ in range(60_000):                       # 60 s at 1 ms
-            m.step(0.001, 5.5, 0.0)
+            m.step(0.001, m.p.peak_torque, 0.0)
         assert m.state.heat > 1.0
         assert m.available_torque(0.0, m.state.heat) < cold
 
