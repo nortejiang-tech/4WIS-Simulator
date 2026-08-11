@@ -62,13 +62,17 @@ run 会直接出现在人的「分析」页。人机共存的地基是对的，�
 ## 3. 分层
 
 ```
-        ┌──────────────┐   ┌──────────────┐
-        │  MCP server  │   │     CLI      │      ← 薄门面，只做协议适配
-        │  (~9 tools)  │   │ sim4wis study│
-        └──────┬───────┘   └──────┬───────┘
-               └────────┬─────────┘
-                 ┌──────▼───────┐
-                 │  study 层     │              ← 本设计的主体
+   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+   │  MCP server  │  │     CLI      │  │   前端 GUI    │  ← 三个门面，无业务逻辑
+   │  (~9 tools)  │  │ sim4wis study│  │  （人在用）   │
+   │  独立进程/stdio│  └──────┬───────┘  └──────┬───────┘
+   └──────┬───────┘         │                 │
+          └──────── HTTP ───┴────────┬────────┘
+                             ┌───────▼──────┐
+                             │  FastAPI      │  /api/study/*  /api/*
+                             └───────┬──────┘
+                 ┌──────────────────▼┐
+                 │  study 层          │         ← 本设计的主体
                  │ spec → runs → metrics
                  │  → compare → report
                  │ + capability envelope
@@ -82,8 +86,9 @@ run 会直接出现在人的「分析」页。人机共存的地基是对的，�
    └───────────┘   └────────────┘  └─────────────┘
 ```
 
-study 层住在 `backend/src/sim4wis/study/`，是普通 Python 包。MCP server 与 CLI 都只是它的调用方，
-**没有任何逻辑住在门面里**——这是"多花一个门面几乎不要钱"的前提。
+study 层住在 `backend/src/sim4wis/study/`，是普通 Python 包，经 `/api/study/*` 出面。三个门面都只是
+它的调用方，**没有任何逻辑住在门面里**——这是"多花一个门面几乎不要钱"的前提，也是决策 b（§13）
+能成立的前提：MCP server 不 import `sim4wis`，只发 HTTP，因此可以和后端各自演进。
 
 ---
 
@@ -368,14 +373,18 @@ sim4wis realtime acquire|release|drive|observe
 | 期 | 内容 | 验收 | 粗估 |
 |---|---|---|---|
 | **P0** | 本设计文档 | 评审通过 | — |
-| **P1** | study 层核心 + CLI：StudySpec、sweep 展开、指标注册表（内置 + 表达式档）、compare、默认 sweep 报告模板 | **用 spec 复刻「后轮转角范围」研究的 sweep 部分，数值与现有报告一致** | 1–2 天 |
+| **P1** | study 层核心 + `/api/study/*` + CLI：StudySpec、sweep 展开、指标注册表（内置 + 表达式档）、compare、默认 sweep 报告模板 | **用 spec 复刻「后轮转角范围」研究的 sweep 部分，数值与现有报告一致** | 1.5–2.5 天 |
 | **P2** | 能力边界守卫 + 出处字段 + `--dry-run` | 模型能力矩阵有测试守着；对运动学问 `grip_util` 被拒绝且给出 `use_instead` | 0.5–1 天 |
-| **P3** | MCP server | 在 Claude Code 里端到端跑通一次真实研究 | 0.5–1 天 |
+| **P3** | MCP server（独立进程 / stdio，§13）：工具面、后端自动拉起与回收、版本协商 | 在 Claude Code 里端到端跑通一次真实研究；后端未启动时能自己拉起，退出时不误杀用户的后端 | 0.5–1 天 |
 | **P4** | 实时租约 + Script 驱动 + GUI 让位提示 | 人在 Agent 持租约时点一下 GUI，租约立即吊销且状态被恢复 | 1 天 |
 | **P5** | Python 插件档：自定义指标插件 + `in_loop` 钩子 + 多命名策略插件 | **用 spec 复刻 decoupling study 的六控制律阶梯** | 1–1.5 天 |
 
 估时是粗估，且假设不返工。P1 的验收标准是刻意挑的：能复刻既有研究，这层才算真的够用；
 复刻不了就说明抽象错了，越早发现越好。
+
+P1 比初稿多了半天：决策 b 把 `/api/study/*` 从 P3 提到了 P1——MCP server 既然只发 HTTP，
+服务端契约就得先有。好处是 CLI 和 MCP 从第一天起就共用同一条路，不会出现"CLI 能做但 MCP
+做不到"的分叉。
 
 ---
 
@@ -392,12 +401,53 @@ sim4wis realtime acquire|release|drive|observe
 4. **实时租约要碰 `Simulator` 单例**，是全项目最热的一段状态。P4 单独成期就是为了不和前面
    的只读工作混在一起。
 
+### 已定
+
+- **b. MCP server 走独立进程（stdio）。** 详见 §13。选它的决定性理由是**可逆**：study 层不变，
+  A 做完想再挂一个 `/mcp` 到 FastAPI 上很容易，反过来要拆。而且它对已经能跑的东西零风险。
+
 ### 未决（需要你的意见）
 
 - **a.** sweep 要不要支持"等 a_y 反解转角"这类带求解的扫描（decoupling study 需要）？
   还是统一交给 `precompute` 钩子？
-- **b.** MCP server 走独立进程（stdio，HTTP 调后端）还是挂进 FastAPI 同一进程（`/mcp`）？
-  独立进程零风险、现在就能用；同进程更贴合便携版"单进程单端口"的架构，但客户端支持面较窄。
-  倾向前者，可后补。
-- **c.** 便携版 zip 要不要带上 MCP server？带上意味着同事拿到包也能让自己的 Agent 用；
-  不带则只是本机开发工具。
+- **c.** 便携版 zip 要不要带上 MCP server？选了 A 之后这件事变得很便宜——stdio server 就是几个
+  Python 文件，便携包本来就内嵌 Python 3.12，等于只多打包几十 KB。带上意味着同事拿到包也能让
+  自己的 Agent 用；不带则只是你本机的开发工具。
+
+---
+
+## 13. MCP server 的进程拓扑（决策 b）
+
+```
+Claude Code / 其它 Agent 宿主
+      │  stdio (JSON-RPC)
+      ▼
+sim4wis-mcp                     ← 独立进程，薄客户端，无业务逻辑
+      │  HTTP 127.0.0.1:8010
+      ▼
+FastAPI（原样不动）
+      ├── /api/*        GUI 与人用
+      └── /api/study/*  study 层的 HTTP 面（新增，CLI 也走它）
+```
+
+### 这条边界带来的三个要求
+
+1. **study 层必须有 HTTP 面。** MCP server 不 import `sim4wis`，只发 HTTP —— 否则它就得跟后端
+   同版本、同解释器，"独立进程"的好处就没了。所以 `/api/study/*` 是 P1 的一部分，不是 P3 的。
+   CLI 也走同一条路，于是三个门面（GUI / CLI / MCP）共用一个服务端契约。
+2. **后端没起的时候要能自己拉起来。** stdio server 是 Agent 宿主的子进程，用户不会先去开后端。
+   启动时探测 `GET /health`，没有就按便携版同样的方式拉起一个，并在自己退出时收掉——但**只收
+   自己拉起来的那个**，绝不能杀掉用户正在用的后端。
+3. **端口要可配。** `SIM4WIS_BACKEND_HTTP` 已经是前端 dev server 在用的约定，沿用它。
+   默认 `http://127.0.0.1:8010`。
+
+### 版本协商
+
+MCP server 与后端可能不同版本（同事更新了包但没更新 MCP server）。启动时拉 `GET /api/version`，
+和自己声明的契约版本比对，不匹配就在 `describe_capabilities` 的返回里带一条显式告警——不阻断，
+但让 Agent 知道自己可能在用一个对不上的接口。
+
+### 配置形态
+
+对 Claude Code 是一条 `.mcp.json` 记录；对便携版用户（若 **c** 选带上）应该给一段可复制粘贴的
+配置片段，放进 iCloud 的说明 txt 里。
