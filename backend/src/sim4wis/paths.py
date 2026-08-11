@@ -68,6 +68,16 @@ def runs_dir() -> Path:
     return Path(env) if env else data_root() / "runs"
 
 
+def studies_dir() -> Path:
+    """Study artifacts (studies/<id>/spec.json + result.json + report.html).
+
+    A sibling of `runs/` rather than a subdirectory of it: a study *references*
+    runs, and the same run can legitimately belong to more than one study.
+    """
+    env = os.environ.get("SIM4WIS_STUDIES_DIR")
+    return Path(env) if env else data_root() / "studies"
+
+
 def plugins_dir() -> Path:
     """Directory containing strategy plugins (*.fmu, *.slx, …)."""
     return data_root() / "plugins" / "strategies"

@@ -1,0 +1,371 @@
+"""sim4wis command line — the second face on the study layer.
+
+`sim4wis` with no arguments still starts the server, because that is what it
+has always done and the portable launchers, which call uvicorn directly, are
+not the only thing that might invoke it.
+
+Everything else goes through `/api/study/*` — the same contract the MCP server
+will speak — so a capability can never exist on the command line and be
+missing from the agent interface. When no backend is reachable the commands
+fall back to running the study layer in-process and say so; refusing to work
+without a server would be friction with nothing behind it, since it is the
+same code either way.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+DEFAULT_BACKEND = os.environ.get("SIM4WIS_BACKEND_HTTP", "http://127.0.0.1:8010")
+_TIMEOUT = 10.0
+
+
+# ---------------------------------------------------------------------------
+# Transport
+# ---------------------------------------------------------------------------
+
+
+class BackendUnavailableError(RuntimeError):
+    pass
+
+
+def _get(base: str, path: str, params: dict[str, Any] | None = None) -> Any:
+    url = f"{base.rstrip('/')}{path}"
+    if params:
+        url += "?" + urllib.parse.urlencode(params)
+    try:
+        with urllib.request.urlopen(url, timeout=_TIMEOUT) as r:   # noqa: S310
+            return json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"{e.code} {e.reason}: {e.read().decode('utf-8', 'replace')[:400]}") from e
+    except (urllib.error.URLError, OSError) as e:
+        raise BackendUnavailableError(str(e)) from e
+
+
+def _post(base: str, path: str, body: Any, timeout: float = _TIMEOUT) -> Any:
+    req = urllib.request.Request(
+        f"{base.rstrip('/')}{path}",
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:    # noqa: S310
+            return json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"{e.code} {e.reason}: {e.read().decode('utf-8', 'replace')[:400]}") from e
+    except (urllib.error.URLError, OSError) as e:
+        raise BackendUnavailableError(str(e)) from e
+
+
+def _backend_up(base: str) -> bool:
+    try:
+        _get(base, "/health")
+        return True
+    except Exception:                                # noqa: BLE001
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Spec loading + printing
+# ---------------------------------------------------------------------------
+
+
+def _load_spec(path: str) -> dict[str, Any]:
+    p = Path(path)
+    if not p.is_file():
+        raise SystemExit(f"spec not found: {path}")
+    text = p.read_text(encoding="utf-8")
+    if p.suffix.lower() in (".yaml", ".yml"):
+        import yaml
+
+        return yaml.safe_load(text)
+    return json.loads(text)
+
+
+def _fmt(v: Any, digits: int = 5) -> str:
+    if v is None:
+        return "—"
+    if isinstance(v, bool):
+        return "yes" if v else "no"
+    if isinstance(v, float):
+        return f"{v:.{digits}g}"
+    return str(v)
+
+
+def _table(headers: list[str], rows: list[list[Any]]) -> str:
+    cells = [[_fmt(c) for c in row] for row in rows]
+    widths = [len(h) for h in headers]
+    for row in cells:
+        for i, c in enumerate(row):
+            widths[i] = max(widths[i], len(c))
+    line = "  ".join(h.ljust(widths[i]) for i, h in enumerate(headers))
+    sep = "  ".join("-" * w for w in widths)
+    body = "\n".join("  ".join(c.ljust(widths[i]) for i, c in enumerate(row)) for row in cells)
+    return f"{line}\n{sep}\n{body}"
+
+
+def _print_summary(s: dict[str, Any]) -> None:
+    print(f"\n{s['study']} — {s['question']}")
+    prov = s.get("provenance") or {}
+    print(f"  model={s['model']}  digest={s['spec_digest']}  git={prov.get('git_sha')}  "
+          f"params={prov.get('params_hash')}  {s.get('elapsed_s')}s")
+
+    axes = sorted({k for r in s["rows"] for k in r["coords"]})
+    metrics = s["metrics"]
+    headers = [*axes, *metrics]
+    rows = [[*(r["coords"].get(a) for a in axes),
+             *(r["metrics"].get(m) for m in metrics)] for r in s["rows"]]
+    print("\n" + _table(headers, rows))
+
+    verdicts = s.get("verdicts") or []
+    if verdicts:
+        print()
+        for v in verdicts:
+            mark = "PASS" if v["passed"] else "FAIL"
+            extra = ""
+            if not v["passed"] and v.get("worst_label"):
+                extra = f"  worst: {v['worst_label']} = {_fmt(v['worst_value'])}"
+            elif v.get("note"):
+                extra = f"  ({v['note']})"
+            print(f"  [{mark}] {v['metric']} {v['must']} @ {v['at']}"
+                  f"  {v['failed']}/{v['checked']} failed{extra}")
+
+    for w in s.get("warnings") or []:
+        print(f"  ! {w}")
+    errs = [(r["label"], m, e) for r in s["rows"] for m, e in (r.get("errors") or {}).items()]
+    for label, m, e in errs[:10]:
+        print(f"  ! {label}: {m}: {e}")
+    if s.get("report_path"):
+        print(f"\n  report: {s['report_path']}")
+
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+
+
+def _local_run(payload: dict[str, Any], dry: bool) -> dict[str, Any]:
+    from sim4wis.study.runner import dry_run, run_sync
+    from sim4wis.study.spec import StudySpec
+
+    spec = StudySpec.model_validate(payload)
+    if dry:
+        return dry_run(spec)
+    _, result = run_sync(spec)
+    return result.to_summary()
+
+
+def cmd_study_run(args: argparse.Namespace) -> int:
+    payload = _load_spec(args.spec)
+    use_http = not args.local and _backend_up(args.backend)
+
+    if args.dry_run:
+        out = (_post(args.backend, "/api/study/dry-run", payload) if use_http
+               else _local_run(payload, dry=True))
+        if args.json:
+            print(json.dumps(out, ensure_ascii=False, indent=1))
+            return 0 if out.get("ok") else 1
+        print(f"spec: {'OK' if out['ok'] else 'INVALID'}   digest={out.get('spec_digest')}")
+        print(f"grid: {out['grid']} cell(s), {out['sim_seconds']}s simulated, "
+              f"~{out['est_wall_seconds']}s wall (rough)")
+        if out.get("cells"):
+            print("cells: " + ", ".join(out["cells"][:12])
+                  + (" …" if len(out["cells"]) > 12 else ""))
+        for w in out.get("warnings", []):
+            print(f"  ! {w}")
+        for p in out.get("problems", []):
+            print(f"  ✗ {p}")
+        return 0 if out["ok"] else 1
+
+    if not use_http:
+        print("(no backend reachable — running in-process)", file=sys.stderr)
+        summary = _local_run(payload, dry=False)
+    else:
+        started = _post(args.backend, "/api/study/run", payload)
+        job_id = started["job_id"]
+        est = started.get("estimate", {})
+        print(f"study job {job_id}: {est.get('runs')} run(s), "
+              f"~{est.get('est_wall_seconds')}s", file=sys.stderr)
+        import time
+
+        while True:
+            job = _get(args.backend, f"/api/study/jobs/{job_id}")
+            if job["status"] != "running":
+                break
+            time.sleep(0.5)
+        if job["status"] == "error":
+            print(f"study failed: {job['error']}", file=sys.stderr)
+            return 1
+        summary = job["result"]
+
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=1))
+    else:
+        _print_summary(summary)
+    passed = summary.get("all_passed")
+    return 0 if passed is not False else 2
+
+
+def cmd_study_list(args: argparse.Namespace) -> int:
+    if _backend_up(args.backend) and not args.local:
+        data = _get(args.backend, "/api/study")["studies"]
+    else:
+        from sim4wis.study import store
+
+        data = store.list_studies()
+    if args.json:
+        print(json.dumps(data, ensure_ascii=False, indent=1))
+        return 0
+    if not data:
+        print("no studies yet")
+        return 0
+    print(_table(
+        ["study_id", "study", "model", "rows", "passed", "created"],
+        [[d["study_id"], d["study"], d["model"], d["rows"], d.get("all_passed"),
+          d.get("created_at", "")] for d in data],
+    ))
+    return 0
+
+
+def cmd_study_show(args: argparse.Namespace) -> int:
+    if _backend_up(args.backend) and not args.local:
+        s = _get(args.backend, f"/api/study/{args.study_id}")
+    else:
+        from sim4wis.study import store
+
+        s = store.load(args.study_id)
+    if args.json:
+        print(json.dumps(s, ensure_ascii=False, indent=1))
+    else:
+        _print_summary(s)
+    return 0
+
+
+def cmd_study_trace(args: argparse.Namespace) -> int:
+    params = {"channels": args.channels, "max_points": args.max_points}
+    if _backend_up(args.backend) and not args.local:
+        data = _get(args.backend, f"/api/study/trace/{args.run_id}", params)
+    else:
+        from sim4wis.experiment import store as run_store
+
+        meta = run_store.load_run_meta(args.run_id)
+        n = int(meta.get("n_samples") or 0)
+        dec = max(1, -(-n // args.max_points)) if n else 1
+        names = [c.strip() for c in args.channels.split(",") if c.strip()]
+        data = {
+            "run_id": args.run_id, "decimate": dec, "of_total": n,
+            "channels": run_store.load_run_channels(args.run_id, names, decimate=dec),
+        }
+    print(json.dumps(data, ensure_ascii=False))
+    return 0
+
+
+def cmd_capabilities(args: argparse.Namespace) -> int:
+    if _backend_up(args.backend) and not args.local:
+        caps = _get(args.backend, "/api/study/capabilities")
+    else:
+        from sim4wis.controller.registry import available_strategies
+        from sim4wis.study.metrics import describe_metrics
+        from sim4wis.study.runner import expected_channels
+        from sim4wis.vehicle.model_registry import model_infos
+
+        caps = {
+            "models": [{"id": m.id, "label": m.label, "layer": m.layer,
+                        "description": m.description} for m in model_infos()],
+            "metrics": describe_metrics(),
+            "strategies": available_strategies(),
+            "channels": expected_channels(),
+        }
+    if args.json:
+        print(json.dumps(caps, ensure_ascii=False, indent=1))
+        return 0
+    print("models:")
+    print(_table(["id", "layer", "label", "description"],
+                 [[m["id"], m["layer"], m["label"], m["description"]] for m in caps["models"]]))
+    print("\nmetrics:")
+    print(_table(["name", "unit", "requires", "solvable", "description"],
+                 [[m["name"], m["unit"], m["requires"], m["solvable"], m["description"]]
+                  for m in caps["metrics"]]))
+    print("\nstrategies: " + ", ".join(caps["strategies"]))
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="sim4wis",
+        description="4WIS Simulator — server and research CLI. "
+                    "With no arguments, starts the backend.",
+    )
+    p.add_argument("--backend", default=DEFAULT_BACKEND,
+                   help=f"backend base URL (default {DEFAULT_BACKEND})")
+    p.add_argument("--local", action="store_true",
+                   help="run in-process instead of calling a backend")
+    p.add_argument("--json", action="store_true", help="machine-readable output")
+    sub = p.add_subparsers(dest="command")
+
+    study = sub.add_parser("study", help="run and inspect studies")
+    ssub = study.add_subparsers(dest="subcommand", required=True)
+
+    run = ssub.add_parser("run", help="run a study spec (YAML or JSON)")
+    run.add_argument("spec")
+    run.add_argument("--dry-run", action="store_true",
+                     help="validate and estimate cost without running anything")
+    run.set_defaults(func=cmd_study_run)
+
+    lst = ssub.add_parser("list", help="list stored studies")
+    lst.set_defaults(func=cmd_study_list)
+
+    show = ssub.add_parser("show", help="show one study's result")
+    show.add_argument("study_id")
+    show.set_defaults(func=cmd_study_show)
+
+    tr = ssub.add_parser("trace", help="downsampled channels for one run")
+    tr.add_argument("run_id")
+    tr.add_argument("--channels", required=True, help="comma-separated channel names")
+    tr.add_argument("--max-points", type=int, default=200)
+    tr.set_defaults(func=cmd_study_trace)
+
+    caps = sub.add_parser("capabilities", help="models, metrics, strategies")
+    caps.set_defaults(func=cmd_capabilities)
+
+    return p
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if not argv:
+        from sim4wis.main import run
+
+        run()
+        return 0
+
+    args = build_parser().parse_args(argv)
+    if not getattr(args, "func", None):
+        build_parser().print_help()
+        return 1
+    try:
+        return int(args.func(args))
+    except BackendUnavailableError as e:
+        print(f"backend unreachable at {args.backend}: {e}", file=sys.stderr)
+        return 3
+    except (RuntimeError, ValueError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":                           # pragma: no cover
+    raise SystemExit(main())

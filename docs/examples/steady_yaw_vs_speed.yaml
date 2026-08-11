@@ -1,0 +1,61 @@
+# 一份可直接跑的 study spec —— 也是 study 层的验收样例。
+#
+#   sim4wis study run docs/examples/steady_yaw_vs_speed.yaml --dry-run
+#   sim4wis study run docs/examples/steady_yaw_vs_speed.yaml
+#
+# 它问的是一个有闭式答案的问题，所以结果可以拿平台自带的解析稳态解
+# (`solve_steady_state_body`) 对表 —— 见 backend/tests/test_study_e2e.py。
+
+study: steady_yaw_vs_speed
+question: 1° 前轮阶跃下，稳态横摆角速度随车速怎么变？不足转向在哪个速度开始明显？
+
+# 必填、无默认值：默认值会让人（或 Agent）无意识地在运动学模型上问动力学问题。
+model: simplified_dynamic
+
+baseline:
+  name: step_1deg
+  strategy: ideal_ackermann
+  maneuver:
+    steps:
+      # 先直行两秒把瞬态放掉，阶跃才干净。
+      - duration: 2.0
+        speed_kmh: 60
+        steer: {kind: constant, amplitude: 0.0}
+      # unit: front_deg 绕过转向手感层（可变传动比 + 软限位），
+      # 这样量到的是**车**，不是驾驶员输入映射。
+      - duration: 14.0
+        speed_kmh: 60
+        steer: {kind: step, amplitude: 1.0, unit: front_deg, t_step: 0.5}
+
+sweep:
+  speed_kmh:
+    values: [30, 40, 50, 60, 80, 100]
+    # bind 是研究变量名到 Experiment 点路径的映射。写死在这里一次，
+    # 后面的表格、分组、判据就都用 speed_kmh 这个名字。
+    bind: maneuver.steps.1.speed_kmh
+
+metrics:
+  - name: r_dps
+    expr: degrees(steady(yaw_rate))
+    unit: °/s
+  - name: beta_deg
+    expr: degrees(atan2(steady(vy), steady(vx)))
+    unit: °
+  - name: ay
+    expr: steady(ay)
+    unit: m/s²
+  - name: yaw_gain
+    expr: degrees(steady(yaw_rate)) / steady(vx)
+    unit: °/s per m/s
+
+compare:
+  group_by: speed_kmh
+  against: {speed_kmh: 30}
+
+criteria:
+  # 判据在跑之前写定，是结论唯一被允许的形式。
+  - {metric: ay, must: abs < 6.0, at: all}
+  - {metric: beta_deg, must: abs < 3.0, at: all}
+
+report:
+  template: sweep

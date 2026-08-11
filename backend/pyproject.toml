@@ -30,7 +30,8 @@ dev = [
 ]
 
 [project.scripts]
-sim4wis = "sim4wis.main:run"
+# Bare `sim4wis` still starts the server; subcommands reach the study layer.
+sim4wis = "sim4wis.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

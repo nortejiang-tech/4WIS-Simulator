@@ -411,7 +411,7 @@ sim4wis realtime acquire|release|drive|observe
 | 期 | 内容 | 验收 | 粗估 |
 |---|---|---|---|
 | **P0** | 本设计文档 | 评审通过 | — |
-| **P1** | study 层核心 + `/api/study/*` + CLI：StudySpec、sweep 展开、指标注册表（内置 + 表达式档）、compare、默认 sweep 报告模板 | **用 spec 复刻「后轮转角范围」研究的 sweep 部分，数值与现有报告一致** | 1.5–2.5 天 |
+| **P1** ✅ | study 层核心 + `/api/study/*` + CLI：StudySpec、sweep 展开、指标注册表（内置 + 表达式档）、compare、criteria、默认 sweep 报告模板 | 见下方「P1 验收标准的更换」 | 已完成 |
 | **P2** | 能力边界守卫 + 出处字段 + `--dry-run` | 模型能力矩阵有测试守着；对运动学问 `grip_util` 被拒绝且给出 `use_instead` | 0.5–1 天 |
 | **P2.5** | 求解轴 `solve_for`（§4）：一维求根、上升支约束与 `unreachable`、标定缓存、`--dry-run` 报成本 | 目标 a_y 超过该工况极限时返回 `unreachable` 并给出实际峰值，**不**收敛到下降支；改车辆参数后缓存自动失效 | 0.5–1 天 |
 | **P3** | MCP server（独立进程 / stdio，§13）：工具面、后端自动拉起与回收、版本协商 | 在 Claude Code 里端到端跑通一次真实研究；后端未启动时能自己拉起，退出时不误杀用户的后端 | 0.5–1 天 |
@@ -431,6 +431,32 @@ P2.5 排在 P2 之后不是随意的：求解轴要靠过峰判据判断上升�
 decoupling study。
 
 合计 **5–7.5 天**（初稿 4–6.5 天，a 与 c 各加约半天到一天）。
+
+### P1 验收标准的更换
+
+原定验收是「用 spec 复刻后轮转角范围研究的 sweep 部分」。**这在 P1 阶段做不到**，原因在
+实现时才浮出来：**后轮转角权限根本不是车辆参数**。`VehicleParams` 只有全局
+`steer_limit`（±35°/轮）；`rear_rack_travel_limit` 声明了，但在整个后端物理代码里一次都
+没被用到（只出现在序列化与参数校验里）。现有研究因此要在控制律跑完之后手动夹后轮命令
+——那是 `in_loop` 钩子，排在 P5。
+
+替代验收（已通过）：**把 study 测出的稳态横摆角速度，与平台自带的闭式稳态解
+`solve_steady_state_body` 对表**。这个参照更强，因为它与 study 实际走的时域路径不共享
+任何代码，等于用一条独立通路验证了整条链路（展开 → 批跑 → 通道存储 → 表达式档的
+`steady()` → 结果表）。线性区内两者吻合到 **0.13–1.10%**。
+
+对表过程本身抓出一个缺陷，见下。
+
+### 该由谁定：后轮权限要不要变成真参数
+
+`in_loop` 钩子（P5）能让研究跑起来，但更根本的问题是：**后轮转向系统的角度上限本来就是
+车辆属性**（它是一条作动器规格），现在它在模型里不存在。两条路：
+
+- **(b) 加成真参数**（推荐）：`VehicleParams` 加 `rear_steer_limit`，在命令路径上生效，
+  默认值取"不额外限制"因此是 no-op、golden 不受影响。之后后轮权限 sweep 就是一句
+  `vehicle.overrides.rear_steer_limit_deg`，不需要钩子；顺带让车辆页那个一直没接线的
+  `rear_rack_travel_limit` 有了归宿。
+- **(a) 只靠钩子**：不动物理面，但每份研究各夹一遍，且这个"车辆属性"永远进不了 GUI。
 
 ---
 
@@ -458,7 +484,22 @@ decoupling study。
 
 ### 未决
 
-暂无。实现中若发现新的分叉再回来记。
+- **d.** 后轮转角权限要不要变成真的 `VehicleParams` 字段？见 §11「该由谁定」。
+
+### P1 实施中发现的缺陷
+
+**解析路径漏了轴侧偏刚度分配。** `dynamic.py` 的时域模型按
+`axle_cornering_scale`（默认车 0.80 前 / 1.20 后）缩放轮胎侧偏刚度，而
+`quasi_static_wheel_loads` → `load_sensitive_cornering_stiffness` **不缩放**。于是所有走
+准静态路径的消费方——`/api/model/demo/bicycle-gain` 的自行车增益演示、负载分析页——
+解的是**另一台车**。
+
+效应与转角幅值无关、随 v² 增长（它移动的是不足转向梯度 K，而横摆增益是 V/(L+K·V²)）：
+稳态横摆角速度在 30 km/h 差 −5%，60 km/h 差 −17%。把分配补上后误差塌缩到 0.13–1.10%。
+
+这与 decoupling study 记录在 `axle_cornering_stiffness()` 上的是**同一类缺陷的第二处实例**。
+已由 `backend/tests/test_study_e2e.py::test_analytic_path_omits_the_axle_cornering_split`
+钉住并写明"修好后请删掉这个测试"。修不修、什么时候修，待定。
 
 ---
 
