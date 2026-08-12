@@ -169,12 +169,14 @@ def _print_compliance(c: dict[str, Any]) -> None:
         detail = r["note"] or (f"worst: {r['worst_label']}"
                                if r["status"] in ("violated", "marginal")
                                and r["worst_label"] else "")
-        rows.append([_MARK[r["status"]], r["id"], r["at"],
-                     r["target"] or "—", r["limit"],
+        rows.append([_MARK[r["status"]], "must" if r["severity"] == "must" else "-",
+                     r["id"], r["at"], r["target"] or "—", r["limit"],
                      _fmt(r["worst_value"]), margin, detail])
-    print(_table(["", "需求", "工况", "目标", "限值", "实测", "余量", "说明"], rows))
+    print(_table(["", "级别", "需求", "工况", "目标", "限值", "实测", "余量", "说明"], rows))
+    if any(r["severity"] != "must" for r in c["rows"]):
+        print("  「级别」为空的行是参考项：会记录、不参与集合判定，也不计入覆盖率。")
     if c["verdict"] == "incomplete":
-        print("\n  「未评估」不是通过：这些要求本次没有测到，或测量值不可信。")
+        print("  「未评估」不是通过：这些要求本次没有测到，或测量值不可信。")
 
 
 # ---------------------------------------------------------------------------

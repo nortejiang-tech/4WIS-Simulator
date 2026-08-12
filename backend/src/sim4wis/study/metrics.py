@@ -7,6 +7,15 @@ computes for every run. A study naming one of these costs nothing extra: the
 value is read straight out of the run's stored KPIs, so a study and the GUI's
 analysis page can never disagree about what `yaw_gain_dps` means.
 
+**Procedure** metrics are the objective-test library: quantities that are only
+defined for a particular manoeuvre and need the whole trace to extract, such as
+the ISO 13674 on-centre numbers read off a weave's hysteresis loops. They are
+neither a stored KPI (they would be computed for every run that cannot support
+them) nor a one-line formula (the extraction is an analysis, not an
+expression). Each one **refuses** rather than returning a plausible number when
+the run cannot support it — a weave metric computed from a straight-line run
+would otherwise come back as a very good on-centre result.
+
 **Expression** metrics are written in the spec as a formula over the run's
 channels. This tier is intentionally weak — no statements, no attribute
 access, no imports, no lambdas — because it is the tier an agent may write
@@ -43,6 +52,9 @@ CAP_SLIP = "tyre_slip"
 CAP_EFFORT = "steering_effort"
 CAP_ATTITUDE = "attitude"
 CAP_DRIVETRAIN = "drivetrain"
+#: Needs the steering system modelled as a plant — hand torque exists only when
+#: `vehicle.steering_system.enabled` is set.
+CAP_PLANT = "steering_plant"
 
 
 @dataclass(frozen=True)
@@ -76,8 +88,95 @@ BUILTIN: dict[str, MetricInfo] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Procedure tier — the objective-test library
+# ---------------------------------------------------------------------------
+
+#: Procedure name → the analysis it runs over a whole record.
+#:
+#: One entry per test, not per metric: a weave yields ten numbers from one pass
+#: over the data, and running the analysis ten times would be both slow and a
+#: way for two metrics of the same run to disagree.
+ANALYSES: dict[str, Callable[[np.ndarray, dict[str, np.ndarray]], Any]] = {}
+
+#: Metric name → (procedure, accessor, info).
+PROCEDURE: dict[str, tuple[str, Callable[[Any], float], MetricInfo]] = {}
+
+
+def _register_weave() -> None:
+    from sim4wis.study import oncentre
+
+    def analysis(t: np.ndarray, ch: dict[str, np.ndarray]) -> Any:
+        def get(name: str) -> np.ndarray | None:
+            v = ch.get(name)
+            return None if v is None else np.asarray(v, dtype=float)
+
+        angle = get("steer_hand_angle")
+        torque = get("steer_hand_torque")
+        if angle is None or torque is None:
+            raise oncentre.ProcedureError(
+                "本次运行没有 steer_hand_angle / steer_hand_torque 通道"
+            )
+        return oncentre.analyse_weave(
+            t, hand_angle=angle, hand_torque=torque,
+            plant_active=get("steer_plant_active"),
+            ay=get("ay"), yaw_rate=get("yaw_rate"),
+        )
+
+    ANALYSES["weave"] = analysis
+
+    deg = 180.0 / math.pi
+    entries: tuple[tuple[str, str, str, Callable[[Any], float]], ...] = (
+        ("onc_torque_gradient_nm_per_deg", "N·m/°",
+         "中心区力矩梯度（零转角处，随试验幅值变化 —— 必须连同工况一起引用）",
+         lambda w: w.torque_gradient_nm_per_rad / deg),
+        ("onc_torque_gradient_nm_per_g", "N·m/g",
+         "中心区力矩梯度（对侧向加速度）—— 与传动比无关，且对幅值稳健",
+         lambda w: _need(w.torque_gradient_nm_per_g, "需要 ay 通道与足够的侧向加速度")),
+        ("onc_torque_at_0_1g_nm", "N·m", "0.1 g 处的手力矩",
+         lambda w: _need(w.torque_at_0_1g_nm, "需要 ay 通道")),
+        ("onc_torque_hysteresis_nm", "N·m",
+         "力矩迟滞：零转角处上下行两支的间距（摩擦感）",
+         lambda w: w.torque_hysteresis_nm),
+        ("onc_torque_deadband_deg", "°",
+         "角度死区：零力矩处上下行两支的间距 —— 车开始回应之前能走过的角度",
+         lambda w: w.angle_deadband_rad * deg),
+        ("onc_angle_gradient_deg_per_g", "°/g", "转向灵敏度（方向盘转角/侧向加速度）",
+         lambda w: _need(w.angle_gradient_rad_per_g, "需要 ay 通道") * deg),
+        ("onc_yaw_phase_lag_deg", "°", "横摆角速度相对方向盘转角的相位滞后",
+         lambda w: _need(w.yaw_phase_lag_deg, "需要 yaw_rate 通道")),
+        # The achieved test condition. Reported as metrics rather than left
+        # implicit because the angle-domain quantities above genuinely move
+        # with amplitude — a gradient quoted without its condition is not a
+        # measurement, and this is how a report is forced to carry both.
+        ("onc_ay_amplitude_g", "g", "实际达到的侧向加速度幅值（试验工况）",
+         lambda w: w.ay_amplitude / 9.81),
+        ("onc_sw_amplitude_deg", "°", "实际达到的方向盘转角幅值（试验工况）",
+         lambda w: w.angle_amplitude_rad * deg),
+        ("onc_frequency_hz", "Hz", "实测扫掠频率（由过零点估计，不取自 spec）",
+         lambda w: w.frequency_hz),
+    )
+    for name, unit, desc, getter in entries:
+        PROCEDURE[name] = (
+            "weave", getter,
+            MetricInfo(name, unit, desc, requires=CAP_PLANT, source="procedure"),
+        )
+
+
+def _need(value: float | None, why: str) -> float:
+    from sim4wis.study.oncentre import ProcedureError
+
+    if value is None:
+        raise ProcedureError(why)
+    return float(value)
+
+
+_register_weave()
+
+
 def describe_metrics() -> list[dict[str, Any]]:
     """Registry as data — what `describe_capabilities` will serve."""
+    infos = [*BUILTIN.values(), *(info for _, _, info in PROCEDURE.values())]
     return [
         {
             "name": m.name,
@@ -87,7 +186,7 @@ def describe_metrics() -> list[dict[str, Any]]:
             "solvable": m.solvable,
             "source": m.source,
         }
-        for m in BUILTIN.values()
+        for m in infos
     ]
 
 
@@ -242,8 +341,32 @@ def collect(
     genuinely came out undefined.
     """
     out = MetricValues()
+    wanted_procedures = {PROCEDURE[n][0] for n in names if n in PROCEDURE}
+    analyses: dict[str, Any] = {}
+    analysis_errors: dict[str, str] = {}
+    if wanted_procedures:
+        arrays = ({k: np.asarray(v, dtype=float) for k, v in channels.items()}
+                  if channels is not None else None)
+        for proc in sorted(wanted_procedures):
+            if t is None or arrays is None:
+                analysis_errors[proc] = f"{proc} 指标需要该 run 的通道数据"
+                continue
+            try:
+                analyses[proc] = ANALYSES[proc](np.asarray(t, dtype=float), arrays)
+            except Exception as e:                   # noqa: BLE001 - recorded per metric
+                analysis_errors[proc] = f"{type(e).__name__}: {e}"
+
     for n in names:
-        if n in kpis and kpis[n] is not None:
+        if n in PROCEDURE:
+            proc, getter, _ = PROCEDURE[n]
+            if proc in analysis_errors:
+                out.errors[n] = analysis_errors[proc]
+                continue
+            try:
+                out.values[n] = float(getter(analyses[proc]))
+            except Exception as e:                   # noqa: BLE001 - recorded per metric
+                out.errors[n] = f"{type(e).__name__}: {e}"
+        elif n in kpis and kpis[n] is not None:
             try:
                 out.values[n] = float(kpis[n])
             except (TypeError, ValueError):

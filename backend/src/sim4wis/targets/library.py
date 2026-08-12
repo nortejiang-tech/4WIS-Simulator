@@ -5,12 +5,22 @@ it yet.
 
 `eps_actuator` is fully checkable today from one sizing pass: it is the
 actuator specification written as requirements, which is what goes to a
-supplier. `steering_feel` is the ISO 13674-flavoured on-centre side, and until
-the objective-test library lands (v2 V3) a compliance run against it reports
-覆盖不全 and names the measurement it wanted. That is the correct state of
-affairs during development and it is worth showing rather than hiding: a
-requirements document exists before the test capability does, and the gap
-between them is the work list.
+supplier. `steering_feel` is the ISO 13674 on-centre side, and it is checked by
+running `procedures/iso13674_oncentre.yaml` — all but one entry. The exception
+is return-to-centre, which needs a release manoeuvre the tool cannot yet
+express, and it reports 覆盖不全 while naming the measurement it wanted. That is
+the correct state of affairs during development and worth showing rather than
+hiding: a requirements document exists before the test capability does, and the
+gap between them is the work list.
+
+**Version 2 of `steering_feel` moved the judgement onto the
+lateral-acceleration quantities** (N·m/g, °/g) and away from the angle-domain
+gradient. The angle-domain gradient moves with the weave amplitude — measured,
+not assumed: 1.46 N·m/deg at 1.2° of steering wheel and 0.76 at 3.3°, and a
+fixed regression window does not remove it because the dependence is real. It
+also scales with the steering ratio, so it cannot be written as a requirement
+that outlives a rack change. It is still computed and reported; it is no longer
+what a configuration passes or fails on.
 
 **Provenance, honestly.** None of these numbers is measured on this vehicle.
 The actuator limits are the fitted hardware's own ratings and a stated design
@@ -122,36 +132,100 @@ def _eps_actuator() -> TargetSet:
 
 
 def _steering_feel() -> TargetSet:
+    iso = "ISO 13674-1 weave 试验口径；带宽取同级别乘用车的普遍范围（工程判断，非实测）"
     return TargetSet(
         name="steering_feel",
-        version=1,
+        version=2,
         title="转向手感要求（中心区 / 回正）",
-        applies_to="LS9 级 2.9 t SUV，任意前轴架构",
+        applies_to="LS9 级 2.9 t SUV，任意前轴架构；100 km/h、0.2 Hz、约 0.2 g 的 weave 工况",
         owner="系统工程",
-        notes=("**当前工具尚无法测量这些指标** —— 客观试验与指标库（v2 V3）落地后才有"
-               "测量值。在此之前对它做符合性检查会报「覆盖不全」并点名缺哪个测量，"
-               "这正是它现在的用处：需求先立，试验后补。"),
+        notes=("配 procedures/iso13674_oncentre.yaml 使用。判定用的是**对侧向加速度**的量"
+               "（N·m/g、°/g）：角度域的力矩梯度随扫掠幅值变化，也随传动比变化，"
+               "不适合写成跨车型的要求。回正性一条仍需线控释放工况（v2 V3 后半），"
+               "在此之前会如实报「未评估」。\n\n"
+               "**这套带子不是对模型的验证。** 带宽取自同级别乘用车的普遍范围，"
+               "但定带时模型的数已经在手边，所以默认车全部达标只说明这套机制跑通了，"
+               "不说明模型准。真正的验证要么来自台架/实车数据，要么来自商用工具对拉 —— "
+               "两者都还没有，产品的适用边界声明依旧成立。"),
         entries=[
             {
-                "id": "onc_torque_gradient",
-                "metric": "onc_torque_gradient_nm_per_deg",
+                "id": "procedure_condition",
+                "metric": "onc_ay_amplitude_g",
                 "at": "speed_kmh == 100",
-                "limit": [0.15, 0.60],
-                "target": [0.25, 0.45],
-                "unit": "N·m/deg",
-                "source": "ISO 13674-1 weave 试验口径；带宽取同级别车的常见范围（工程判断）",
+                "limit": [0.12, 0.28],
+                "target": [0.15, 0.25],
+                "unit": "g",
+                "source": "ISO 13674-1 中心区试验工况（0.1–0.2 g 量级）",
+                "rationale": ("对试验本身的要求，不是对车的要求：幅值落在带外，"
+                              "上面每一条读出来的都是另一个工况下的车"),
+            },
+            {
+                "id": "onc_torque_gradient",
+                "metric": "onc_torque_gradient_nm_per_g",
+                "at": "speed_kmh == 100",
+                "limit": [4.0, 18.0],
+                "target": [7.0, 14.0],
+                "unit": "N·m/g",
+                "source": iso,
                 "rationale": ("两侧都是要求：太小方向发飘、驾驶员不敢松手，"
                               "太大高速转向沉重且指向迟钝。写成单边就丢掉一半需求"),
+            },
+            {
+                "id": "onc_torque_at_0_1g",
+                "metric": "onc_torque_at_0_1g_nm",
+                "at": "speed_kmh == 100",
+                "limit": [0.6, 2.5],
+                "target": [0.9, 1.8],
+                "unit": "N·m",
+                "source": iso,
+                "rationale": "0.1 g 是日常并线与修正的量级，最直接对应「日常手感」",
+            },
+            {
+                "id": "onc_torque_hysteresis",
+                "metric": "onc_torque_hysteresis_nm",
+                "at": "speed_kmh == 100",
+                "limit": "<= 1.2",
+                "target": "<= 0.7",
+                "unit": "N·m",
+                "severity": "should",
+                "source": iso,
+                "rationale": ("迟滞环在零转角处的宽度。**不作为判定项** —— 本模型上它"
+                              "对齿条库仑摩擦不单调（0 N 时已有 0.99 N·m，500 N 时降到"
+                              "0.26，900 N 又回到 1.66），因为 0.2 Hz 下车辆自身的侧向"
+                              "动力学滞后贡献了同量级的正交分量，与摩擦项部分抵消。"
+                              "记录、观察，但不拿它写要求"),
             },
             {
                 "id": "onc_torque_deadband",
                 "metric": "onc_torque_deadband_deg",
                 "at": "speed_kmh == 100",
-                "limit": "<= 1.2",
+                "limit": "<= 1.5",
                 "target": "<= 0.8",
-                "unit": "deg",
-                "source": "ISO 13674-1；限值按同级别车常见上限（工程判断）",
-                "rationale": "死区主要由齿条库仑摩擦决定，是中心区手感的第一成因",
+                "unit": "°",
+                "severity": "should",
+                "source": iso,
+                "rationale": ("车开始回应之前能走过的方向盘角度。**不作为判定项**，"
+                              "与上一条同因：它是同一个环在另一个轴上的宽度"),
+            },
+            {
+                "id": "onc_steering_sensitivity",
+                "metric": "onc_angle_gradient_deg_per_g",
+                "at": "speed_kmh == 100",
+                "limit": [8.0, 30.0],
+                "target": [11.0, 22.0],
+                "unit": "°/g",
+                "source": iso,
+                "rationale": "太小高速紧张、修正过度，太大转向迟钝；与总传动比强相关",
+            },
+            {
+                "id": "onc_yaw_phase_lag",
+                "metric": "onc_yaw_phase_lag_deg",
+                "at": "speed_kmh == 100",
+                "limit": "<= 8.0",
+                "target": "<= 5.0",
+                "unit": "°",
+                "source": "ISO 13674-1 / ISO 7401 口径；0.2 Hz 处的相位滞后（工程判断）",
+                "rationale": "0.2 Hz 已经很慢，此处的滞后基本反映车辆本身而非作动器",
             },
             {
                 "id": "return_residual_angle",
@@ -159,9 +233,10 @@ def _steering_feel() -> TargetSet:
                 "at": "all",
                 "limit": "abs <= 8.0",
                 "target": "abs <= 4.0",
-                "unit": "deg",
+                "unit": "°",
                 "source": "回正性试验（无统一国际标准，按内部惯例）",
-                "rationale": "残余角由逆效率与摩擦决定；蜗轮蜗杆架构最容易在这里失分",
+                "rationale": ("残余角由逆效率与摩擦决定；蜗轮蜗杆架构最容易在这里失分。"
+                              "**本工具尚无法测量** —— 需要「松手」工况，见 v2 V3 后半"),
             },
         ],
     )

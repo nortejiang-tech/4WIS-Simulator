@@ -1,0 +1,78 @@
+# ISO 13674-1 口径 —— 中心区手感（weave 试验）
+#
+#   sim4wis study run procedures/iso13674_oncentre.yaml --dry-run
+#   sim4wis study run procedures/iso13674_oncentre.yaml
+#
+# 高速公路上绝大多数时间都花在正前方几度以内、0.2 g 以下。那一区决定车"精确"
+# 还是"发飘"，而稳态横摆增益量不到它（测点在区外），阶跃响应 50 ms 就穿过去了。
+# 决定它的是**手力矩与方向盘转角在零点附近的关系**——那是一个迟滞环，不是一条
+# 曲线，因为齿条与转向柱的摩擦让去路和回路不重合。
+#
+# 三条关于本模板的约定：
+#
+# 1. **工况必须钉死。** 角度域的量（力矩梯度、死区）确实随扫掠幅值变化——这是
+#    试验本身的性质，不是估计器的毛病，也正是 ISO 用侧向加速度来定幅值的原因。
+#    所以本模板固定 100 km/h、0.2 Hz、前轮 0.4°（默认车约 0.19 g），并把
+#    onc_ay_amplitude_g 也作为指标记录下来：脱离工况引用的梯度不是测量值。
+# 2. **必须启用转向系统被控对象层。** 没有它就没有手力矩通道，所有中心区指标
+#    都无从谈起；指标会直接拒绝，而不是返回一个看着合理的数。
+# 3. **speed_kmh 写成只有一个值的 sweep 轴**，这样工况会出现在结果表的坐标里，
+#    目标集的 `at: "speed_kmh == 100"` 也才有东西可匹配。
+
+study: iso13674_oncentre
+question: 这套转向配置的中心区手感如何？力矩梯度、摩擦感、死区与横摆相位滞后各是多少？
+
+model: simplified_dynamic
+targets: steering_feel
+
+baseline:
+  name: oncentre_weave
+  strategy: ideal_ackermann
+  # 0.2 Hz 的环要看清楚，50 Hz 记录率是必要的：过零点用相邻样本线性插值，
+  # 而被测的量本身就只有零点几度。
+  record_hz: 50
+  vehicle:
+    overrides:
+      steering_system:
+        enabled: true
+  maneuver:
+    steps:
+      # 先直行，把起步瞬态放掉。分析会再丢掉第一个完整周期。
+      - duration: 4.0
+        speed_kmh: 100
+        steer: {kind: constant, amplitude: 0.0}
+      # 6 个周期：丢 1 个，剩 5 个用来对每个过零点求平均。
+      - duration: 30.0
+        speed_kmh: 100
+        steer: {kind: sine, amplitude: 0.4, unit: front_deg, freq_hz: 0.2}
+
+sweep:
+  # 单值轴：把工况写进结果坐标，目标集才能按工况点匹配。
+  speed_kmh:
+    values: [100]
+    bind: maneuver.steps.1.speed_kmh
+
+metrics:
+  # 与传动比无关、对幅值稳健的两个 —— 目标集判定用它们。
+  - onc_torque_gradient_nm_per_g
+  - onc_torque_at_0_1g_nm
+  # 迟滞环本身：摩擦感与死区。
+  - onc_torque_hysteresis_nm
+  - onc_torque_deadband_deg
+  # 灵敏度与响应相位。
+  - onc_angle_gradient_deg_per_g
+  - onc_yaw_phase_lag_deg
+  # 角度域梯度：随幅值变化，所以只记录、不判定。
+  - onc_torque_gradient_nm_per_deg
+  # 实际达到的试验工况 —— 脱离它引用上面任何一个数都没有意义。
+  - onc_ay_amplitude_g
+  - onc_sw_amplitude_deg
+  - onc_frequency_hz
+
+criteria:
+  # 本模板自己的自检：跑出来的确实是一次中心区试验。
+  - {metric: onc_ay_amplitude_g, must: "< 0.30", at: all}
+  - {metric: onc_frequency_hz, must: "< 0.25", at: all}
+
+report:
+  template: sweep

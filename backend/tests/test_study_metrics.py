@@ -13,6 +13,7 @@ import pytest
 
 from sim4wis.study.metrics import (
     BUILTIN,
+    PROCEDURE,
     ExpressionError,
     collect,
     describe_metrics,
@@ -97,7 +98,16 @@ class TestCollection:
         assert "channels" in mv.errors["b"]
 
 
-def test_every_builtin_is_described_with_a_capability():
+def test_every_metric_is_described_with_a_capability():
+    """The catalogue an agent reads must cover every tier, and label it.
+
+    `describe_metrics` is the only place a caller finds out a metric exists,
+    so a tier that is registered but not described is a metric nobody can
+    discover — and one that is described without `requires` is a metric an
+    envelope guard cannot reason about.
+    """
     described = {m["name"]: m for m in describe_metrics()}
-    assert set(described) == set(BUILTIN)
+    assert set(described) == set(BUILTIN) | set(PROCEDURE)
     assert all(m["requires"] for m in described.values())
+    assert all(described[n]["source"] == "builtin" for n in BUILTIN)
+    assert all(described[n]["source"] == "procedure" for n in PROCEDURE)

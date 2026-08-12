@@ -150,6 +150,8 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
   见 [`docs/steering_system_guide.md`](docs/steering_system_guide.md)。
 - **作动器选型** — 最恶劣工况库 → 峰值转矩/转速/RMS/热 → 一页规格书与判定。
   `sim4wis targets check eps_actuator`。
+- **客观试验库** — `procedures/` 下每项标准试验一份可跑的 spec 模板（工况 + 指标 +
+  目标带）。已有 ISO 13674-1 中心区 weave：力矩梯度、摩擦感、死区、灵敏度、横摆相位。
 - **目标层** — 可版本化的需求集 + 符合性表，回答"这套转向配置达标了吗"。
   与 study 的 `criteria` 分开：criteria 属于一个问题，目标集属于一个产品。
   见 [`docs/targets_guide.md`](docs/targets_guide.md)。

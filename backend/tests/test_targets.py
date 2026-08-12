@@ -560,7 +560,11 @@ class TestApi:
 
     def test_the_library_is_listed(self, client):
         body = client.get("/api/targets").json()
-        assert {s["ref"] for s in body["sets"]} >= {"eps_actuator@1", "steering_feel@1"}
+        # By name, not by ref: a shipped set is expected to be versioned up as
+        # the requirements change, and this assertion is about the library
+        # being served, not about which revision is current.
+        assert {s["name"] for s in body["sets"]} >= {"eps_actuator", "steering_feel"}
+        assert all(s["ref"] == f"{s['name']}@{s['version']}" for s in body["sets"])
 
     def test_a_set_comes_back_with_its_sources(self, client):
         body = client.get("/api/targets/eps_actuator@1").json()

@@ -32,7 +32,13 @@ from sim4wis.study import compare as compare_mod
 from sim4wis.study import criteria as criteria_mod
 from sim4wis.study import store as study_store
 from sim4wis.study.expand import baseline_experiment, expand, grid_size, validate_binds
-from sim4wis.study.metrics import BUILTIN, ExpressionError, collect, validate_expression
+from sim4wis.study.metrics import (
+    BUILTIN,
+    PROCEDURE,
+    ExpressionError,
+    collect,
+    validate_expression,
+)
 from sim4wis.study.result import Row, StudyResult
 from sim4wis.study.spec import StudySpec
 from sim4wis.targets import compliance as compliance_mod
@@ -68,9 +74,10 @@ def dry_run(spec: StudySpec) -> dict[str, Any]:
 
     channels = expected_channels()
     for name in spec.builtin_metrics():
-        if name not in BUILTIN:
+        if name not in BUILTIN and name not in PROCEDURE:
             problems.append(
-                f"unknown metric {name!r}; known: {', '.join(sorted(BUILTIN))}"
+                f"unknown metric {name!r}; known: "
+                f"{', '.join(sorted({*BUILTIN, *PROCEDURE}))}"
             )
     for m in spec.expr_metrics():
         try:
@@ -89,6 +96,17 @@ def dry_run(spec: StudySpec) -> dict[str, Any]:
                 problems.append(
                     f"criterion selector {c.at!r} names unknown axis {key!r}"
                 )
+
+    # Procedure metrics need the plant; a study can know that before running.
+    wanted_proc = [n for n in spec.metric_names() if n in PROCEDURE]
+    if wanted_proc:
+        sys_block = (spec.baseline.vehicle.overrides or {}).get("steering_system") or {}
+        if not sys_block.get("enabled"):
+            warnings.append(
+                f"{', '.join(sorted(wanted_proc))} 需要转向系统被控对象层，"
+                "但 baseline 未启用它（vehicle.overrides.steering_system.enabled）—— "
+                "这些指标会全部缺失"
+            )
 
     # Step-response metrics need a step-kind segment to be defined at all.
     step_metrics = {"yaw_gain_dps", "yaw_rise_time_s", "yaw_overshoot_pct", "yaw_settling_time_s"}
@@ -156,10 +174,12 @@ def run_sync(spec: StudySpec, *, write_report: bool = True) -> tuple[str, StudyR
 
     names = spec.metric_names()
     exprs = spec.expr_metrics()
-    # Only the channels the expressions actually reference are read back, and
-    # only when there are expressions at all — the CSV is the widest thing in
-    # the pipeline.
-    want_channels = expected_channels() if exprs else []
+    procedures = [n for n in names if n in PROCEDURE]
+    # Channels are read back only when something needs them — the CSV is the
+    # widest thing in the pipeline. Both the expression tier and the procedure
+    # tier do; the builtin tier reads stored KPIs and never touches them.
+    needs_channels = bool(exprs or procedures)
+    want_channels = expected_channels() if needs_channels else []
 
     rows: list[Row] = []
     warnings: list[str] = list(check["warnings"])
@@ -167,7 +187,7 @@ def run_sync(spec: StudySpec, *, write_report: bool = True) -> tuple[str, StudyR
         run_id, kpis = by_label.get(cell.label, (None, {}))
         t: list[float] | None = None
         channels: dict[str, list[float]] | None = None
-        if exprs and run_id:
+        if needs_channels and run_id:
             try:
                 raw = run_store.load_run_channels(run_id, want_channels)
                 t = [float(x) for x in raw.pop("t", [])]
