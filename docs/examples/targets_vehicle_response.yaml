@@ -1,0 +1,58 @@
+# 一份目标集示例 —— 放到 targets/ 目录下即可被工具识别。
+#
+#   sim4wis targets list
+#   sim4wis targets show vehicle_response
+#
+# 与 study 的 criteria 的区别（这是本层存在的理由）：
+#
+#   criteria  属于**一个问题**。随研究写、随研究扔，阈值是为了让这一个论断可证伪。
+#   目标集    属于**一个产品**。有名字、有版本、有归口、有依据，被每一次研究、
+#             每一套配置反复引用；它回答的是"这套转向配置达标了吗"。
+#
+# 三条约定：
+#   1. 每条要求都是一个**带**。单边限值只是半开的特例 —— 中心区力矩梯度太小和
+#      太大一样是问题，schema 只会写"小于"就会把这类需求逼成单边。
+#   2. target 是想达到的，limit 是不能越过的。落在两者之间判"边际"，
+#      评审读它和读"达标"是两回事。
+#   3. source 必填。需求评审的第一个问题就是"谁说的"；没有出处的数字是偏好，
+#      不是要求，会被想推翻它的人推翻。
+
+name: vehicle_response
+version: 1
+title: 车辆响应要求（示例）
+applies_to: LS9 级 2.9 t SUV，前轮转向
+owner: 系统工程
+notes: 供 study 层引用的示例；数字为工程判断，非实测。
+
+entries:
+  - id: lateral_accel_linear_range
+    metric: ay
+    at: all
+    limit: "abs <= 6.0"
+    target: "abs <= 4.0"
+    unit: m/s²
+    source: 线性区上界（工程判断）——超过后侧偏刚度不再是常数，结论口径要换
+    rationale: 用来守住"这次扫掠还在线性区"这个前提，而不是评价车好不好
+
+  - id: sideslip_at_60
+    metric: beta_deg
+    at: "speed_kmh == 60"
+    # 两侧都是要求：写成 [lo, hi] 而不是两条单边要求，
+    # 这样报告里是一行需求，不是两行。
+    limit: [-3.0, 3.0]
+    target: [-2.0, 2.0]
+    unit: deg
+    source: 同级别车的常见范围（工程判断，非实测）
+    rationale: 质心侧偏角是驾驶员对"车尾在哪"的直接感受
+
+  # 故意留一条本工具现在测不出来的：符合性表会报「未评估」并点名缺哪个指标。
+  # 这不是缺陷，是工作清单 —— 需求先立，试验后补。
+  - id: onc_torque_deadband
+    metric: onc_torque_deadband_deg
+    at: "speed_kmh == 100"
+    limit: "<= 1.2"
+    target: "<= 0.8"
+    unit: deg
+    severity: should
+    source: ISO 13674-1；限值按同级别车常见上限（工程判断）
+    rationale: 中心区死区主要由齿条库仑摩擦决定；客观试验库（v2 V3）落地后才有测量值

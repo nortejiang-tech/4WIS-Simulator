@@ -33,7 +33,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 FRONTEND_DIST = REPO / "frontend" / "dist"
 BACKEND_SRC = REPO / "backend" / "src"
-DATA_FOLDERS = ["projects", "scripts_lib", "plugins"]
+DATA_FOLDERS = ["projects", "scripts_lib", "plugins", "targets"]
 OUT_ROOT = REPO / "dist_portable"
 CACHE = OUT_ROOT / ".cache"
 

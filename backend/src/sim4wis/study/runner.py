@@ -35,6 +35,10 @@ from sim4wis.study.expand import baseline_experiment, expand, grid_size, validat
 from sim4wis.study.metrics import BUILTIN, ExpressionError, collect, validate_expression
 from sim4wis.study.result import Row, StudyResult
 from sim4wis.study.spec import StudySpec
+from sim4wis.targets import compliance as compliance_mod
+from sim4wis.targets import library as target_library
+from sim4wis.targets import measure as target_measure
+from sim4wis.targets.spec import TargetError
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +102,23 @@ def dry_run(spec: StudySpec) -> dict[str, Any]:
                 f"{', '.join(sorted(kinds)) or 'none'}) — they will be missing from every cell"
             )
 
+    if spec.targets:
+        try:
+            ts = target_library.get(spec.targets)
+        except TargetError as e:
+            problems.append(str(e))
+        else:
+            # Coverage is knowable before running anything, and knowing it
+            # after a few hundred runs is knowing it too late.
+            names = set(spec.metric_names())
+            uncovered = sorted({e.metric for e in ts.entries
+                                if e.severity == "must" and e.metric not in names})
+            if uncovered:
+                warnings.append(
+                    f"目标集 {ts.ref} 有 {len(uncovered)} 条强制要求的指标本研究不计算，"
+                    f"将判为「未评估」：{', '.join(uncovered)}"
+                )
+
     n = grid_size(spec) if not problems else 0
     sim_seconds = n * spec.baseline.maneuver.total_duration
     return {
@@ -110,6 +131,7 @@ def dry_run(spec: StudySpec) -> dict[str, Any]:
         "est_wall_seconds": round(sim_seconds * _SECONDS_PER_SIM_SECOND, 1),
         "metrics": spec.metric_names(),
         "axes": list(spec.sweep),
+        "targets": spec.targets,
         "cells": [c.label for c in expand(spec)] if not problems else [],
         "spec_digest": spec.digest(),
     }
@@ -167,6 +189,20 @@ def run_sync(spec: StudySpec, *, write_report: bool = True) -> tuple[str, StudyR
 
     verdicts = criteria_mod.evaluate(spec.criteria, rows, list(spec.sweep))
 
+    compliance = None
+    if spec.targets:
+        try:
+            target_set = target_library.get(spec.targets)
+            report = compliance_mod.evaluate(
+                target_set, target_measure.from_study(
+                    StudyResult(study=spec.study, question=spec.question,
+                                model=spec.model, spec_digest=spec.digest(), rows=rows)
+                ),
+            )
+            compliance = report.to_dict()
+        except TargetError as e:                     # noqa: BLE001 - a study is not its targets
+            warnings.append(f"目标符合性检查失败：{e}")
+
     resolved = params_to_dict(resolve_vehicle_params(base))
     result = StudyResult(
         study=spec.study,
@@ -178,6 +214,7 @@ def run_sync(spec: StudySpec, *, write_report: bool = True) -> tuple[str, StudyR
         rows=rows,
         comparison=comparison,
         verdicts=verdicts,
+        compliance=compliance,
         warnings=warnings,
         elapsed_s=time.time() - started,
     )

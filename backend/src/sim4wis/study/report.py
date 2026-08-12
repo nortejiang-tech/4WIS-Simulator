@@ -35,10 +35,15 @@ if str(_SCRIPTS) not in sys.path:                    # pragma: no cover - import
     sys.path.insert(0, str(_SCRIPTS))
 
 try:                                                 # pragma: no cover - optional
-    from reporting import ReportDocument, html_table, report_section
+    from reporting import ReportDocument, html_cell, html_table, report_section
     _HAVE_HELPERS = True
 except Exception:                                    # noqa: BLE001
     _HAVE_HELPERS = False
+
+
+def _raw(markup: str) -> Any:
+    """A cell whose content is markup — `html_table` escapes bodies by default."""
+    return html_cell(markup, raw=True) if _HAVE_HELPERS else markup
 
 
 def _fmt(v: Any, digits: int = 4) -> str:
@@ -93,12 +98,12 @@ def render_html(spec: StudySpec, result: StudyResult) -> str:
         ["字段", "值"],
         [
             ["study", result.study],
-            ["spec_digest", f"<code>{_fmt(result.spec_digest)}</code>"],
+            ["spec_digest", _raw(f"<code>{_fmt(result.spec_digest)}</code>")],
             ["模型", result.model],
             ["策略", _fmt(prov.get("strategy"))],
             ["版本", _fmt(prov.get("sim4wis_version"))],
-            ["git", f"<code>{_fmt(prov.get('git_sha'))}</code>"],
-            ["params_hash", f"<code>{_fmt(prov.get('params_hash'))}</code>"],
+            ["git", _raw(f"<code>{_fmt(prov.get('git_sha'))}</code>")],
+            ["params_hash", _raw(f"<code>{_fmt(prov.get('params_hash'))}</code>")],
             ["dt / 记录率", f"{_fmt(prov.get('dt'))} s / {_fmt(prov.get('record_hz'))} Hz"],
             ["生成时间", _fmt(prov.get("created_at"))],
         ],
@@ -117,7 +122,7 @@ def render_html(spec: StudySpec, result: StudyResult) -> str:
     rows: list[list[Any]] = []
     for r in result.rows:
         cells: list[Any] = [_fmt(r.coords.get(a)) for a in axes]
-        cells.append(f"<span class='meta'>{_fmt(r.run_id)}</span>")
+        cells.append(_raw(f"<span class='meta'>{_fmt(r.run_id)}</span>"))
         for m in result.metric_names:
             cells.append(_fmt(r.metrics.get(m)) if m in r.metrics else "—")
         rows.append(cells)
@@ -156,17 +161,30 @@ def render_html(spec: StudySpec, result: StudyResult) -> str:
             "<p class='note'>Δ% 在基准为 0 时无定义，留空。</p>" + _table(dheaders, drows),
         ))
 
+    if result.compliance:
+        # Reconstructed rather than re-evaluated: the verdict a report shows
+        # must be the one that was stored, not one computed a second time from
+        # a library that may have moved on since.
+        from sim4wis.targets.report import render_fragment
+
+        try:
+            parts.append(render_fragment(result.compliance))
+        except Exception as e:                       # noqa: BLE001 - never lose the report
+            parts.append(_section("目标符合性", f"<div class='warn'>无法渲染："
+                                                f"{html.escape(type(e).__name__)}: {html.escape(str(e))}</div>"))
+
     if result.verdicts:
         vrows = []
         for v in result.verdicts:
-            mark = "<span class='pass'>PASS</span>" if v.passed else "<span class='fail'>FAIL</span>"
+            mark = _raw("<span class='pass'>PASS</span>" if v.passed
+                        else "<span class='fail'>FAIL</span>")
             detail = v.note
             if not v.passed and v.worst_label:
                 detail = (f"最差：{html.escape(v.worst_label)} = {_fmt(v.worst_value)}"
                           + (f"；{detail}" if detail else ""))
             vrows.append([
-                f"{html.escape(v.metric)} {html.escape(v.must)}",
-                html.escape(v.at), mark, f"{v.n_failed}/{v.n_checked}", detail or "—",
+                f"{v.metric} {v.must}",
+                v.at, mark, f"{v.n_failed}/{v.n_checked}", _raw(detail or "—"),
             ])
         parts.append(_section("判据", "<p class='note'>判据在运行之前写定，是本报告中唯一"
                                       "作为结论的陈述。</p>"
@@ -176,7 +194,7 @@ def render_html(spec: StudySpec, result: StudyResult) -> str:
     if errs:
         parts.append(_section("缺失的测量", _table(
             ["cell", "指标", "原因"],
-            [[html.escape(a), html.escape(b), html.escape(c)] for a, b, c in errs[:60]],
+            [[a, b, c] for a, b, c in errs[:60]],
         )))
 
     if result.warnings:

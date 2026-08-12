@@ -148,6 +148,11 @@ cd frontend && npm run e2e:prod  # 仅在已构建 dist 后直接跑 Playwright
 - **转向系统被控对象层** — 扭杆/扭矩传感器/助力曲线/电机包络/齿条摩擦，以及八种架构
   （C/P/DP/R-EPS · SBW · EPS+RWS · SBW+RWS · 4WIS）。**默认关闭**，关闭时行为逐位不变。
   见 [`docs/steering_system_guide.md`](docs/steering_system_guide.md)。
+- **作动器选型** — 最恶劣工况库 → 峰值转矩/转速/RMS/热 → 一页规格书与判定。
+  `sim4wis targets check eps_actuator`。
+- **目标层** — 可版本化的需求集 + 符合性表，回答"这套转向配置达标了吗"。
+  与 study 的 `criteria` 分开：criteria 属于一个问题，目标集属于一个产品。
+  见 [`docs/targets_guide.md`](docs/targets_guide.md)。
 
 > **适用边界**：本工具经解析闭式解与内部一致性验证、golden 基线逐位可复现，
 > **尚未与实车或台架数据做相关性验证**；转向系统参数为工程估计值。

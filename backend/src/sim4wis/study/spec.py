@@ -160,6 +160,16 @@ class StudySpec(BaseModel):
     metrics: list[str | ExprMetric] = Field(default_factory=list)
     compare: CompareSpec | None = None
     criteria: list[Criterion] = Field(default_factory=list)
+    #: A target set to judge this study's results against, as `name` or
+    #: `name@version`.
+    #:
+    #: Distinct from `criteria`, and the distinction is the point. A criterion
+    #: belongs to this question and is thrown away with it; a target belongs to
+    #: the product, is versioned and sourced, and is the same document every
+    #: other study is judged against. Both can be present: the criteria say
+    #: whether the study answered its question, the targets say whether the
+    #: configuration is acceptable. See sim4wis.targets.
+    targets: str | None = None
     report: ReportSpec | None = None
 
     # ---- validation --------------------------------------------------------

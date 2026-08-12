@@ -139,6 +139,10 @@ def _print_summary(s: dict[str, Any]) -> None:
             print(f"  [{mark}] {v['metric']} {v['must']} @ {v['at']}"
                   f"  {v['failed']}/{v['checked']} failed{extra}")
 
+    comp = s.get("compliance")
+    if comp:
+        _print_compliance(comp)
+
     for w in s.get("warnings") or []:
         print(f"  ! {w}")
     errs = [(r["label"], m, e) for r in s["rows"] for m, e in (r.get("errors") or {}).items()]
@@ -146,6 +150,31 @@ def _print_summary(s: dict[str, Any]) -> None:
         print(f"  ! {label}: {m}: {e}")
     if s.get("report_path"):
         print(f"\n  report: {s['report_path']}")
+
+
+_MARK = {"met": "MET ", "marginal": "MARG", "violated": "FAIL", "not_evaluated": "----"}
+
+
+def _print_compliance(c: dict[str, Any]) -> None:
+    """The compliance table, worst first."""
+    counts = c["counts"]
+    print(f"\n目标符合性 {c['ref']} — {c['verdict_label'].upper()} "
+          f"({c['verdict']})  覆盖 {c['coverage']:.0%}"
+          f"  超标 {counts['violated']} / 边际 {counts['marginal']} / "
+          f"未评估 {counts['not_evaluated']}")
+    order = {"violated": 0, "not_evaluated": 1, "marginal": 2, "met": 3}
+    rows = []
+    for r in sorted(c["rows"], key=lambda r: (order[r["status"]], r["id"])):
+        margin = "—" if r["margin_pct"] is None else f"{r['margin_pct']:+.1f}%"
+        detail = r["note"] or (f"worst: {r['worst_label']}"
+                               if r["status"] in ("violated", "marginal")
+                               and r["worst_label"] else "")
+        rows.append([_MARK[r["status"]], r["id"], r["at"],
+                     r["target"] or "—", r["limit"],
+                     _fmt(r["worst_value"]), margin, detail])
+    print(_table(["", "需求", "工况", "目标", "限值", "实测", "余量", "说明"], rows))
+    if c["verdict"] == "incomplete":
+        print("\n  「未评估」不是通过：这些要求本次没有测到，或测量值不可信。")
 
 
 # ---------------------------------------------------------------------------
@@ -269,6 +298,78 @@ def cmd_study_trace(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_targets_list(args: argparse.Namespace) -> int:
+    from sim4wis.targets.library import catalogue
+
+    items = catalogue()
+    if args.json:
+        print(json.dumps(items, ensure_ascii=False, indent=2))
+        return 0
+    print(_table(
+        ["ref", "标题", "适用", "条数", "强制", "内置"],
+        [[c["ref"], c["title"], c["applies_to"], c["entries"], c["must"], c["builtin"]]
+         for c in items],
+    ))
+    return 0
+
+
+def cmd_targets_show(args: argparse.Namespace) -> int:
+    from sim4wis.targets.library import get
+
+    ts = get(args.ref)
+    if args.json:
+        print(json.dumps(ts.to_dict(), ensure_ascii=False, indent=2))
+        return 0
+    print(f"{ts.ref} — {ts.title}\n  适用：{ts.applies_to}\n  归口：{ts.owner or '—'}"
+          f"\n  digest：{ts.digest()}")
+    if ts.notes:
+        print(f"  说明：{ts.notes}")
+    print()
+    print(_table(
+        ["需求", "指标", "工况", "目标", "限值", "级别", "依据"],
+        [[e.id, e.metric, e.at,
+          e.target_band.describe() if e.target_band else "—",
+          e.limit_band.describe(), e.severity, e.source] for e in ts.entries],
+    ))
+    return 0
+
+
+def cmd_targets_check(args: argparse.Namespace) -> int:
+    """Check a target set against a fresh actuator-sizing pass."""
+    from pathlib import Path
+
+    from sim4wis.core.state import VehicleParams
+    from sim4wis.project.vehicle_profiles import load_profile_params
+    from sim4wis.steering.sizing import size_actuator
+    from sim4wis.targets import compliance, library, measure
+    from sim4wis.targets import report as target_report
+
+    if args.vehicle:
+        params = load_profile_params(args.vehicle)
+    else:
+        params = VehicleParams()
+    if not params.steering_system.enabled:
+        import dataclasses
+
+        params = dataclasses.replace(
+            params,
+            steering_system=dataclasses.replace(params.steering_system, enabled=True),
+        )
+    req = size_actuator(params)
+    rep = compliance.evaluate(library.get(args.ref), measure.from_sizing(req))
+    if args.json:
+        print(json.dumps(rep.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        _print_compliance(rep.to_dict())
+    if args.out:
+        path = target_report.render(
+            rep, Path(args.out),
+            notes=f"作动器选型走查 · 架构 {params.steering_system.architecture}",
+        )
+        print(f"\n  report: {path}")
+    return 0 if rep.verdict == "compliant" else 2
+
+
 def cmd_capabilities(args: argparse.Namespace) -> int:
     if _backend_up(args.backend) and not args.local:
         caps = _get(args.backend, "/api/study/capabilities")
@@ -346,6 +447,22 @@ def build_parser() -> argparse.ArgumentParser:
     tr.add_argument("--channels", required=True, help="comma-separated channel names")
     tr.add_argument("--max-points", type=int, default=200)
     tr.set_defaults(func=cmd_study_trace)
+
+    tg = sub.add_parser("targets", help="requirement sets and compliance")
+    tsub = tg.add_subparsers(dest="subcommand", required=True)
+
+    tl = tsub.add_parser("list", help="list available target sets")
+    tl.set_defaults(func=cmd_targets_list)
+
+    ts = tsub.add_parser("show", help="show one target set")
+    ts.add_argument("ref", help="name or name@version")
+    ts.set_defaults(func=cmd_targets_show)
+
+    tc = tsub.add_parser("check", help="check a target set against an actuator sizing pass")
+    tc.add_argument("ref", help="name or name@version")
+    tc.add_argument("--vehicle", help="vehicle profile name (default: built-in LS9)")
+    tc.add_argument("--out", help="write an HTML compliance report here")
+    tc.set_defaults(func=cmd_targets_check)
 
     caps = sub.add_parser("capabilities", help="models, metrics, strategies")
     caps.set_defaults(func=cmd_capabilities)

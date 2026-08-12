@@ -78,6 +78,18 @@ def studies_dir() -> Path:
     return Path(env) if env else data_root() / "studies"
 
 
+def targets_dir() -> Path:
+    """Requirement sets (targets/<name>.yaml).
+
+    A sibling of `studies/` rather than something inside them: a target set
+    outlives any one study and is referenced by many. It is also the folder a
+    customer edits — the shipped sets live in code so the product always has
+    them, and anything here adds to that library.
+    """
+    env = os.environ.get("SIM4WIS_TARGETS_DIR")
+    return Path(env) if env else data_root() / "targets"
+
+
 def plugins_dir() -> Path:
     """Directory containing strategy plugins (*.fmu, *.slx, …)."""
     return data_root() / "plugins" / "strategies"

@@ -22,6 +22,7 @@ from sim4wis.api.routers import (
     scene,
     script,
     study,
+    targets,
     vehicle_profiles,
 )
 
@@ -40,3 +41,4 @@ router.include_router(recording.router)
 router.include_router(vehicle_profiles.router)
 router.include_router(experiments.router)
 router.include_router(study.router)
+router.include_router(targets.router)

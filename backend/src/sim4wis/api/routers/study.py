@@ -39,6 +39,7 @@ from sim4wis.steering import architecture as steering_arch
 from sim4wis.study import runner, store
 from sim4wis.study.metrics import describe_metrics
 from sim4wis.study.spec import StudySpec
+from sim4wis.targets import library as target_library
 from sim4wis.vehicle.model_registry import model_infos
 
 logger = logging.getLogger(__name__)
@@ -111,6 +112,7 @@ async def capabilities() -> dict[str, Any]:
         ],
         "metrics": describe_metrics(),
         "steering_architectures": steering_arch.describe_all(),
+        "target_sets": target_library.catalogue(),
         "strategies": available_strategies(),
         "steer_kinds": ["constant", "step", "ramp", "sine", "sweep", "dlc"],
         "steer_units": ["normalized", "front_deg"],
@@ -124,8 +126,13 @@ async def capabilities() -> dict[str, Any]:
             "solver axes (sweep[*].solve_for) are declared in the schema but not "
             "implemented yet.",
             "steering_architectures describes what each configuration has and how it "
-            "can fail. The steering plant is not wired into the vehicle yet, so these "
-            "are declarations the guard can already use, not behaviour you can run.",
+            "can fail. The plant runs inside the dynamic and multibody models when "
+            "vehicle.steering_system.enabled is set; off by default, and off means "
+            "bit-identical to before it existed.",
+            "target_sets are versioned requirement documents. A spec may name one as "
+            "`targets: name@version`, and the result then carries a compliance table. "
+            "They are not the same thing as `criteria`: criteria belong to the "
+            "question, targets belong to the product.",
         ],
     }
 

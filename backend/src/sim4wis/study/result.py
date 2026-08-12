@@ -78,6 +78,8 @@ class StudyResult:
     rows: list[Row] = field(default_factory=list)
     comparison: dict[str, Any] | None = None
     verdicts: list[Verdict] = field(default_factory=list)
+    #: Target-set compliance, when the spec named one. See sim4wis.targets.
+    compliance: dict[str, Any] | None = None
     warnings: list[str] = field(default_factory=list)
     report_path: str | None = None
     elapsed_s: float = 0.0
@@ -94,8 +96,10 @@ class StudyResult:
             "rows": [r.to_dict() for r in self.rows],
             "comparison": self.comparison,
             "verdicts": [v.to_dict() for v in self.verdicts],
+            "compliance": self.compliance,
             "warnings": self.warnings,
             "report_path": self.report_path,
             "elapsed_s": round(self.elapsed_s, 3),
             "all_passed": all(v.passed for v in self.verdicts) if self.verdicts else None,
+            "compliant": (self.compliance or {}).get("verdict"),
         }

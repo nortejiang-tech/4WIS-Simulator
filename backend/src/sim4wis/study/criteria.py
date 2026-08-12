@@ -59,11 +59,17 @@ def parse_selector(at: str) -> list[tuple[str, Any]]:
     return filters
 
 
-def _matches(row: Row, filters: list[tuple[str, Any]]) -> bool:
+def matches_coords(coords: dict[str, Any], filters: list[tuple[str, Any]]) -> bool:
+    """Does this coordinate dict satisfy every filter?
+
+    Public because the targets layer selects measurements with the same
+    selector language, and the float tolerance below is exactly the kind of
+    rule that must not exist in two places.
+    """
     for key, want in filters:
-        if key not in row.coords:
+        if key not in coords:
             return False
-        have = row.coords[key]
+        have = coords[key]
         if isinstance(have, float) or isinstance(want, float):
             try:
                 if not math.isclose(float(have), float(want), rel_tol=1e-9, abs_tol=1e-12):
@@ -74,6 +80,10 @@ def _matches(row: Row, filters: list[tuple[str, Any]]) -> bool:
         if have != want:
             return False
     return True
+
+
+def _matches(row: Row, filters: list[tuple[str, Any]]) -> bool:
+    return matches_coords(row.coords, filters)
 
 
 def _holds(value: float, use_abs: bool, op: str, threshold: float) -> bool:
