@@ -39,7 +39,11 @@ from sim4wis.core.state import (
 )
 from sim4wis.vehicle.base import VehicleModel
 from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
-from sim4wis.vehicle.steering_link import front_axle_step, make_steering_plant
+from sim4wis.vehicle.steering_link import (
+    front_axle_step,
+    idle_channels,
+    make_steering_plant,
+)
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.model_core import (
     body_resistance_force,
@@ -105,6 +109,10 @@ class MultiBodyModel(VehicleModel):
         # See vehicle/steering_link.py — None unless enabled and the
         # architecture has a mechanical front axle.
         self._steering, self._mech_ratio = make_steering_plant(params)
+        #: Front-axle telemetry for the recorder. NaN until a plant runs,
+        #: because a run without one has no hand torque — not a hand torque
+        #: of zero.
+        self.steering_channels = idle_channels()
         self._prev_hand = 0.0
         # Filtered friction-brake command per wheel (first-order, brake_tau).
         self._brake_f = np.zeros(N_WHEELS)
@@ -225,7 +233,7 @@ class MultiBodyModel(VehicleModel):
                 self._delta_act[2:], cmd.delta_cmd[2:], dt,
                 getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
             )
-            delta_f, self._prev_hand = front_axle_step(
+            delta_f, self._prev_hand, self.steering_channels = front_axle_step(
                 self._steering, self._mech_ratio, cmd.delta_cmd, dt,
                 prev_hand=self._prev_hand, rack_force=float(np.sum(s.rack_force[:2])),
                 speed_ms=float(s.vx),

@@ -10,6 +10,13 @@ Design notes:
       target-speed fraction (throttle = speed / v_max).
     * `vehicle.profile` names a YAML in vehicle_profiles/; `vehicle.overrides`
       is a params_codec dict fragment applied on top (either may be omitted).
+    * **Unknown fields are refused.** They used to be dropped in silence, which
+      meant a misspelling ran successfully and produced a result that answered
+      a different question: `frequency: 0.2` on a sine profile is not
+      `freq_hz`, so the run executed at the 0.5 Hz default and the weave
+      analysis downstream was measuring something nobody had asked for. The
+      study layer already refuses a typo'd `bind` path for exactly this reason;
+      the schema underneath it should not be the soft spot.
 """
 
 from __future__ import annotations
@@ -17,7 +24,7 @@ from __future__ import annotations
 import math
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 SteerKind = Literal["constant", "step", "ramp", "sine", "sweep", "dlc"]
 # Unit of the steer `amplitude`:
@@ -38,6 +45,7 @@ class SteerProfile(BaseModel):
         directly to delta_cmd, bypassing the feel layer — so a regression
         baseline survives future tuning of the driver-input mapping.
     """
+    model_config = ConfigDict(extra="forbid")
 
     kind: SteerKind = "constant"
     # The bound depends on the unit — see `_check_amplitude_unit`. The field
@@ -97,6 +105,7 @@ def _bump(u: float, lo: float, hi: float) -> float:
 
 class ManeuverStep(BaseModel):
     """One segment of a maneuver, ending after `duration` sim-seconds."""
+    model_config = ConfigDict(extra="forbid")
 
     name: str = ""
     duration: float = Field(..., gt=0.0, le=600.0)
@@ -111,6 +120,7 @@ class ManeuverStep(BaseModel):
 
 
 class Maneuver(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str = "untitled"
     steps: list[ManeuverStep] = Field(default_factory=list)
 
@@ -120,6 +130,7 @@ class Maneuver(BaseModel):
 
 
 class ExperimentVehicle(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     profile: str | None = None                       # vehicle_profiles/<name>.yaml
     overrides: dict[str, Any] = Field(default_factory=dict)
 
@@ -151,6 +162,7 @@ class FaultSpec(BaseModel):
     [kg·m²] (wheel assembly + reflected rack/motor), ``c_damp`` viscous
     damping [N·m·s/rad], ``tau_coulomb`` breakaway friction [N·m].
     """
+    model_config = ConfigDict(extra="forbid")
 
     fault_type: Literal["stuck_zero", "stuck_hold", "stuck_value", "limited", "free_caster"]
     wheel: int = Field(..., ge=0, le=3)              # 0=FL 1=FR 2=RL 3=RR
@@ -164,6 +176,7 @@ class FaultSpec(BaseModel):
 
 class PathSpec(BaseModel):
     """Reference path for follow_trajectory: template or explicit waypoints."""
+    model_config = ConfigDict(extra="forbid")
 
     template: str | None = None                      # controller.path template name
     params: dict[str, Any] = Field(default_factory=dict)
@@ -172,6 +185,7 @@ class PathSpec(BaseModel):
 
 
 class Experiment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=1, max_length=64)
     description: str = ""
     vehicle: ExperimentVehicle = Field(default_factory=ExperimentVehicle)

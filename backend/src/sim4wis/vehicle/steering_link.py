@@ -30,6 +30,8 @@ the plant starts unloaded.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 from sim4wis.core.state import VehicleParams
@@ -72,6 +74,59 @@ def make_steering_plant(
     return plant, ratio
 
 
+#: What a run records from the front axle, whatever kind of axle it is.
+#:
+#: One fixed set across architectures, with **NaN for signals this hardware does
+#: not have** — a by-wire car has no torsion bar, so recording 0.0 in
+#: `steer_torque_sensor` would read as "the sensor said zero" rather than "there
+#: is no sensor", and every metric downstream would believe it. NaN propagates
+#: instead, and the study layer already treats a NaN metric as untrusted rather
+#: than as a measurement.
+STEERING_CHANNELS: tuple[str, ...] = (
+    "steer_hand_torque",       # what the driver's hands feel [N·m]
+    "steer_hand_angle",        # steering wheel angle [rad] — the x-axis of every
+                               # on-centre plot, so it is not optional
+    "steer_torque_sensor",     # torsion-bar reading; mechanical axles only
+    "steer_assist_torque",     # assist referred to the pinion [N·m]
+    "steer_motor_torque",      # assist motor, or the by-wire feedback motor
+    "steer_motor_speed",       # [rad/s] at the motor shaft
+    "steer_angle_deviation",   # commanded − actual road wheel; by-wire only
+    "steer_plant_active",      # 1.0 when the plant produced this sample
+)
+
+_ABSENT = {name: math.nan for name in STEERING_CHANNELS}
+
+
+def idle_channels() -> dict[str, float]:
+    """What a model without a steering plant reports.
+
+    Not zeros. A run with no plant has no hand torque — it does not have a hand
+    torque of zero — and the difference is what stops a target from being
+    scored MET against a channel nothing simulated.
+    """
+    return {**_ABSENT, "steer_plant_active": 0.0}
+
+
+def _channels(plant: SteeringPlant | ByWirePlant) -> dict[str, float]:
+    out = dict(_ABSENT)
+    out["steer_plant_active"] = 1.0
+    s = plant.state
+    if isinstance(plant, ByWirePlant):
+        out["steer_hand_torque"] = s.hand_torque
+        out["steer_motor_torque"] = s.hand_torque
+        out["steer_angle_deviation"] = s.angle_deviation
+        # `steer_hand_angle` is filled by the caller: on a by-wire axle the hand
+        # wheel is an independent input the plant does not own.
+        return out
+    out["steer_hand_torque"] = s.hand_torque
+    out["steer_hand_angle"] = s.hand_angle
+    out["steer_torque_sensor"] = s.torque_sensor
+    out["steer_assist_torque"] = s.assist_torque
+    out["steer_motor_torque"] = s.motor_torque
+    out["steer_motor_speed"] = s.motor_speed
+    return out
+
+
 def front_axle_step(
     plant: SteeringPlant | ByWirePlant,
     mech_ratio: float,
@@ -81,7 +136,7 @@ def front_axle_step(
     prev_hand: float,
     rack_force: float,
     speed_ms: float,
-) -> tuple[float, float]:
+) -> tuple[float, float, dict[str, float]]:
     """One front-axle step, whichever kind of plant this is."""
     if isinstance(plant, ByWirePlant):
         # The hand wheel is an independent input. Until a real hand-wheel
@@ -99,11 +154,14 @@ def front_axle_step(
             rack_force=rack_force,
             speed_ms=speed_ms,
         )
-        return state.road_wheel_angle, hand
-    return plant_front_angle(
+        chans = _channels(plant)
+        chans["steer_hand_angle"] = hand
+        return state.road_wheel_angle, hand, chans
+    angle, hand = plant_front_angle(
         plant, mech_ratio, delta_cmd, dt,
         prev_hand=prev_hand, rack_force=rack_force, speed_ms=speed_ms,
     )
+    return angle, hand, _channels(plant)
 
 
 def plant_front_angle(

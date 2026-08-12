@@ -28,6 +28,7 @@ from sim4wis.environment.disturbance import Scene
 from sim4wis.experiment.schema import Experiment, PathSpec
 from sim4wis.project.params_codec import params_from_dict
 from sim4wis.vehicle.model_registry import make_vehicle_model
+from sim4wis.vehicle.steering_link import STEERING_CHANNELS, idle_channels
 
 WHEELS = ("fl", "fr", "rl", "rr")
 
@@ -46,7 +47,11 @@ SCALAR_CHANNELS = (
     "driver_steering", "driver_throttle",
     # Body specific force — the g-g trace for post-run analysis.
     "ax", "ay",
+    # Front axle, when a steering plant is configured. NaN otherwise — see
+    # steering_link.idle_channels for why not zero.
+    *STEERING_CHANNELS,
 )
+_IDLE_STEERING = idle_channels()
 WHEEL_CHANNELS = (
     "delta", "delta_cmd", "omega", "fz", "torque_steer",
     "rack_force", "motor_torque", "slip_alpha", "slip_kappa", "icr_dev",
@@ -281,6 +286,9 @@ class SimSession:
         chans["driver_throttle"].append(float(driver.throttle))
         chans["ax"].append(_finite(s.ax))
         chans["ay"].append(_finite(s.ay))
+        steer = getattr(self.model, "steering_channels", None) or _IDLE_STEERING
+        for name in STEERING_CHANNELS:
+            chans[name].append(float(steer.get(name, math.nan)))
         slip_a = getattr(self.model, "slip_alpha", None)
         slip_k = getattr(self.model, "slip_kappa", None)
         for i, w in enumerate(WHEELS):
