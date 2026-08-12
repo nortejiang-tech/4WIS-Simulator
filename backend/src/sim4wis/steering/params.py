@@ -54,18 +54,38 @@ class ColumnParams:
     sensor_range_nm: float = 10.0
     #: What the thing holding the wheel can actually apply [N·m].
     #:
-    #: The imposed-angle convention says "the wheel is here now", which stops
-    #: being physical once holding it there needs more than a person or a
-    #: steering robot can produce. Without this limit the model answers an
-    #: impossible request by ringing: past assist saturation it produced
-    #: 48 000 rpm and 399 N.m at the hand wheel, because it was being told to
-    #: hold an angle nothing could hold. With it, the wheel simply stops
-    #: advancing — which is what happens in the car park.
-    #:
     #: 25 N.m is above any sustained human effort (a strong driver two-handed
     #: is ~15) and below a test robot's capability, so it bounds the model
     #: without truncating anything a real test would measure.
     hand_torque_limit_nm: float = 25.0
+
+    #: Grip impedance — the driver (or robot) as a spring-damper onto the
+    #: commanded angle, rather than as an infinitely stiff constraint.
+    #:
+    #: This is what stops the marginal band from ringing, and it is physics
+    #: rather than a numerical patch. With assist saturated the motor clips
+    #: *everything* it was asked for, damping included, and the pinion is left
+    #: as a mass on the torsion bar at zeta ~ 0.03. A real car does not ring
+    #: there because a real pair of arms is compliant and damped and absorbs
+    #: it. An imposed angle is infinitely stiff and absorbs nothing, so the
+    #: model rang exactly where the hardware does not.
+    #:
+    #: The value is the *effective* stiffness of a driver actively holding a
+    #: target angle, not passive arm impedance. Passive arms are 10-30
+    #: N.m/rad, which leaves 22% of steady-state droop — the wheel sitting well
+    #: short of where it was asked for — because a passive arm never corrects.
+    #: A driver watching the road does. Measured against both requirements:
+    #:
+    #:     stiffness   droop   2 N.m motor, full-lock parking
+    #:            20   22.1%   1429 rpm   (stable)
+    #:            60    7.1%   1693 rpm   (stable)
+    #:           200    2.1%   1725 rpm   (stable)
+    #:           400    1.0%   1871 rpm   (stable)
+    #:
+    #: Stability holds throughout, so the choice is free on that axis and is
+    #: made on droop. Damping is set for zeta ~= 0.7 against the column inertia.
+    grip_stiffness: float = 200.0           # [N·m/rad]
+    grip_damping: float = 4.4               # [N·m·s/rad]
 
     @property
     def torsion_stiffness(self) -> float:

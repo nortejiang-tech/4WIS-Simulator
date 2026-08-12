@@ -2,13 +2,12 @@
 
 This is the piece that makes hand-wheel torque exist as a signal.
 
-Convention: **the hand-wheel angle is imposed.** That is the steering-robot
-convention, and it is the right default for three reasons — every objective
-test procedure drives angle and measures torque, every existing input path in
-this simulator (keyboard, gamepad, script, experiment manoeuvre) produces a
-position, and it makes torque an *output*, which is precisely the signal that
-was missing. Driving by applied torque, which a force-feedback wheel needs,
-is the same equations with the column DOF freed and comes later.
+Convention: **angle is commanded, and the driver is a spring-damper onto it.**
+Every objective test procedure drives angle and measures torque, and every
+input path in this simulator produces a position, so angle is the input. But
+the thing holding the wheel is not a rigid constraint — it has finite
+stiffness, damping and strength, and leaving that out is what made the model
+ring in the one place hardware does not (see below).
 
     θ_sw (imposed)
       │  τ_tb = K(θ_sw − θ_p) + c(ω_sw − ω_p)          ← torsion bar
@@ -48,15 +47,32 @@ That is why every production EPS carries a damping function. The gain here is
 scheduled on the local boost so the loop damping ratio holds; a real
 calibration uses a table, and this is the shape that table approximates.
 
-Bench probe, current state
---------------------------
-    full-lock parking, 10 kN rack load
-        assist off   96.5 N.m at the hand wheel
-        assist on     4.9 N.m          — 20x reduction, right direction
-        peak motor    3.1 N.m          — inside the 5.5 N.m peak
-    100 km/h, +/-10 deg
-        peak hand     1.3 N.m          — plausible on-centre effort
-        hysteresis loop has area, and the stick logic engages
+The driver has to be compliant
+------------------------------
+With assist saturated the motor clips everything it was asked for, damping
+included, and the pinion is left as a mass on the torsion bar at zeta ~ 0.03.
+An imposed angle is infinitely stiff and absorbs none of that, so the model
+rang — and worst in the *marginal* band, a motor that almost holds the load,
+which is exactly the band an actuator-sizing pass operates in. A real pair of
+arms is compliant, damped and finite in strength, and absorbs it.
+
+Freeing the column DOF removed the band entirely. Sweeping motor size at
+full-lock parking, 20.7 kN:
+
+    2.0 N.m   17.98 N.m at the hand wheel, 1404 rpm
+    4.0       10.32                        1672
+    5.5        4.63                        1539
+    8.0        4.66                        1539
+    12.0       4.66                        1539
+
+Monotone, no oscillation anywhere, and an undersized motor now reads as heavy
+steering rather than as a numerical excursion.
+
+Step-size note: the column mode is ~10 Hz and the commanded angle is held
+constant across the internal sub-steps, so a *peak* hand torque is
+under-resolved by roughly a third at the default 5 ms vehicle step. RMS
+converges within 7% over a tenfold change in step. Read RMS unless you can
+afford a finer step.
 
 Plausible, not validated: no bench or vehicle data backs these numbers, and
 the parameters are engineering estimates. See docs/v2_steering_platform_plan.md
@@ -78,8 +94,9 @@ class SteeringPlantState:
 
     pinion_angle: float = 0.0
     pinion_rate: float = 0.0
-    hand_angle: float = 0.0
+    hand_angle: float = 0.0            # 方向盘实际角（自由度，非强加）
     hand_rate: float = 0.0
+    commanded_hand_angle: float = 0.0  # 驾驶员/机器人想要的角度
     torsion_torque: float = 0.0        # 扭杆实际传递力矩（含阻尼项）
     torque_sensor: float = 0.0         # 传感器读数（仅弹性项，带饱和）
     assist_torque: float = 0.0         # 折算到小齿轮的助力 [N·m]
@@ -187,16 +204,20 @@ class SteeringPlant:
         n = max(self.motor_gear_ratio, 1e-6)
 
         k_tb = p.column.torsion_stiffness
-        twist = float(hand_angle) - s.pinion_angle
-        # A driver cannot apply unlimited torque, so the hand wheel cannot be
-        # imposed at an angle that would require it. Clamping the twist is the
-        # same statement: past this the wheel stops advancing rather than the
-        # model inventing an equilibrium nothing can hold.
-        twist_limit = p.column.hand_torque_limit_nm / max(k_tb, 1e-9)
-        hand_limited = abs(twist) > twist_limit
+
+        # The driver is a spring-damper onto the commanded angle, not a rigid
+        # constraint. `hand_angle` is what they are reaching for; `sw` is where
+        # the wheel actually is.
+        sw, sw_rate = s.hand_angle, s.hand_rate
+        driver = (p.column.grip_stiffness * (float(hand_angle) - sw)
+                  + p.column.grip_damping * (float(hand_rate) - sw_rate))
+        limit = p.column.hand_torque_limit_nm
+        hand_limited = abs(driver) > limit
         if hand_limited:
-            twist = math.copysign(twist_limit, twist)
-        rate_diff = float(hand_rate) - s.pinion_rate
+            driver = math.copysign(limit, driver)
+
+        twist = sw - s.pinion_angle
+        rate_diff = sw_rate - s.pinion_rate
         torsion = k_tb * twist + p.column.torsion_damping * rate_diff
 
         # The sensor measures twist only — see the module docstring.
@@ -264,23 +285,23 @@ class SteeringPlant:
 
         angle = s.pinion_angle + rate * dt
 
-        # Hand-wheel torque: what a steering robot's load cell would read.
-        hand_accel = (float(hand_rate) - self._prev_hand_rate) / dt
-        self._prev_hand_rate = float(hand_rate)
-        col_friction = (math.copysign(p.column.coulomb_friction, hand_rate)
-                        if abs(hand_rate) > 1e-6 else 0.0)
-        hand_torque = (
-            p.column.inertia * hand_accel
-            + p.column.damping * float(hand_rate)
-            + col_friction
-            + torsion
-        )
+        # Column DOF: the wheel accelerates under what the driver applies minus
+        # what the torsion bar takes back. Hand torque is the *applied* torque,
+        # which is what a robot's load cell reads and what the driver feels.
+        col_friction = (math.copysign(p.column.coulomb_friction, sw_rate)
+                        if abs(sw_rate) > 1e-6 else 0.0)
+        sw_accel = ((driver - torsion - p.column.damping * sw_rate - col_friction)
+                    / max(p.column.inertia, 1e-9))
+        sw_rate_new = sw_rate + sw_accel * dt
+        sw_new = sw + sw_rate_new * dt
+        hand_torque = driver
 
         self.state = SteeringPlantState(
             pinion_angle=angle,
             pinion_rate=rate,
-            hand_angle=float(hand_angle),
-            hand_rate=float(hand_rate),
+            hand_angle=sw_new,
+            hand_rate=sw_rate_new,
+            commanded_hand_angle=float(hand_angle),
             torsion_torque=torsion,
             torque_sensor=sensor,
             assist_torque=assist_pinion,

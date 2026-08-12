@@ -167,18 +167,32 @@ class TestPlant:
                              amp_deg=90.0, assist=True)
         without = _sweep(_plant(), rack_n=PARK_RACK_N, speed_ms=0.0,
                          amp_deg=90.0, assist=False)
+        limit = SteeringSystemParams().column.hand_torque_limit_nm
         peak_on = max(abs(s.hand_torque) for _, s in with_assist)
         peak_off = max(abs(s.hand_torque) for _, s in without)
-        assert peak_on < peak_off / 5.0, f"assist {peak_on:.1f} vs unassisted {peak_off:.1f} N.m"
+        # Unassisted, the driver runs out of strength — which is the honest
+        # form of the old "96.5 N.m" number now that the driver is a finite
+        # spring rather than an infinitely stiff constraint. Nobody applies
+        # 96 N.m to a steering wheel; they simply fail to turn it.
+        assert peak_off >= limit * 0.99, f"unassisted only needed {peak_off:.1f} N.m"
+        assert any(s.hand_limited for _, s in without)
+        # Assisted, it is an ordinary parking effort and the driver is nowhere
+        # near their limit.
         assert peak_on < 10.0, f"{peak_on:.1f} N.m is not a power-assisted car"
+        assert not any(s.hand_limited for _, s in with_assist)
 
     def test_an_undamped_assist_loop_diverges(self):
         """Pins *why* the damping term exists, not just that it is there."""
         undamped = _sweep(_plant(assist_damping_ratio=0.0), rack_n=PARK_RACK_N,
                           speed_ms=0.0, amp_deg=90.0)
         damped = _sweep(_plant(), rack_n=PARK_RACK_N, speed_ms=0.0, amp_deg=90.0)
+        # Without damping the driver is driven to their strength limit on a
+        # manoeuvre that with damping costs a few N.m — the compliant driver
+        # bounds the divergence but does not remove it.
+        assert any(s.hand_limited for _, s in undamped)
+        assert not any(s.hand_limited for _, s in damped)
         assert (max(abs(s.hand_torque) for _, s in undamped)
-                > 5.0 * max(abs(s.hand_torque) for _, s in damped))
+                > 3.0 * max(abs(s.hand_torque) for _, s in damped))
 
     def test_the_motor_stays_inside_its_envelope_at_parking(self):
         run = _sweep(_plant(), rack_n=PARK_RACK_N, speed_ms=0.0, amp_deg=90.0)
@@ -207,12 +221,42 @@ class TestPlant:
                        rack_force=0.0, speed_ms=0.0, assist_enabled=False)
         assert s.stuck and abs(s.pinion_angle) < 1e-6
 
-    def test_substepping_matches_a_finer_outer_step(self):
+    def test_rms_effort_converges_with_outer_step_size(self):
+        """RMS converges; the transient peak does not, and that is worth knowing.
+
+        The column DOF brought a ~10 Hz mode (grip stiffness against wheel
+        inertia), and the commanded angle is held constant across the internal
+        sub-steps because the outer loop has nothing finer to offer — so
+        sub-stepping cannot recover it and only a finer *outer* step can.
+
+            dt      peak    RMS
+            5.0 ms  1.864   1.214
+            2.0 ms  2.472   1.267
+            1.0 ms  2.700   1.289
+            0.5 ms  2.812   1.299
+
+        RMS moves 7% across a tenfold change in step and under 1% on the last
+        halving. The peak moves 51% and is still climbing, so at the default
+        5 ms vehicle step peak hand torque is under-resolved by roughly a
+        third. Anything reading a peak effort needs a finer step; anything
+        reading an RMS does not.
+        """
+        def rms(run):
+            xs = [abs(s.hand_torque) for _, s in run]
+            return math.sqrt(sum(x * x for x in xs) / len(xs))
+
         coarse = _sweep(_plant(), rack_n=4000.0, speed_ms=10.0, amp_deg=30.0, dt=0.005)
         fine = _sweep(_plant(), rack_n=4000.0, speed_ms=10.0, amp_deg=30.0, dt=0.001)
-        pc = max(abs(s.hand_torque) for _, s in coarse)
-        pf = max(abs(s.hand_torque) for _, s in fine)
-        assert pc == pytest.approx(pf, rel=0.15), f"{pc:.2f} vs {pf:.2f}"
+        assert rms(coarse) == pytest.approx(rms(fine), rel=0.10)
+
+    def test_the_peak_is_under_resolved_at_the_default_step(self):
+        """Documents the limitation above rather than leaving it to be found."""
+        def peak(run):
+            return max(abs(s.hand_torque) for _, s in run)
+
+        coarse = _sweep(_plant(), rack_n=4000.0, speed_ms=10.0, amp_deg=30.0, dt=0.005)
+        fine = _sweep(_plant(), rack_n=4000.0, speed_ms=10.0, amp_deg=30.0, dt=0.0005)
+        assert peak(coarse) < 0.8 * peak(fine)
 
     def test_assist_raises_the_mode_the_step_has_to_carry(self):
         p = _plant()
