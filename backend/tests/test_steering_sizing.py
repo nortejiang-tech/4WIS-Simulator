@@ -1,21 +1,27 @@
 """Tests — actuator sizing.
 
 Two of these are about refusing to answer. A sizing pass drives past actuator
-capability on purpose, and the plant is only faithful *within* capability, so
-the module has to know the difference between "this motor is too small" (which
-it can say) and "here is by how much" (which, past saturation, it cannot).
+capability on purpose, so the module has to know the difference between "this
+motor is too small" (which it can say) and "here is by how much" (which, once
+the driver has run out of arms, it cannot).
+
+The line moved. It used to be drawn at assist saturation, because saturation
+meant the plant rang; it is now drawn at the driver's torque limit, because a
+saturated run merely goes heavy and that is the answer, not an artefact.
+`test_the_size_sweep_is_monotone_with_no_marginal_band` is what holds it there.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import math
 
 import pytest
 
 from sim4wis.core.state import VehicleParams
 from sim4wis.steering.sizing import (
     DEFAULT_SCENARIOS,
-    SATURATION_TRUST_LIMIT,
+    DELIVERY_TRUST_LIMIT,
     run_scenario,
     size_actuator,
 )
@@ -30,6 +36,7 @@ def _params(**motor):
 
 
 LOW_SPEED = next(s for s in DEFAULT_SCENARIOS if s.id == "low_speed_manoeuvre")
+PARKING = next(s for s in DEFAULT_SCENARIOS if s.id == "parking_full_lock")
 
 
 class TestScenarioLibrary:
@@ -64,8 +71,8 @@ class TestWithinCapability:
         # Both sizes must be *within* capability or the comparison is being
         # made against an oscillation — the module's own rule, and this test
         # broke it on the first attempt by reaching for a 4 N.m motor.
-        small = run_scenario(_params(peak_torque=8.0), LOW_SPEED)
-        big = run_scenario(_params(peak_torque=16.0), LOW_SPEED)
+        small = run_scenario(_params(peak_torque=3.0), LOW_SPEED)
+        big = run_scenario(_params(peak_torque=8.0), LOW_SPEED)
         assert not small.beyond_capability and not big.beyond_capability
         assert big.peak_hand_torque < small.peak_hand_torque
 
@@ -74,15 +81,54 @@ class TestBeyondCapability:
     def test_an_undersized_motor_is_flagged_rather_than_quantified(self):
         """The honest refusal.
 
-        Past saturation the plant rings instead of going heavy, so its peak
-        numbers stop meaning anything. The module may still say "too small" —
-        that conclusion survives — but it must mark the run so nobody reads a
-        margin off an oscillation.
+        What voids a run is the **driver** running out, not the motor. Past
+        their torque limit the wheel never reaches the commanded angle, so the
+        peaks describe a manoeuvre that did not happen; the module may still
+        say "too small" — that conclusion survives — but it must mark the run
+        so nobody reads a margin off it.
         """
         r = run_scenario(_params(peak_torque=1.0), LOW_SPEED)
-        assert r.saturated_fraction > SATURATION_TRUST_LIMIT
+        assert r.hand_limited_fraction > DELIVERY_TRUST_LIMIT
         assert r.beyond_capability
-        assert "不可信" in r.to_dict()["note"]
+        assert "差多少" in r.to_dict()["note"]
+
+    def test_assist_saturation_alone_is_a_finding_not_a_void(self):
+        """Saturation used to void a run. It should not, and no longer does.
+
+        The rule was written when saturation meant divergence — the marginal
+        band rang, so any run that touched it was unreadable. With the driver
+        given a real impedance, the ECU damping acting on the mode instead of
+        on the manoeuvre, and an input profile with finite acceleration, a
+        saturated run simply goes heavy, which is what an undersized EPS *is*.
+        Voiding it would throw away the one result that says so.
+        """
+        r = run_scenario(_params(peak_torque=8.0), PARKING)
+        assert r.saturated_fraction > DELIVERY_TRUST_LIMIT
+        assert r.hand_limited_fraction == 0.0
+        assert not r.beyond_capability
+        assert "note" not in r.to_dict()
+        # And the numbers are usable: heavier than a motor that covers it.
+        easy = run_scenario(_params(peak_torque=16.0), PARKING)
+        assert r.peak_hand_torque > easy.peak_hand_torque
+
+    def test_the_size_sweep_is_monotone_with_no_marginal_band(self):
+        """The band that made the old rule necessary, pinned shut.
+
+        A motor that almost holds the load used to ring — 5.5 N.m chattered at
+        85 000 rpm while 3.0 and 8.0 were fine — which is exactly the band a
+        sizing pass operates in. Effort must now fall (never rise) as the motor
+        grows, and no size may produce a speed the hardware could not reach.
+        """
+        efforts = []
+        for peak in (2.0, 4.0, 6.0, 6.5, 7.0, 8.0, 10.0, 12.0):
+            r = run_scenario(_params(peak_torque=peak), PARKING)
+            efforts.append(r.peak_hand_torque)
+            assert r.peak_motor_speed * 60 / (2 * math.pi) < 20000, (
+                f"{peak} N·m motor spun to "
+                f"{r.peak_motor_speed * 60 / (2 * math.pi):.0f} rpm"
+            )
+        for smaller, bigger in zip(efforts, efforts[1:], strict=False):
+            assert bigger <= smaller + 1e-6, f"effort rose: {efforts}"
 
     def test_the_verdict_fails_and_says_why(self):
         req = size_actuator(_params(peak_torque=1.0))

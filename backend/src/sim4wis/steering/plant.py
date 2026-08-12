@@ -191,11 +191,23 @@ class SteeringPlant:
         rack_force: float,
         speed_ms: float,
         assist_enabled: bool = True,
+        rack_resistance: float = 0.0,
     ) -> SteeringPlantState:
         """Advance one step.
 
         `rack_force` [N] is the tyre-side load from the existing kingpin →
-        linkage chain, positive when it opposes a positive pinion rotation.
+        linkage chain, positive when it opposes a positive pinion rotation. It
+        is **angle-directed**: it restores toward centre, like the aligning
+        torque of a rolling tyre.
+
+        `rack_resistance` [N] is the part of the tyre load that is *dissipative*
+        rather than restoring — the scrub of a tyre pivoting in place. It
+        opposes motion and holds a stationary rack, so it is resolved with the
+        rack's own Coulomb friction rather than added to `rack_force`. The
+        distinction is not pedantic: a standing tyre at full lock resists being
+        turned with several hundred N.m and does **not** spring back when
+        released, and a model that signs that load by angle instead has built a
+        400 N.m centring spring that exists nowhere.
         """
         p = self.params
         s = self.state
@@ -253,8 +265,26 @@ class SteeringPlant:
             k_eff = k_tb * (1.0 + boost)
             c_damp = (2.0 * p.assist_damping_ratio
                       * math.sqrt(max(k_eff * self.equivalent_inertia, 0.0)))
+            # Damp the **twist rate**, not the pinion rate.
+            #
+            # The unstable mode is the torsion bar's: its state is the twist
+            # and its velocity is (pinion_rate - hand_rate), so that is the
+            # signal to damp. Damping the pinion's absolute rate also stabilises
+            # the mode, and charges the whole manoeuvre for it — the term then
+            # opposes steering itself, so the faster you turn the less help you
+            # get. Measured on the default map: at a parking rate of 193 deg/s
+            # at the pinion it removed 195 N.m of the 413 N.m the map had asked
+            # for, which put the driver on their 25 N.m limit, lost them the
+            # wheel, and let a fully loaded rack drive the pinion backwards
+            # until the run left physics entirely (345 000 rpm).
+            #
+            # In steady turning the pinion tracks the hand wheel and this term
+            # vanishes, which is the point. In the oscillation the relative
+            # rate *is* the oscillation, so it bites in full. Production EPS
+            # damping functions are scheduled to behave this way for the same
+            # reason; here the structure gets it rather than a schedule.
             want_pinion = (self.assist_map.assist_torque(sensor, speed_ms)
-                           - c_damp * s.pinion_rate)
+                           - c_damp * (s.pinion_rate - sw_rate))
             motor_cmd = want_pinion / n
             m = self._motor.step(dt, motor_cmd, s.pinion_rate * n)
             assist_pinion = m.torque * n
@@ -266,7 +296,7 @@ class SteeringPlant:
         # Viscous first; Coulomb is resolved against the net torque below.
         viscous = p.rack.viscous_n_per_mps * r * r * s.pinion_rate
         applied = torsion + assist_pinion - load - viscous
-        coulomb = p.rack.coulomb_friction_n * r
+        coulomb = (p.rack.coulomb_friction_n + abs(float(rack_resistance))) * r
 
         j = self.equivalent_inertia
         # Torque needed to bring the pinion to rest exactly at the end of this
@@ -326,6 +356,7 @@ class SteeringPlant:
         rack_force: float,
         speed_ms: float,
         assist_enabled: bool = True,
+        rack_resistance: float = 0.0,
     ) -> SteeringPlantState:
         """Advance one vehicle step, sub-stepping internally for stability.
 
@@ -344,6 +375,7 @@ class SteeringPlant:
                 rack_force=rack_force,
                 speed_ms=speed_ms,
                 assist_enabled=assist_enabled,
+                rack_resistance=rack_resistance,
             )
         return state
 
