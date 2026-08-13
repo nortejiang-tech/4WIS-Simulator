@@ -52,6 +52,11 @@ def write_minimal_release_tree(root: Path, checker, version: str = "9.8.7") -> N
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"s" * 2048)
 
+    for rel in checker.REQUIRED_MCP_FILES:
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"m" * 2048)
+
 
 def test_release_asset_checker_accepts_current_delivery_materials(tmp_path: Path) -> None:
     checker = load_checker()

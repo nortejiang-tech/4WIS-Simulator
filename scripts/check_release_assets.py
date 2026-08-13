@@ -60,6 +60,13 @@ REQUIRED_SCRIPTS = (
     "scripts/build_portable.py",
 )
 
+#: The MCP facade must ship with the release — it is a separate process entry
+#: (`sim4wis-mcp`) whose absence would silently drop the agent interface.
+REQUIRED_MCP_FILES = (
+    "backend/src/sim4wis_mcp/__init__.py",
+    "backend/src/sim4wis_mcp/server.py",
+)
+
 
 @dataclass(frozen=True)
 class AssetCheck:
@@ -134,6 +141,10 @@ def check_release_assets(
 
     for path in REQUIRED_SCRIPTS:
         checks.append(_file_check(root / path, root, min_bytes=1024))
+
+    for path in REQUIRED_MCP_FILES:
+        # __init__.py is a docstring-only package marker — 100 bytes is enough.
+        checks.append(_file_check(root / path, root, min_bytes=100))
 
     if require_portable_zips:
         for target in targets:
