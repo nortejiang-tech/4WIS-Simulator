@@ -3,7 +3,7 @@
 - **日期**：2026-08-13
 - **依据**：[test_report_2026-08-13.md](test_report_2026-08-13.md)（当日实测全链路测试）、CHANGELOG 未发布节、[../validation_matrix.md](../validation_matrix.md)、[../v2_steering_platform_plan.md](../v2_steering_platform_plan.md)
 - **用途**：下一迭代开发的路线、顺序与验收基准
-- **状态**：提案，开发前评审
+- **状态**：P0 三件已实施（Inc1 `3e42c02` / Inc2 `8a72c0a` / Inc3 `3845abe`，见 CHANGELOG 未发布节）；P1/P2 仍为提案
 
 > 前置阅读：测试报告 §9 的偏差清单（D1–D9）。本文引用其编号。
 
