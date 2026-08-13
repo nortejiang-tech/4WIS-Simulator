@@ -135,14 +135,18 @@ def _steering_feel() -> TargetSet:
     iso = "ISO 13674-1 weave 试验口径；带宽取同级别乘用车的普遍范围（工程判断，非实测）"
     return TargetSet(
         name="steering_feel",
-        version=2,
-        title="转向手感要求（中心区 / 回正）",
-        applies_to="LS9 级 2.9 t SUV，任意前轴架构；100 km/h、0.2 Hz、约 0.2 g 的 weave 工况",
+        version=3,
+        title="转向手感要求（中心区 / 回正 / 摩擦）",
+        applies_to="LS9 级 2.9 t SUV，任意前轴架构；100 km/h、0.2 Hz、约 0.2 g 的 weave 工况 + 50 km/h、0.02 Hz 慢斜坡摩擦工况",
         owner="系统工程",
-        notes=("配 procedures/iso13674_oncentre.yaml 使用。判定用的是**对侧向加速度**的量"
-               "（N·m/g、°/g）：角度域的力矩梯度随扫掠幅值变化，也随传动比变化，"
-               "不适合写成跨车型的要求。回正性一条仍需线控释放工况（v2 V3 后半），"
-               "在此之前会如实报「未评估」。\n\n"
+        notes=("配 procedures/iso13674_oncentre.yaml（中心区）与 procedures/friction_slow_ramp.yaml"
+               "（摩擦）使用。判定用的是**对侧向加速度**的量（N·m/g、°/g）：角度域的"
+               "力矩梯度随扫掠幅值变化，也随传动比变化，不适合写成跨车型的要求。"
+               "回正性一条仍需线控释放工况（v2 V3 后半），在此之前会如实报「未评估」。\n\n"
+               "**v3 把摩擦条目升为判定项。** v2 时迟滞环宽/死区只记录不判定，因为 0.2 Hz "
+               "weave 下环宽对齿条摩擦不单调（车辆侧向动力学滞后与摩擦项正交抵消，D2）。"
+               "v3 把判定搬到 0.02 Hz、50 km/h 的慢斜坡上：动力学分量消失后环宽对摩擦单调，"
+               "环宽才配得上写摩擦要求。\n\n"
                "**这套带子不是对模型的验证。** 带宽取自同级别乘用车的普遍范围，"
                "但定带时模型的数已经在手边，所以默认车全部达标只说明这套机制跑通了，"
                "不说明模型准。真正的验证要么来自台架/实车数据，要么来自商用工具对拉 —— "
@@ -183,29 +187,28 @@ def _steering_feel() -> TargetSet:
             {
                 "id": "onc_torque_hysteresis",
                 "metric": "onc_torque_hysteresis_nm",
-                "at": "speed_kmh == 100",
-                "limit": "<= 1.2",
-                "target": "<= 0.7",
+                "at": "freq_hz == 0.02",
+                "limit": [0.4, 2.0],
+                "target": [0.7, 1.5],
                 "unit": "N·m",
-                "severity": "should",
                 "source": iso,
-                "rationale": ("迟滞环在零转角处的宽度。**不作为判定项** —— 本模型上它"
-                              "对齿条库仑摩擦不单调（0 N 时已有 0.99 N·m，500 N 时降到"
-                              "0.26，900 N 又回到 1.66），因为 0.2 Hz 下车辆自身的侧向"
-                              "动力学滞后贡献了同量级的正交分量，与摩擦项部分抵消。"
-                              "记录、观察，但不拿它写要求"),
+                "rationale": ("慢斜坡（0.02 Hz、50 km/h）下迟滞环在零转角处的宽度——"
+                              "频域分离后车辆动力学正交分量消失，环宽对齿条库仑摩擦"
+                              "单调（0/80/260/900 N → 0.29/0.96/1.12/1.71 N·m），这才"
+                              "配得上写摩擦要求。两侧都是要求：太小发飘、太大粘滞。"
+                              "0.2 Hz weave 上同一指标仍不单调，所以只在本工况判定"),
             },
             {
                 "id": "onc_torque_deadband",
                 "metric": "onc_torque_deadband_deg",
-                "at": "speed_kmh == 100",
-                "limit": "<= 1.5",
-                "target": "<= 0.8",
+                "at": "freq_hz == 0.02",
+                "limit": "<= 3.5",
+                "target": "<= 2.5",
                 "unit": "°",
-                "severity": "should",
+                "severity": "must",
                 "source": iso,
-                "rationale": ("车开始回应之前能走过的方向盘角度。**不作为判定项**，"
-                              "与上一条同因：它是同一个环在另一个轴上的宽度"),
+                "rationale": ("慢斜坡下车开始回应之前能走过的方向盘角度——与环宽同源，是"
+                              "同一个环在另一个轴上的宽度；摩擦过大时死区大到影响精准性"),
             },
             {
                 "id": "onc_steering_sensitivity",

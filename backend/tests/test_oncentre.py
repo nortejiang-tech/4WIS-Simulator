@@ -216,6 +216,43 @@ class TestWeaveResult:
             "and delete this test"
         )
 
+    def test_the_loop_width_is_monotone_in_rack_friction_at_the_slow_ramp(self):
+        """C4: the frequency-separated friction measurement, pinned.
+
+        At 0.2 Hz the loop width is NOT monotone in rack Coulomb friction
+        (pinned above) because the vehicle's own lateral-dynamics lag
+        contributes a quadrature term of the same order. At 0.02 Hz and
+        50 km/h that term vanishes — the lag time constant shrinks with speed
+        and the quadrature scales with frequency — and the width returns to
+        friction: 0/80/260/900 N → 0.29/0.96/1.12/1.71 N·m. It must grow with
+        rack friction, or the number cannot carry a friction requirement
+        (steering_feel@3 judges it under exactly this condition).
+        """
+        def width(coulomb):
+            exp = Experiment.model_validate({
+                "name": "w", "strategy": "ideal_ackermann",
+                "model_type": "simplified_dynamic", "record_hz": 50,
+                "vehicle": {"overrides": {"steering_system": {
+                    "enabled": True, "rack": {"coulomb_friction_n": coulomb}}}},
+                "maneuver": {"steps": [
+                    {"duration": 5.0, "speed_kmh": 50,
+                     "steer": {"kind": "constant", "amplitude": 0.0}},
+                    {"duration": 115.0, "speed_kmh": 50,
+                     "steer": {"kind": "sine", "amplitude": 0.4,
+                               "unit": "front_deg", "freq_hz": 0.02}}]},
+            })
+            r = SimSession(exp).run()
+            c = {k: np.asarray(v, float) for k, v in r.channels.items()}
+            w = _analyse(np.asarray(r.t, float), c)
+            return w.torque_hysteresis_nm, w.angle_deadband_rad * 180.0 / math.pi
+
+        widths = [width(c) for c in (0.0, 260.0, 900.0)]
+        hyst = [w[0] for w in widths]
+        assert all(b > a for a, b in zip(hyst, hyst[1:], strict=False)), hyst
+        # The same loop in the angle axis carries the same separation.
+        dead = [w[1] for w in widths]
+        assert all(b > a for a, b in zip(dead, dead[1:], strict=False)), dead
+
     def test_an_unassisted_heavy_vehicle_cannot_be_weaved_at_speed(self):
         """A refusal that is the right answer, not a failure.
 

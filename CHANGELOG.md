@@ -8,6 +8,13 @@
 
 ### 新增 (Added)
 
+- **摩擦的频域分离协议（C4 / D2）**：0.2 Hz weave 下迟滞环宽对齿条摩擦不单调，
+  是因为车辆侧向动力学滞后贡献同量级正交分量。新增 `procedures/friction_slow_ramp.yaml`
+  —— 0.02 Hz、50 km/h 慢斜坡：动力学分量消失后，环宽对齿条库仑摩擦**单调**
+  （0/80/260/900 N → 0.29/0.96/1.12/1.71 N·m；死区 0.06→2.28→4.78°）。
+  `test_the_loop_width_is_monotone_in_rack_friction_at_the_slow_ramp` 钉住该单调性；
+  `steering_feel@2 → @3`：迟滞环宽与死区两条**从参考项升为判定项**，判定工况为
+  `freq_hz == 0.02`（0.2 Hz 上仍只记录不判定，那里的数不承载摩擦含义）。
 - **v2 黄金锚点**：`check_golden_experiments.py` 现在除了 KPI 黄金之外还跑
   `procedures/iso13674_oncentre.yaml`（100 km/h、0.2 Hz、前轮 0.4°、转向层开启、
   50 Hz 记录），把 ISO 13674 中心区 weave 的 10 个过程指标

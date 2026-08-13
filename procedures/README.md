@@ -11,6 +11,7 @@ sim4wis study run procedures/iso13674_oncentre.yaml
 | 模板 | 口径 | 量什么 | 需要 |
 |---|---|---|---|
 | `iso13674_oncentre.yaml` | ISO 13674-1 | 中心区力矩梯度、摩擦感、死区、灵敏度、横摆相位 | 转向系统被控对象层 |
+| `friction_slow_ramp.yaml` | 频域分离协议 | 0.02 Hz、50 km/h 慢斜坡下的迟滞环宽与死区——摩擦分量 | 转向系统被控对象层 |
 
 ## 为什么试验要成为模板，而不是每次现写
 
