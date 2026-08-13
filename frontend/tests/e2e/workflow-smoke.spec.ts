@@ -953,6 +953,91 @@ test("3D camera modes switch and the roof rig persists its settings", async ({ p
 
   await attachPageScreenshot(page, testInfo, "workflow-roof-camera");
 });
+// ---------------------------------------------------------------------------
+// H1: render smoothness — the 6.7 Hz beat, machine-verified instead of eyeballed
+// ---------------------------------------------------------------------------
+
+function worstBeatAutocorrelation(deltas: number[], minPeriodMs: number, maxPeriodMs: number) {
+  const n = deltas.length;
+  if (n < 60) return 0;
+  const mean = deltas.reduce((a, b) => a + b, 0) / n;
+  const centered = deltas.map((d) => d - mean);
+  const variance = centered.reduce((a, b) => a + b * b, 0) / n;
+  if (variance < 1e-6) return 0;
+  const frame = Math.max(mean, 1.0);
+  let worst = 0;
+  for (let lag = Math.max(1, Math.floor(minPeriodMs / frame));
+       lag <= Math.ceil(maxPeriodMs / frame); lag++) {
+    let acc = 0;
+    for (let i = 0; i + lag < n; i++) acc += centered[i] * centered[i + lag];
+    acc /= (n - lag) * variance;
+    worst = Math.max(worst, Math.abs(acc));
+  }
+  return worst;
+}
+
+test("the 3D roof view animates with no periodic stutter while the car moves", async ({ page, request }, testInfo) => {
+  await request.post("/api/script/stop");
+
+  // Capture rAF timestamps from before the app boots, so nothing escapes.
+  await page.addInitScript(() => {
+    const stamps: number[] = [];
+    (window as unknown as { __rafStamps: number[] }).__rafStamps = stamps;
+    const orig = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (cb) => orig((t) => { stamps.push(t); cb(t); });
+    localStorage.setItem("4wis_quickstart_dismissed", "1");
+  });
+  await page.goto("/");
+  await page.locator(".view-switch button", { hasText: "3D" }).click();
+  await page.locator(".canvas-hud").getByRole("button", { name: "车顶" }).click();
+
+  // Put the car in motion with the fixed double-lane-change script; the 3D
+  // viewport stays mounted while the side pane switches to the data tools.
+  await page.getByRole("tab", { name: "数据" }).click();
+  const scriptPanel = page.locator(".panel").filter({ hasText: "动作脚本" });
+  await scriptPanel.locator("select").selectOption("double_lane_change");
+  await scriptPanel.getByRole("button", { name: "载入" }).click();
+  await expect(scriptPanel).toContainText("已载入: double_lane_change");
+  await scriptPanel.getByRole("button", { name: "▶ 启动脚本" }).click();
+  await expect(scriptPanel).toContainText(/运行中: double_lane_change/);
+
+  // Prove the car is actually moving — the smoothness check must not pass
+  // vacuously on a parked car.
+  const poseA = await (await request.get("/api/status")).json() as { pose: { x: number; y: number; psi: number } };
+  await page.waitForTimeout(1000);
+  const poseB = await (await request.get("/api/status")).json() as { pose: { x: number; y: number; psi: number } };
+  expect(Math.hypot(poseB.pose.x - poseA.pose.x, poseB.pose.y - poseA.pose.y)).toBeGreaterThan(0.05);
+
+  // Measure the frame cadence during motion.
+  await page.evaluate(() => {
+    (window as unknown as { __rafStamps: number[] }).__rafStamps.length = 0;
+  });
+  await page.waitForTimeout(4500);
+  const stamps = await page.evaluate(() => (window as unknown as { __rafStamps: number[] }).__rafStamps as number[]);
+  // Several components schedule their own rAF callback per frame, so one
+  // display frame stamps several equal timestamps — the frame cadence is the
+  // run of *distinct* timestamps.
+  const frames = stamps.filter((t, i) => i === 0 || t !== stamps[i - 1]);
+  const deltas = frames.slice(1).map((t, i) => t - frames[i]);
+
+  // A real render loop: hundreds of frames at display cadence. Headless
+  // Chromium has no vsync, so the cadence itself may be anywhere in the
+  // 30–160 Hz band — what matters is that it is a cadence, and that it
+  // carries no periodic beat (checked below).
+  expect(deltas.length).toBeGreaterThan(150);
+  const median = [...deltas].sort((a, b) => a - b)[Math.floor(deltas.length / 2)];
+  expect(median).toBeGreaterThan(6);
+  expect(median).toBeLessThan(34);
+
+  // No periodic component in the 40–300 ms band — the old 66.7 Hz state
+  // stream vs 60 Hz display beat (period ~150 ms) lived exactly there.
+  const worst = worstBeatAutocorrelation(deltas, 40, 300);
+  expect(worst, `frame intervals carry a periodic beat (worst |ac| = ${worst.toFixed(3)})`).toBeLessThan(0.35);
+
+  await request.post("/api/script/stop");
+  await attachPageScreenshot(page, testInfo, "workflow-render-smoothness");
+});
+
 
 test("path version refresh failure surfaces a toast without blocking scenario tools", async ({ page }, testInfo) => {
   let failPathRefresh = false;

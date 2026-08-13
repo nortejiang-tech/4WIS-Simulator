@@ -104,6 +104,13 @@ def _apply_client_message(data: Any, sim) -> None:
         return
     mtype = data.get("type")
     if mtype == "driver":
+        # A running action script owns the driver channel. The keyboard input
+        # loop pushes driver state at 50 Hz even when idle, so without this
+        # guard every script command lived exactly 20 ms before being
+        # clobbered back to idle — a started script could not actually drive
+        # the car while the GUI was connected. Stop the script to take back.
+        if sim.script_runner.status().running:
+            return
         sim.set_driver(
             throttle=data.get("throttle"),
             brake=data.get("brake"),
