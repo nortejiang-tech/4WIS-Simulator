@@ -20,7 +20,7 @@
 | `reference_reproducibility` | PASS | yes | `validation_data`<br>`docs/reports/reference_benchmark_review.md`<br>`scripts/check_reference_benchmarks.py` | 2/2 reference benchmarks pass with 15 checked metrics. |
 | `independent_reference` | GAP | yes | `validation_data`<br>`docs/reports/reference_benchmark_review.md`<br>`scripts/check_reference_benchmarks.py` | no passing external_tool, bench, scaled_vehicle, or full_vehicle benchmark is present. |
 | `incoming_reference_pipeline` | PASS | no | `validation_data/.incoming`<br>`scripts/check_reference_benchmarks.py` | No incoming benchmark directories found; intake gate is clear. |
-| `browser_smoke` | PASS | yes | `frontend/tests/e2e/workflow-smoke.spec.ts`<br>`frontend/package.json` | workflow-smoke.spec.ts contains 52 browser smoke cases and package.json exposes e2e:prod. |
+| `browser_smoke` | PASS | yes | `frontend/tests/e2e/workflow-smoke.spec.ts`<br>`frontend/package.json` | workflow-smoke.spec.ts contains 53 browser smoke cases and package.json exposes e2e:prod. |
 | `report_pipeline` | PASS | yes | `scripts/reporting.py`<br>`scripts/study_single_wheel_failure.py`<br>`docs/reports/single_wheel_failure_metrics.json`<br>`docs/reports/single_wheel_failure_safety_analysis.html` | single-wheel-failure study has reusable report helpers, metrics JSON, and self-contained HTML output. |
 | `release_delivery` | PASS | yes | `scripts/check_release_assets.py`<br>`docs/user_manual.html`<br>`docs/manual_figs`<br>`dist_portable` | 37 delivery material checks pass. |
 | `physical_validation_interface` | PASS | no | `docs/reference_benchmark_protocol.md`<br>`validation_data/README.md` | validation_data protocol reserves source types and channel metadata for scaled/full vehicle evidence. |
