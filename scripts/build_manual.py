@@ -704,7 +704,10 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>v0.12.0</td><td>时域 c_α(F_z) 载荷敏感度</td></tr>
 <tr><td>v0.13–0.14</td><td>单轮失效 ISO 26262 研究：故障注入（含自由脚轮机构 ODE）、容错重构策略、参数敏感性流水线、论文级报告</td></tr>
 <tr><td>v0.15.0</td><td>手柄映射机制：六模式预设（前后轴/左右侧/逐轮/蟹行/全向）+ 点击绑定校准 + 死区/expo/反向</td></tr>
-<tr><td>v{VER}</td><td>V1 候选收敛：黄金实验、reference 审查、v1 readiness、Playwright smoke、研究报告和便携发布门禁闭环；独立外部/实测 reference 保持为 v1 严格阻塞项</td></tr>
+<tr><td>v0.99–0.99.3</td><td>2D/3D 渲染兼容性修复；标准工况场地重制；3D 车顶视角</td></tr>
+<tr><td>v0.100.0</td><td>研究报告流水线：单轮失效安全分析、解耦价值研究、后轮转角范围研究自包含 HTML</td></tr>
+<tr><td>v0.101.0–0.101.1</td><td>K&C 表驱动悬架特性；显示可读性与 3D 运动重建（航位推算去拍频）</td></tr>
+<tr><td>v{VER}</td><td>P0 正确性（D1 轴侧偏分配单源化、D5 多速率转向）；v2 转向层黄金锚点与摩擦频域分离；objective-test 体系统一；MCP 服务器；标定残差面板（C3a）；3D 平滑性机器验证</td></tr>
 </table>
 <p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v{VER}</p>
 </body></html>"""

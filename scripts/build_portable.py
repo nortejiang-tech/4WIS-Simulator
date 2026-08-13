@@ -39,7 +39,7 @@ CACHE = OUT_ROOT / ".cache"
 
 PY_VER = "3.12"
 PY_ABI = "cp312"
-DEPS = ["fastapi", "uvicorn", "websockets", "pydantic", "numpy", "pyyaml"]
+DEPS = ["fastapi", "uvicorn", "websockets", "pydantic", "numpy", "pyyaml", "mcp"]
 
 
 def _version() -> str:
