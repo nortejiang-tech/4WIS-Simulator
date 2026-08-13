@@ -8,6 +8,14 @@
 
 ### 新增 (Added)
 
+- **MCP 服务器（S3）——服务发货**：`sim4wis-mcp` 独立 stdio 进程（薄 HTTP 客户端，
+  不 import sim4wis，与后端各自演进）上线，8 个工具：describe_capabilities /
+  run_study（dry_run 旗标；真跑阻塞轮询到出结果）/ get_study / list_studies /
+  list_runs / get_trace（显式降采样）/ read_report（回本地路径，不塞 HTML）/
+  verify_golden（子进程跑黄金门禁）。后端不在时自动拉起、退出时只收自己拉起的。
+  验收流（新建 spec → dry-run → run → 读报告）已做成测试，含真实 stdio
+  握手端到端。设计文档 §10 的 compare 并入 study 结果、realtime 属 P4 租约，
+  均未发货（如实注明，不伪装）。依赖新增 `mcp>=2.0`，控制台入口 `sim4wis-mcp`。
 - **统一实验体系（S1）**：黄金实验不再是平行体系——`step_steer_60kmh` 与
   `iso3888_dlc_60kmh` 两个 KPI 黄金移植为 procedures 模板（工况钉死 + criteria +
   报告 + 出处字段），`check_golden_experiments.py` 改为经 study runner 跑全部

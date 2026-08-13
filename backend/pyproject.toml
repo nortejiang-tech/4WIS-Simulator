@@ -18,6 +18,10 @@ dependencies = [
     "pydantic>=2.7",
     "numpy>=1.26",
     "pyyaml>=6.0",
+    # The MCP facade (sim4wis_mcp) speaks JSON-RPC over stdio; the backend never
+    # imports it. Kept in the main deps so a shipped bundle carries it (the
+    # portable packaging vendors it — see docs/agent_interface_design.md §13).
+    "mcp>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +36,8 @@ dev = [
 [project.scripts]
 # Bare `sim4wis` still starts the server; subcommands reach the study layer.
 sim4wis = "sim4wis.cli:main"
+# The agent facade — a separate stdio process, thin HTTP client, no sim4wis import.
+sim4wis-mcp = "sim4wis_mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
