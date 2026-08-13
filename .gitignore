@@ -51,5 +51,8 @@ recordings/
 # Batch-run artifacts (runs/<id>/meta.json + data.csv) — regenerable
 runs/
 
+# Study artifacts (studies/<id>/spec.json + result.json + report.html) — regenerable
+studies/
+
 # Manual intermediate screenshots (regenerable; embedded base64 in user_manual.html)
 docs/manual_figs/
