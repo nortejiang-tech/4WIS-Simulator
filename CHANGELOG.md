@@ -8,6 +8,13 @@
 
 ### 新增 (Added)
 
+- **v2 黄金锚点**：`check_golden_experiments.py` 现在除了 KPI 黄金之外还跑
+  `procedures/iso13674_oncentre.yaml`（100 km/h、0.2 Hz、前轮 0.4°、转向层开启、
+  50 Hz 记录），把 ISO 13674 中心区 weave 的 10 个过程指标
+  （力矩梯度 ×2、0.1 g 手力矩、迟滞环宽、死区、转向灵敏度、横摆相位滞后、
+  实测幅值/频率）锁进 `docs/golden_experiments.json` —— 改动 `plant.py` /
+  `oncentre.py` 的参数或算法即红（容差按实测篡改探针标定：扭杆 +10% 与
+  拟合窗口 0.25→0.30 都能被抓到），耗时增量 ~4 s。
 - **study 层**：`StudySpec` 声明式研究单元（网格 sweep → 指标 → 跨 run 对比 → 判据
   → 报告），`/api/study/*` 契约 + `sim4wis study` CLI + 出处字段（git sha / params_hash）。
   表达式指标档带 AST 白名单沙箱。见 `docs/study_guide.md`。
