@@ -57,9 +57,9 @@ def sweep_load_analysis(
     ``body_coupling`` is ``"vehicle"`` (default — current behaviour, bicycle
     coupling above 1 m/s) or ``"isolated"`` (the wheel is treated as a stand-
     alone bench unit, α = −δ regardless of speed). All other physics — toe,
-    camber thrust, drive force, aero lift, load-sensitive c_α, Pacejka /
-    friction ellipse, kingpin chain, parking — are applied identically in
-    both modes.
+    camber thrust, drive force, aero lift, axle-split load-sensitive c_α,
+    Pacejka / friction ellipse, kingpin chain, parking — are applied
+    identically in both modes.
     """
     if body_coupling not in {"vehicle", "isolated"}:
         body_coupling = "vehicle"
@@ -190,6 +190,12 @@ def _analyze_state(
     toe_offsets = alignment.toe_offsets
     camber = alignment.camber
     fz = loads.fz
+    # Effective stiffness — load-sensitive AND axle-split (the same single
+    # constitutive law the time-domain models run). The bicycle solve below,
+    # the Pacejka calls, and the camber-thrust divisor all use this same
+    # array, so the camber absorption is scale-invariant: scaling c_α by s
+    # divides the offset by s and multiplies the model's slope by s, and the
+    # reproduced camber force Fy_cam = (s·c_α)·(Fy_cam/(s·c_α)) is unchanged.
     c_alpha_eff = loads.c_alpha
 
     deltas = deltas_cmd + toe_offsets

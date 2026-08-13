@@ -41,6 +41,17 @@
 
 ### 修复 (Fixed)
 
+- **解析路径漏轴侧偏刚度分配（D1）**：`quasi_static_wheel_loads` 返回的载荷敏感
+  c_α 不带轴分配（0.80 前 / 1.20 后），解析路径一直在解“另一台车”——稳态横摆
+  −5% @30 km/h、−17% @60 km/h（幅值无关、随 v² 增长）。现将本构律单源化为
+  `effective_cornering_stiffness`（载荷敏感 × 轴分配）：时域模型以滑移角缩放
+  达到同值（Fy = −c_α·(s·α) ≡ −(s·c_α)·α），准静态路径直接用缩放后的刚度，
+  两条路径不再有平行实现。**负载分析页与自行车增益 demo 的显示值随之变化
+  5–17%，这是修复本身的证据，不是回归**。钉住缺陷的
+  `test_analytic_path_omits_the_axle_cornering_split` 与 `with_axle_split`
+  开关已删除，代之以 `test_quasi_static_bundle_applies_the_axle_cornering_split`。
+  控制器 `rws_common.axle_cornering_stiffness()` 的同源第一例仍由历史研究
+  `docs/reports/steering_decoupling_value.html` 记录（该报告不重跑）。
 - **`SteeringPlantState.to_channels()` 从来没有调用者**：手力矩每步都算、每步都扔，
   所以在补上记录之前，任何中心区指标都无从算起。
 - **Experiment schema 静默吞掉拼错的字段**：`frequency: 0.2`（字段其实叫 `freq_hz`）

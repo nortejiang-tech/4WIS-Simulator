@@ -6,8 +6,10 @@ import numpy as np
 
 from sim4wis.core.state import N_WHEELS, VehicleParams
 from sim4wis.vehicle.model_core import (
+    axle_cornering_scale,
     camber_per_wheel,
     drive_force_per_wheel,
+    effective_cornering_stiffness,
     fz_with_aero_lift,
     load_sensitive_cornering_stiffness,
     quasi_static_wheel_loads,
@@ -117,7 +119,28 @@ def test_quasi_static_wheel_loads_bundle_matches_load_helpers() -> None:
     expected_fz = fz_with_aero_lift(p, fz_static, 30.0)
     assert np.allclose(loads.fz_static, fz_static)
     assert np.allclose(loads.fz, expected_fz)
-    assert np.allclose(loads.c_alpha, load_sensitive_cornering_stiffness(p, expected_fz))
+    assert np.allclose(loads.c_alpha, effective_cornering_stiffness(p, expected_fz))
+
+
+def test_quasi_static_bundle_applies_the_axle_cornering_split() -> None:
+    """D1 regression pin: the analytic path must solve for the same car.
+
+    Before the single-source fix ``quasi_static_wheel_loads`` returned the raw
+    load-sensitive stiffness without the 0.80 front / 1.20 rear axle split,
+    so every consumer of the quasi-static path (bicycle-gain demo, load page)
+    solved for a different car than the time-domain models. The bundle's
+    c_alpha must equal the single constitutive law — raw law × axle scale.
+    """
+    p = VehicleParams()
+    fz_static = np.full(N_WHEELS, p.mass * 9.80665 / N_WHEELS)
+    loads = quasi_static_wheel_loads(p, fz_static, speed=30.0)
+
+    raw = load_sensitive_cornering_stiffness(p, loads.fz)
+    scale = axle_cornering_scale(p)
+    assert np.allclose(loads.c_alpha, raw * scale)
+    assert np.allclose(scale, [0.80, 0.80, 1.20, 1.20])
+    assert loads.c_alpha[0] < loads.c_alpha[2]  # front scaled down vs rear
+    assert np.allclose(loads.c_alpha, effective_cornering_stiffness(p, loads.fz))
 
 
 def test_steady_state_slip_angles_make_high_speed_single_corner_more_sensitive() -> None:

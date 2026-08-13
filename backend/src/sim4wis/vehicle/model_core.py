@@ -53,7 +53,11 @@ class WheelAlignment:
 
 @dataclass(frozen=True)
 class WheelLoads:
-    """Per-wheel vertical load and load-derived tyre stiffness."""
+    """Per-wheel vertical load and load-derived tyre stiffness.
+
+    ``c_alpha`` is the *effective* stiffness: load-sensitive and axle-split,
+    as returned by `effective_cornering_stiffness`.
+    """
 
     fz_static: np.ndarray
     fz: np.ndarray
@@ -422,7 +426,16 @@ def load_sensitive_cornering_stiffness(
     params: VehicleParams,
     fz: np.ndarray,
 ) -> np.ndarray:
-    """c_alpha(Fz) = c_alpha0 * (Fz/Fz_nom)^p."""
+    """c_alpha(Fz) = c_alpha0 * (Fz/Fz_nom)^p — the raw law, no axle split.
+
+    This is the tyre-level load sensitivity only. Consumers that need the
+    stiffness the *vehicle* actually runs with must call
+    `effective_cornering_stiffness` (which applies the axle distribution) or
+    apply `axle_cornering_scale` themselves as a slip-angle scale — the two
+    are exactly equivalent. Call the raw law directly only where the axle
+    split must NOT appear, e.g. `camber_thrust_alpha_offset`, whose offset is
+    expressed against the unscaled c_α.
+    """
 
     c_alpha0 = float(params.tire_c_alpha)
     exponent = float(getattr(params, "tire_load_sensitivity_exp", 0.8))
@@ -431,19 +444,55 @@ def load_sensitive_cornering_stiffness(
     return c_alpha0 * np.power(ratio, exponent)
 
 
+def effective_cornering_stiffness(
+    params: VehicleParams,
+    fz: np.ndarray,
+    *,
+    axle_distribution: np.ndarray | None = None,
+) -> np.ndarray:
+    """Per-wheel cornering stiffness with the axle split applied — THE one law.
+
+    Single-source constitutive law: the load-sensitive c_α(Fz) multiplied by
+    the per-wheel axle distribution (`axle_cornering_scale`, 0.80 front /
+    1.20 rear on the default vehicle). Every consumer that needs "the
+    stiffness this car actually corners on" goes through here; the time-domain
+    models reach the identical numbers by feeding the tyre a scaled slip angle
+    (Fy = −c_α·(s·α) ≡ −(s·c_α)·α), the quasi-static paths use the scaled
+    stiffness directly. There must be no third way.
+
+    ``axle_distribution`` overrides the per-wheel scale array when a caller
+    already holds one — but the distribution still comes from one parameter
+    (`tire_c_alpha_front_scale` / `tire_c_alpha_rear_scale`); do not introduce
+    a second source for it.
+    """
+
+    c_alpha = load_sensitive_cornering_stiffness(params, fz)
+    dist = (
+        axle_cornering_scale(params)
+        if axle_distribution is None
+        else np.asarray(axle_distribution, dtype=np.float64).reshape(N_WHEELS)
+    )
+    return c_alpha * dist
+
+
 def quasi_static_wheel_loads(
     params: VehicleParams,
     fz_static: np.ndarray,
     speed: float,
 ) -> WheelLoads:
-    """Return static Fz, aero-adjusted Fz, and c_alpha(Fz) as one bundle."""
+    """Return static Fz, aero-adjusted Fz, and effective c_alpha(Fz) as one bundle.
+
+    ``c_alpha`` carries the axle cornering split (`effective_cornering_stiffness`),
+    so consumers solving the steady-state bicycle or the tyre forces with it
+    analyse the same car the time-domain models simulate.
+    """
 
     fz0 = np.asarray(fz_static, dtype=np.float64).reshape(N_WHEELS)
     fz = fz_with_aero_lift(params, fz0, speed)
     return WheelLoads(
         fz_static=fz0,
         fz=fz,
-        c_alpha=load_sensitive_cornering_stiffness(params, fz),
+        c_alpha=effective_cornering_stiffness(params, fz),
     )
 
 

@@ -7,8 +7,9 @@ chain — expansion, batch execution, channel storage, the expression tier's
 `steady()`, and the result table — against something that was not produced by
 that chain.
 
-Getting them to agree turned up a real defect; see
-`test_analytic_path_omits_the_axle_cornering_split` at the bottom.
+Getting them to agree previously exposed a real defect (the analytic path
+omitted the axle cornering-stiffness split); that defect is fixed and the two
+paths now share the one constitutive law (`effective_cornering_stiffness`).
 """
 
 from __future__ import annotations
@@ -24,7 +25,6 @@ from sim4wis.study.runner import dry_run, run_sync
 from sim4wis.study.spec import StudySpec
 from sim4wis.vehicle.load_transfer import vertical_loads
 from sim4wis.vehicle.model_core import (
-    axle_cornering_scale,
     quasi_static_wheel_loads,
     solve_steady_state_body,
 )
@@ -76,11 +76,15 @@ def _spec() -> StudySpec:
     })
 
 
-def _analytic_yaw_rate_dps(params, row, *, with_axle_split: bool) -> float:
-    """Closed-form steady yaw rate for the steer angles the run actually held."""
+def _analytic_yaw_rate_dps(params, row) -> float:
+    """Closed-form steady yaw rate for the steer angles the run actually held.
+
+    ``loads.c_alpha`` already carries the axle cornering split — the single
+    constitutive law both paths share since the D1 fix.
+    """
     fz_static = vertical_loads(params, ax=0.0, ay=0.0)
     loads = quasi_static_wheel_loads(params, fz_static, row.metrics["vx_ss"])
-    c_alpha = loads.c_alpha * (axle_cornering_scale(params) if with_axle_split else 1.0)
+    c_alpha = loads.c_alpha
     delta = np.radians([row.metrics[f"d_{w}"] for w in ("fl", "fr", "rl", "rr")])
     _, yaw = solve_steady_state_body(
         speed=row.metrics["vx_ss"], delta=delta, c_alpha=c_alpha,
@@ -106,7 +110,7 @@ class TestAcceptance:
         assert not any(r.errors for r in result.rows), [r.errors for r in result.rows]
 
         for row in result.rows:
-            analytic = _analytic_yaw_rate_dps(params, row, with_axle_split=True)
+            analytic = _analytic_yaw_rate_dps(params, row)
             measured = row.metrics["r_dps"]
             rel = abs(measured - analytic) / abs(analytic)
             assert rel < 0.02, (
@@ -148,39 +152,3 @@ class TestAcceptance:
         _, b = run_sync(_spec(), write_report=False)
         for ra, rb in zip(a.rows, b.rows, strict=True):
             assert ra.metrics == rb.metrics
-
-
-def test_analytic_path_omits_the_axle_cornering_split():
-    """Documents a defect the acceptance test above ran into.
-
-    `dynamic.py` scales tyre cornering stiffness per axle by
-    `axle_cornering_scale` (0.80 front / 1.20 rear on the default vehicle), but
-    `quasi_static_wheel_loads` → `load_sensitive_cornering_stiffness` does not.
-    So every consumer of the quasi-static path — the bicycle-gain demo, the
-    load-analysis page — is solving for a *different car* than the one the time
-    domain simulates.
-
-    This is the same defect class the decoupling study recorded in
-    `axle_cornering_stiffness()`; this is a second instance of it.
-
-    The effect is amplitude-independent and grows with v² (it moves the
-    understeer gradient K, and yaw gain is V/(L + K·V²)): about −5 % of steady
-    yaw rate at 30 km/h and −17 % at 60 km/h.
-
-    **When the analytic path is fixed, delete this test** — and the
-    `with_axle_split` switch above with it.
-    """
-    spec = _spec()
-    _, result = run_sync(spec, write_report=False)
-    params = resolve_vehicle_params(spec.baseline)
-
-    errors = {}
-    for row in result.rows:
-        analytic = _analytic_yaw_rate_dps(params, row, with_axle_split=False)
-        errors[row.coords["speed_kmh"]] = (row.metrics["r_dps"] - analytic) / analytic
-
-    assert errors[30.0] < -0.02, errors           # already visible at 30 km/h
-    assert errors[60.0] < -0.10, errors           # and much worse at 60
-    # Monotone in speed — the signature of a term that moves K, not of noise.
-    ordered = [errors[v] for v in SPEEDS]
-    assert all(a > b for a, b in zip(ordered, ordered[1:], strict=False)), ordered
