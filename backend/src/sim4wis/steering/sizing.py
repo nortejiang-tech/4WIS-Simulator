@@ -37,7 +37,7 @@ import numpy as np
 from sim4wis.core.state import VehicleParams
 from sim4wis.steering import architecture as arch
 from sim4wis.steering.assist import get as get_assist_map
-from sim4wis.steering.plant import SteeringPlant
+from sim4wis.steering.plant import SteeringPlant, STEERING_INNER_DT
 from sim4wis.vehicle.load_analysis import sweep_load_analysis
 
 #: Above this driver-limited fraction a scenario's numbers stop meaning
@@ -283,6 +283,7 @@ def run_scenario(
 
     delta = 0.0            # commanded road wheel angle [rad]
     delta_rate = 0.0       # and its rate — a state now, not a square wave
+    prev_hand = 0.0        # previous outer-step commanded hand angle, for the ramp
     leg_index = 0
     settle = 0.0
 
@@ -309,14 +310,27 @@ def run_scenario(
         hand_rate = delta_rate * ratio
 
         aligning, scrub = rack_of(plant.state.pinion_angle / ratio)
-        s = plant.step(
-            dt,
-            hand_angle=hand,
-            hand_rate=hand_rate,
-            rack_force=aligning,
-            rack_resistance=scrub,
-            speed_ms=speed_ms,
-        )
+        # Multi-rate, as in vehicle/steering_link.plant_front_angle: the peak
+        # quantities (hand torque, motor torque) are under-resolved when the
+        # plant sees the command as a 2 ms staircase, so advance it at the
+        # layer's inner rate with the commanded angle interpolated across the
+        # span. The waypoint trajectory is piecewise-linear, so the ramp is
+        # the exact command, not an approximation.
+        n_inner = max(1, int(round(dt / max(STEERING_INNER_DT, 1e-9))))
+        h = dt / n_inner
+        s = plant.state
+        for k in range(n_inner):
+            frac = (k + 1) / n_inner
+            hand_k = prev_hand + (hand - prev_hand) * frac
+            s = plant.step(
+                h,
+                hand_angle=hand_k,
+                hand_rate=hand_rate,
+                rack_force=aligning,
+                rack_resistance=scrub,
+                speed_ms=speed_ms,
+            )
+        prev_hand = hand
         steps += 1
         res.peak_motor_torque = max(res.peak_motor_torque, abs(s.motor_torque))
         res.peak_motor_speed = max(res.peak_motor_speed, abs(s.motor_speed))

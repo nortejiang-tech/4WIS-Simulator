@@ -86,18 +86,18 @@
     "oncentre_weave_100kmh": {
       "experiment": "procedures/iso13674_oncentre.yaml",
       "n_samples": 1700,
-      "duration_s": 3.891,
+      "duration_s": 4.295,
       "kpis": {
-        "onc_torque_gradient_nm_per_g": 11.230175911751832,
-        "onc_torque_at_0_1g_nm": 1.2115715087110055,
-        "onc_torque_hysteresis_nm": 0.5341498808792444,
-        "onc_torque_deadband_deg": 0.6510389792181236,
-        "onc_angle_gradient_deg_per_g": 14.078289669789957,
-        "onc_yaw_phase_lag_deg": 2.107617080814402,
-        "onc_torque_gradient_nm_per_deg": 0.8970406637125943,
-        "onc_ay_amplitude_g": 0.18482175351013633,
-        "onc_sw_amplitude_deg": 2.673827612686475,
-        "onc_frequency_hz": 0.19994884506600183
+        "onc_torque_gradient_nm_per_g": 11.195981306689799,
+        "onc_torque_at_0_1g_nm": 1.2082001839006828,
+        "onc_torque_hysteresis_nm": 0.4724210534381728,
+        "onc_torque_deadband_deg": 0.612655026066139,
+        "onc_angle_gradient_deg_per_g": 14.0840676502146,
+        "onc_yaw_phase_lag_deg": 2.007503030728305,
+        "onc_torque_gradient_nm_per_deg": 0.8974469690383328,
+        "onc_ay_amplitude_g": 0.18478955907304342,
+        "onc_sw_amplitude_deg": 2.6728469931227417,
+        "onc_frequency_hz": 0.1999489496389747
       }
     }
   },

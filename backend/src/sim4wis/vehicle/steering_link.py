@@ -26,6 +26,16 @@ the previous step's load. That is ordinary coupling lag at 5 ms, not a defect,
 and it is written down here because the next person to read it will otherwise
 spend an afternoon deciding whether it is one. On the first step it is zero and
 the plant starts unloaded.
+
+**The steering layer is multi-rate.** The vehicle outer loop steps at 5 ms, but
+the column mode (~10 Hz, and 5x+ once assist closes the loop) cannot be resolved
+by holding the commanded angle across that whole span: the peak hand torque came
+out a third low because the peak fell between outer samples (D5). The mechanical
+path therefore advances the plant at `STEERING_INNER_DT` = 0.5 ms with the
+command interpolated across the span — a ramp to the inner loop, not a staircase
+— while the outer-loop quantities (rack force, vehicle speed) stay held, and the
+outputs (δ, hand torque) are read at the 5 ms boundary so nothing downstream
+changes shape. 0.5 ms vs a 0.25 ms reference agree to <2% on the peak.
 """
 
 from __future__ import annotations
@@ -38,7 +48,7 @@ from sim4wis.core.state import VehicleParams
 from sim4wis.steering import architecture as arch
 from sim4wis.steering.assist import get as get_assist_map
 from sim4wis.steering.bywire import ByWirePlant
-from sim4wis.steering.plant import SteeringPlant
+from sim4wis.steering.plant import SteeringPlant, STEERING_INNER_DT
 
 
 def make_steering_plant(
@@ -173,22 +183,39 @@ def plant_front_angle(
     prev_hand: float,
     rack_force: float,
     speed_ms: float,
+    inner_dt: float = STEERING_INNER_DT,
 ) -> tuple[float, float]:
-    """Advance the plant one step; return (front wheel angle, hand angle).
+    """Advance the plant one vehicle step; return (front wheel angle, hand angle).
 
     The commanded front angle is converted to a hand-wheel angle through the
     mechanism's ratio, and the resulting pinion angle back again, so the ratio
     cancels in steady state and the plant contributes dynamics rather than a
     second gear stage.
+
+    Multi-rate: the plant is advanced at the layer's inner rate (0.5 ms by
+    default) with the commanded hand angle linearly interpolated across the
+    span, instead of being held for the whole 5 ms outer step. That gives the
+    inner loop the continuous excitation the column mode needs — the old
+    zero-order hold under-resolved the peak hand torque by ~1/3 (D5). The
+    outer-loop quantities (`rack_force`, `speed_ms`) stay held: the vehicle
+    has nothing finer to offer for them, and they are the slow dynamics. The
+    returned state is read at the outer boundary, so downstream consumers see
+    exactly the same step shape as before.
     """
     delta_f_cmd = 0.5 * (float(delta_cmd[0]) + float(delta_cmd[1]))
     hand = delta_f_cmd * mech_ratio
+    n_inner = max(1, int(round(dt / max(float(inner_dt), 1e-9))))
+    h = dt / n_inner
     hand_rate = (hand - prev_hand) / max(dt, 1e-9)
-    state = plant.step(
-        dt,
-        hand_angle=hand,
-        hand_rate=hand_rate,
-        rack_force=rack_force,
-        speed_ms=speed_ms,
-    )
+    state = plant.state
+    for k in range(n_inner):
+        frac = (k + 1) / n_inner
+        hand_k = prev_hand + (hand - prev_hand) * frac
+        state = plant.step(
+            h,
+            hand_angle=hand_k,
+            hand_rate=hand_rate,
+            rack_force=rack_force,
+            speed_ms=speed_ms,
+        )
     return state.pinion_angle / mech_ratio, hand

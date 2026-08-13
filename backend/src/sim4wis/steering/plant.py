@@ -68,11 +68,14 @@ full-lock parking, 20.7 kN:
 Monotone, no oscillation anywhere, and an undersized motor now reads as heavy
 steering rather than as a numerical excursion.
 
-Step-size note: the column mode is ~10 Hz and the commanded angle is held
-constant across the internal sub-steps, so a *peak* hand torque is
-under-resolved by roughly a third at the default 5 ms vehicle step. RMS
-converges within 7% over a tenfold change in step. Read RMS unless you can
-afford a finer step.
+Step-size note: the column mode is ~10 Hz (and 5x+ once assist closes the
+loop), so the plant cannot be driven by a command held constant across the
+whole 5 ms vehicle step — the peak hand torque used to come out ~1/3 low
+because the peak fell between outer samples (D5). The coupling in
+`vehicle/steering_link.py` therefore advances the plant at a 0.5 ms inner
+rate with the commanded angle interpolated across the span; callers that
+drive `step()` directly still get a zero-order hold and should read RMS
+unless they use a comparably fine step.
 
 Plausible, not validated: no bench or vehicle data backs these numbers, and
 the parameters are engineering estimates. See docs/v2_steering_platform_plan.md
@@ -86,6 +89,14 @@ from dataclasses import dataclass, field
 from sim4wis.steering.assist import AssistMap
 from sim4wis.steering.motor import Motor
 from sim4wis.steering.params import SteeringSystemParams
+
+#: Inner rate of the steering layer [s]. The vehicle outer loop runs at its own
+#: step (5 ms default); the column mode (~10 Hz, and 5x+ once assist closes the
+#: loop) cannot be resolved by a command held across that whole span, so every
+#: path that drives the plant for a *peak* quantity advances it 10x finer with
+#: the commanded angle interpolated across the span — a ramp, not a staircase.
+#: 0.5 ms vs a 0.25 ms reference agree to <2% on the peak hand torque.
+STEERING_INNER_DT = 0.5e-3
 
 
 @dataclass
@@ -360,8 +371,11 @@ class SteeringPlant:
     ) -> SteeringPlantState:
         """Advance one vehicle step, sub-stepping internally for stability.
 
-        The inputs are held across the sub-steps: they come from the outer loop
-        and have no finer information to offer.
+        The inputs are held across the sub-steps. The vehicle coupling
+        (`steering_link.plant_front_angle`) calls this at a 0.5 ms inner rate
+        with the command already interpolated, so a direct caller using the
+        full outer step gets a coarser zero-order hold of the command than the
+        vehicle models do.
         """
         dt = max(float(dt), 1e-9)
         n = max(1, min(256, math.ceil(dt / max(self.max_substep_s, 1e-9))))

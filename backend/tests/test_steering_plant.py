@@ -47,6 +47,41 @@ def _sweep(plant: SteeringPlant, *, rack_n: float, speed_ms: float,
     return out
 
 
+def _sweep_coupled(plant: SteeringPlant, *, rack_n: float = 4000.0,
+                   speed_ms: float = 10.0, amp_deg: float = 30.0,
+                   freq: float = 0.2, outer_dt: float = 0.005, cycles: float = 2.0,
+                   inner_dt: float = 0.5e-3):
+    """The D5 scenario driven through the real vehicle coupling.
+
+    Same imposed trajectory and angle-proportional load as `_sweep`, but the
+    command goes in as a front-axle `delta_cmd` through `plant_front_angle`,
+    so the multi-rate interpolation is exercised exactly as the vehicle models
+    exercise it. The rack force is held per outer step, as the vehicle's
+    one-step-old load would be.
+    """
+    from sim4wis.vehicle.steering_link import plant_front_angle
+
+    plant.reset()
+    mech_ratio = 16.0
+    n = int(round(cycles / freq / outer_dt))
+    amp = math.radians(amp_deg)
+    out = []
+    prev_hand = 0.0
+    for i in range(n):
+        t = i * outer_dt
+        theta = amp * math.sin(2.0 * math.pi * freq * t)
+        rack_force = rack_n * (plant.state.pinion_angle / amp)
+        front = theta / mech_ratio
+        _angle, hand = plant_front_angle(
+            plant, mech_ratio, [front, front, 0.0, 0.0], outer_dt,
+            prev_hand=prev_hand, rack_force=rack_force, speed_ms=speed_ms,
+            inner_dt=inner_dt,
+        )
+        prev_hand = hand
+        out.append((math.degrees(theta), plant.state))
+    return out
+
+
 class TestAssistMap:
     def test_deadband_then_progressive_rise(self):
         m = get("default")
@@ -222,24 +257,16 @@ class TestPlant:
         assert s.stuck and abs(s.pinion_angle) < 1e-6
 
     def test_rms_effort_converges_with_outer_step_size(self):
-        """RMS converges; the transient peak does not, and that is worth knowing.
+        """RMS converges across step sizes even for a direct, held-command call.
 
         The column DOF brought a ~10 Hz mode (grip stiffness against wheel
-        inertia), and the commanded angle is held constant across the internal
-        sub-steps because the outer loop has nothing finer to offer — so
-        sub-stepping cannot recover it and only a finer *outer* step can.
-
-            dt      peak    RMS
-            5.0 ms  1.864   1.214
-            2.0 ms  2.472   1.267
-            1.0 ms  2.700   1.289
-            0.5 ms  2.812   1.299
-
-        RMS moves 7% across a tenfold change in step and under 1% on the last
-        halving. The peak moves 51% and is still climbing, so at the default
-        5 ms vehicle step peak hand torque is under-resolved by roughly a
-        third. Anything reading a peak effort needs a finer step; anything
-        reading an RMS does not.
+        inertia). Driven directly with the command held per step, the peak
+        hand torque was under-resolved by ~1/3 at the default 5 ms step (the
+        old D5 pin: 1.864 vs 2.812 N.m at 0.5 ms) while RMS moved only 7%
+        across a tenfold step change. The vehicle coupling fixes the peak by
+        construction (see `test_the_multi_rate_coupling_resolves_the_peak`);
+        this test keeps the direct-call contract honest: RMS is what a
+        held-command caller can trust, the peak is not.
         """
         def rms(run):
             xs = [abs(s.hand_torque) for _, s in run]
@@ -249,14 +276,31 @@ class TestPlant:
         fine = _sweep(_plant(), rack_n=4000.0, speed_ms=10.0, amp_deg=30.0, dt=0.001)
         assert rms(coarse) == pytest.approx(rms(fine), rel=0.10)
 
-    def test_the_peak_is_under_resolved_at_the_default_step(self):
-        """Documents the limitation above rather than leaving it to be found."""
-        def peak(run):
+    def test_the_multi_rate_coupling_resolves_the_peak(self):
+        """D5 reversal — the pin that replaced the under-resolution pin.
+
+        The old pin recorded that a command held across the 5 ms vehicle step
+        missed the peak hand torque by ~1/3 (1.864 vs 2.812 N.m), because the
+        peak fell between outer samples and the zero-order hold smeared it.
+        The coupling now advances the plant at 0.5 ms with the commanded angle
+        interpolated across the span, so the peak lands on the fine reference:
+        0.5 ms vs a 0.25 ms inner rate agree to <2%, and the default 5 ms
+        vehicle step is no longer the resolution limit.
+        """
+        from sim4wis.vehicle.steering_link import plant_front_angle
+
+        def coupled_peak(inner_dt):
+            plant = _plant()
+            run = _sweep_coupled(plant, inner_dt=inner_dt)
             return max(abs(s.hand_torque) for _, s in run)
 
+        ref = coupled_peak(0.00025)
+        got = coupled_peak(0.0005)
+        assert abs(got - ref) / ref < 0.02, f"inner-rate peak {got:.4f} vs {ref:.4f}"
+        # And the old zero-order-hold path is left behind by construction.
         coarse = _sweep(_plant(), rack_n=4000.0, speed_ms=10.0, amp_deg=30.0, dt=0.005)
-        fine = _sweep(_plant(), rack_n=4000.0, speed_ms=10.0, amp_deg=30.0, dt=0.0005)
-        assert peak(coarse) < 0.8 * peak(fine)
+        old_way = max(abs(s.hand_torque) for _, s in coarse)
+        assert got > 1.2 * old_way, f"{got:.4f} vs held-command {old_way:.4f}"
 
     def test_assist_raises_the_mode_the_step_has_to_carry(self):
         p = _plant()
