@@ -12,6 +12,12 @@ sim4wis study run procedures/iso13674_oncentre.yaml
 |---|---|---|---|
 | `iso13674_oncentre.yaml` | ISO 13674-1 | 中心区力矩梯度、摩擦感、死区、灵敏度、横摆相位 | 转向系统被控对象层 |
 | `friction_slow_ramp.yaml` | 频域分离协议 | 0.02 Hz、50 km/h 慢斜坡下的迟滞环宽与死区——摩擦分量 | 转向系统被控对象层 |
+| `step_steer_golden.yaml` | ISO 7401 风格 | 角阶跃 @60 km/h 的横摆 KPI（黄金回归源） | 无 |
+| `iso3888_dlc_golden.yaml` | ISO 3888-1/-2 | 开环双移线 @60 km/h 的 KPI（黄金回归源） | 无 |
+
+两个 `*_golden.yaml` 是 `check_golden_experiments.py` 的回归源（S1：黄金并入
+procedures）。它们与 GUI 实验库里的同名实验（`experiments/*.yaml`）必须逐字段一致，
+检查器会校验（twin check）——改动时两边一起改。
 
 ## 为什么试验要成为模板，而不是每次现写
 

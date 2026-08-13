@@ -8,6 +8,13 @@
 
 ### 新增 (Added)
 
+- **统一实验体系（S1）**：黄金实验不再是平行体系——`step_steer_60kmh` 与
+  `iso3888_dlc_60kmh` 两个 KPI 黄金移植为 procedures 模板（工况钉死 + criteria +
+  报告 + 出处字段），`check_golden_experiments.py` 改为经 study runner 跑全部
+  procedure 黄金（KPI 值逐位不变）。带 `library` 孪生文件的 procedure 会被
+  **twin check** 校验与 GUI 实验库条目逐字段一致——两处工况漂移即红（实测篡改
+  库文件立刻报错）。单轮失效 3 样本仍走研究脚本（其安全指标不在 study 指标
+  注册表内，待 study 层扩展）。
 - **摩擦的频域分离协议（C4 / D2）**：0.2 Hz weave 下迟滞环宽对齿条摩擦不单调，
   是因为车辆侧向动力学滞后贡献同量级正交分量。新增 `procedures/friction_slow_ramp.yaml`
   —— 0.02 Hz、50 km/h 慢斜坡：动力学分量消失后，环宽对齿条库仑摩擦**单调**

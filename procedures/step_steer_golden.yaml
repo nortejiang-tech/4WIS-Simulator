@@ -1,0 +1,50 @@
+# ISO 7401 风格角阶跃 @60 km/h —— 黄金回归锚点（S1：golden 并入 procedures）
+#
+# 工况与 experiments/step_steer_60kmh.yaml（GUI 实验库条目）必须同步：
+# check_golden_experiments.py 以本文件为回归源，并校验两份文件一致（twin check），
+# 改动时两边一起改，改完 --update 重新锁定。
+
+study: step_steer_60kmh
+question: 角阶跃 @60 km/h 的横摆 KPI 是否仍在黄金基线？
+
+model: simplified_dynamic
+
+baseline:
+  name: step_steer_60kmh
+  strategy: ideal_ackermann
+  record_hz: 50
+  maneuver:
+    name: step_steer
+    steps:
+      # 加速到 60 km/h。
+      - name: 加速到 60
+        duration: 6.0
+        speed_kmh: 60
+        speed_ramp_s: 4.0
+        steer: {kind: constant, amplitude: 0.0}
+      # 角阶跃。幅值是标定过的：产生既定侧向加速度的转角。
+      - name: 角阶跃
+        duration: 6.0
+        steer: {kind: step, amplitude: 1.508559, unit: front_deg, t_step: 0.5}
+
+sweep:
+  # 单值轴：工况写进结果坐标。
+  speed_kmh:
+    values: [60]
+    bind: maneuver.steps.0.speed_kmh
+
+metrics:
+  - yaw_rate_peak_dps
+  - speed_error_rms_kmh
+  - yaw_gain_dps
+  - yaw_rise_time_s
+  - yaw_overshoot_pct
+  - slip_alpha_peak_deg
+
+criteria:
+  # 自检：跑出来的确实是一次完成了加速、横摆响应正常的阶跃。
+  - {metric: speed_error_rms_kmh, must: "< 1.0", at: all}
+  - {metric: yaw_rate_peak_dps, must: "> 5", at: all}
+
+report:
+  template: sweep

@@ -1,0 +1,56 @@
+# ISO 3888 开环双移线 @60 km/h —— 黄金回归锚点（S1：golden 并入 procedures）
+#
+# 工况与 experiments/iso3888_dlc_60kmh.yaml（GUI 实验库条目）必须同步：
+# check_golden_experiments.py 以本文件为回归源，并校验两份文件一致（twin check），
+# 改动时两边一起改，改完 --update 重新锁定。
+
+study: iso3888_dlc_60kmh
+question: ISO 3888 开环双移线 @60 km/h 的 KPI 是否仍在黄金基线？
+
+model: simplified_dynamic
+
+baseline:
+  name: iso3888_dlc_60kmh
+  strategy: ideal_ackermann
+  record_hz: 50
+  path:
+    template: double_lane_change
+  maneuver:
+    name: dlc
+    steps:
+      # 加速到 60 km/h。
+      - name: 加速到 60
+        duration: 6.0
+        speed_kmh: 60
+        speed_ramp_s: 4.0
+        steer: {kind: constant, amplitude: 0.0}
+      # 双移线。幅值是标定过的。
+      - name: 双移线
+        duration: 8.0
+        steer: {kind: dlc, amplitude: 1.814818, unit: front_deg}
+      # 稳定段。
+      - name: 稳定段
+        duration: 2.0
+        steer: {kind: constant, amplitude: 0.0}
+
+sweep:
+  # 单值轴：工况写进结果坐标。
+  speed_kmh:
+    values: [60]
+    bind: maneuver.steps.0.speed_kmh
+
+metrics:
+  - yaw_rate_peak_dps
+  - vy_peak_kmh
+  - speed_error_rms_kmh
+  - steer_energy_nms
+  - rack_force_peak_n
+  - slip_alpha_peak_deg
+
+criteria:
+  # 自检：跑出来的确实是一次完成加速、横摆响应正常的双移线。
+  - {metric: speed_error_rms_kmh, must: "< 1.5", at: all}
+  - {metric: yaw_rate_peak_dps, must: "> 5", at: all}
+
+report:
+  template: sweep
