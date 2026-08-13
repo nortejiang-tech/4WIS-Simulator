@@ -372,6 +372,24 @@ def cmd_targets_check(args: argparse.Namespace) -> int:
     return 0 if rep.verdict == "compliant" else 2
 
 
+def cmd_calibrate_residual(args: argparse.Namespace) -> int:
+    """C3 · 3.1a: bench CSV + same-condition procedure -> residual report."""
+    from sim4wis.calibration.residual import residual_panel
+
+    channels = (
+        [c.strip() for c in args.channels.split(",") if c.strip()]
+        if args.channels else None
+    )
+    out = residual_panel(args.reference, args.procedure,
+                         out_html=args.out, channels=channels)
+    print(f"align: {out['shift_s']:+.3f} s on {out['align_channel']}")
+    for c, r in sorted(out["residuals"].items()):
+        print(f"  {c:<24} rms {r['rms']:.4g}  peak {r['peak']:.4g}"
+              f"  rms/σ {r['rms_over_std']:.3f}  corr {r['corr']:.4f}")
+    print(f"\nreport: {out['report']}")
+    return 0
+
+
 def cmd_capabilities(args: argparse.Namespace) -> int:
     if _backend_up(args.backend) and not args.local:
         caps = _get(args.backend, "/api/study/capabilities")
@@ -468,6 +486,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     caps = sub.add_parser("capabilities", help="models, metrics, strategies")
     caps.set_defaults(func=cmd_capabilities)
+
+    cal = sub.add_parser("calibrate", help="calibration workbench (C3)")
+    csub = cal.add_subparsers(dest="subcommand", required=True)
+
+    cres = csub.add_parser(
+        "residual",
+        help="residual panel: bench CSV vs the same-condition sim (3.1a)",
+    )
+    cres.add_argument("--reference", required=True,
+                      help="bench CSV with a t column plus standard channel columns")
+    cres.add_argument("--procedure", required=True,
+                      help="study-spec file pinning the same condition")
+    cres.add_argument("--out", default=None, help="HTML report path (default: next to the CSV)")
+    cres.add_argument("--channels", default=None,
+                      help="comma-separated channel subset (default: all common)")
+    cres.set_defaults(func=cmd_calibrate_residual)
 
     return p
 

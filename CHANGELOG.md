@@ -8,6 +8,14 @@
 
 ### 新增 (Added)
 
+- **标定/相关性工作台立项（C3 · 3.1a）**：数据管道 + 残差面板上线。
+  `sim4wis calibrate residual --reference <台架CSV> --procedure <同工况模板>`
+  一键产出残差报告：台架数据按标准通道名读入（拼错列名即拒绝）→ 跑同工况仿真 →
+  **互相关对齐时钟**（优先方向盘转角，±3 s 粗网格）→ 逐通道 RMS/峰值/RMS÷σ/相关，
+  自包含 HTML 报告（残差表 + 内联 SVG 叠加图，零依赖）。护栏落实：第一版只输出
+  残差、**不自动改写参数库**（拟合是 3.1b）。验收演示：260 N 摩擦的 weave 台架 CSV
+  对 900 N 摩擦模型，面板把残差准确钉在 steer_hand_torque（rms/σ 0.37），
+  车辆通道（ay/vx/yaw_rate）rms/σ ≤ 0.06——标定问题被定位到该在的地方。
 - **MCP 服务器（S3）——服务发货**：`sim4wis-mcp` 独立 stdio 进程（薄 HTTP 客户端，
   不 import sim4wis，与后端各自演进）上线，8 个工具：describe_capabilities /
   run_study（dry_run 旗标；真跑阻塞轮询到出结果）/ get_study / list_studies /
