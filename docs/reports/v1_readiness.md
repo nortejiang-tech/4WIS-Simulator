@@ -15,7 +15,7 @@
 
 | Check | Status | Strict v1 | Evidence | Detail |
 |---|---|---|---|---|
-| `golden_regression` | PASS | yes | `docs/golden_experiments.json`<br>`scripts/check_golden_experiments.py` | 5 golden cases are recorded, including step steer, ISO 3888 DLC, and single-wheel-failure quick samples. |
+| `golden_regression` | PASS | yes | `docs/golden_experiments.json`<br>`scripts/check_golden_experiments.py` | 6 golden cases are recorded, including step steer, ISO 3888 DLC, and single-wheel-failure quick samples. |
 | `validation_matrix` | PASS | yes | `docs/validation_matrix.md` | 14 capability rows declare levels, evidence, and boundaries. |
 | `reference_reproducibility` | PASS | yes | `validation_data`<br>`docs/reports/reference_benchmark_review.md`<br>`scripts/check_reference_benchmarks.py` | 2/2 reference benchmarks pass with 15 checked metrics. |
 | `independent_reference` | GAP | yes | `validation_data`<br>`docs/reports/reference_benchmark_review.md`<br>`scripts/check_reference_benchmarks.py` | no passing external_tool, bench, scaled_vehicle, or full_vehicle benchmark is present. |
