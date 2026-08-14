@@ -40,7 +40,10 @@ from sim4wis.study.expand import baseline_experiment
 from sim4wis.study.spec import StudySpec
 
 #: Channels tried, in order, for the time alignment — a periodic driver-side
-#: signal first, vehicle responses later.
+#: signal first (the hand-wheel state is ~99.97 % the command echo, and its
+#: small parameter dependence is handled by the fit's refinement pass),
+#: vehicle responses later. Channels that are constant on either side (e.g.
+#: `driver_steering`, which only varies in free-drive runs) are skipped.
 ALIGN_PREFERENCE = (
     "steer_hand_angle",
     "steer_hand_torque",
@@ -112,11 +115,21 @@ def align_time(
 ) -> tuple[float, str | None]:
     """Best time shift so that meas_t - shift lines up with sim_t.
 
-    Cross-correlation on a common 50 Hz grid over a coarse shift lattice. The
-    reference channel is the first ALIGN_PREFERENCE entry present in both.
+    Cross-correlation on a common 50 Hz grid over a coarse shift lattice, on
+    the first ALIGN_PREFERENCE channel that actually varies on both sides (a
+    constant channel carries no alignment information and is skipped). The
+    lattice step (10 ms) is coarser than the comparison needs, so the peak is
+    then refined to sub-grid accuracy with a parabola through it and its two
+    neighbours — without it, a one-step misalignment already reads as a
+    per-channel residual floor of a few % of σ.
     """
-    ref = next((c for c in ALIGN_PREFERENCE if c in meas_ch and c in sim_ch), None)
-    if ref is None:
+    for ref in ALIGN_PREFERENCE:
+        if ref not in meas_ch or ref not in sim_ch:
+            continue
+        if float(np.std(meas_ch[ref])) < 1e-12 or float(np.std(sim_ch[ref])) < 1e-12:
+            continue
+        break
+    else:
         return 0.0, None
     lo = max(float(meas_t[0]), float(sim_t[0])) + 1.0
     hi = min(float(meas_t[-1]), float(sim_t[-1])) - 1.0
@@ -130,18 +143,33 @@ def align_time(
     m_norm = float(np.sqrt((m * m).sum()))
     if m_norm < 1e-12 or float(np.sqrt((s * s).sum())) < 1e-12:
         return 0.0, ref
-    best_shift, best_corr = 0.0, -2.0
-    shift = -ALIGN_MAX_SHIFT_S
-    while shift <= ALIGN_MAX_SHIFT_S + 1e-9:
+
+    def corr_at(shift: float) -> float:
         s_shifted = np.interp(grid + shift, sim_t, sim_ch[ref])
         s_shifted = s_shifted - s_shifted.mean()
         s_norm = float(np.sqrt((s_shifted * s_shifted).sum()))
         # Normalise by the *shifted* trace's own norm — edge clamping changes
         # it, and reusing the unshifted norm misranks near-perfect matches.
-        corr = float((m * s_shifted).sum() / (m_norm * s_norm)) if s_norm > 1e-12 else -2.0
-        if corr > best_corr:
-            best_corr, best_shift = corr, float(shift)
+        return float((m * s_shifted).sum() / (m_norm * s_norm)) if s_norm > 1e-12 else -2.0
+
+    best_shift, best_corr = 0.0, corr_at(0.0)
+    shift = -ALIGN_MAX_SHIFT_S
+    while shift <= ALIGN_MAX_SHIFT_S + 1e-9:
+        if abs(shift) > 1e-12:
+            corr = corr_at(float(shift))
+            if corr > best_corr:
+                best_corr, best_shift = corr, float(shift)
         shift += ALIGN_GRID_S
+    # Sub-grid refinement: parabola through (best-d, best, best+d). The
+    # neighbours are inside the scanned lattice, so this costs two more
+    # interpolations and removes the quantisation floor.
+    d = ALIGN_GRID_S
+    c_m, c_p = corr_at(best_shift - d), corr_at(best_shift + d)
+    denom = c_m - 2.0 * best_corr + c_p
+    if denom < 0.0:
+        delta = 0.5 * d * (c_m - c_p) / denom
+        if abs(delta) <= d:
+            best_shift += float(delta)
     return best_shift, ref
 
 

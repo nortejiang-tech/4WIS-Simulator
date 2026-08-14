@@ -390,6 +390,59 @@ def cmd_calibrate_residual(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_calibrate_fit(args: argparse.Namespace) -> int:
+    """C3 · 3.1b: fit steering parameters to the bench CSV (report only)."""
+    import json as _json
+    from pathlib import Path as _Path
+
+    from sim4wis.calibration.identify import DEFAULT_MAX_EVALS, fit_reference
+
+    params = (
+        [p.strip() for p in args.params.split(",") if p.strip()]
+        if args.params else None
+    )
+    channels = (
+        [c.strip() for c in args.channels.split(",") if c.strip()]
+        if args.channels else None
+    )
+
+    def progress(n: int, loss: float, x) -> None:
+        print(f"  [{n:4d}] loss {loss:.4f}  " +
+              "  ".join(f"{v:.4g}" for v in x), flush=True)
+
+    out = fit_reference(
+        args.reference, args.procedure,
+        params=params, channels=channels,
+        max_evals=args.max_evals or DEFAULT_MAX_EVALS,
+        out_html=args.out,
+        progress=progress if args.verbose else None,
+    )
+    print("parameters (default -> fitted):")
+    for name, p in out["params"].items():
+        rel = (p["fitted"] - p["default"]) / max(abs(p["default"]), 1e-12)
+        print(f"  {name:<40} {p['default']:10.4g} -> {p['fitted']:<10.4g}"
+              f" ({rel:+.1%}, bounds {p['bounds'][0]:g}–{p['bounds'][1]:g})")
+    print(f"\nloss {out['loss']['before']:.4f} -> {out['loss']['after']:.4f}"
+          f"  ({out['loss']['n_evals']} evals, {out['loss']['wall_s']:.1f} s)")
+    print("residuals (rms/σ, default -> fitted):")
+    for c in sorted(out["residuals_after"]):
+        b = out["residuals_before"].get(c, {})
+        a = out["residuals_after"][c]
+        print(f"  {c:<24} {b.get('rms_over_std', float('nan')):.3f}"
+              f" -> {a['rms_over_std']:.3f}   corr {a['corr']:.4f}")
+    if args.json:
+        record = dict(out)
+        record.pop("report", None)
+        _Path(args.json).write_text(
+            _json.dumps(record, ensure_ascii=False, indent=1, default=str),
+            encoding="utf-8")
+        print(f"\nrecord: {args.json}")
+    if "report" in out:
+        print(f"report: {out['report']}")
+    print("\nidentification only — the parameter library is not rewritten")
+    return 0
+
+
 def cmd_capabilities(args: argparse.Namespace) -> int:
     if _backend_up(args.backend) and not args.local:
         caps = _get(args.backend, "/api/study/capabilities")
@@ -502,6 +555,29 @@ def build_parser() -> argparse.ArgumentParser:
     cres.add_argument("--channels", default=None,
                       help="comma-separated channel subset (default: all common)")
     cres.set_defaults(func=cmd_calibrate_residual)
+
+    cfit = csub.add_parser(
+        "fit",
+        help="parameter identification: least-squares fit of steering scalars (3.1b)",
+    )
+    cfit.add_argument("--reference", required=True,
+                      help="bench CSV with a t column plus standard channel columns")
+    cfit.add_argument("--procedure", required=True,
+                      help="study-spec file pinning the same condition")
+    cfit.add_argument("--params", default=None,
+                      help="comma-separated parameters to fit (default: all fittable; "
+                           "see calibrate fit --help listing)")
+    cfit.add_argument("--max-evals", type=int, default=None,
+                      help="optimiser evaluation budget (default: 300)")
+    cfit.add_argument("--out", default=None, help="HTML report path")
+    cfit.add_argument("--json", default=None,
+                      help="write the fit record (params, residuals, provenance) as JSON")
+    cfit.add_argument("--channels", default=None,
+                      help="comma-separated loss-channel subset (default: all common "
+                           "except steer_hand_angle)")
+    cfit.add_argument("-v", "--verbose", action="store_true",
+                      help="print the optimiser trajectory")
+    cfit.set_defaults(func=cmd_calibrate_fit)
 
     return p
 
