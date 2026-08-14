@@ -48,7 +48,7 @@ from sim4wis.core.state import VehicleParams
 from sim4wis.steering import architecture as arch
 from sim4wis.steering.assist import get as get_assist_map
 from sim4wis.steering.bywire import ByWirePlant
-from sim4wis.steering.plant import SteeringPlant, STEERING_INNER_DT
+from sim4wis.steering.plant import STEERING_INNER_DT, SteeringPlant
 
 
 def make_steering_plant(
