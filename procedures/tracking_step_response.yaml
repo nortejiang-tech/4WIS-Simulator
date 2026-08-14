@@ -1,0 +1,79 @@
+# 角度跟随层 —— 阶跃响应评估（FR-10 的阶跃臂）
+#
+#   sim4wis study run procedures/tracking_step_response.yaml
+#
+# 4WIS 架构 + 角度跟随层开启，直行放掉瞬态后前轴给一个 1° 的保持阶跃。
+# 每个 sweep 单元换一个控制器（open_loop 是"旧线控行为"的基准，其余是
+# 控制库 v1）；trk_* 指标从记录的 delta_cmd/delta 通道提取过程量：
+# 上升时间、超调、调节时间、稳态误差、峰值偏差 —— fl 是被激励的轮，
+# rl 是串扰见证（它应保持零，保持得多好是控制质量的一部分）。
+#
+# 约束：本模板只判阶跃。正弦扫频/负载扰动在评估协议扩展时另立模板
+# （工况模块后续有大改，协议按工况族设计，不为当前三工况写死）。
+
+study: tracking_step_response
+question: 各控制策略对 1° 前轴阶跃的跟踪质量如何？上升、超调、稳态误差与串扰各是多少？
+
+model: simplified_dynamic
+targets: null
+
+baseline:
+  name: step_4wis
+  strategy: ideal_ackermann
+  record_hz: 200
+  vehicle:
+    overrides:
+      steering_system:
+        enabled: true
+        architecture: 4wis
+        angle_control:
+          enabled: true
+          controller: open_loop
+          # Realistic resolver + one control-period pipeline delay. The
+          # params default is coarser; the evaluation pins the realistic end.
+          sensor_quant_rad: 0.00017
+          sensor_delay_steps: 1
+          # The feedback controllers share the pluggable feedforward stack —
+          # production SBW would never run without load compensation, and
+          # without it the rack-force feedback pins the wheels in the
+          # friction deadband at 30 km/h.
+          controller_kwargs:
+            ff:
+              blocks:
+                - {type: rack_force, gain: 1.0, lowpass_hz: 15}
+                - {type: velocity, damping: 4.0, inertia: 0.6}
+                - {type: friction, friction_nm: 0.5}
+  maneuver:
+    steps:
+      # 直行放掉起步瞬态。
+      - duration: 1.0
+        speed_kmh: 30
+        steer: {kind: constant, amplitude: 0.0}
+      # 保持阶跃：前轴 1°，停住不动。
+      - duration: 2.5
+        speed_kmh: 30
+        steer: {kind: step, amplitude: 1.0, unit: front_deg, t_step: 0.0}
+
+sweep:
+  # 控制器名本身是研究坐标：同一工况、同一记录，只有控制律不同。
+  controller:
+    values: [open_loop, pid_single, pid_cascade, lqr]
+    bind: vehicle.overrides.steering_system.angle_control.controller
+
+metrics:
+  - trk_rise_s_fl
+  - trk_overshoot_pct_fl
+  - trk_settle_s_fl
+  - trk_ss_err_rad_fl
+  - trk_peak_dev_rad_fl
+  # 串扰见证：后轮应保持零。
+  - trk_ss_err_rad_rl
+  - trk_peak_dev_rad_rl
+
+criteria:
+  # 自检：任何控制器都必须把前轮带到位并收敛。
+  - {metric: trk_settle_s_fl, must: "< 1.0", at: all}
+  - {metric: trk_peak_dev_rad_fl, must: "< 0.05", at: all}
+
+report:
+  template: sweep

@@ -299,7 +299,12 @@ class TestProcedureTier:
         metrics_mod.ANALYSES["weave"] = counting
         try:
             t, c = _weave_run()
-            names = sorted(PROCEDURE)
+            # One analysis per procedure, not per metric: every *weave* metric
+            # must come from the single counting call. The tracking-step
+            # procedure lives in the same registry but belongs to another
+            # manoeuvre class and refuses on a weave by design.
+            names = [n for n, (proc, _, _) in PROCEDURE.items()
+                     if proc == "weave"]
             out = collect(names, [], {}, list(t), {k: list(v) for k, v in c.items()})
         finally:
             metrics_mod.ANALYSES["weave"] = real

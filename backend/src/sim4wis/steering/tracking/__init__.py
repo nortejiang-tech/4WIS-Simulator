@@ -28,6 +28,13 @@ Two contracts this package lives by:
    changes nothing measurable — pinned by test.
 """
 
+from sim4wis.steering.tracking import advanced as _advanced  # noqa: F401, E402
+
+# Importing the controller modules registers them with the registry; the
+# registry itself is lazy otherwise and a spec naming `pid_single` would be
+# refused before any controller code ran.
+from sim4wis.steering.tracking import controllers as _controllers  # noqa: F401, E402
+from sim4wis.steering.tracking import external as _external  # noqa: F401, E402
 from sim4wis.steering.tracking.controller import (
     AngleTrackingController,
     OpenLoopController,

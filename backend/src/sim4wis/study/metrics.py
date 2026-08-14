@@ -171,7 +171,36 @@ def _need(value: float | None, why: str) -> float:
     return float(value)
 
 
+def _register_tracking_step() -> None:
+    from sim4wis.study import tracking_step
+
+    def analysis(t: np.ndarray, ch: dict[str, np.ndarray]) -> Any:
+        return tracking_step.analyse_tracking_step(t, ch)
+
+    ANALYSES["tracking_step"] = analysis
+    entries: tuple[tuple[str, str, str, Callable[[Any], float]], ...] = ()
+    for w in ("fl", "rl"):
+        entries += (
+            (f"trk_rise_s_{w}", "s", f"{w.upper()} 轮阶跃上升时间（10→90%）",
+             lambda wm, _w=w: wm.get(_w).rise_s),
+            (f"trk_overshoot_pct_{w}", "%", f"{w.upper()} 轮阶跃超调",
+             lambda wm, _w=w: wm.get(_w).overshoot_pct),
+            (f"trk_settle_s_{w}", "s", f"{w.upper()} 轮阶跃调节时间（±2% 带）",
+             lambda wm, _w=w: wm.get(_w).settle_s),
+            (f"trk_ss_err_rad_{w}", "rad", f"{w.upper()} 轮稳态误差",
+             lambda wm, _w=w: wm.get(_w).ss_err_rad),
+            (f"trk_peak_dev_rad_{w}", "rad", f"{w.upper()} 轮峰值跟踪偏差",
+             lambda wm, _w=w: wm.get(_w).peak_dev_rad),
+        )
+    for name, unit, desc, getter in entries:
+        PROCEDURE[name] = (
+            "tracking_step", getter,
+            MetricInfo(name, unit, desc, requires=CAP_PLANT, source="procedure"),
+        )
+
+
 _register_weave()
+_register_tracking_step()
 
 
 def describe_metrics() -> list[dict[str, Any]]:
