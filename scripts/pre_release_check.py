@@ -212,7 +212,10 @@ def main() -> int:
     failures += command(release_cmd, ROOT)
 
     if not args.skip_tests:
-        failures += command([py, "-m", "pytest", "tests/"], BACKEND)
+        # -n auto: the suite is worker-safe by construction (env dirs through
+        # monkeypatch+tmp_path, no fixed ports) and parallel is the difference
+        # between 8 and 2 minutes of gate time (S5). xdist is a dev extra.
+        failures += command([py, "-m", "pytest", "tests/", "-q", "-n", "auto"], BACKEND)
         failures += command([py, "scripts/smoke_test.py"], ROOT)
         failures += command([py, "scripts/check_golden_experiments.py"], ROOT)
         ref_cmd = [py, "scripts/check_reference_benchmarks.py"]

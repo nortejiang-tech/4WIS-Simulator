@@ -52,9 +52,15 @@ def _short_procedure(tmp_path: Path, *, settle_s: float, weave_s: float) -> Path
 
 @pytest.fixture(scope="module")
 def bench(tmp_path_factory) -> tuple[Path, Path]:
-    """A synthetic bench CSV: the truth-parameter sim's own channels."""
+    """A synthetic bench CSV: the truth-parameter sim's own channels.
+
+    Six seconds of weave (~1.2 cycles) is a budget choice: the friction
+    signature in hand torque is strong enough that a one-parameter fit
+    recovers it from a single cycle, and every fit evaluation is a sim run —
+    the suite's wall time is this number times the evaluation count.
+    """
     tmp = tmp_path_factory.mktemp("cal_fit")
-    procedure = _short_procedure(tmp, settle_s=1.0, weave_s=8.0)
+    procedure = _short_procedure(tmp, settle_s=1.0, weave_s=6.0)
     raw = yaml.safe_load(procedure.read_text(encoding="utf-8"))
     t, ch = run_sim_with_values(raw, TRUTH)
     out = tmp / "bench.csv"
@@ -97,7 +103,7 @@ def test_fit_recovers_the_truth_and_drops_the_residuals(bench, tmp_path):
     bench_csv, procedure = bench
     out = fit_reference(
         bench_csv, procedure,
-        params=list(TRUTH), passes=2, max_evals=90,
+        params=list(TRUTH), passes=2, max_evals=70,
         out_html=tmp_path / "fit.html",
     )
     for name, truth in TRUTH.items():
@@ -114,7 +120,7 @@ def test_fit_is_reproducible(bench, tmp_path):
     bench_csv, procedure = bench
     runs = [
         fit_reference(bench_csv, procedure, params=list(TRUTH),
-                      passes=1, max_evals=15)
+                      passes=1, max_evals=8)
         for _ in range(2)
     ]
     a, b = runs

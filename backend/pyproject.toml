@@ -28,6 +28,10 @@ dependencies = [
 dev = [
     "pytest>=8",
     "pytest-asyncio>=0.23",
+    # Parallel run: the suite outgrew serial minutes (S5). Tests are worker-
+    # safe by construction — env dirs go through monkeypatch+tmp_path and the
+    # only socket user picks an OS port.
+    "pytest-xdist>=3.5",
     "ruff>=0.5",
     "httpx>=0.27",
     "matplotlib>=3.8",

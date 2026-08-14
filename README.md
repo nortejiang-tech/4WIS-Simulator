@@ -118,7 +118,7 @@ python scripts/pre_release_check.py
 常用单项命令：
 
 ```bash
-backend/.venv/bin/python -m pytest tests/        # 后端全量测试
+backend/.venv/bin/python -m pytest tests/ -q -n auto   # 后端全量测试（并行；串行约 8 分钟，18 核并行约 2 分钟）
 backend/.venv/bin/python scripts/smoke_test.py   # 从仓库根目录运行 smoke
 backend/.venv/bin/python scripts/check_golden_experiments.py
 backend/.venv/bin/python scripts/check_reference_benchmarks.py
