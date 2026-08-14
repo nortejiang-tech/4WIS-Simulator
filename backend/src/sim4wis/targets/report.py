@@ -112,6 +112,55 @@ def _row_cells(d: dict[str, Any]) -> list[Any]:
     ]
 
 
+def _margins_cells(a: dict[str, Any]) -> list[Any]:
+    def fmt(v: float | None) -> str:
+        return "—" if v is None else f"{v:.4g}"
+
+    def fmt_pct(v: float | None) -> str:
+        return "—" if v is None else f"{v:+.1f}%"
+
+    flipped = "; ".join(
+        e for e in (a.get("flip_low_entries") or []) + (a.get("flip_high_entries") or [])
+    ) or "—"
+    fitted = "—"
+    if a.get("fitted") is not None:
+        state = {True: "在存活区间内", False: "<b>超出存活区间</b>", None: "—"}[
+            a.get("fitted_inside")]
+        fitted = f"{fmt(a['fitted'])}（{state}）"
+    return [
+        html.escape(a["axis"]),
+        _num(a["nominal"]),
+        _raw(f"{fmt(a['flip_low'])}<br><span class='src'>{fmt_pct(a['flip_low_pct'])}</span>"),
+        _raw(f"{fmt(a['flip_high'])}<br><span class='src'>{fmt_pct(a['flip_high_pct'])}</span>"),
+        _raw(fitted),
+        html.escape(flipped),
+    ]
+
+
+def render_margins(margins: dict[str, Any]) -> str:
+    """The parameter-space margin section (C5/C3c).
+
+    Sits next to the compliance table and answers the question that one
+    cannot: not "how close is the number" but "how wrong may the parameters
+    be before this verdict is gone".
+    """
+    rows = [_margins_cells(a) for a in margins.get("axes", [])]
+    table = _table(
+        ["参数轴", "标称值", "向下翻转", "向上翻转", "标定值 (C3b)", "翻转的条目"],
+        rows,
+    )
+    nominal = margins.get("nominal_violated") or []
+    legend = (
+        "<p class='note'>单轴扰动下的二分：参数从标称值向边界推进，"
+        "「违反的强制条目集合」首次变化的交叉点。↓/↑ 无翻转（—）表示在该方向整个"
+        f"边界内判定签名不变。当前判定已违反：{html.escape('、'.join(nominal) or '无')}。"
+        "翻转条目标明去向：<b>→ 达标</b>才是合规，"
+        "<b>→ 未评估</b>是测量失去可信度（运行超出作动器能力、被拒绝判定）——"
+        "违反消失了，但什么也没被证明。联合扰动（两个参数同时错）不在此表的承诺范围内。</p>"
+    )
+    return _section("参数空间余量", table + legend)
+
+
 def render_fragment(report: ComplianceReport | dict[str, Any]) -> str:
     """The compliance section, for embedding in a larger report.
 
@@ -152,7 +201,8 @@ def render_fragment(report: ComplianceReport | dict[str, Any]) -> str:
 
 
 def render_html(report: ComplianceReport | dict[str, Any], *,
-                title: str = "", notes: str = "") -> str:
+                title: str = "", notes: str = "",
+                margins: dict[str, Any] | None = None) -> str:
     """A standalone compliance document."""
     d = report.to_dict() if isinstance(report, ComplianceReport) else report
     heading = title or f"目标符合性报告 — {d['ref']}"
@@ -165,6 +215,8 @@ def render_html(report: ComplianceReport | dict[str, Any], *,
         "目标带本身的依据见下表「目标依据」一栏。</p>"
     )
     body += render_fragment(d)
+    if margins:
+        body += render_margins(margins)
     if _HAVE_HELPERS:
         return ReportDocument(title=heading, styles=_CSS).render(body)
     return (

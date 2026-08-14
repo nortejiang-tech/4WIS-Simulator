@@ -8,6 +8,8 @@
 sim4wis targets list
 sim4wis targets show <name>
 sim4wis targets check <name>          # 对着一次作动器选型走查判定
+sim4wis targets check <name> --margins \
+           [--fit-record fit.json]    # 附参数空间余量：参数要错多少判定才翻（C5/C3c）
 ```
 
 格式与写法见 [`docs/targets_guide.md`](../docs/targets_guide.md)，

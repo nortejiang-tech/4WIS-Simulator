@@ -359,17 +359,63 @@ def cmd_targets_check(args: argparse.Namespace) -> int:
         )
     req = size_actuator(params)
     rep = compliance.evaluate(library.get(args.ref), measure.from_sizing(req))
+    margins_dict = None
+    if getattr(args, "margins", False):
+        from sim4wis.targets import robustness
+
+        axes = robustness.DEFAULT_AXES
+        if getattr(args, "axes", None):
+            wanted = {a.strip() for a in args.axes.split(",") if a.strip()}
+            axes = tuple(a for a in robustness.DEFAULT_AXES if a.name in wanted)
+            unknown = wanted - {a.name for a in axes}
+            if unknown:
+                print(f"unknown axis(es) {sorted(unknown)}; "
+                      f"known: {[a.name for a in robustness.DEFAULT_AXES]}")
+                return 2
+        print(f"parameter-space margins: {len(axes)} axes × both directions, "
+              "bisecting a sizing pass each step …")
+        margins = robustness.axis_margins(
+            params, library.get(args.ref), axes,
+            bisect_steps=args.bisect_steps,
+            progress=lambda name, n: print(f"  [{n:3d}] {name} done", flush=True),
+        )
+        if getattr(args, "fit_record", None):
+            n = robustness.annotate_with_fit(margins, args.fit_record)
+            print(f"annotated {n} axis(es) from {args.fit_record}")
+        margins_dict = margins.to_dict()
+        _print_margins(margins_dict)
     if args.json:
-        print(json.dumps(rep.to_dict(), ensure_ascii=False, indent=2))
+        d = rep.to_dict()
+        if margins_dict is not None:
+            d["margins"] = margins_dict
+        print(json.dumps(d, ensure_ascii=False, indent=2))
     else:
         _print_compliance(rep.to_dict())
     if args.out:
         path = target_report.render(
             rep, Path(args.out),
             notes=f"作动器选型走查 · 架构 {params.steering_system.architecture}",
+            margins=margins_dict,
         )
         print(f"\n  report: {path}")
     return 0 if rep.verdict == "compliant" else 2
+
+
+def _print_margins(margins: dict) -> None:
+    print("\n参数空间余量（判定翻转点，单轴扰动）：")
+    print(f"  {'axis':<42}{'nominal':>10}{'flip↓':>12}{'flip↑':>12}"
+          f"{'fitted':>10}{'inside':>8}  翻转条目")
+    for a in margins["axes"]:
+        def fmt(v):
+            return "—" if v is None else f"{v:.4g}"
+        inside = "—" if a["fitted_inside"] is None else ("是" if a["fitted_inside"] else "否")
+        entries = "; ".join(
+            (a["flip_low_entries"] or []) + (a["flip_high_entries"] or []))
+        print(f"  {a['axis']:<42}{fmt(a['nominal']):>10}"
+              f"{fmt(a['flip_low']):>12}{fmt(a['flip_high']):>12}"
+              f"{fmt(a['fitted']):>10}{inside:>8}  {entries or '—'}")
+    print(f"  evals {margins['n_evals']} · {margins['wall_s']:.0f} s · "
+          f"nominal violated: {', '.join(margins['nominal_violated']) or '无'}")
 
 
 def cmd_calibrate_residual(args: argparse.Namespace) -> int:
@@ -535,6 +581,17 @@ def build_parser() -> argparse.ArgumentParser:
     tc.add_argument("ref", help="name or name@version")
     tc.add_argument("--vehicle", help="vehicle profile name (default: built-in LS9)")
     tc.add_argument("--out", help="write an HTML compliance report here")
+    tc.add_argument("--margins", action="store_true",
+                    help="also bisect parameter-space margins: how far each steering "
+                         "scalar can move before the violated-must set changes (C5/C3c). "
+                         "Costs one sizing pass per bisection step — minutes, not seconds")
+    tc.add_argument("--axes", default=None,
+                    help="comma-separated axes to stress (default: all; see --margins)")
+    tc.add_argument("--bisect-steps", type=int, default=6,
+                    help="bisection depth per direction (default: 6)")
+    tc.add_argument("--fit-record", default=None,
+                    help="a calibrate-fit JSON record: annotates each axis with its "
+                         "identified value and whether the verdict survives it (C3c)")
     tc.set_defaults(func=cmd_targets_check)
 
     caps = sub.add_parser("capabilities", help="models, metrics, strategies")
