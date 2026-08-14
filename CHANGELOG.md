@@ -8,6 +8,13 @@
 
 ### 新增 (Added)
 
+- **README 验证基线自生成（S4 · D6）**：README 的测试计数（曾手写 `245 passed`、
+  `50 passed`，实际早已是 804/53）改为 pre_release_check 在**真实跑完门禁后**
+  从各门禁输出解析重写（`scripts/refresh_readme_status.py`，标记块内替换）。
+  契约：解析不到的计数**省略而非猜测**；门禁失败不重写（失败不能扮成通过）；
+  部分门禁（带 `--skip-*`）不重写（避免块收缩）；`--check` 模式校验标记存在
+  且版本未过期。e2e 端口支持 `PW_E2E_PORT` 覆盖——开发服务器占着 8010 时门禁
+  不再被"端口已占用"挡死。
 - **测试并行化（S5）**：dev 依赖新增 `pytest-xdist`，全量套件并行跑通 ——
   804 项测试串行 478 s → 18 核 `-n auto` 117 s、24 worker 94 s（约 5×）。
   套件本身 worker 安全是构造出来的：环境目录全走 monkeypatch+tmp_path、
@@ -16,6 +23,11 @@
   剩余临界路径是 C4 慢斜坡摩擦单调性钉住测试（47 s）与 kc 多体对比
   （43 s）——那是证据的诚实成本，不剪。`pre_release_check` 与 README 的
   常用命令均改为并行跑法。
+- **失败不伪装契约组件化（H3）**：e2e 里 25+ 个"失败可见、不伪装成空库、
+  控件可用、内容保留"的测试提炼为 `failureHonesty.ts` 契约辅助
+  （`failApi` + `expectFailureHonesty` 四段断言），四处代表性面板
+  （分析 run 列表、实验库、故障列表、脚本库）已迁移；新面板照 helper
+  写即自动获得该契约，不再手抄四条断言。
 
 - **参数辨识（C3 · 3.1b）**：`sim4wis calibrate fit --reference <台架CSV>
   --procedure <同工况模板>` —— 在 3.1a 残差面板之上，把"哪个参数让模型更接近

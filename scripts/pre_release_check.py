@@ -81,6 +81,57 @@ def command(cmd: list[str], cwd: Path) -> int:
     return proc.returncode
 
 
+def command_capture(cmd: list[str], cwd: Path) -> tuple[int, str]:
+    """Run a gate streaming its output, and keep a copy for parsing.
+
+    The README status block (S4) is generated from what the gates actually
+    printed, so a count in the README is always a count something produced
+    just now — never a number a human transcribed and forgot.
+    """
+    log(f"$ {' '.join(cmd)}  (cwd={cwd.relative_to(ROOT)})")
+    # Merged streams on purpose — the parsers want one transcript in command
+    # order, which capture_output (separate pipes) cannot give.
+    proc = subprocess.run(cmd, cwd=cwd, text=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  # noqa: UP022
+    sys.stdout.write(proc.stdout)
+    return proc.returncode, proc.stdout
+
+
+def parse_status_facts(outputs: dict[str, str]) -> dict[str, object]:
+    """Counts out of gate output. A fact that fails to parse is omitted —
+    the block never carries a guess."""
+    facts: dict[str, object] = {}
+
+    def last_int(pattern: str, text: str) -> int | None:
+        hits = re.findall(pattern, text)
+        return int(hits[-1]) if hits else None
+
+    if "pytest" in outputs:
+        facts["pytest_passed"] = last_int(r"(\d+) passed", outputs["pytest"])
+    if "vitest" in outputs:
+        facts["vitest_passed"] = last_int(r"Tests\s+(\d+)\s+passed", outputs["vitest"])
+    if "smoke" in outputs:
+        m = re.search(r"结果：(\d+/\d+ 通过)", outputs["smoke"])
+        facts["smoke"] = m.group(1) if m else None
+    if "golden" in outputs:
+        oks = re.findall(r"^(\S+): ok", outputs["golden"], re.M)
+        if oks:
+            facts["golden_ok"] = len(oks)
+            facts["golden_total"] = len(re.findall(r"^(\S+): ", outputs["golden"], re.M))
+            facts["golden_names"] = oks
+    if "benchmarks" in outputs:
+        oks = re.findall(r"^(\S+): ok", outputs["benchmarks"], re.M)
+        total = re.findall(r"^(\S+): ", outputs["benchmarks"], re.M)
+        if total:
+            facts["benchmark_ok"] = len(oks)
+            facts["benchmark_total"] = len(total)
+    if "e2e" in outputs:
+        facts["e2e_passed"] = last_int(r"(\d+) passed", outputs["e2e"])
+    # A fact that did not parse is dropped, not kept as None: the block's
+    # contract is that every key present is a number something printed.
+    return {k: v for k, v in facts.items() if v is not None}
+
+
 def refresh_report(py: str, script: str, report: str, refresh: bool) -> tuple[int, bool]:
     """Bring a tracked, generated report up to date — or verify it, if asked.
 
@@ -193,6 +244,8 @@ def main() -> int:
 
     failures = 0
     regenerated = 0
+    gate_outputs: dict[str, str] = {}
+    gate_failures = 0
     failures += check_versions()
     py = backend_python()
 
@@ -215,15 +268,27 @@ def main() -> int:
         # -n auto: the suite is worker-safe by construction (env dirs through
         # monkeypatch+tmp_path, no fixed ports) and parallel is the difference
         # between 8 and 2 minutes of gate time (S5). xdist is a dev extra.
-        failures += command([py, "-m", "pytest", "tests/", "-q", "-n", "auto"], BACKEND)
-        failures += command([py, "scripts/smoke_test.py"], ROOT)
-        failures += command([py, "scripts/check_golden_experiments.py"], ROOT)
+        code, out = command_capture(
+            [py, "-m", "pytest", "tests/", "-q", "-n", "auto"], BACKEND)
+        failures += code
+        gate_failures += code
+        gate_outputs["pytest"] = out
+        code, out = command_capture([py, "scripts/smoke_test.py"], ROOT)
+        failures += code
+        gate_failures += code
+        gate_outputs["smoke"] = out
+        code, out = command_capture([py, "scripts/check_golden_experiments.py"], ROOT)
+        failures += code
+        gate_failures += code
+        gate_outputs["golden"] = out
         ref_cmd = [py, "scripts/check_reference_benchmarks.py"]
         if args.require_reference_data:
             ref_cmd.append("--require-data")
         if args.require_independent_reference:
             ref_cmd.append("--require-independent-source")
-        failures += command(ref_cmd, ROOT)
+        code, out = command_capture(ref_cmd, ROOT)
+        failures += code
+        gate_outputs["benchmarks"] = out
         code, moved = refresh_report(
             py,
             "scripts/check_reference_benchmarks.py",
@@ -263,13 +328,38 @@ def main() -> int:
     # covers the pure logic underneath it — the input state machine and display
     # maths, which had no coverage at all until three blocking defects were
     # found there by inspection.
-    failures += command([npm, "run", "test"], FRONTEND)
+    code, out = command_capture([npm, "run", "test"], FRONTEND)
+    failures += code
+    gate_failures += code
+    gate_outputs["vitest"] = out
 
     if not args.skip_build:
         failures += command([npm, "run", "build"], FRONTEND)
 
     if not args.skip_e2e:
-        failures += command([npm, "run", "e2e:prod"], FRONTEND)
+        code, out = command_capture([npm, "run", "e2e:prod"], FRONTEND)
+        failures += code
+        gate_failures += code
+        gate_outputs["e2e"] = out
+
+    # The status block is written by a *full* gate only: a --skip-e2e run
+    # has no e2e count, and letting it rewrite would shrink the block to
+    # match the partial run. Partial runs leave the block alone.
+    full_run = not (args.skip_tests or args.skip_build or args.skip_e2e)
+    if gate_outputs and full_run and not args.no_refresh_reports:
+        # Rewrite the README status block from what the gates just printed —
+        # but never on a failing run: a failure must not dress up as "passed".
+        if gate_failures:
+            log("gates failed; README status block left untouched")
+        else:
+            sys.path.insert(0, str(ROOT / "scripts"))
+            import refresh_readme_status
+
+            if refresh_readme_status.rewrite(parse_status_facts(gate_outputs)):
+                log("README status block REGENERATED — commit it before tagging")
+                regenerated += 1
+            else:
+                log("README status block: already up to date")
 
     if regenerated:
         # The dirty-tree check above ran before these were written, so say it
