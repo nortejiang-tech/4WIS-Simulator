@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { expectFailureHonesty, failApi } from "./failureHonesty";
 
 async function dragBy(locator: Locator, dx: number, dy: number) {
   const box = await locator.boundingBox();
@@ -236,22 +237,18 @@ test("analysis data load failure surfaces an error state with screenshot evidenc
 });
 
 test("analysis run list failure does not masquerade as an empty library", async ({ page }, testInfo) => {
-  await page.route("**/api/runs", async (route) => {
-    await route.fulfill({
-      status: 500,
-      contentType: "application/json",
-      body: JSON.stringify({ detail: "synthetic run list failure" }),
-    });
-  });
+  failApi(page, "**/api/runs", "synthetic run list failure");
 
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
   await rail.getByRole("button", { name: /分析/ }).click();
 
-  await expect(page.getByText("Run 库（0）")).toBeVisible();
-  await expect(page.getByText("读取 run 列表失败：synthetic run list failure").first()).toBeVisible();
-  await expect(page.getByText("还没有 run — 到「试验」页跑一个批量")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "刷新" })).toBeEnabled();
+  await expectFailureHonesty(page, {
+    error: "读取 run 列表失败：synthetic run list failure",
+    notMasqueradingAs: ["还没有 run — 到「试验」页跑一个批量"],
+    staysEnabled: [page.getByRole("button", { name: "刷新" })],
+    staysVisible: [page.getByText("Run 库（0）")],
+  });
 
   await attachPageScreenshot(page, testInfo, "workflow-analysis-run-list-error");
 });
@@ -303,13 +300,7 @@ test("analysis run delete failure keeps the selected run visible", async ({ page
 });
 
 test("experiment library failure does not masquerade as an empty library", async ({ page }, testInfo) => {
-  await page.route("**/api/experiments", async (route) => {
-    await route.fulfill({
-      status: 500,
-      contentType: "application/json",
-      body: JSON.stringify({ detail: "synthetic experiment library failure" }),
-    });
-  });
+  failApi(page, "**/api/experiments", "synthetic experiment library failure");
 
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
@@ -318,12 +309,15 @@ test("experiment library failure does not masquerade as an empty library", async
   const library = page
     .locator("aside.wf-col")
     .filter({ has: page.locator(".wf-col-head", { hasText: "实验库" }) });
-  await expect(library).toBeVisible();
-  await expect(library).toContainText("读取实验库失败：synthetic experiment library failure");
-  await expect(library.getByText("暂无已保存实验")).toHaveCount(0);
-  await expect(library.getByRole("button", { name: "刷新" })).toBeEnabled();
-  await expect(library.getByRole("button", { name: "＋ 新建" })).toBeEnabled();
-  await expect(page.getByText("运行矩阵")).toBeVisible();
+  await expectFailureHonesty(page, {
+    error: "读取实验库失败：synthetic experiment library failure",
+    notMasqueradingAs: ["暂无已保存实验"],
+    staysEnabled: [
+      library.getByRole("button", { name: "刷新" }),
+      library.getByRole("button", { name: "＋ 新建" }),
+    ],
+    staysVisible: [library, page.getByText("运行矩阵")],
+  });
 
   await attachPageScreenshot(page, testInfo, "workflow-experiment-library-error");
 });
@@ -332,17 +326,8 @@ test("experiment library write failures keep the editor and library state visibl
   const experimentName = `e2e_write_failure_${Date.now()}`;
   await request.delete(`/api/experiments/${experimentName}`);
 
-  await page.route("**/api/experiments/*", async (route) => {
-    if (route.request().method() !== "POST") {
-      await route.fallback();
-      return;
-    }
-    await route.fulfill({
-      status: 500,
-      contentType: "application/json",
-      body: JSON.stringify({ detail: "synthetic experiment save failure" }),
-    });
-  });
+  failApi(page, "**/api/experiments/*", "synthetic experiment save failure",
+          { method: "POST" });
 
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
@@ -1435,28 +1420,22 @@ test("scenario fault injection panel adds, toggles, and clears faults", async ({
 
 test("fault list failure does not masquerade as an empty fault configuration", async ({ page, request }, testInfo) => {
   await request.delete("/api/faults");
-  await page.route("**/api/faults", async (route) => {
-    if (route.request().method() !== "GET") {
-      await route.fallback();
-      return;
-    }
-    await route.fulfill({
-      status: 500,
-      contentType: "application/json",
-      body: JSON.stringify({ detail: "synthetic fault list failure" }),
-    });
-  });
+  failApi(page, "**/api/faults", "synthetic fault list failure", { method: "GET" });
 
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
   await rail.getByRole("button", { name: /场景/ }).click();
 
   const faultPanel = page.locator(".panel").filter({ hasText: "故障注入" });
-  await expect(faultPanel).toBeVisible();
-  await expect(faultPanel).toContainText("读取故障失败：synthetic fault list failure");
-  await expect(faultPanel.getByText("暂无故障配置")).toHaveCount(0);
-  await expect(faultPanel.getByRole("button", { name: "+ 添加" })).toBeEnabled();
-  await expect(faultPanel.getByRole("button", { name: "刷新故障" })).toBeEnabled();
+  await expectFailureHonesty(page, {
+    error: "读取故障失败：synthetic fault list failure",
+    notMasqueradingAs: ["暂无故障配置"],
+    staysEnabled: [
+      faultPanel.getByRole("button", { name: "+ 添加" }),
+      faultPanel.getByRole("button", { name: "刷新故障" }),
+    ],
+    staysVisible: [faultPanel],
+  });
 
   await attachPageScreenshot(page, testInfo, "workflow-fault-list-error");
 });
@@ -1656,23 +1635,21 @@ test("script start and stop failures keep script controls recoverable", async ({
 
 test("script library failure does not masquerade as an empty script library", async ({ page, request }, testInfo) => {
   await request.post("/api/script/stop");
-  await page.route("**/api/script/library", async (route) => {
-    await route.fulfill({
-      status: 500,
-      contentType: "application/json",
-      body: JSON.stringify({ detail: "synthetic script library failure" }),
-    });
-  });
+  failApi(page, "**/api/script/library", "synthetic script library failure");
 
   await page.goto("/");
   await page.getByRole("tab", { name: "数据" }).click();
 
   const scriptPanel = page.locator(".panel").filter({ hasText: "动作脚本" });
-  await expect(scriptPanel).toBeVisible();
-  await expect(scriptPanel).toContainText("读取脚本库失败：synthetic script library failure");
+  await expectFailureHonesty(page, {
+    error: "读取脚本库失败：synthetic script library failure",
+    staysEnabled: [scriptPanel.getByRole("button", { name: "刷新库" })],
+    staysVisible: [scriptPanel],
+  });
+  // Library-dependent controls are the deliberate exceptions: no library,
+  // nothing to load — they must disable, and the edited script survives.
   await expect(scriptPanel.locator("select")).toBeDisabled();
   await expect(scriptPanel.getByRole("button", { name: "载入" })).toBeDisabled();
-  await expect(scriptPanel.getByRole("button", { name: "刷新库" })).toBeEnabled();
   await expect(scriptPanel.locator("textarea")).toContainText("name: my_script");
 
   await attachPageScreenshot(page, testInfo, "workflow-script-library-error");
