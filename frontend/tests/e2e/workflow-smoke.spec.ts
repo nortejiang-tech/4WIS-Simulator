@@ -1946,3 +1946,54 @@ test("gamepad mapping panel edits persist without a physical controller", async 
   await expect(page.getByText("死区 0.08")).toBeVisible();
   await expect(page.getByTestId("gp-preset-per_wheel")).toHaveClass(/on/);
 });
+
+// ---------------------------------------------------------------------------
+// H2: visual regression — pixel baselines for the surfaces a workflow test
+// cannot judge: the analysis chart, the 3D roof view, the geometry studio.
+// Deterministic inputs (the same experiment run, the parked car, the same
+// parameter set) must render the same pixels; a gross regression — blank
+// canvas, broken layout, missing axis — fails on a diff, not on a human
+// noticing. Refresh deliberately with --update-snapshots.
+// ---------------------------------------------------------------------------
+
+test("visual baselines pin the analysis chart, 3D roof view, and geometry studio", async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
+  // The quickstart card overlays the viewport HUD on a fresh profile; the
+  // 3D camera controls live underneath it.
+  await page.addInitScript(() => {
+    localStorage.setItem("4wis_quickstart_dismissed", "1");
+  });
+  // --- 1. Analysis chart: a deterministic experiment run, default zoom.
+  await page.goto("/");
+  const rail = page.getByRole("navigation", { name: "工作流" });
+  await rail.getByRole("button", { name: /试验/ }).click();
+  await expect(page.getByText("运行矩阵")).toBeVisible();
+  await page.getByRole("button", { name: /运行（1 runs）/ }).click();
+  await expect(page.getByText(/完成 1 runs/)).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("button", { name: /去分析页对比这些 runs/ }).click();
+  await expect(page.getByText("KPI 对比")).toBeVisible();
+  const chart = page.getByTestId("analysis-chart-vx");
+  await expect(chart).toBeVisible();
+  await expect(chart.locator("canvas").first()).toHaveScreenshot(
+    "analysis-chart-vx.png", { maxDiffPixelRatio: 0.02 });
+
+  // --- 2. 3D roof view: the parked car at the origin renders the same scene.
+  // The view switch lives on the driving page, not the analysis page.
+  await page.goto("/");
+  await page.locator(".view-switch button", { hasText: "3D" }).click();
+  await page.locator(".canvas-hud").getByRole("button", { name: "车顶" }).click();
+  await expect(page.locator(".canvas-container")).toBeVisible();
+  await page.waitForTimeout(600);
+  await expect(page.locator(".canvas-container")).toHaveScreenshot(
+    "viewport-3d-roof.png", { maxDiffPixelRatio: 0.03 });
+
+  // --- 3. Geometry studio: the parameter diagram is pure SVG — the most
+  // deterministic of the three, and the one a layout break would trash first.
+  await rail.getByRole("button", { name: /车辆/ }).click();
+  const diagram = page.getByRole("img", { name: "整车俯视参数示意" });
+  await expect(diagram).toBeVisible();
+  await expect(diagram).toHaveScreenshot(
+    "vehicle-top-diagram.png", { maxDiffPixelRatio: 0.01 });
+
+  await attachPageScreenshot(page, testInfo, "workflow-visual-baselines");
+});
