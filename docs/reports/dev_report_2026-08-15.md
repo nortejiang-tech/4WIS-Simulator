@@ -4,7 +4,7 @@
 
 两条线在今天收敛。**收尾线**：路线图遗留的 S4（README 状态块自生成）、S5（测试并行化）、H2（视觉回归基线）、H3（失败不伪装契约化）四项 P2 全部落地并验证。**主线**：转向角度跟随控制层从需求冻结一路做到 M1–M4 全量交付——控制器协议与逐轮执行骨架、控制库 v1（PID 单环/级联、LQR）与积木化前馈三件套、阶跃评估协议与首份控制器对比、调参工作台（解析/继电/黑盒 + 110% 验收门）、进阶库（DOB/ADRC/SMC/MPC/H∞）与 Simulink 接口框架。
 
-测试基线：**873 passed（并行 ~100 s）+ 黄金 6/6 + 阶跃评估 procedure 自检判据全过**。两份新文档：`docs/steering_control_guide.md`（使用手册）、`docs/steering_control_layer_requirements.md`（需求，已冻结并标注全量落地）。
+测试基线：**872 passed（并行 ~107 s）+ 黄金 6/6 + 阶跃评估 procedure 自检判据全过**。两份新文档：`docs/steering_control_guide.md`（使用手册）、`docs/steering_control_layer_requirements.md`（需求，已冻结并标注全量落地）。
 
 ## 一、收尾线（S4 / S5 / H2 / H3）
 
@@ -29,7 +29,7 @@
 - **开发期关键发现**：跟踪对象含纯积分器（位置状态特征值恰在 z=1），朴素 Riccati 迭代收敛到反稳定解；改 Newton 法从极点配置稳定初值解起（LQR 增益即"PID 设计精修到最优"，出处叙事清晰）。
 - 前馈三件套（齿条力/速度/摩擦补偿）积木化、可选、可配置。
 - 评估协议：`procedures/tracking_step_response.yaml` + `trk_*` 过程指标族（静态 toe 基线校正；见证轮按"保持零"语义；非阶跃工况明确拒绝——wave 轨迹产出会伪装成跟踪质量）。
-- **首份对比**（30 km/h、1° 阶跃、4WIS）：open_loop 35 ms/0 超调（基准）｜pid_single 30 ms/6.9%/0.45 s｜pid_cascade 35 ms/**1.3%**/75 ms｜lqr **25 ms**/0.44%/**4.7e-7 rad**。
+- **首份对比**（30 km/h、1° 阶跃、4WIS）：open_loop 35 ms/0 超调（基准）｜pid_single 30 ms/6.9%/0.45 s｜pid_cascade 35 ms/**1.3%**/75 ms｜lqr **25 ms**/0.34%/**4.2e-6 rad**。
 - **调参教训入档**：齿条力已滞后一步（5 ms），前馈上再叠 15 Hz 低通把 LQR 超调 0.3%→3.8%、调节时间 1.28→2.5 s——默认不放低通；发布默认增益由 `scripts/tune_vehicle_defaults.py` 在车辆闭环 Nelder-Mead 调出并烘入。
 
 ### M3 调参工作台
@@ -45,7 +45,7 @@
 
 | 项 | 结果 |
 |---|---|
-| 后端全量（含 63 个新 tracking 测试） | **873 passed**，并行 ~100 s |
+| 后端全量（含 63 个新 tracking 测试） | **872 passed**，并行 ~107 s |
 | 黄金门禁 | 6/6 通过（位级不变契约保持） |
 | 阶跃评估 procedure | 判据全过（settle < 1 s、peak_dev < 0.05 rad，4/4 控制器） |
 | e2e | 53/53（前日已验证；今日未触碰前端行为） |
@@ -60,4 +60,4 @@
 
 ## 五、提交记录（本日）
 
-`a39154b` S5 并行 · `18012fe` S4 状态块 · `b7ebc6d` H3 契约 · `9efb6f5` H2 视觉基线 · `73fae90` 控制层需求调研 · `e929491`/`900e570` M1 骨架 · 本报告对应 M2–M4 增量（待提交）。
+`a39154b` S5 并行 · `18012fe` S4 状态块 · `b7ebc6d` H3 契约 · `9efb6f5` H2 视觉基线 · `73fae90` 控制层需求调研 · `e929491`/`900e570` M1 骨架 · `7b118f7` M2 控制库+评估 · `9eeebae` M3 调参 · `fbbf16a` M4 进阶库+Simulink 框架 · `9a25b79` 文档。
