@@ -8,6 +8,36 @@
 
 ### 新增 (Added)
 
+- **转向角度跟随控制层 M2/M3/M4（控制库、调参工作台、进阶库、Simulink 框架）**：
+  使用手册见 [`docs/steering_control_guide.md`](docs/steering_control_guide.md)。
+  - **控制库 v1（M2）**：`pid_single`（位置 P/PI/PID + 测量速率微分 + 积分钳位）、
+    `pid_cascade`（位置 PI → 速度 PI，量产形态）、`lqr`（积分增广离散 Riccati，
+    Newton 法从极点配置稳定初值解起——对含纯积分器的跟踪对象，朴素迭代收敛到
+    反稳定解）。车速增益调度（`GainSchedule` 线性插值）。
+  - **前馈三件套（积木化）**：齿条力/动力学前馈（增益 + 可选低通）、速度前馈
+    （b·ω_ref + J·α_ref）、摩擦补偿前馈（F_c·tanh，平滑过零）。独立开关、独立
+    配置、任意叠加。**实测教训写入文档**：齿条力已滞后一步，前馈上再叠 15 Hz
+    低通把 LQR 超调 0.3%→3.8%、调节时间 1.28→2.5 s——默认不放低通。
+  - **评估协议（FR-10 阶跃臂）**：`procedures/tracking_step_response.yaml` +
+    `trk_*` 过程指标族（上升/超调/调节/稳态误差/90% 后峰值偏差，fl 被激励、
+    rl 串扰见证；静态 toe 基线校正，见证轮按"保持零"语义分析）。
+    首份对比：级联 PID 超调 1.3% 最小，LQR 25 ms 上升 + 稳态误差 4.7e-7 rad，
+    open_loop 为逐位一致的基准；procedure 自检判据全过。
+  - **调参工作台（M3）**：解析（极点配置）→ 继电辨识（Åström–Hägglund，
+    **带滞环**——无滞环时刚性对象的"周期"测到的是采样率，实测 Tu=1 ms、
+    ZN 增益十亿级）→ 黑盒精修（Nelder-Mead）。110% 验收门：精修成本
+    ≤ 1.1×解析基线才被接受，否则如实报告解析增益。全确定性、带出处。
+    发布默认增益由 `scripts/tune_vehicle_defaults.py` 在车辆闭环调出并烘入。
+  - **进阶库（M4）**：`dob`（扰动观测器）、`adrc`（线性自抗扰，ESO 带宽
+    参数化）、`smc`（tanh 边界层滑模）、`mpc`（约束线性 MPC，积分增广 +
+    Hildreth 主动集 QP——唯一显式规划 |u|≤u_max 的成员；有限时域首步向
+    无限时域 LQR 律收敛已钉住）、`h_inf`（game Riccati 状态反馈，L2 扰动
+    增益 < γ 有界——γ 不可行时构造期明确拒绝）。各带解析钉住测试
+    （Riccati 残差、Hamiltonian 稳定、观测器增益式、滑模面界、QP 解析解）。
+  - **Simulink 接口框架（FR-11）**：端口契约（轮域六入一出）+ 三原语
+    （init_backend / _invoke / shutdown）+ 参数出处强制；参考适配器
+    `file_gain`（JSON 增益表）跑通契约，缺失即明确拒绝。真实 FMU/代码生成
+    加载器为生产环境工作，接口已冻结。
 - **转向角度跟随控制层 M1（新平台 · 骨架落地）**：在 `delta_cmd` 与车轮之间
   插入可替换、可调参的逐轮角度跟随层（`steering/tracking/`，需求与调研见
   [`docs/steering_control_layer_requirements.md`](docs/steering_control_layer_requirements.md)）。
