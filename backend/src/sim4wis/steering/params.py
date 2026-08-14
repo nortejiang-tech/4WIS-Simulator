@@ -154,6 +154,51 @@ class RackParams:
 
 
 @dataclass
+class AngleControlParams:
+    """The per-corner angle-tracking control layer.
+
+    Sits between ``delta_cmd`` and the wheel for every corner an
+    architecture gives an actuator to (SBW front, RWS rear, all four on
+    4WIS). Off by default and the disabled layer is bit-identical to the
+    legacy actuator paths; the default controller (``open_loop``) reproduces
+    the legacy by-wire update bit-exactly. Scope and contracts:
+    docs/steering_control_layer_requirements.md.
+    """
+
+    enabled: bool = False
+    #: Controller registry name (open_loop / pid_single / … later pid_cascade,
+    #: lqr, mpc, smc, adrc, h_inf).
+    controller: str = "open_loop"
+    #: Constructor kwargs for the controller (gains, bandwidths, …).
+    controller_kwargs: dict[str, object] = field(default_factory=dict)
+
+    # ---- torque-mode corner actuator (wheel domain) ------------------------
+    #: J of the corner actuator referred to the road wheel [kg·m²].
+    plant_inertia_kgm2: float = 0.6
+    #: Viscous damping [N·m·s/rad].
+    plant_damping_nms_per_rad: float = 4.0
+    #: Coulomb friction [N·m] — with stiction hold at rest.
+    plant_friction_nm: float = 0.5
+    #: Saturation of the actuator torque [N·m] at the wheel.
+    plant_peak_torque_nm: float = 40.0
+    #: Optional wheel-domain rate limit [rad/s]; None = off (the legacy
+    #: rate limit lives in the open_loop controller itself).
+    plant_rate_limit_rad_s: float | None = None
+
+    # ---- angle sensor -------------------------------------------------------
+    #: Quantisation step [rad] (~0.03 deg).
+    sensor_quant_rad: float = 5.0e-4
+    #: Sampling-pipeline delay in control periods.
+    sensor_delay_steps: int = 1
+    #: Measurement noise std [rad]. Off by default — the open_loop reference
+    #: must not have a measurement in its loop, and bit-reproducibility stays
+    #: the default everywhere.
+    sensor_noise_std_rad: float = 0.0
+    #: RNG seed; per-corner sensors offset by the wheel index.
+    sensor_seed: int = 1234
+
+
+@dataclass
 class SteeringSystemParams:
     """The steering system as a plant. Off by default.
 
@@ -168,6 +213,9 @@ class SteeringSystemParams:
     column: ColumnParams = field(default_factory=ColumnParams)
     motor: MotorParams = field(default_factory=MotorParams)
     rack: RackParams = field(default_factory=RackParams)
+    #: Per-corner angle-tracking control layer. Disabled by default: the
+    #: vehicle then behaves exactly as it did before the layer existed.
+    angle_control: AngleControlParams = field(default_factory=AngleControlParams)
     #: Which architecture this system is. Decides whether there is a
     #: mechanical front axle to run the plant on at all, and the reduction
     #: ratio — see sim4wis.steering.architecture.

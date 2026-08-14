@@ -44,6 +44,10 @@ from sim4wis.vehicle.steering_link import (
     idle_channels,
     make_steering_plant,
 )
+from sim4wis.steering.tracking.coupling import (
+    corner_tracking_step,
+    make_corner_trackers,
+)
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.model_core import (
     body_resistance_force,
@@ -114,6 +118,9 @@ class MultiBodyModel(VehicleModel):
         #: of zero.
         self.steering_channels = idle_channels()
         self._prev_hand = 0.0
+        # Per-corner angle-tracking layer (see dynamic.py for the contract).
+        self._tracking = make_corner_trackers(params)
+        self._prev_delta_cmd = np.zeros(N_WHEELS)
         # Filtered friction-brake command per wheel (first-order, brake_tau).
         self._brake_f = np.zeros(N_WHEELS)
 
@@ -206,6 +213,10 @@ class MultiBodyModel(VehicleModel):
         self._delta_act = np.zeros(N_WHEELS)
         if self._steering is not None:
             self._steering.reset()
+        if self._tracking is not None:
+            for tracker in self._tracking[0].values():
+                tracker.reset()
+        self._prev_delta_cmd = np.zeros(N_WHEELS)
         self._prev_hand = 0.0
         self.slip_alpha[:] = 0.0
         self.slip_kappa[:] = 0.0
@@ -239,6 +250,17 @@ class MultiBodyModel(VehicleModel):
                 speed_ms=float(s.vx),
             )
             self._delta_act[0] = self._delta_act[1] = delta_f
+            if self._tracking is not None:
+                trackers, per_wheel = self._tracking
+                tracked, track_channels = corner_tracking_step(
+                    trackers, per_wheel, cmd.delta_cmd, dt,
+                    rack_forces=s.rack_force, speed_ms=float(s.vx),
+                    pinion_radius=float(p.pinion_radius),
+                )
+                for corner in trackers:
+                    self._delta_act[corner] = tracked[corner]
+                self.steering_channels.update(track_channels)
+                self._prev_delta_cmd = cmd.delta_cmd.copy()
         delta_cmd = self._delta_act.astype(float)
 
         if float(getattr(p, "tire_relax_length", 0.0)) > 0.0:

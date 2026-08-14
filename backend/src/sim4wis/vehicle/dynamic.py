@@ -34,37 +34,43 @@ import math
 import numpy as np
 
 from sim4wis.core.state import (
+    N_WHEELS,
     ControlCommand,
     EnvironmentState,
-    N_WHEELS,
     VehicleParams,
     VehicleState,
 )
+from sim4wis.steering.tracking.coupling import (
+    corner_tracking_step,
+    make_corner_trackers,
+)
 from sim4wis.vehicle.base import VehicleModel
 from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
-from sim4wis.vehicle.steering_link import (
-    front_axle_step,
-    idle_channels,
-    make_steering_plant,
-)
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.load_transfer import vertical_loads
 from sim4wis.vehicle.model_core import (
-    body_resistance_force,
     axle_cornering_scale,
+    body_resistance_force,
     camber_thrust_alpha_offset,
     friction_brake_torques,
+    fz_with_aero_lift,
     kc_wheel_offsets,
     load_sensitive_mu,
     relax_slip,
     resolve_kc,
-    store_grip_state as _store_grip,
-    wheel_grip_state,
-    fz_with_aero_lift,
     rotate_wheel_forces_to_body,
     semi_implicit_wheel_spin,
     static_toe_offsets,
+    wheel_grip_state,
     wheel_slip_kinematics,
+)
+from sim4wis.vehicle.model_core import (
+    store_grip_state as _store_grip,
+)
+from sim4wis.vehicle.steering_link import (
+    front_axle_step,
+    idle_channels,
+    make_steering_plant,
 )
 from sim4wis.vehicle.tire import TireModel, make_tire
 from sim4wis.vehicle.wheel_servo import WheelSpeedServo
@@ -109,6 +115,11 @@ class SimplifiedDynamicModel(VehicleModel):
         #: of zero.
         self.steering_channels = idle_channels()
         self._prev_hand = 0.0
+        # Per-corner angle-tracking layer. None when it is off or the
+        # architecture has no corner actuators — then the legacy paths run
+        # untouched (the disabled-layer contract).
+        self._tracking = make_corner_trackers(params)
+        self._prev_delta_cmd = np.zeros(N_WHEELS)
         # Static toe (A3, same convention as the load page): the physical wheel
         # angle is the actuator angle plus the per-wheel alignment offset.
         self._toe = static_toe_offsets(params)
@@ -144,6 +155,10 @@ class SimplifiedDynamicModel(VehicleModel):
         self.slip_alpha[:] = 0.0
         self.slip_kappa[:] = 0.0
         self._delta_act = np.zeros(N_WHEELS)
+        if self._tracking is not None:
+            for tracker in self._tracking[0].values():
+                tracker.reset()
+        self._prev_delta_cmd = np.zeros(N_WHEELS)
         self.state.fz = vertical_loads(self.params, 0.0, 0.0)
 
     def step(
@@ -176,6 +191,20 @@ class SimplifiedDynamicModel(VehicleModel):
                 speed_ms=float(s.vx),
             )
             self._delta_act[0] = self._delta_act[1] = delta_f
+            if self._tracking is not None:
+                # Corners with actuators follow their trackers; the legacy
+                # front-axle step above still ran for the feel synthesis and
+                # the mechanical path, but its angles are overridden here.
+                trackers, per_wheel = self._tracking
+                tracked, track_channels = corner_tracking_step(
+                    trackers, per_wheel, cmd.delta_cmd, dt,
+                    rack_forces=s.rack_force, speed_ms=float(s.vx),
+                    pinion_radius=float(p.pinion_radius),
+                )
+                for corner in trackers:
+                    self._delta_act[corner] = tracked[corner]
+                self.steering_channels.update(track_channels)
+                self._prev_delta_cmd = cmd.delta_cmd.copy()
         s.delta[:] = np.clip(self._delta_act + self._toe, -p.steer_limit, p.steer_limit)
 
         # Per-wheel surface mu cache (re-evaluated using world wheel positions at start)

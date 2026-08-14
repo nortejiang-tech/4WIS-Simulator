@@ -102,6 +102,12 @@ STEERING_CHANNELS: tuple[str, ...] = (
     "steer_motor_speed",       # [rad/s] at the motor shaft
     "steer_angle_deviation",   # commanded − actual road wheel; by-wire only
     "steer_plant_active",      # 1.0 when the plant produced this sample
+    # Per-corner tracking-layer deviations [rad] — NaN when the layer is off
+    # or the corner has no actuator. The control-quality signal per wheel.
+    "steer_corner_deviation_fl",
+    "steer_corner_deviation_fr",
+    "steer_corner_deviation_rl",
+    "steer_corner_deviation_rr",
 )
 
 _ABSENT = {name: math.nan for name in STEERING_CHANNELS}

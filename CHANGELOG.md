@@ -8,6 +8,19 @@
 
 ### 新增 (Added)
 
+- **转向角度跟随控制层 M1（新平台 · 骨架落地）**：在 `delta_cmd` 与车轮之间
+  插入可替换、可调参的逐轮角度跟随层（`steering/tracking/`，需求与调研见
+  [`docs/steering_control_layer_requirements.md`](docs/steering_control_layer_requirements.md)）。
+  M1 交付：控制器协议（`AngleTrackingController`——直接给角或给力矩二选一、
+  控制器声明自身更新率）、`open_loop` 参考控制器、力矩型转角执行器对象
+  （J·θ̈ + b·θ̇ + 库仑摩擦静摩擦 + 负载 = 饱和力矩，轮域）、角度传感器模型
+  （量化 + 管线延迟 + 种子噪声，默认关）、逐轮执行通道（按架构生成：
+  SBW 前轮、RWS 后轮、4WIS 四角独立，删除前轴左右平均）。两个契约钉住：
+  **关闭层位级不变**（`angle_control.enabled` 默认 False，全部旧路径原样）；
+  **open_loop 与旧线控更新逐位一致**（启用层 + 默认控制器不改变任何已发布
+  数字）。新增 4 条逐轮偏差通道（`steer_corner_deviation_*`，无执行器的
+  轮为 NaN）。控制库（PID 单环/级联、LQR、MPC、SMC、ADRC、H∞）与积木化
+  前馈三件套（齿条力/动力学、速度、摩擦补偿）按冻结需求在 M2 陆续落地。
 - **README 验证基线自生成（S4 · D6）**：README 的测试计数（曾手写 `245 passed`、
   `50 passed`，实际早已是 804/53）改为 pre_release_check 在**真实跑完门禁后**
   从各门禁输出解析重写（`scripts/refresh_readme_status.py`，标记块内替换）。

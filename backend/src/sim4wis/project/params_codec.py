@@ -7,6 +7,7 @@ from typing import Any
 
 from sim4wis.core.state import SteeringGeometryParams, SuspensionParams, VehicleParams
 from sim4wis.steering.params import (
+    AngleControlParams,
     ColumnParams,
     MotorParams,
     RackParams,
@@ -63,7 +64,10 @@ def params_from_dict(data: dict[str, Any] | None, base: VehicleParams | None = N
     if isinstance(steer_raw, dict):
         # Same shape as suspension/steering_geometry above, one level deeper:
         # the sub-blocks are dataclasses too.
-        sub = {"column": ColumnParams, "motor": MotorParams, "rack": RackParams}
+        sub = {
+            "column": ColumnParams, "motor": MotorParams, "rack": RackParams,
+            "angle_control": AngleControlParams,
+        }
         nested = {}
         for key, cls in sub.items():
             block = steer_raw.get(key)
