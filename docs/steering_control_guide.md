@@ -158,11 +158,17 @@ step_cost("lqr", {...})       # 单点成本（ITAE 归一 + 峰值力矩惩罚�
   以加权聚合替代单点阶跃成本（泊车负载 vs 高速负载一张成本表）；`tune()` 同名参数直达。
 - **网格通道**：`grid_search("pid_single", points=4)` —— 轴空间均匀网格 + 同一条 110%
   验收门，与 Nelder-Mead 互为交叉验证（两通道应落在同一盆地）。
+- **贝叶斯通道**：`bayesian_search("pid_single", max_evals=60)` —— 确定性 GP（固定
+  超参）+ log-EI 获取函数、Halton 候选集，全程可复现，同一条 110% 验收门。
+- **study 扫掠直连**：`tune_procedure("pid_single",
+  "procedures/tracking_step_response.yaml")` —— 成本改由 study procedure（车辆环）给出，
+  增益合入 spec 的 `controller_kwargs`（保留前馈栈）；即 `tune_vehicle_defaults.py`
+  流程的通用化。
 - **参数空间余量**：`tune_margins(controller, gains, ratio=1.5)` —— 逐增益二分"成本越过
   1.5× 名义值"的翻转点（C5 同款模式）；某个方向上界内不翻转 = 如实报 None（也是余量）。
 - **入库与 CLI**：`save_record(result, path)` 落 JSON（含 git 出处、plant、conditions）；
   命令行 `sim4wis tune pid_single [--plant-json …] [--conditions-json …] [--grid N]
-  [--margins] [--out record.json] [--json]`。
+  [--bayesian] [--procedure spec.yaml] [--margins] [--out record.json] [--json]`。
 
 ## 4b. 柔度维度（方向 3：双质量传动 + 间隙）
 

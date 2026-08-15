@@ -32,6 +32,7 @@ actuator without running the vehicle.
 
 from __future__ import annotations
 
+import copy
 import itertools
 import json
 import math
@@ -662,3 +663,198 @@ def save_record(result: TuningResult, path: str | Path) -> Path:
     p.write_text(json.dumps(result.to_record(), ensure_ascii=False, indent=1),
                  encoding="utf-8")
     return p
+
+
+# ---------------------------------------------------------------------------
+# Bayesian channel (direction 4): a small GP + log-EI optimiser, deterministic
+# ---------------------------------------------------------------------------
+
+
+def _halton(index: int, base: int) -> float:
+    """One coordinate of the Halton sequence — a deterministic space filler."""
+    f, i, result = 1.0, index + 1, 0.0
+    while i > 0:
+        f /= base
+        result += f * (i % base)
+        i //= base
+    return result
+
+
+_ERF = np.vectorize(math.erf)  # numpy ships no erf; math's is exact enough here
+
+
+def _gp_predict(x_obs: np.ndarray, y_obs: np.ndarray,
+                x_query: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Gaussian-process posterior (squared-exponential, fixed hyperparameters).
+
+    Fixed length scale 0.2 in the normalised box and a fixed 1e-6 noise floor:
+    the channel is a deterministic surrogate, not a hyperparameter search —
+    the honest way to keep it reproducible. Returns (mean, std) at the query
+    points.
+    """
+    n = x_obs.shape[0]
+
+    def k(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        sq = ((a[:, None, :] - b[None, :, :]) ** 2).sum(-1)
+        return np.exp(-sq / (2.0 * 0.2 ** 2))
+
+    kxx = k(x_obs, x_obs) + 1e-6 * np.eye(n)
+    chol = np.linalg.cholesky(kxx)
+    alpha = np.linalg.solve(chol.T, np.linalg.solve(chol, y_obs))
+    kxq = k(x_obs, x_query)
+    mean = kxq.T @ alpha
+    v = np.linalg.solve(chol, kxq)
+    std = np.sqrt(np.maximum(1.0 - (v ** 2).sum(axis=0), 1e-12))
+    return mean, std
+
+
+def bayesian_search(
+    controller: str,
+    *,
+    max_evals: int = 60,
+    candidate_points: int = 800,
+    plant_kwargs: dict[str, Any] | None = None,
+    conditions: Sequence[CostCondition | dict[str, float]] | None = None,
+) -> TuningResult:
+    """The Bayesian channel (direction 4): a deterministic GP surrogate with
+    log-expected-improvement acquisition over the search axis, under the same
+    110 % acceptance bar. The candidates are a Halton sequence — no random
+    restarts, so the run reproduces exactly."""
+    plant = plant_kwargs or {}
+    names, analytic, lo, hi = _axis_for(controller, plant)
+    cost_a = step_cost(controller, analytic, conditions=conditions, **plant)
+    span = hi - lo
+    norm = (np.array([analytic[n] for n in names]) - lo) / span
+    # Seed the surrogate with the Nelder-Mead starting simplex (the seed plus
+    # one 0.1-of-range offset per axis): a GP with a single observation has
+    # no local gradient, and the cost landscape is too sharp for blind
+    # exploration to find the basin (measured: 40 evals, no improvement).
+    simplex = [np.clip(norm, 0.0, 1.0)]
+    for i in range(len(names)):
+        v = norm.copy()
+        v[i] = v[i] + 0.1 if v[i] + 0.1 <= 1.0 else v[i] - 0.1
+        simplex.append(v)
+    x_obs = np.array(simplex)
+    y_obs = np.array([step_cost(controller, {n: float(v) for n, v in
+                                              zip(names, lo + u * span,
+                                                  strict=True)},
+                                 conditions=conditions, **plant)
+                      for u in x_obs])
+    n_evals = int(x_obs.shape[0])
+    best_i = int(np.argmin(y_obs))
+    best_cost, best_x = float(y_obs[best_i]), lo + x_obs[best_i] * span
+    candidates = np.array([
+        [_halton(i, p) for p in (2, 3, 5, 7, 11)[:len(names)]]
+        for i in range(1, candidate_points + 1)])
+    for _ in range(max(0, max_evals - n_evals)):
+        # Standardise: the cost spans orders of magnitude (the unstable
+        # regions), and a GP on the raw scale cannot see the good basin.
+        y_mu, y_sd = float(y_obs.mean()), max(float(y_obs.std()), 1e-9)
+        y_std_obs = (y_obs - y_mu) / y_sd
+        best_std = (best_cost - y_mu) / y_sd
+        mean, std = _gp_predict(x_obs, y_std_obs, candidates)
+        improvement = best_std - mean
+        z = improvement / np.maximum(std, 1e-9)
+        ei = improvement * (0.5 * (1.0 + _ERF(z / math.sqrt(2.0)))) \
+            + std * np.exp(-0.5 * z ** 2) / math.sqrt(2.0 * math.pi)
+        pick = int(np.argmax(ei))
+        x_norm = candidates[pick]
+        x = lo + x_norm * span
+        kwargs = {n: float(v) for n, v in zip(names, x, strict=True)}
+        val = step_cost(controller, kwargs, conditions=conditions, **plant)
+        n_evals += 1
+        x_obs = np.vstack([x_obs, x_norm[None, :]])
+        y_obs = np.append(y_obs, val)
+        if val < best_cost:
+            best_cost, best_x = float(val), x
+    tuned = {n: float(v) for n, v in zip(names, best_x, strict=True)}
+    accepted = best_cost <= ACCEPTANCE_RATIO * cost_a
+    note = (f"bayesian search — GP + log-EI, {n_evals} evaluations on a "
+            f"Halton candidate set ({candidate_points} points), deterministic")
+    if not accepted:
+        note += (" — the surrogate did not beat the analytic design; the "
+                 "analytic gains stand and this result is reported, not crowned")
+        tuned, best_cost = analytic, cost_a
+    return TuningResult(
+        controller=controller, cost_analytic=cost_a, cost_tuned=best_cost,
+        analytic_params=analytic, tuned_params=tuned, n_evals=n_evals,
+        accepted=accepted, note=note, plant=dict(plant),
+        conditions=_as_conditions(conditions),
+    )
+
+
+def tune_procedure(
+    controller: str,
+    procedure_path: str | Path,
+    *,
+    max_evals: int = 120,
+    extra_kwargs: dict[str, Any] | None = None,
+    strategy: str = "nelder_mead",
+) -> TuningResult:
+    """The study-sweep channel (direction 4): tune against a study procedure
+    (the vehicle loop) instead of the corner plant.
+
+    The procedure spec supplies the scenario, the recording and the
+    feedforward stack; the tuned gains are merged over the spec's
+    ``controller_kwargs``. Cost = settle + 5·overshoot% + 20·|ss|/step — the
+    same shape `scripts/tune_vehicle_defaults.py` ships defaults with. The
+    search axis and analytic seed come from the workbench as usual.
+    """
+    from sim4wis.calibration.identify import _load_procedure_raw, run_sim_with_values
+    from sim4wis.study.tracking_step import _analyse_one
+
+    raw = _load_procedure_raw(str(procedure_path))
+    plant = {"procedure": str(procedure_path)}
+    names, analytic, lo, hi = _axis_for(controller, plant)
+
+    def vehicle_cost(kwargs: dict[str, float]) -> float:
+        spec = copy.deepcopy(raw)
+        spec["sweep"] = {}
+        ac = spec["baseline"]["vehicle"]["overrides"]["steering_system"]["angle_control"]
+        ac["controller"] = controller
+        merged = dict(ac.get("controller_kwargs") or {})
+        merged.update(kwargs)
+        if extra_kwargs:
+            merged.update(extra_kwargs)
+        ac["controller_kwargs"] = merged
+        t, ch = run_sim_with_values(spec, {})
+        m = _analyse_one(ch["delta_cmd_fl"], ch["delta_fl"],
+                         float(np.median(np.diff(t))))
+        step = abs(m.amplitude_rad)
+        return (m.settle_s + 5.0 * m.overshoot_pct / 100.0
+                + 20.0 * abs(m.ss_err_rad) / max(step, 1e-9))
+
+    cost_a = vehicle_cost(analytic)
+    x0 = np.array([analytic[n] for n in names], dtype=float)
+    cache: dict[tuple[float, ...], float] = {}
+
+    def f(x: np.ndarray) -> float:
+        key = tuple(np.round(x, 9))
+        if key in cache:
+            return cache[key]
+        kwargs = {n: float(v) for n, v in zip(names, x, strict=True)}
+        try:
+            val = vehicle_cost(kwargs)
+        except ValueError:
+            val = 100.0
+        cache[key] = val
+        return val
+
+    if strategy == "nelder_mead":
+        x_best, cost_t, n_evals = nelder_mead(f, x0, lo=lo, hi=hi,
+                                              max_evals=max_evals)
+        note = "vehicle-loop Nelder-Mead over the procedure"
+    else:
+        raise ValueError(f"strategy {strategy!r} not supported; "
+                         "known: nelder_mead")
+    tuned = {n: float(v) for n, v in zip(names, x_best, strict=True)}
+    accepted = cost_t <= ACCEPTANCE_RATIO * cost_a
+    if not accepted:
+        note += (" — the search did not beat the analytic seed; the analytic "
+                 "gains stand and this result is reported, not crowned")
+        tuned, cost_t = analytic, cost_a
+    return TuningResult(
+        controller=controller, cost_analytic=cost_a, cost_tuned=cost_t,
+        analytic_params=analytic, tuned_params=tuned, n_evals=n_evals,
+        accepted=accepted, note=note, plant=plant,
+    )

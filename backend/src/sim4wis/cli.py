@@ -495,7 +495,13 @@ def cmd_tune(args: argparse.Namespace) -> int:
 
     plant = json.loads(args.plant_json) if args.plant_json else None
     conditions = json.loads(args.conditions_json) if args.conditions_json else None
-    if args.grid:
+    if args.procedure:
+        result = tuning.tune_procedure(args.controller, args.procedure,
+                                       max_evals=args.evals)
+    elif args.bayesian:
+        result = tuning.bayesian_search(args.controller, max_evals=args.evals,
+                                        plant_kwargs=plant, conditions=conditions)
+    elif args.grid:
         result = tuning.grid_search(args.controller, points=args.grid,
                                     plant_kwargs=plant, conditions=conditions)
     else:
@@ -650,6 +656,11 @@ def build_parser() -> argparse.ArgumentParser:
                      help="Nelder-Mead evaluation budget (default 120)")
     tun.add_argument("--grid", type=int, default=0,
                      help="grid-search mode with N points per axis (0 = Nelder-Mead)")
+    tun.add_argument("--bayesian", action="store_true",
+                     help="Bayesian mode: deterministic GP + log-EI over the axis")
+    tun.add_argument("--procedure", default=None,
+                     help="study-spec file: tune against the vehicle-loop procedure "
+                          "instead of the corner plant")
     tun.add_argument("--margins", action="store_true",
                      help="bisect parameter-space margins on the tuned gains")
     tun.add_argument("--margins-ratio", type=float, default=1.5,

@@ -8,18 +8,23 @@ and the CLI face.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
 from sim4wis.steering.tracking.tuning import (
     CostCondition,
     analytic_pid,
+    bayesian_search,
     grid_search,
     save_record,
     step_cost,
     tune,
     tune_margins,
+    tune_procedure,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 PID_ANALYTIC = analytic_pid(0.6, 4.0)
 
@@ -100,6 +105,34 @@ class TestMargins:
             tune_margins("pid_single", {"kp": 1.0})
 
 
+class TestBayesianChannel:
+    def test_bayesian_is_deterministic_and_beats_the_analytic(self):
+        a = bayesian_search("pid_single", max_evals=30)
+        b = bayesian_search("pid_single", max_evals=30)
+        assert a.tuned_params == b.tuned_params
+        assert a.cost_tuned == b.cost_tuned
+        assert a.accepted
+        assert a.cost_tuned <= a.cost_analytic
+        assert a.n_evals == 30
+        assert "bayesian" in a.note
+
+
+class TestProcedureChannel:
+    def test_tune_procedure_runs_the_vehicle_loop(self):
+        proc = REPO_ROOT / "procedures" / "tracking_step_response.yaml"
+        result = tune_procedure("pid_single", str(proc), max_evals=12)
+        assert result.accepted
+        assert result.cost_tuned < result.cost_analytic
+        assert result.plant["procedure"].endswith("tracking_step_response.yaml")
+        assert "vehicle-loop" in result.note
+
+    def test_unknown_strategy_is_refused(self):
+        proc = REPO_ROOT / "procedures" / "tracking_step_response.yaml"
+        with pytest.raises(ValueError, match="strategy"):
+            tune_procedure("pid_single", str(proc), max_evals=5,
+                           strategy="particle_swarm")
+
+
 class TestRecord:
     def test_a_record_roundtrips_with_provenance(self, tmp_path):
         result = tune("pid_single", max_evals=20)
@@ -142,3 +175,12 @@ class TestCli:
         rc = main(["tune", "not_a_controller"])
         capsys.readouterr()
         assert rc == 1
+
+    def test_bayesian_flag_reaches_the_channel(self, capsys):
+        from sim4wis.cli import main
+
+        rc = main(["--json", "tune", "pid_single", "--bayesian", "--evals", "20"])
+        out = capsys.readouterr().out
+        record = json.loads(out)
+        assert rc == 0
+        assert "bayesian" in record["note"]

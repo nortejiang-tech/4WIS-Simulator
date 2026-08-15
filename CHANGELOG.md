@@ -47,11 +47,15 @@
 
 - **调参工作台工程化（方向 4）**：多工况加权成本（`step_cost`/`tune` 的
   `conditions` 列表，泊车/高速负载一张成本表）；网格通道 `grid_search`（轴空间
-  均匀网格 + 同一条 110% 验收门，与 Nelder-Mead 互为交叉验证）；参数空间余量
-  `tune_margins`（逐增益二分"成本越过 1.5× 名义"的翻转点，C5 同款模式，上界内
-  不翻转如实报 None）；调参记录入库 `save_record`（JSON，含 git 出处/plant/
-  conditions）；`sim4wis tune` CLI（`--plant-json`/`--conditions-json`/`--grid`/
-  `--margins`/`--out`/`--json`）。贝叶斯通道与 study 扫掠直连列为下一阶段。
+  均匀网格 + 同一条 110% 验收门，与 Nelder-Mead 互为交叉验证）；**贝叶斯通道**
+  `bayesian_search`（确定性 GP + log-EI、Halton 候选集、观测标准化、NM 单纯形
+  种子——同一条 110% 验收门）；**study 扫掠直连** `tune_procedure`（成本改由
+  study procedure/车辆环给出，增益合入 spec 的 `controller_kwargs` 保留前馈栈）；
+  参数空间余量 `tune_margins`（逐增益二分"成本越过 1.5× 名义"的翻转点，C5
+  同款模式，上界内不翻转如实报 None）；调参记录入库 `save_record`（JSON，含
+  git 出处/plant/conditions）；`sim4wis tune` CLI（`--plant-json`/
+  `--conditions-json`/`--grid`/`--bayesian`/`--procedure`/`--margins`/`--out`/
+  `--json`）。
 
 - **超包线定量研究（方向 6）**：`scripts/devtools/over_envelope_study.py` 对
   5°@60 km/h（≈0.8 g）前轴阶跃做峰值扭矩扫掠。定量结论：动态需求 ≈**81 N·m**

@@ -240,10 +240,13 @@ ControllerStrategy.compute → delta_cmd[4]（rad，逐轮）
 
 **方向 4 调参工作台工程化**：多工况加权成本（`step_cost`/`tune` 的 `conditions`，
 加权聚合替换单点成本）、网格通道 `grid_search`（与 Nelder-Mead 同一条 110% 验收门，
-互为交叉验证——实测两通道落同一盆地）、参数空间余量 `tune_margins`（逐增益二分
-"成本越过 1.5× 名义"的翻转点，C5 同款模式）、记录入库 `save_record`（JSON + git
-出处 + plant/conditions）、`sim4wis tune` CLI。新增测试 15 项（含 CLI 端到端）。
-贝叶斯通道与 study 扫掠直连留作下一阶段。
+互为交叉验证——实测两通道落同一盆地）、**贝叶斯通道** `bayesian_search`（确定性 GP
++ log-EI：观测标准化 + NM 单纯形种子，实测 40 次评估成本 0.0108 vs NM 0.0089，
+同一条 110% 验收门）、**study 扫掠直连** `tune_procedure`（车辆环 procedure 成本，
+增益合入 spec 保留前馈栈——`tune_vehicle_defaults.py` 流程的通用化）、参数空间余量
+`tune_margins`（C5 二分模式）、记录入库 `save_record`（JSON + git 出处 + plant/
+conditions）、`sim4wis tune` CLI（含 `--bayesian`/`--procedure`）。新增测试 19 项
+（含 CLI 端到端）。
 
 **方向 6 超包线定量研究**（`scripts/devtools/over_envelope_study.py`，5°@60 ≈0.8 g
 峰值扫掠）：
