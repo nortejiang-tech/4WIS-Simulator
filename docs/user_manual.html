@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
-<title>4WIS Simulator v0.102.0 使用说明书（图文版）</title>
+<title>4WIS Simulator v0.103.0 使用说明书（图文版）</title>
 <style>
  body { font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
         max-width: 1020px; margin: 0 auto; padding: 36px 22px; color:#1a202c; line-height:1.8; }
@@ -26,7 +26,7 @@
  .meta { color:#718096; font-size: 13px; }
 </style></head><body>
 
-<h1>4WIS Simulator 使用说明书 <span style="font-size:15px;color:#718096">v0.102.0 · 图文版</span></h1>
+<h1>4WIS Simulator 使用说明书 <span style="font-size:15px;color:#718096">v0.103.0 · 图文版</span></h1>
 <p class="meta">四轮独立转向（4WIS）仿真平台 —— 交互驾驶 · 批量实验 · 结果分析 · 负载选型 · 功能安全研究。
 本说明书全部截图由 <code>python scripts/build_manual.py</code> 从当前版本实跑生成。</p>
 
@@ -44,7 +44,7 @@
 <a href="#s11">11 快捷键与命令面板</a> ·
 <a href="#s12">12 工程工作流配方</a> ·
 <a href="#s13">13 FAQ</a> ·
-<a href="#s14">14 版本纪要 v0.9→v0.102.0</a></div>
+<a href="#s14">14 版本纪要 v0.9→v0.103.0</a></div>
 
 <h2 id="s1">1　安装启动</h2>
 <p><b>便携版（推荐）</b>：解压对应平台的 zip → macOS 双击 <code>start.command</code>（首次被 Gatekeeper
@@ -250,7 +250,7 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>分析页 run 从哪来？</td><td>试验页跑的批量实验（含安全研究脚本产生的）都会落盘到 runs/。</td></tr>
 </table>
 
-<h2 id="s14">14　版本纪要 v0.9 → v0.102.0</h2>
+<h2 id="s14">14　版本纪要 v0.9 → v0.103.0</h2>
 <table>
 <tr><th>版本</th><th>要点</th></tr>
 <tr><td>v0.9.0</td><td>时域/负载页物理口径统一（阻力/升力/toe/camber）；轮速积分半隐式化修复中低速潜伏失稳；手柄初版</td></tr>
@@ -262,7 +262,7 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>v0.99–0.99.3</td><td>2D/3D 渲染兼容性修复；标准工况场地重制；3D 车顶视角</td></tr>
 <tr><td>v0.100.0</td><td>研究报告流水线：单轮失效安全分析、解耦价值研究、后轮转角范围研究自包含 HTML</td></tr>
 <tr><td>v0.101.0–0.101.1</td><td>K&C 表驱动悬架特性；显示可读性与 3D 运动重建（航位推算去拍频）</td></tr>
-<tr><td>v0.102.0</td><td>P0 正确性（D1 轴侧偏分配单源化、D5 多速率转向）；v2 转向层黄金锚点与摩擦频域分离；objective-test 体系统一；MCP 服务器；标定残差面板（C3a）；3D 平滑性机器验证</td></tr>
+<tr><td>v0.103.0</td><td>P0 正确性（D1 轴侧偏分配单源化、D5 多速率转向）；v2 转向层黄金锚点与摩擦频域分离；objective-test 体系统一；MCP 服务器；标定残差面板（C3a）；3D 平滑性机器验证</td></tr>
 </table>
-<p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v0.102.0</p>
+<p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v0.103.0</p>
 </body></html>
