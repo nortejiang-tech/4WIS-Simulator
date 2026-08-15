@@ -180,13 +180,18 @@ class AngleControlParams:
     #: Coulomb friction [N·m] — with stiction hold at rest.
     plant_friction_nm: float = 0.5
     #: Saturation of the actuator torque [N·m] at the wheel. Sized from the
-    #: repo's own actuator-sizing module, not a placeholder: full-lock
-    #: parking costs ~104 N·m per corner (5.2 kN rack × 0.02 m pinion) and
-    #: a 0.5 g evasive at 60 km/h ~40 N·m of aligning load — the original
-    #: default of 40 sat exactly ON the highway load with zero margin, and
-    #: the validation sweep caught the wheel being blown off its command
-    #: (measured: 3° step @60 km/h, wheel driven to −0.34 rad with the
-    #: actuator pinned at its limit). 120 covers both with margin.
+    #: repo's own actuator-sizing module, not a placeholder: the rack-chain
+    #: basis at full-lock parking is ~207 N·m per corner (10.3 kN rack ×
+    #: 0.02 m pinion — an earlier note said 104 N·m from "5.2 kN rack",
+    #: which was the tyre lateral force tire_fy mislabelled as rack force;
+    #: see steering/sizing.size_corner_actuator), and the dynamic
+    #: over-envelope step (5°@60 km/h ≈ 0.8 g) costs ~81 N·m
+    #: (scripts/devtools/over_envelope_study.py). The default 120 covers the
+    #: dynamic case; against the static rack-chain basis it is undersized —
+    #: invisible in the dynamic model because its parking loads are a known
+    #: model boundary. The original 40 N·m default sat exactly ON the 0.5 g
+    #: aligning load with zero margin and was blown off its command
+    #: (measured: 3° step @60 km/h, wheel driven to −0.34 rad).
     plant_peak_torque_nm: float = 120.0
     #: Optional wheel-domain rate limit [rad/s]; None = off (the legacy
     #: rate limit lives in the open_loop controller itself).

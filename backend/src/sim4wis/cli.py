@@ -489,6 +489,47 @@ def cmd_calibrate_fit(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_tune(args: argparse.Namespace) -> int:
+    """The tuning workbench on the command line (direction 4)."""
+    from sim4wis.steering.tracking import tuning
+
+    plant = json.loads(args.plant_json) if args.plant_json else None
+    conditions = json.loads(args.conditions_json) if args.conditions_json else None
+    if args.grid:
+        result = tuning.grid_search(args.controller, points=args.grid,
+                                    plant_kwargs=plant, conditions=conditions)
+    else:
+        result = tuning.tune(args.controller, max_evals=args.evals,
+                             plant_kwargs=plant, conditions=conditions)
+    record = result.to_record()
+    margins = None
+    if args.margins:
+        margins = [m.to_dict() for m in tuning.tune_margins(
+            args.controller, result.tuned_params, plant_kwargs=plant,
+            conditions=conditions, ratio=args.margins_ratio)]
+        record["margins"] = margins
+    if args.out:
+        Path(args.out).write_text(json.dumps(record, ensure_ascii=False, indent=1),
+                                  encoding="utf-8")
+        print(f"record: {args.out}")
+    if args.json:
+        print(json.dumps(record, ensure_ascii=False, indent=1))
+        return 0
+    print(f"{args.controller}: cost {record['cost_analytic']:.4f} "
+          f"-> {record['cost_tuned']:.4f} ({record['n_evals']} evals, "
+          f"accepted={'yes' if record['accepted'] else 'no'})")
+    print("  " + ", ".join(f"{k}={v:.4g}" for k, v in record["tuned_params"].items()))
+    if margins:
+        print("margins (cost bar = "
+              f"{args.margins_ratio:.1f}x nominal):")
+        for m in margins:
+            lo = "—" if m["flip_low"] is None else f"{m['flip_low']:.4g}"
+            hi = "—" if m["flip_high"] is None else f"{m['flip_high']:.4g}"
+            print(f"  {m['name']:<16} nominal {m['nominal']:.4g}  "
+                  f"flips low {lo} / high {hi}")
+    return 0
+
+
 def cmd_capabilities(args: argparse.Namespace) -> int:
     if _backend_up(args.backend) and not args.local:
         caps = _get(args.backend, "/api/study/capabilities")
@@ -596,6 +637,26 @@ def build_parser() -> argparse.ArgumentParser:
 
     caps = sub.add_parser("capabilities", help="models, metrics, strategies")
     caps.set_defaults(func=cmd_capabilities)
+
+    tun = sub.add_parser("tune", help="tuning workbench: corner-plant controller tuning")
+    tun.add_argument("controller", help="pid_single / pid_cascade / lqr")
+    tun.add_argument("--plant-json", default=None,
+                     help='plant kwargs as JSON, e.g. '
+                          '{"transmission_stiffness_nms_per_rad": 1200.0}')
+    tun.add_argument("--conditions-json", default=None,
+                     help="cost conditions as a JSON list of "
+                          "{target, load_torque, t_end, weight}")
+    tun.add_argument("--evals", type=int, default=120,
+                     help="Nelder-Mead evaluation budget (default 120)")
+    tun.add_argument("--grid", type=int, default=0,
+                     help="grid-search mode with N points per axis (0 = Nelder-Mead)")
+    tun.add_argument("--margins", action="store_true",
+                     help="bisect parameter-space margins on the tuned gains")
+    tun.add_argument("--margins-ratio", type=float, default=1.5,
+                     help="cost bar for the margins bisection (default 1.5x)")
+    tun.add_argument("--out", default=None,
+                     help="write the tuning record (with margins) as JSON")
+    tun.set_defaults(func=cmd_tune)
 
     cal = sub.add_parser("calibrate", help="calibration workbench (C3)")
     csub = cal.add_subparsers(dest="subcommand", required=True)

@@ -119,6 +119,21 @@ sim4wis study run procedures/tracking_step_response.yaml
 
 首份对比（v0.102.0+，默认增益）：级联 PID 超调最小（1.3%），LQR 最快且稳态误差 4.7e-7 rad，open_loop 为无反馈基准。正弦扫频/负载扰动模板在工况模块扩展时另立（协议按工况族设计，不写死）。
 
+## 3e. 超包线研究（方向 6）
+
+`backend/.venv/bin/python scripts/devtools/over_envelope_study.py`：5°@60 km/h（≈0.8 g）
+前轴阶跃 × 峰值扭矩扫掠（40–120 N·m，生产形控制器 pid_single+FF 与 open_loop）。
+结论（逐轮齿条力 × 0.02 m pinion 口径）：
+
+- 动态需求 ≈ **81 N·m**（峰值负载）；≥ **60 N·m** 即不被深滑移回正吹离——40 N·m 被吹飞
+  0.698 rad 的原始发现已复现锚定，60 N·m 起 post-90% 偏差 0.026 rad、100+ N·m 后 ~0.008 rad。
+- 默认 **120 N·m 覆盖动态工况**（余量 32%；post-90% 偏差 0.008 vs 判据 0.05）。
+- **静态口径勘误**：原"104 N·m（5.2 kN rack）"把轮胎侧向力 tire_fy 误标为齿条力；
+  逐轮齿条链实为 ~**207 N·m/角**（kingpin 直驱口径 ~881 N·m）。动态模型泊车工况不承载
+  准静态驻车负载（模型边界），矩阵因此不显示该缺口。`steering/sizing.py` 的
+  `size_corner_actuator()` 如实报告三个口径与判定——执行器规格模型与选型模块的闭环
+  互证列为本阶段移交项。
+
 ## 4. 调参工作台（FR-9）
 
 Python API（`sim4wis.steering.tracking.tuning`）：
@@ -133,6 +148,18 @@ step_cost("lqr", {...})       # 单点成本（ITAE 归一 + 峰值力矩惩罚�
 三条通道：**解析**（模型给定增益即给定——极点配置/LQR）、**继电辨识**（半自动，对执行器对象做继电试验取 Ku/Tu）、**黑盒**（Nelder-Mead 精修，确定性）。验收：精修成本 ≤ 解析基线 × **110%**，不达标则如实报告解析增益，不"加冕"。全部可复现。
 
 **发布默认值**由 `scripts/tune_vehicle_defaults.py` 在车辆闭环里调出（齿条力滞后一步 + 轮胎回正弹簧都在环内），该脚本是默认增益的出处；对新的执行器对象重新调参时，先在 plant 级用 `tune()`，再按此脚本在车辆闭环复调。
+
+**工程化通道（方向 4）**：
+
+- **多工况加权成本**：`step_cost(..., conditions=[{target, load_torque, t_end, weight}, ...])`
+  以加权聚合替代单点阶跃成本（泊车负载 vs 高速负载一张成本表）；`tune()` 同名参数直达。
+- **网格通道**：`grid_search("pid_single", points=4)` —— 轴空间均匀网格 + 同一条 110%
+  验收门，与 Nelder-Mead 互为交叉验证（两通道应落在同一盆地）。
+- **参数空间余量**：`tune_margins(controller, gains, ratio=1.5)` —— 逐增益二分"成本越过
+  1.5× 名义值"的翻转点（C5 同款模式）；某个方向上界内不翻转 = 如实报 None（也是余量）。
+- **入库与 CLI**：`save_record(result, path)` 落 JSON（含 git 出处、plant、conditions）；
+  命令行 `sim4wis tune pid_single [--plant-json …] [--conditions-json …] [--grid N]
+  [--margins] [--out record.json] [--json]`。
 
 ## 4b. 柔度维度（方向 3：双质量传动 + 间隙）
 
@@ -189,3 +216,6 @@ override 块见 `scripts/devtools/compliance_tuning.py`（角级表 → 车辆�
   共振以下（车辆环有效上升 ~1 s），换执行器传动（k、惯量分配）必须重走柔度调参配方。
 - 间隙对中心区手感的影响尚未研究（方向 3 剩余项）；电机侧传感器/观测器通道是柔度
   环带宽的根本解，未实现。
+- 转角执行器默认 120 N·m 按动态超包线口径是够的（81 N·m 需求），但按逐轮齿条链的
+  静态泊车口径（~207 N·m）不足——动态模型泊车负载缺失掩盖了这一点（模型边界）；
+  执行器规格模型与选型模块的闭环互证是明确移交项（见 §3e）。

@@ -45,6 +45,24 @@
   结构。陷波可行但与 D 滤波相位组合脆（12.9%）、电机侧速率阻尼最优（7.8%）
   但需电机侧传感器通道——均如实记录为下一阶段选项。发布默认增益不变（红线）。
 
+- **调参工作台工程化（方向 4）**：多工况加权成本（`step_cost`/`tune` 的
+  `conditions` 列表，泊车/高速负载一张成本表）；网格通道 `grid_search`（轴空间
+  均匀网格 + 同一条 110% 验收门，与 Nelder-Mead 互为交叉验证）；参数空间余量
+  `tune_margins`（逐增益二分"成本越过 1.5× 名义"的翻转点，C5 同款模式，上界内
+  不翻转如实报 None）；调参记录入库 `save_record`（JSON，含 git 出处/plant/
+  conditions）；`sim4wis tune` CLI（`--plant-json`/`--conditions-json`/`--grid`/
+  `--margins`/`--out`/`--json`）。贝叶斯通道与 study 扫掠直连列为下一阶段。
+
+- **超包线定量研究（方向 6）**：`scripts/devtools/over_envelope_study.py` 对
+  5°@60 km/h（≈0.8 g）前轴阶跃做峰值扭矩扫掠。定量结论：动态需求 ≈**81 N·m**
+  （峰值负载）、≥**60 N·m** 即不被深滑移回正吹离（40 N·m 被吹飞 0.698 rad 的
+  原始发现复现锚定；60 N·m 起 post-90% 偏差 0.026 rad），默认 120 N·m 覆盖动态
+  工况（余量 32%）。**静态口径勘误**：原"104 N·m（5.2 kN rack）"把轮胎侧向力
+  tire_fy 误标为齿条力，逐轮齿条链实为 ~**207 N·m/角**（kingpin 直驱 ~881 N·m）；
+  动态模型泊车负载缺失（模型边界）掩盖了该缺口。`steering/sizing.py` 新增
+  `size_corner_actuator()` 如实报告三个口径与判定；执行器规格模型与选型模块
+  闭环互证移交下一阶段。
+
 - **负载扰动评估协议（FR-10 扰动臂，三臂齐备）**：
   `procedures/tracking_disturbance_response.yaml` + `trk_dist_*` 指标族。
   60 km/h 小角度稳态行驶突入低 μ 冰面（场景扰动，μ 0.85→0.35），

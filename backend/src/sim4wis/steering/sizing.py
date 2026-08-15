@@ -37,7 +37,7 @@ import numpy as np
 from sim4wis.core.state import VehicleParams
 from sim4wis.steering import architecture as arch
 from sim4wis.steering.assist import get as get_assist_map
-from sim4wis.steering.plant import SteeringPlant, STEERING_INNER_DT
+from sim4wis.steering.plant import STEERING_INNER_DT, SteeringPlant
 from sim4wis.vehicle.load_analysis import sweep_load_analysis
 
 #: Above this driver-limited fraction a scenario's numbers stop meaning
@@ -186,6 +186,18 @@ class ActuatorRequirement:
             "scenarios": [s.to_dict() for s in self.scenarios],
             "verdict": self.verdict,
         }
+
+
+#: Direction 6 — the **dynamic over-envelope requirement** for the by-wire
+#: corner actuator, measured by `scripts/devtools/over_envelope_study.py`
+#: (5° front step @ 60 km/h ≈ 0.8 g, deep-slip blow-back): the peak
+#: per-corner load torque the actuator must hold is ~81 N·m. Below ~60 N·m
+#: the wheel is blown 0.7 rad off command and stays there — the original
+#: 40 N·m finding, reproduced and anchored by that study. Full-lock parking
+#: (~104 N·m) remains the binding driver, so the corner sizing rule is
+#: unchanged; these numbers are what the margin is measured against.
+CORNER_OVER_ENVELOPE_PEAK_NM = 81.0
+CORNER_OVER_ENVELOPE_FLOOR_NM = 60.0
 
 
 #: Speed at which the tyre is considered to be rolling rather than scrubbing
@@ -420,3 +432,48 @@ def size_actuator(
                                       "但数值有效 —— 这是一条发现，不是一次失效。")
     req.verdict = verdict
     return req
+
+
+def size_corner_actuator(params: VehicleParams) -> dict[str, Any]:
+    """The by-wire corner actuator requirement — static + dynamic (direction 6).
+
+    Static: the full-lock parking rack force per corner × pinion radius,
+    from the same quasi-static load model the rest of sizing uses. Dynamic:
+    the over-envelope step blow-back (`CORNER_OVER_ENVELOPE_PEAK_NM`). The
+    requirement is the larger of the two, and the verdict is the margin the
+    configured corner peak (`angle_control.plant_peak_torque_nm`) leaves
+    over it.
+
+    Honesty notes carried in the output: the earlier documented basis
+    (104 N·m = "5.2 kN rack × pinion") mislabeled the tyre lateral force
+    `tire_fy` as the rack force — the rack chain gives ~2× that; and the
+    layer's load convention is rack × pinion, while a kingpin-direct
+    corner module would face the full kingpin torque (reported as
+    `static_kingpin_direct_nm` for the sizing/规格 model closure work).
+    """
+    pinion = float(params.pinion_radius)
+    limit = float(params.steer_limit)
+    data = sweep_load_analysis(params, speeds=[0.0], angles=[limit],
+                               wheel_index=0, mu=0.9)
+    row = data["rows"][0]
+    rack_n = abs(float(row["rack_force"]))
+    static_nm = rack_n * pinion
+    tire_fy_basis_nm = abs(float(row["tire_fy"])) * pinion
+    kingpin_direct_nm = abs(float(row["torque_steer"]))
+    dynamic_nm = CORNER_OVER_ENVELOPE_PEAK_NM
+    need = max(static_nm, dynamic_nm)
+    have = float(params.steering_system.angle_control.plant_peak_torque_nm)
+    margin = (have - need) / have if have else float("-inf")
+    return {
+        "static_parking_nm": round(static_nm, 1),
+        "static_tire_fy_basis_nm": round(tire_fy_basis_nm, 1),
+        "static_kingpin_direct_nm": round(kingpin_direct_nm, 1),
+        "dynamic_over_envelope_nm": dynamic_nm,
+        "over_envelope_floor_nm": CORNER_OVER_ENVELOPE_FLOOR_NM,
+        "required_peak_nm": round(need, 1),
+        "configured_peak_nm": round(have, 1),
+        "margin_pct": round(margin * 100, 1),
+        "pass": have >= need,
+        "driven_by": ("parking_full_lock" if static_nm >= dynamic_nm
+                      else "over_envelope_step"),
+    }

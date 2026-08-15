@@ -32,9 +32,13 @@ actuator without running the vehicle.
 
 from __future__ import annotations
 
+import itertools
+import json
 import math
-from collections.abc import Callable
-from dataclasses import dataclass
+import subprocess
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -49,6 +53,30 @@ from sim4wis.steering.tracking.plant import CornerActuatorPlant
 ACCEPTANCE_RATIO = 1.10
 
 
+@dataclass(frozen=True)
+class CostCondition:
+    """One operating point of the multi-condition cost.
+
+    The single-condition cost is the legacy corner loop (1° step, 3 N·m
+    load, 2 s); a real controller has to hold its quality across parking
+    loads and highway loads, so ``step_cost`` accepts a weighted list of
+    these and reports the weighted aggregate."""
+
+    target: float = 0.01745
+    load_torque: float = 3.0
+    t_end: float = 2.0
+    weight: float = 1.0
+
+    @classmethod
+    def from_mapping(cls, m: dict[str, float]) -> CostCondition:
+        keys = {"target", "load_torque", "t_end", "weight"}
+        return cls(**{k: float(v) for k, v in m.items() if k in keys})
+
+    def to_dict(self) -> dict[str, float]:
+        return {"target": self.target, "load_torque": self.load_torque,
+                "t_end": self.t_end, "weight": self.weight}
+
+
 @dataclass
 class TuningResult:
     controller: str
@@ -59,6 +87,10 @@ class TuningResult:
     n_evals: int
     accepted: bool
     note: str = ""
+    #: The plant and conditions the result was tuned against — the
+    #: provenance a stored record must carry.
+    plant: dict[str, Any] = field(default_factory=dict)
+    conditions: list[dict[str, float]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -70,8 +102,16 @@ class TuningResult:
             "n_evals": self.n_evals,
             "analytic_params": self.analytic_params,
             "tuned_params": self.tuned_params,
+            "plant": self.plant,
+            "conditions": self.conditions,
             "note": self.note,
         }
+
+    def to_record(self) -> dict[str, Any]:
+        """The stored tuning record: result + acceptance + provenance."""
+        record = self.to_dict()
+        record["git"] = _git_sha()
+        return record
 
 
 def analytic_pid(j: float, b: float, wn: float = 25.0,
@@ -108,12 +148,57 @@ def step_cost(
     quant_rad: float = 0.00017, delay_steps: int = 1,
     target: float = 0.01745, t_end: float = 2.0,
     dt: float = 5.0e-4,
+    conditions: Sequence[CostCondition | dict[str, float]] | None = None,
 ) -> float:
     """Closed-loop step cost on the corner plant: ITAE-normalised error plus
     a peak-torque penalty. Lower is better; deterministic. With a
     transmission stiffness set, the plant is the two-mass model — the cost
     then measures how the controller copes with the resonance and the
-    backlash dead band (the compliance evaluation dimension)."""
+    backlash dead band (the compliance evaluation dimension).
+
+    With ``conditions`` the cost is the weight-weighted aggregate across
+    operating points (e.g. parking load vs highway load) — the
+    multi-condition channel (direction 4). Without it the legacy
+    single-condition cost is computed exactly as before."""
+    if conditions is None:
+        conds = [CostCondition(target=target, load_torque=load_torque,
+                               t_end=t_end, weight=1.0)]
+    else:
+        conds = [c if isinstance(c, CostCondition) else CostCondition.from_mapping(c)
+                 for c in conditions]
+        if not conds:
+            raise ValueError("conditions must not be empty")
+    plant_kwargs = {
+        "inertia": inertia, "damping": damping, "friction_nm": friction_nm,
+        "peak_torque_nm": peak_torque_nm,
+        "transmission_stiffness_nms_per_rad": (
+            transmission_stiffness_nms_per_rad),
+        "backlash_rad": backlash_rad,
+        "motor_inertia_fraction": motor_inertia_fraction,
+    }
+    total_w = sum(c.weight for c in conds) or 1.0
+    cost = 0.0
+    for cond in conds:
+        cost += cond.weight * _step_cost_one(
+            controller, kwargs, cond.target, cond.load_torque, cond.t_end,
+            dt=dt, quant_rad=quant_rad, delay_steps=delay_steps,
+            **plant_kwargs) / total_w
+    return cost
+
+
+def _step_cost_one(
+    controller: str,
+    kwargs: dict[str, Any],
+    target: float,
+    load_torque: float,
+    t_end: float,
+    *,
+    inertia: float, damping: float, friction_nm: float, peak_torque_nm: float,
+    transmission_stiffness_nms_per_rad: float | None,
+    backlash_rad: float, motor_inertia_fraction: float,
+    quant_rad: float, delay_steps: int, dt: float,
+) -> float:
+    """One closed-loop step at one condition — the cost's atomic evaluation."""
     c = make_controller(controller, **kwargs)
     plant = CornerActuatorPlant(inertia_kgm2=inertia, damping_nms_per_rad=damping,
                                 coulomb_friction_nm=friction_nm,
@@ -350,23 +435,28 @@ def _register_spaces() -> None:
 _register_spaces()
 
 
-def tune(
-    controller: str,
-    *,
-    max_evals: int = 120,
-    plant_kwargs: dict[str, Any] | None = None,
-) -> TuningResult:
-    """Analytic baseline → black-box refinement → 110 % acceptance gate.
+def _git_sha() -> str:
+    """The current commit, best effort — a stored record says where it came from."""
+    try:
+        out = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                             capture_output=True, text=True, timeout=5.0, check=False)
+        return out.stdout.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
 
-    With a compliant plant (``transmission_stiffness_nms_per_rad`` set) the
-    analytic channel switches to the resonance-safe designs and the
-    rate-channel low-pass ``deriv_tau_s`` joins the search axis."""
+
+def _axis_for(
+    controller: str,
+    plant: dict[str, Any],
+) -> tuple[tuple[str, ...], dict[str, float], np.ndarray, np.ndarray]:
+    """The search axis for a controller on a plant: names, analytic seed,
+    and bounds — with the compliance extensions applied when the plant is
+    the two-mass model."""
     if controller not in TUNE_SPACE:
         raise ValueError(
             f"controller {controller!r} has no tuning space; known: "
             f"{sorted(TUNE_SPACE)}")
     names, analytic_fn, lo, hi = TUNE_SPACE[controller]
-    plant = plant_kwargs or {}
     analytic = analytic_fn(plant)
     if _compliant_plant(plant):
         if "deriv_tau_s" not in names:
@@ -378,7 +468,33 @@ def tune(
         hi = np.asarray(hi, dtype=float).copy()
         for key, value in COMPLIANT_LO_RELAX.get(controller, {}).items():
             lo[names.index(key)] = min(float(value), lo[names.index(key)])
-    cost_a = step_cost(controller, analytic, **plant)
+    return names, analytic, lo, hi
+
+
+def _as_conditions(
+    conditions: Sequence[CostCondition | dict[str, float]] | None,
+) -> list[dict[str, float]] | None:
+    return None if conditions is None else [
+        (c if isinstance(c, CostCondition) else CostCondition.from_mapping(c)).to_dict()
+        for c in conditions]
+
+
+def tune(
+    controller: str,
+    *,
+    max_evals: int = 120,
+    plant_kwargs: dict[str, Any] | None = None,
+    conditions: Sequence[CostCondition | dict[str, float]] | None = None,
+) -> TuningResult:
+    """Analytic baseline → black-box refinement → 110 % acceptance gate.
+
+    With a compliant plant (``transmission_stiffness_nms_per_rad`` set) the
+    analytic channel switches to the resonance-safe designs and the
+    rate-channel low-pass ``deriv_tau_s`` joins the search axis. With
+    ``conditions`` the cost is the weighted multi-condition aggregate."""
+    plant = plant_kwargs or {}
+    names, analytic, lo, hi = _axis_for(controller, plant)
+    cost_a = step_cost(controller, analytic, conditions=conditions, **plant)
 
     x0 = np.array([analytic[n] for n in names], dtype=float)
     cache: dict[tuple[float, ...], float] = {}
@@ -388,7 +504,7 @@ def tune(
         if key in cache:
             return cache[key]
         kwargs = {n: float(v) for n, v in zip(names, x, strict=True)}
-        val = step_cost(controller, kwargs, **plant)
+        val = step_cost(controller, kwargs, conditions=conditions, **plant)
         cache[key] = val
         return val
 
@@ -404,5 +520,145 @@ def tune(
     return TuningResult(
         controller=controller, cost_analytic=cost_a, cost_tuned=cost_t,
         analytic_params=analytic, tuned_params=tuned, n_evals=n_evals,
-        accepted=accepted, note=note,
+        accepted=accepted, note=note, plant=dict(plant),
+        conditions=_as_conditions(conditions),
     )
+
+
+def grid_search(
+    controller: str,
+    *,
+    points: int = 4,
+    max_cells: int = 1296,
+    plant_kwargs: dict[str, Any] | None = None,
+    conditions: Sequence[CostCondition | dict[str, float]] | None = None,
+) -> TuningResult:
+    """The explicit grid channel (direction 4): evaluate the cost on a
+    uniform grid over the search axis and keep the best cell, under the
+    same 110 % acceptance bar against the analytic seed. Deterministic;
+    deliberately exhaustive where Nelder-Mead is opportunistic — the two
+    channels cross-check each other."""
+    plant = plant_kwargs or {}
+    names, analytic, lo, hi = _axis_for(controller, plant)
+    cells = int(points) ** len(names)
+    if cells > max_cells:
+        raise ValueError(
+            f"grid of {points} points over {len(names)} axes is {cells} cells; "
+            f"max_cells={max_cells} — lower points or raise max_cells")
+    cost_a = step_cost(controller, analytic, conditions=conditions, **plant)
+    per_axis = [np.linspace(float(lo[i]), float(hi[i]), int(points))
+                for i in range(len(names))]
+    best_x: np.ndarray | None = None
+    best_cost = float("inf")
+    n_evals = 0
+    for combo in itertools.product(*per_axis):
+        kwargs = {n: float(v) for n, v in zip(names, combo, strict=True)}
+        val = step_cost(controller, kwargs, conditions=conditions, **plant)
+        n_evals += 1
+        if val < best_cost:
+            best_cost, best_x = val, np.asarray(combo, dtype=float)
+    tuned = {n: float(v) for n, v in zip(names, best_x, strict=True)}
+    accepted = best_cost <= ACCEPTANCE_RATIO * cost_a
+    note = (f"grid search — {points} points per axis, {n_evals} cells "
+            "evaluated, best kept under the 110 % bar")
+    if not accepted:
+        note += (" — the grid did not beat the analytic design; the analytic "
+                 "gains stand and this result is reported, not crowned")
+        tuned, best_cost = analytic, cost_a
+    return TuningResult(
+        controller=controller, cost_analytic=cost_a, cost_tuned=best_cost,
+        analytic_params=analytic, tuned_params=tuned, n_evals=n_evals,
+        accepted=accepted, note=note, plant=dict(plant),
+        conditions=_as_conditions(conditions),
+    )
+
+
+@dataclass
+class GainMargin:
+    """How far one tuned gain can move before the cost degrades past the bar."""
+
+    name: str
+    nominal: float
+    lo: float
+    hi: float
+    cost_base: float
+    #: Nearest value below/above the nominal where the cost exceeded
+    #: ``ratio``× the nominal cost; None = it never did within the bounds.
+    flip_low: float | None = None
+    flip_high: float | None = None
+    cost_at_flip_low: float | None = None
+    cost_at_flip_high: float | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "nominal": round(self.nominal, 5),
+            "bounds": [round(self.lo, 5), round(self.hi, 5)],
+            "cost_base": round(self.cost_base, 6),
+            "flip_low": (None if self.flip_low is None else round(self.flip_low, 5)),
+            "flip_high": (None if self.flip_high is None else round(self.flip_high, 5)),
+            "cost_at_flip_low": (None if self.cost_at_flip_low is None
+                                 else round(self.cost_at_flip_low, 6)),
+            "cost_at_flip_high": (None if self.cost_at_flip_high is None
+                                  else round(self.cost_at_flip_high, 6)),
+        }
+
+
+def tune_margins(
+    controller: str,
+    gains: dict[str, float],
+    *,
+    plant_kwargs: dict[str, Any] | None = None,
+    conditions: Sequence[CostCondition | dict[str, float]] | None = None,
+    ratio: float = 1.5,
+    bisect_steps: int = 8,
+) -> list[GainMargin]:
+    """Parameter-space margins of a tuned design (direction 4, the C5 pattern).
+
+    For every gain on the controller's axis, bisect in both directions from
+    the nominal until the closed-loop cost exceeds ``ratio``× the nominal
+    cost — the flip. A gain whose whole range keeps the cost inside the bar
+    reports ``None`` ("no flip within bounds"), which is a margin, not a
+    failure. Deterministic.
+    """
+    plant = plant_kwargs or {}
+    names, _, lo, hi = _axis_for(controller, plant)
+    missing = [n for n in names if n not in gains]
+    if missing:
+        raise ValueError(f"gains missing axis entries: {missing}")
+    base = {n: float(gains[n]) for n in names}
+    cost_base = step_cost(controller, base, conditions=conditions, **plant)
+    bar = ratio * cost_base
+    margins: list[GainMargin] = []
+    for i, name in enumerate(names):
+        margin = GainMargin(name=name, nominal=base[name],
+                            lo=float(lo[i]), hi=float(hi[i]),
+                            cost_base=cost_base)
+        for direction, bound in ((+1, float(hi[i])), (-1, float(lo[i]))):
+            probe = {**base, name: bound}
+            if step_cost(controller, probe, conditions=conditions, **plant) <= bar:
+                continue  # the whole side stays inside the bar — no flip
+            inside_v, outside_v = base[name], bound
+            for _ in range(bisect_steps):
+                mid = 0.5 * (inside_v + outside_v)
+                probe = {**base, name: mid}
+                if step_cost(controller, probe, conditions=conditions, **plant) <= bar:
+                    inside_v = mid
+                else:
+                    outside_v = mid
+            probe = {**base, name: outside_v}
+            cost_at = step_cost(controller, probe, conditions=conditions, **plant)
+            if direction > 0:
+                margin.flip_high, margin.cost_at_flip_high = outside_v, cost_at
+            else:
+                margin.flip_low, margin.cost_at_flip_low = outside_v, cost_at
+        margins.append(margin)
+    return margins
+
+
+def save_record(result: TuningResult, path: str | Path) -> Path:
+    """Persist a tuning record (result + acceptance + provenance) as JSON."""
+    p = Path(path)
+    p.write_text(json.dumps(result.to_record(), ensure_ascii=False, indent=1),
+                 encoding="utf-8")
+    return p
