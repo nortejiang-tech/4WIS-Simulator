@@ -2,7 +2,8 @@
 #
 #   sim4wis study run procedures/tracking_sweep_response.yaml
 #
-# 4WIS + 层开启，60 km/h，前轴 0.2°（≈0.1 g，线性区）阶梯正弦：
+# 4WIS + 层开启，60 km/h，前轴 0.2°（≈0.1 g，线性区）阶梯正弦，
+# 9 控制器（每单元 = 完整 angle_control 配置）：
 # 0.5 → 1 → 2 → 5 Hz 每段 4 个周期。分析器从命令信号自身分段
 # （过零半周期估计），逐段相关最小二乘拟合幅值/相位，对数插值
 # −3 dB 带宽。trk_amp_ratio_* / trk_phase_lag_2hz / trk_bw_hz 即出。
@@ -64,9 +65,89 @@ baseline:
         steer: {kind: constant, amplitude: 0.0}
 
 sweep:
-  controller:
-    values: [open_loop, pid_single, pid_cascade, lqr]
-    bind: vehicle.overrides.steering_system.angle_control.controller
+  # 每个单元 = 一个完整的 angle_control 配置（控制器 + 其调参条件下的前馈栈）。
+  # dob/adrc 与 rack/friction 前馈互斥（构造期拒绝）→ 仅速度前馈。
+  profile:
+    values:
+      - {controller: open_loop, enabled: true, sensor_quant_rad: 0.00017,
+         sensor_delay_steps: 1, controller_kwargs: {}}
+      - controller: pid_single
+        enabled: true
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      - controller: pid_cascade
+        enabled: true
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      - controller: lqr
+        enabled: true
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      - controller: dob
+        enabled: true
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          ff:
+            blocks:
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+      - controller: adrc
+        enabled: true
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          ff:
+            blocks:
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+      - controller: smc
+        enabled: true
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      - controller: mpc
+        enabled: true
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      - controller: h_inf
+        enabled: true
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+    bind: vehicle.overrides.steering_system.angle_control
 
 metrics:
   - trk_amp_ratio_0_5hz
