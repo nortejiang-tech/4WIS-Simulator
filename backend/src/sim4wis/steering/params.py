@@ -179,8 +179,15 @@ class AngleControlParams:
     plant_damping_nms_per_rad: float = 4.0
     #: Coulomb friction [N·m] — with stiction hold at rest.
     plant_friction_nm: float = 0.5
-    #: Saturation of the actuator torque [N·m] at the wheel.
-    plant_peak_torque_nm: float = 40.0
+    #: Saturation of the actuator torque [N·m] at the wheel. Sized from the
+    #: repo's own actuator-sizing module, not a placeholder: full-lock
+    #: parking costs ~104 N·m per corner (5.2 kN rack × 0.02 m pinion) and
+    #: a 0.5 g evasive at 60 km/h ~40 N·m of aligning load — the original
+    #: default of 40 sat exactly ON the highway load with zero margin, and
+    #: the validation sweep caught the wheel being blown off its command
+    #: (measured: 3° step @60 km/h, wheel driven to −0.34 rad with the
+    #: actuator pinned at its limit). 120 covers both with margin.
+    plant_peak_torque_nm: float = 120.0
     #: Optional wheel-domain rate limit [rad/s]; None = off (the legacy
     #: rate limit lives in the open_loop controller itself).
     plant_rate_limit_rad_s: float | None = None

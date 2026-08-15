@@ -64,29 +64,59 @@ def _ctx(dt: float, target_rate: float, load: float, speed_ms: float,
 class DobController(AngleTrackingController):
     """PID base + disturbance observer.
 
-    The observer reconstructs the total disturbance (load + modelling
-    error) as the difference between the torque actually commanded and the
-    torque the nominal plant (J, b) would have needed for the measured
-    acceleration, low-passed by the Q filter. Feeding that estimate forward
-    lets the PID loop act on a plant that behaves nominal.
+    The observer reconstructs the total disturbance (load + friction +
+    modelling error) as the difference between the torque actually commanded
+    and the torque the nominal plant (J, b) would have needed for the
+    measured motion, low-passed by the Q filter. Feeding that estimate
+    forward lets the base loop act on a plant that behaves nominal.
+
+    **The observer IS the load compensator.** A rack-force or friction
+    feedforward block stacked on top would double-count the same
+    disturbance — the observer cannot tell "torque that cancels the load"
+    from "the load itself"; both appear in the commanded torque — and the
+    doubled compensation drives the wheel off its command (measured in the
+    vehicle loop: 0.26-0.6 rad of wander across scenarios, vs 0.005 with
+    the roles kept separate). The constructor therefore refuses those
+    blocks; the velocity feedforward is fine (it compensates the reference
+    dynamics, not a disturbance).
+
+    The base carries no integral (ki = 0): the DC action is the observer's
+    job, and a base integrator on the same error forms the classic
+    two-integrator fight.
     """
 
     name: ClassVar[str] = "dob"
     inner_rate_hz: ClassVar[float | None] = INNER_RATE_HZ
 
+    #: Feedforward blocks that would double-count a disturbance the observer
+    #: already cancels. Refused at construction, loudly.
+    _FORBIDDEN_FF = ("rack_force", "friction")
+
     def __init__(self, *, inertia: float = 0.6, damping: float = 4.0,
-                 q_hz: float = 6.0, base: dict[str, Any] | None = None,
+                 q_hz: float = 6.0, d_hat_limit_nm: float = 60.0,
+                 base: dict[str, Any] | None = None,
+                 ff: FeedforwardStack | dict[str, Any] | None = None,
                  torque_limit_nm: float | None = None) -> None:
         self.j, self.b = float(inertia), float(damping)
         self.q_hz = float(q_hz)
+        #: The observer's estimate is clamped at a physical bound: a
+        #: "disturbance" larger than anything the actuator could oppose is
+        #: an artefact of the filtered acceleration lagging the command,
+        #: not physics.
+        self.d_hat_limit = float(d_hat_limit_nm)
         self.torque_limit = torque_limit_nm
-        # Softer than the bare PID defaults: the observer feeds the estimate
-        # back on top, and a full-strength base double-counts it in the
-        # transient (measured: 60 %+ overshoot). The trade — a larger
-        # initial overshoot for near-zero steady error under load — is the
-        # DOB's characteristic, and the comparison table shows it.
-        self.base = PidSingleController(**({"kp": 250.0, "ki": 1200.0,
-                                            "kd": 50.0} | (base or {})))
+        stack = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
+        bad = [b.name for b in stack.blocks if b.name in self._FORBIDDEN_FF]
+        if bad:
+            raise ValueError(
+                f"dob refuses feedforward block(s) {bad}: the disturbance "
+                "observer already cancels the load and the friction, and "
+                "stacking them again double-counts the same disturbance "
+                "(measured: the wheel wanders off its command). Velocity "
+                "feedforward is fine.")
+        merged = {"kp": 800.0, "ki": 0.0, "kd": 50.0} | (base or {})
+        merged["ff"] = stack
+        self.base = PidSingleController(**merged)
         self._d_hat = 0.0
         self._last_u = 0.0
         self._rate = _FilteredDerivative(0.005)
@@ -112,6 +142,7 @@ class DobController(AngleTrackingController):
         raw = self._last_u - (self.j * a + self.b * w)
         alpha = 1.0 - math.exp(-2.0 * math.pi * self.q_hz * dt)
         self._d_hat += (raw - self._d_hat) * alpha
+        self._d_hat = max(-self.d_hat_limit, min(self.d_hat_limit, self._d_hat))
         u = u_base + self._d_hat
         if self.torque_limit is not None:
             u = max(-self.torque_limit, min(self.torque_limit, u))
@@ -137,10 +168,12 @@ class AdrcController(AngleTrackingController):
 
     def __init__(self, *, inertia: float = 0.6, omega_c: float = 30.0,
                  omega_o: float = 120.0,
+                 ff: FeedforwardStack | dict[str, Any] | None = None,
                  torque_limit_nm: float | None = None) -> None:
         self.j = float(inertia)
         self.b0 = 1.0 / self.j
         self.wc, self.wo = float(omega_c), float(omega_o)
+        self.ff = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
         self.torque_limit = torque_limit_nm
         self._z = np.zeros(3)  # [θ̂, ω̂, f̂]
         # Gao's bandwidth parameterisation of the ESO gains.
@@ -158,6 +191,8 @@ class AdrcController(AngleTrackingController):
         u_prev = self._u_prev if hasattr(self, "_u_prev") else 0.0
         u0 = self.wc ** 2 * (float(target_angle) - z[0]) - 2.0 * self.wc * z[1]
         u = (u0 - z[2]) / self.b0
+        u += self.ff.compute(_ctx(dt, float(target_rate), float(load_torque),
+                                  float(speed_ms)))
         if self.torque_limit is not None:
             u = max(-self.torque_limit, min(self.torque_limit, u))
         z[0] += (z[1] + self._l[0] * e) * dt
@@ -183,11 +218,17 @@ class SmcController(AngleTrackingController):
     inner_rate_hz: ClassVar[float | None] = INNER_RATE_HZ
 
     def __init__(self, *, damping: float = 4.0, lam: float = 25.0,
-                 switching_gain: float = 12.0, phi: float = 0.05,
+                 switching_gain: float = 25.0, phi: float = 0.05,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
                  torque_limit_nm: float | None = None) -> None:
         self.b = float(damping)
         self.lam = float(lam)
+        # The switching gain must exceed the disturbance bound or the
+        # sliding condition is unreachable: at 100 km/h the straight-line
+        # aligning load alone is ~12 N·m (600 N rack × 0.02 m pinion), and
+        # with k = 12 the saturated tanh could not push back — the wheel was
+        # blown to the steer stop (measured, weave_100). 25 N·m covers the
+        # aligning load up to ~1.25 kN of rack force.
         self.k = float(switching_gain)
         self.phi = float(phi)
         self.ff = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
@@ -294,6 +335,27 @@ class MpcController(AngleTrackingController):
         self._p = solve_dare(self._a, self._b, q3, np.array([[r]]), k0)
         self._q = np.diag([q_integral, q_angle, q_rate])
         self._r = float(r)
+        # The condensed QP's state-independent parts are constant: A, B, Q,
+        # R and the terminal weight do not change per step. Precomputing
+        # them moves ~n² matrix powers out of the 2000 Hz inner loop — the
+        # per-step work drops to one matvec, one solve and the QP iteration.
+        n = self.horizon
+        m_mat = np.zeros((3 * n, 3))
+        n_mat = np.zeros((3 * n, n))
+        a_pow = np.eye(3)
+        for k in range(n):
+            m_mat[3 * k:3 * k + 3] = a_pow
+            for j in range(k):
+                n_mat[3 * k:3 * k + 3, j] = (
+                    np.linalg.matrix_power(self._a, k - 1 - j) @ self._b)[:, 0]
+            n_mat[3 * k:3 * k + 3, k] = self._b[:, 0]
+            a_pow = self._a @ a_pow
+        q_bar = np.kron(np.eye(n), self._q)
+        q_bar[-3:, -3:] += self._p
+        self._h_inv = np.linalg.inv(n_mat.T @ q_bar @ n_mat + self._r * np.eye(n))
+        self._nq_m = n_mat.T @ q_bar @ m_mat      # multiplies x0
+        self._nq = n_mat.T @ q_bar                 # multiplies (−x_ref)
+        self._hqp = n_mat.T @ q_bar @ n_mat + self._r * np.eye(n)
 
     def reset(self) -> None:
         self._rate = _FilteredDerivative(0.005)
@@ -301,33 +363,16 @@ class MpcController(AngleTrackingController):
 
     def step(self, dt, *, target_angle, target_rate, feedback_angle,
              plant_angle, load_torque, speed_ms):
-        # Condensed QP over the horizon: x = M·x0 + N·u_seq.
         n = self.horizon
-        n_state = 3
-        m_mat = np.zeros((n_state * n, n_state))
-        n_mat = np.zeros((n_state * n, n))
-        a_pow = np.eye(n_state)
-        for k in range(n):
-            m_mat[n_state * k:n_state * k + n_state] = a_pow
-            for j in range(k):
-                n_mat[n_state * k:n_state * k + n_state, j] = (
-                    np.linalg.matrix_power(self._a, k - 1 - j) @ self._b)[:, 0]
-            n_mat[n_state * k:n_state * k + n_state, k] = self._b[:, 0]
-            a_pow = self._a @ a_pow
-        q_bar = np.kron(np.eye(n), self._q)
-        q_bar[-n_state:, -n_state:] += self._p
-        r_bar = self._r * np.eye(n)
-        h_qp = n_mat.T @ q_bar @ n_mat + r_bar
         w_meas = self._rate.update(float(feedback_angle), dt)
         e_now = float(target_angle) - float(feedback_angle)
         self._integral += e_now * float(dt)
         x0 = np.array([self._integral, float(feedback_angle), w_meas])
-        # Reference along the horizon: integral state 0, target angle, 0 rate.
         x_ref = np.tile([0.0, float(target_angle), float(target_rate)], n)
-        c_qp = n_mat.T @ q_bar @ (m_mat @ x0 - x_ref)
+        c_qp = self._nq_m @ x0 - self._nq @ x_ref
         m_cons = np.vstack([np.eye(n), -np.eye(n)])
         q_cons = np.concatenate([np.full(n, self.u_max), np.full(n, self.u_max)])
-        u_seq = hildreth_qp(h_qp, c_qp, m_cons, q_cons)
+        u_seq = hildreth_qp(self._hqp, c_qp, m_cons, q_cons)
         u = float(u_seq[0])
         u += self.ff.compute(_ctx(dt, float(target_rate), float(load_torque),
                                   float(speed_ms)))
@@ -385,8 +430,10 @@ class HInfController(AngleTrackingController):
                  gamma: float = 6.0, q_integral: float = 300.0,
                  q_angle: float = 900.0, q_rate: float = 1.0,
                  r: float = 0.01,
+                 ff: FeedforwardStack | dict[str, Any] | None = None,
                  torque_limit_nm: float | None = None) -> None:
         self.j, self.b = float(inertia), float(damping)
+        self.ff = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
         self.torque_limit = torque_limit_nm
         a = np.array([[0.0, 1.0, 0.0],
                       [0.0, 0.0, -1.0],
@@ -410,6 +457,8 @@ class HInfController(AngleTrackingController):
         self._integral += e * float(dt)
         w = self._rate.update(float(feedback_angle), float(dt))
         u = -(self._k[0] * self._integral + self._k[1] * e + self._k[2] * w)
+        u += self.ff.compute(_ctx(dt, float(target_rate), float(load_torque),
+                                  float(speed_ms)))
         if self.torque_limit is not None:
             u = max(-self.torque_limit, min(self.torque_limit, u))
         return TrackingOutput(

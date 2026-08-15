@@ -257,6 +257,26 @@ class PidCascadeController(AngleTrackingController):
         )
 
 
+def _lyapunov_discrete(a: np.ndarray, q: np.ndarray,
+                       *, tol: float = 1e-13, max_iter: int = 200) -> np.ndarray:
+    """P = Q + A'PA for stable A, by the doubling algorithm.
+
+    A_{k+1} = A_k² and P_{k+1} = P_k + A_k'P_kA_k double the horizon each
+    step, so convergence is logarithmic in ‖A‖ (~30 iterations for these
+    plants) where the naive fixed point needs ~1e5 — the naive loop cost
+    5.6 s per LQR construction; this is microseconds.
+    """
+    a, q = np.asarray(a, float), np.asarray(q, float)
+    p = q.copy()
+    for _ in range(max_iter):
+        step = a.T @ p @ a
+        p = p + step
+        a = a @ a
+        if np.max(np.abs(step)) < tol * max(1.0, float(np.max(np.abs(p)))):
+            return p
+    return p
+
+
 def solve_dare(a: np.ndarray, b: np.ndarray, q: np.ndarray,
                r: np.ndarray, k0: np.ndarray, *,
                tol: float = 1e-9, max_iter: int = 40) -> np.ndarray:
@@ -271,25 +291,14 @@ def solve_dare(a: np.ndarray, b: np.ndarray, q: np.ndarray,
     design refined to optimality.
 
     Each step: A_cl = A − B·K; P solves the discrete Lyapunov equation
-    P = Q + K'RK + A_cl'PA_cl (by contractive iteration, A_cl stable);
-    K_new = (R + B'PB)⁻¹B'PA.
+    P = Q + K'RK + A_cl'PA_cl (doubling algorithm); K_new = (R + B'PB)⁻¹B'PA.
     """
     a, b, q, r = (np.asarray(x, dtype=float) for x in (a, b, q, r))
     k = np.asarray(k0, dtype=float).reshape(1, -1)
     p = np.zeros_like(q)
     for _ in range(max_iter):
         a_cl = a - b @ k
-        p[:] = 0.0
-        for _ in range(200000):
-            p_next = q + k.T @ r @ k + a_cl.T @ p @ a_cl
-            # Relative tolerance: with large weights the solution's entries
-            # reach ~1e7, and an absolute 1e-13 floor is unreachable in
-            # double precision — the loop would exit unconverged.
-            if np.max(np.abs(p_next - p)) < 1e-12 * max(
-                    1.0, float(np.max(np.abs(p_next)))):
-                p = p_next
-                break
-            p = p_next
+        p = _lyapunov_discrete(a_cl, q + k.T @ r @ k)
         k_new = np.linalg.solve(r + b.T @ p @ b, b.T @ p @ a)
         if np.max(np.abs(k_new - k)) < tol:
             return p
