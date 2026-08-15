@@ -8,6 +8,18 @@
 
 ### 新增 (Added)
 
+- **执行器传动细化起步（方向 3）**：`CornerActuatorPlant` 支持双质量传动
+  （`plant_transmission_stiffness_nms_per_rad`）+ 间隙（`plant_backlash_rad`，
+  默认 None/0 = 原刚性单质量路径**位级不变**，测试钉住）。解析钉住：预扭转
+  释放的轮侧自由振荡频率与 `f=(1/2π)√(k(J_m+J_w)/(J_m J_w))` 吻合（1.6%），
+  间隙死区内外耦合力矩行为精确。**如实记录**：柔度开启（k=1200，~18 Hz
+  共振）后现有默认增益全部失稳（超调 900–1500%）——高带宽反馈+未建模共振
+  是真实物理，柔度下的调参/鲁棒化列入交接待办。
+- **阶段交接文档**：`docs/HANDOFF_steering_control_layer.md` —— 已交付清单
+  （含提交号）、代码地图、复现命令、验证状态、10 条血泪教训（每条对应一个
+  已修复缺陷）、未完成待办（方向 3 收尾 / 4 调参工程化 / 5 Simulink /
+  6 超包线）。
+
 - **负载扰动评估协议（FR-10 扰动臂，三臂齐备）**：
   `procedures/tracking_disturbance_response.yaml` + `trk_dist_*` 指标族。
   60 km/h 小角度稳态行驶突入低 μ 冰面（场景扰动，μ 0.85→0.35），

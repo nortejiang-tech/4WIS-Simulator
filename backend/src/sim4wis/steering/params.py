@@ -191,6 +191,14 @@ class AngleControlParams:
     #: Optional wheel-domain rate limit [rad/s]; None = off (the legacy
     #: rate limit lives in the open_loop controller itself).
     plant_rate_limit_rad_s: float | None = None
+    #: Transmission refinement (direction 3): finite coupling stiffness
+    #: [N·m/rad] turns the actuator into two masses with a resonance.
+    #: None = rigid — the original single-mass path, bit-exact.
+    plant_transmission_stiffness_nms_per_rad: float | None = None
+    #: Backlash dead band across the transmission [rad]; 0 = none.
+    plant_backlash_rad: float = 0.0
+    #: Motor-side share of the inertia when compliant [fraction].
+    plant_motor_inertia_fraction: float = 0.2
 
     # ---- angle sensor -------------------------------------------------------
     #: Quantisation step [rad] (~0.03 deg).

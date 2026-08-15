@@ -327,3 +327,66 @@ def test_multibody_4wis_corners_follow_their_own_commands():
 def test_unknown_controller_name_is_refused():
     with pytest.raises(ValueError, match="unknown angle-tracking controller"):
         make_controller("not_a_controller")
+
+
+# ---------------------------------------------------------------------------
+# Transmission refinement (direction 3): two-mass resonance + backlash
+# ---------------------------------------------------------------------------
+
+
+def test_rigid_default_is_bit_identical_with_transmission_off():
+    """k_trans = None must keep the original single-mass path untouched."""
+    a = CornerActuatorPlant(inertia_kgm2=0.6, damping_nms_per_rad=4.0,
+                            coulomb_friction_nm=0.5, peak_torque_nm=40.0)
+    b = CornerActuatorPlant(inertia_kgm2=0.6, damping_nms_per_rad=4.0,
+                            coulomb_friction_nm=0.5, peak_torque_nm=40.0,
+                            transmission_stiffness_nms_per_rad=None,
+                            backlash_rad=0.3)  # ignored when rigid
+    rng = np.random.default_rng(3)
+    for _ in range(500):
+        u, load = float(rng.uniform(-5, 5)), float(rng.uniform(-2, 2))
+        a.step(5e-4, u, load)
+        b.step(5e-4, u, load)
+    assert a.angle == b.angle and a.rate == b.rate
+
+
+def test_two_mass_free_oscillation_matches_the_analytic_resonance():
+    """Pre-twist the coupling spring (initial motor displacement), release:
+    the wheel oscillates at f = (1/2π)·sqrt(k·(J_m+J_w)/(J_m·J_w)) —
+    measured from the wheel's zero crossings, vs the closed form."""
+    j_total, k = 0.6, 800.0
+    frac = 0.2
+    j_m, j_w = j_total * frac, j_total * (1.0 - frac)
+    plant = CornerActuatorPlant(
+        inertia_kgm2=j_total, damping_nms_per_rad=0.0, coulomb_friction_nm=0.0,
+        peak_torque_nm=50.0, transmission_stiffness_nms_per_rad=k,
+        motor_inertia_fraction=frac)
+    dt = 2e-5
+    plant._theta_m = 0.1  # pre-twist: the spring is wound, both at rest
+    samples = []
+    for _ in range(20000):
+        plant.step(dt, 0.0, 0.0)
+        samples.append(plant.angle)
+    zc = np.where(np.diff(np.signbit(np.array(samples) - np.mean(samples))))[0]
+    assert zc.size >= 12
+    period = 2.0 * np.median(np.diff(zc)) * dt
+    f_meas = 1.0 / period
+    f_analytic = math.sqrt(k * (j_m + j_w) / (j_m * j_w)) / (2.0 * math.pi)
+    assert f_meas == pytest.approx(f_analytic, rel=0.05)
+def test_backlash_dead_zone_blocks_torque_transfer():
+    """Inside the dead zone the coupling carries nothing; outside it the
+    spring engages with the backlash subtracted."""
+    plant = CornerActuatorPlant(
+        inertia_kgm2=0.6, damping_nms_per_rad=0.0, coulomb_friction_nm=0.0,
+        peak_torque_nm=10.0, transmission_stiffness_nms_per_rad=500.0,
+        backlash_rad=0.05, motor_inertia_fraction=0.2)
+    # inside: motor displaced 0.04, wheel at 0 — no torque, wheel stays.
+    plant._theta_m = 0.04
+    plant.step(5e-4, 0.0, 0.0)
+    assert plant.coupling_torque == 0.0
+    assert plant.angle == 0.0
+    # outside: 0.06 − 0.05 dead zone → k·0.01 drives the wheel.
+    plant._theta_m = 0.06
+    plant.step(5e-4, 0.0, 0.0)
+    assert plant.coupling_torque == pytest.approx(500.0 * 0.01)
+    assert plant.angle > 0.0

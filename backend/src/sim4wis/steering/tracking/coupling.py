@@ -130,6 +130,10 @@ def make_corner_trackers(
                 coulomb_friction_nm=ac.plant_friction_nm,
                 peak_torque_nm=ac.plant_peak_torque_nm,
                 rate_limit_rad_s=ac.plant_rate_limit_rad_s,
+                transmission_stiffness_nms_per_rad=(
+                    ac.plant_transmission_stiffness_nms_per_rad),
+                backlash_rad=ac.plant_backlash_rad,
+                motor_inertia_fraction=ac.plant_motor_inertia_fraction,
             ),
             sensor=AngleSensor(
                 quant_rad=ac.sensor_quant_rad,
