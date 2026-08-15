@@ -326,6 +326,11 @@ class LqrController(AngleTrackingController):
         q_integral: float = 50.0, q_angle: float = 1.97e4,
         q_rate: float = 0.1, r: float = 0.001,
         dt: float = 1.0 / INNER_RATE_HZ,
+        #: Rate-channel low-pass [s]. On a compliant transmission the
+        #: wheel-rate state feedback excites the two-mass mode exactly like
+        #: the PID D term; raising this filter is the robustification
+        #: channel the compliance tuning axis drives.
+        deriv_tau_s: float = 0.005,
         ff: FeedforwardStack | dict[str, Any] | None = None,
         torque_limit_nm: float | None = None,
     ) -> None:
@@ -334,7 +339,8 @@ class LqrController(AngleTrackingController):
         self.torque_limit = torque_limit_nm
         self.dt = float(dt)
         self._integral = 0.0
-        self._rate = _FilteredDerivative(0.005)
+        self._rate_tau = float(deriv_tau_s)
+        self._rate = _FilteredDerivative(self._rate_tau)
         # Continuous plant on [e, ω] with ė = −ω, ω̇ = −b/J·ω + u/J.
         a_c = np.array([[0.0, -1.0], [0.0, -self.b / self.j]])
         b_c = np.array([[0.0], [1.0 / self.j]])
@@ -365,7 +371,7 @@ class LqrController(AngleTrackingController):
 
     def reset(self) -> None:
         self._integral = 0.0
-        self._rate = _FilteredDerivative(0.005)
+        self._rate = _FilteredDerivative(self._rate_tau)
 
     def step(self, dt, *, target_angle, target_rate, feedback_angle,
              plant_angle, load_torque, speed_ms):

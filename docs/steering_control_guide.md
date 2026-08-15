@@ -134,6 +134,35 @@ step_cost("lqr", {...})       # 单点成本（ITAE 归一 + 峰值力矩惩罚�
 
 **发布默认值**由 `scripts/tune_vehicle_defaults.py` 在车辆闭环里调出（齿条力滞后一步 + 轮胎回正弹簧都在环内），该脚本是默认增益的出处；对新的执行器对象重新调参时，先在 plant 级用 `tune()`，再按此脚本在车辆闭环复调。
 
+## 4b. 柔度维度（方向 3：双质量传动 + 间隙）
+
+被控对象支持双质量传动与间隙（`plant_transmission_stiffness_nms_per_rad` /
+`plant_backlash_rad` / `plant_motor_inertia_fraction`，默认刚性、位级不变）。开启
+柔度（k=1200 N·m/rad → ~17.8 Hz 共振）后：
+
+- **默认增益全部失稳**（1° 阶跃超调 952/1322/1158%，pid_single/cascade/lqr）：轮侧
+  速率反馈（PID 的 D 项、级联内环、LQR 的 ω 状态）从电机力矩侧激发双质量共振模态——
+  非共置反馈的经典失稳，真实物理而非 bug。
+- **鲁棒化通道**：速率通道低通（`deriv_tau_s`，柔度调参轴）+ 共振安全解析规则
+  （`analytic_pid_compliant`：wn = ω_res/8、τ = 5/ω_res，网格钉住在稳定盆地内）。
+  输出陷波（17.8 Hz）可行（12.9% @wn=15）但与 D 滤波相位相互作用、组合脆；电机侧
+  速率阻尼（共置反馈教科书解，7.8% @wn=15）需电机侧传感器通道，留作下一阶段。
+- **齿条力前馈别加低通**（教训 #6 的柔度版）：15 Hz 低通把柔度环的车辆级超调推到
+  642%，去掉后 53%——柔度配置的前馈栈省略 `lowpass_hz`。
+
+调参走工作台柔度通道（解析种子自动切换共振安全设计，`deriv_tau_s` 入轴，110% 验收
+门不变）：
+
+```python
+tune("pid_single", plant_kwargs={"transmission_stiffness_nms_per_rad": 1200.0,
+                                "peak_torque_nm": 120.0,
+                                "motor_inertia_fraction": 0.2})
+```
+
+角级调参**不迁移到车辆环**（车辆横摆动态与柔度压低后的带宽同频）；两阶段配方与推荐
+override 块见 `scripts/devtools/compliance_tuning.py`（角级表 → 车辆级 Nelder-Mead）。
+车辆级正式评估：`sim4wis study run procedures/tracking_compliance_step.yaml`。
+
 ## 5. Simulink 接口（FR-11 · 框架）
 
 当前交付**契约 + 参考适配器**，不包含真实 FMU 加载器（生产环境实现）：
@@ -150,3 +179,7 @@ step_cost("lqr", {...})       # 单点成本（ITAE 归一 + 峰值力矩惩罚�
 - 执行器对象为位置+速度二阶（电流环不建模，按需求冻结）。
 - 逐轮负载为 `rack_force × pinion_radius` 的一阶折算；更细的角执行器链路模型是 M2 的作动器规格工作。
 - 传感器噪声默认关闭（可复现优先）；开启时各控制器噪声敏感度差异是评估维度之一。
+- 柔度是评估维度不是发布配置：发布默认增益仍为刚性调参；柔度下轮侧反馈带宽须压到
+  共振以下（车辆环有效上升 ~1 s），换执行器传动（k、惯量分配）必须重走柔度调参配方。
+- 间隙对中心区手感的影响尚未研究（方向 3 剩余项）；电机侧传感器/观测器通道是柔度
+  环带宽的根本解，未实现。

@@ -20,6 +20,29 @@
   已修复缺陷）、未完成待办（方向 3 收尾 / 4 调参工程化 / 5 Simulink /
   6 超包线）。
 
+- **柔度调参/鲁棒化（方向 3 收尾 ①）**：调参工作台柔度通道——
+  `step_cost`/`relay_identify`/`tune()` 接受双质量传动参数；解析通道新增
+  共振安全设计（`analytic_pid_compliant`：wn=ω_res/8、τ=5/ω_res；
+  `analytic_cascade_compliant`：wc_vel=ω_res/4、τ=4/ω_res，网格钉住在稳定
+  盆地内）；柔度下 `deriv_tau_s`（速率通道低通）入搜索轴、低增益区下界
+  放宽，110% 验收门不变。**机理定位**：轮侧速率反馈（PID 的 D 项、级联
+  内环、LQR 的 ω 状态）从电机力矩侧激发 ~17.8 Hz 双质量共振——非共置反馈
+  的经典失稳，不是 bug。角级 before/after（超调）：pid_single 952→32%、
+  pid_cascade 1322→17%、lqr 1158→15%。
+
+- **柔度车辆级复调 + 评估维度（方向 3 收尾 ②）**：角级增益不迁移到车辆环——
+  生产前馈栈的 15 Hz 齿条力低通在柔度环上是失稳元凶（车辆级超调 642%→
+  去掉后 53%，教训 #6 的柔度版），柔度配置前馈栈省略 `lowpass_hz`。
+  `scripts/devtools/compliance_tuning.py` 两阶段配方（角级工作台表 → 车辆级
+  确定性多起点 Nelder-Mead：角级种子 + 共振安全解析种子 + warm-start，物理
+  下界）产出柔度配置推荐 override；车辆级最终：pid_single os 0.1%/settle
+  0.42 s、pid_cascade **外环纯 P**（ki_pos=0，DC 由内环积分+前馈承担）os
+  0.0%/settle 0.36 s、lqr os 0.1%/settle 0.29 s，后轮串扰 ≤0.008 rad。
+  新增 `procedures/tracking_compliance_step.yaml`（柔度车辆级阶跃 procedure，
+  3/3 判据绿）。陷波可行但与 D 滤波相位组合脆（12.9%）、电机侧速率阻尼
+  最优（7.8%）但需电机侧传感器通道——均如实记录为下一阶段选项。发布默认
+  增益不变（红线）。
+
 - **负载扰动评估协议（FR-10 扰动臂，三臂齐备）**：
   `procedures/tracking_disturbance_response.yaml` + `trk_dist_*` 指标族。
   60 km/h 小角度稳态行驶突入低 μ 冰面（场景扰动，μ 0.85→0.35），

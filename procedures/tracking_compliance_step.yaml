@@ -1,0 +1,134 @@
+# 角度跟随层 —— 柔度传动阶跃评估（方向 3 的评估维度）
+#
+#   sim4wis study run procedures/tracking_compliance_step.yaml
+#
+# 双质量传动（k=1200 N·m/rad → ~17.8 Hz 共振）+ 各控制器柔度调参增益，
+# 前轴 1° 保持阶跃。与 tracking_step_response.yaml 同工况、同指标族，差别
+# 只在被控对象与增益：刚性发布默认增益在这条对象上全部失稳（超调 900–1500%，
+# 见 devtools/compliance_tuning.py 的 before/after 表），这里门禁的是柔度配置
+# 本身——柔度调参后的回路必须把前轮带到位、收敛、后轮串扰受控。
+#
+# 每个 sweep 单元是一个完整的 angle_control 配置块（含增益出处
+# scripts/devtools/compliance_tuning.py 的车辆级 Nelder-Mead 阶段）。
+# 前馈栈省略 rack_force 的 lowpass：15 Hz 低通在柔度环上是失稳元凶
+# （车辆级超调 642% → 去掉后 53%，教训 #6 的柔度版）。
+
+study: tracking_compliance_step
+question: 柔度传动（17.8 Hz 共振）下，柔度调参后的各控制策略对 1° 前轴阶跃的跟踪质量如何？上升、超调、稳态误差与串扰各是多少？
+model: simplified_dynamic
+targets: null
+
+baseline:
+  name: compliance_step_4wis
+  strategy: ideal_ackermann
+  record_hz: 200
+  vehicle:
+    overrides:
+      steering_system:
+        enabled: true
+        architecture: 4wis
+        angle_control:
+          enabled: true
+          controller: pid_single
+          plant_transmission_stiffness_nms_per_rad: 1200.0
+          plant_motor_inertia_fraction: 0.2
+          sensor_quant_rad: 0.00017
+          sensor_delay_steps: 1
+          controller_kwargs:
+            kp: 605.95
+            ki: 45.576
+            kd: 41.716
+            deriv_tau_s: 0.051497
+            ff:
+              blocks:
+                - {type: rack_force, gain: 1.0}
+                - {type: velocity, damping: 4.0, inertia: 0.6}
+                - {type: friction, friction_nm: 0.5}
+  maneuver:
+    steps:
+      # 直行放掉起步瞬态。
+      - duration: 1.0
+        speed_kmh: 30
+        steer: {kind: constant, amplitude: 0.0}
+      # 保持阶跃：前轴 1°，停住不动。
+      - duration: 2.5
+        speed_kmh: 30
+        steer: {kind: step, amplitude: 1.0, unit: front_deg, t_step: 0.0}
+
+sweep:
+  # 每个单元 = 一个完整的柔度 angle_control 配置（控制器 + 柔度调参增益 + 前馈）。
+  profile:
+    values:
+      - controller: pid_single
+        enabled: true
+        plant_transmission_stiffness_nms_per_rad: 1200.0
+        plant_motor_inertia_fraction: 0.2
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          kp: 605.95
+          ki: 45.576
+          kd: 41.716
+          deriv_tau_s: 0.051497
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      # 外环积分 = 0：柔度下的最优是纯 P 外环（DC 由内环积分 + 前馈承担），
+      # 物理下界处的合法设计点，不是搜索边界伪影。
+      - controller: pid_cascade
+        enabled: true
+        plant_transmission_stiffness_nms_per_rad: 1200.0
+        plant_motor_inertia_fraction: 0.2
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          kp_pos: 16.074
+          ki_pos: 0.0
+          kp_vel: 30.110
+          ki_vel: 48.274
+          deriv_tau_s: 0.046622
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      - controller: lqr
+        enabled: true
+        plant_transmission_stiffness_nms_per_rad: 1200.0
+        plant_motor_inertia_fraction: 0.2
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          q_integral: 92.105
+          q_angle: 2859.476
+          q_rate: 0.20374
+          r: 0.041702
+          deriv_tau_s: 0.042555
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+    bind: vehicle.overrides.steering_system.angle_control
+
+metrics:
+  - trk_rise_s_fl
+  - trk_overshoot_pct_fl
+  - trk_settle_s_fl
+  - trk_ss_err_rad_fl
+  - trk_peak_dev_rad_fl
+  # 串扰见证：后轮应保持零。
+  - trk_ss_err_rad_rl
+  - trk_peak_dev_rad_rl
+
+criteria:
+  # 柔度调参后的回路必须把前轮带到位并收敛（比刚性臂宽一档：柔度环
+  # 带宽被共振压在 ~2 Hz，上升 ~1 s 是物理地板）。
+  - {metric: trk_settle_s_fl, must: "< 1.0", at: all}
+  - {metric: trk_peak_dev_rad_fl, must: "< 0.05", at: all}
+  - {metric: trk_peak_dev_rad_rl, must: "< 0.05", at: all}
+
+report:
+  template: sweep
