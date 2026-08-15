@@ -163,6 +163,12 @@ tune("pid_single", plant_kwargs={"transmission_stiffness_nms_per_rad": 1200.0,
 override 块见 `scripts/devtools/compliance_tuning.py`（角级表 → 车辆级 Nelder-Mead）。
 车辆级正式评估：`sim4wis study run procedures/tracking_compliance_step.yaml`。
 
+**间隙量化（方向 3 收尾 ③，柔度调参 pid_single + FF，车辆级 1° 阶跃）**：柔度环
+容忍 ≤5 mrad 间隙（超调 0.1→3.0%，中心区极限环 0.0007 rad）；10 mrad 显著退化
+（超调 35%、调节 2.0 s、中心区狩猎 0.012 rad）；20 mrad 越限（超调 192%、峰值
+偏差 0.051 rad > 0.05 判据）。结论：精密齿轮箱（~2–5 mrad）可接受，更大间隙需要
+抗间隙结构（死区补偿/双闭环），列为下一阶段选项。
+
 ## 5. Simulink 接口（FR-11 · 框架）
 
 当前交付**契约 + 参考适配器**，不包含真实 FMU 加载器（生产环境实现）：
