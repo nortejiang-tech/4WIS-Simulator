@@ -49,7 +49,9 @@ class CornerActuatorPlant:
         inertia_kgm2: float = 0.6,
         damping_nms_per_rad: float = 4.0,
         coulomb_friction_nm: float = 0.5,
-        peak_torque_nm: float = 40.0,
+        #: The sized default (see AngleControlParams.plant_peak_torque_nm):
+        #: the rack-chain parking basis / 0.8 usage = 259 → 260 N·m.
+        peak_torque_nm: float = 260.0,
         rate_limit_rad_s: float | None = None,
         transmission_stiffness_nms_per_rad: float | None = None,
         backlash_rad: float = 0.0,

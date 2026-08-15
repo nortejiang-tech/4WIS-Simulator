@@ -225,7 +225,7 @@ ControllerStrategy.compute → delta_cmd[4]（rad，逐轮）
 | 工作台柔度通道 | `step_cost`/`relay_identify`/`tune()` 接受传动参数；共振安全解析种子（wn=ω_res/8、τ=5/ω_res）；`deriv_tau_s` 入轴；110% 验收门不变 |
 | 角级 before/after（超调） | pid_single 952→32% · pid_cascade 1322→17% · lqr 1158→15% |
 | 车辆级发现 | 角级增益不迁移（车辆横摆动态与压低后带宽同频）；15 Hz 齿条力前馈低通是柔度环失稳元凶（642%→53%） |
-| 车辆级最终（柔度 procedure） | pid_single os 0.1%/settle 0.42 s · pid_cascade 外环纯 P os 0.0%/settle 0.36 s · lqr os 0.1%/settle 0.29 s；后轮串扰 ≤0.008 rad；3/3 判据绿 |
+| 车辆级最终（柔度 procedure） | pid_single os 0.1%/settle 0.42 s · pid_cascade 外环纯 P os 0.0%/settle 0.35 s · lqr os 0.1%/settle 0.29 s；后轮串扰 ≤0.008 rad；3/3 判据绿 |
 
 发布默认增益不变（红线）；柔度配置是评估维度（`procedures/tracking_compliance_step.yaml`），
 其增益出处为 `scripts/devtools/compliance_tuning.py`（确定性多起点：角级种子 + 共振安全
@@ -254,12 +254,15 @@ ControllerStrategy.compute → delta_cmd[4]（rad，逐轮）
 | 60 N·m | 0.026 rad | −0.002 | 81.4 N·m |
 | 80–120 N·m | 0.008–0.009 rad | −0.002 | 81.3 N·m |
 
-结论：动态需求 ~81 N·m，≥60 N·m 即不被吹离；默认 120 N·m 覆盖（余量 32%）。
-交叉验证：准静态 5°@60 给 61 N·m、动态 81 N·m，两口径一致。**静态口径勘误**：
-原"104 N·m（5.2 kN rack）"误用轮胎侧向力 tire_fy，逐轮齿条链实为 ~207 N·m/角
-（kingpin 直驱 ~881 N·m）；动态模型泊车负载缺失（模型边界）掩盖了该缺口。
-`sizing.size_corner_actuator()` 如实报告三口径与判定，执行器规格模型与选型模块
-闭环互证移交下一阶段。
+结论：动态需求 ~81 N·m，≥60 N·m 即不被吹离。交叉验证：准静态 5°@60 给 61 N·m、
+动态 81 N·m，两口径一致。**静态口径勘误**：原"104 N·m（5.2 kN rack）"误用轮胎
+侧向力 tire_fy，逐轮齿条链实为 ~207 N·m/角（kingpin 直驱 ~881 N·m）。
+
+**闭环互证收口**：口径决策 = pinion 等效轮域（rack × pinion）；kingpin 直驱口径下
+动态工况即 400–530 N·m——采用即需整体重设计。默认峰值 120 → **260 N·m**（207 ÷
+80% 使用率），全部力矩限对齐（dob/adrc/h_inf/mpc/plant/step_cost）；实测 120→260
+限位在所有评估工况从不绑定（5/5 逐位一致）→ 默认增益无需重调；SMC k=60 口径明确
+为 FF 补偿后的残余。`sizing.size_corner_actuator()` 报告全口径 + 80% 选型推荐。
 
 ### 附 2：负载扰动臂数据（2026-08-15 第三轮，FR-10 三臂齐备）
 

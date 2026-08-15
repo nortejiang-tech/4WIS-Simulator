@@ -75,7 +75,7 @@
 - **车辆级复调**：角级增益不迁移；15 Hz 齿条力前馈低通是柔度环失稳元凶
   （642%→53%）。`scripts/devtools/compliance_tuning.py` 两阶段配方（确定性多起点：
   角级种子 + 解析种子 + warm-start，物理下界）→ 最终 pid_single os 0.1%/0.42 s、
-  pid_cascade 外环纯 P 0.0%/0.36 s、lqr 0.1%/0.29 s；新增
+  pid_cascade 外环纯 P 0.0%/0.35 s、lqr 0.1%/0.29 s；新增
   `procedures/tracking_compliance_step.yaml` 3/3 判据绿。发布默认增益不变（红线）。
 
 **方向 4/6 启动（23:30 后）**：

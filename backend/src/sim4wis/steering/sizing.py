@@ -462,6 +462,8 @@ def size_corner_actuator(params: VehicleParams) -> dict[str, Any]:
     kingpin_direct_nm = abs(float(row["torque_steer"]))
     dynamic_nm = CORNER_OVER_ENVELOPE_PEAK_NM
     need = max(static_nm, dynamic_nm)
+    # The EPS design-margin convention: aim to use at most 80 % of the rating.
+    sized_nm = math.ceil(need / 0.8 / 10.0) * 10.0
     have = float(params.steering_system.angle_control.plant_peak_torque_nm)
     margin = (have - need) / have if have else float("-inf")
     return {
@@ -471,7 +473,9 @@ def size_corner_actuator(params: VehicleParams) -> dict[str, Any]:
         "dynamic_over_envelope_nm": dynamic_nm,
         "over_envelope_floor_nm": CORNER_OVER_ENVELOPE_FLOOR_NM,
         "required_peak_nm": round(need, 1),
+        "sized_peak_nm": sized_nm,
         "configured_peak_nm": round(have, 1),
+        "usage_pct": round(need / have * 100, 1) if have else None,
         "margin_pct": round(margin * 100, 1),
         "pass": have >= need,
         "driven_by": ("parking_full_lock" if static_nm >= dynamic_nm

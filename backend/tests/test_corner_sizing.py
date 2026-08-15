@@ -43,21 +43,29 @@ def test_dynamic_over_envelope_numbers_are_pinned():
     assert out["over_envelope_floor_nm"] == CORNER_OVER_ENVELOPE_FLOOR_NM
 
 
-def test_the_default_peak_is_undersized_against_the_static_basis():
-    # The 120 N·m default covers the dynamic case but not the static rack
-    # chain — the verdict says so instead of laundering it.
+def test_a_peak_below_the_static_basis_fails_honestly():
+    # Below the rack-chain requirement the verdict says so instead of
+    # laundering it — the 120 N·m default was this case before the closure.
     out = size_corner_actuator(_params(120.0))
     assert out["driven_by"] == "parking_full_lock"
     assert not out["pass"]
     assert out["required_peak_nm"] > 120.0
 
 
-def test_a_peak_covering_the_static_basis_passes():
-    out = size_corner_actuator(_params(250.0))
+def test_the_sized_default_covers_the_static_basis():
+    out = size_corner_actuator(_params(260.0))
     assert out["pass"]
+    assert out["usage_pct"] <= 80.0
     assert out["margin_pct"] > 0.0
+    assert out["driven_by"] == "parking_full_lock"
+
+
+def test_sized_peak_follows_the_80_percent_convention():
+    out = size_corner_actuator(_params(260.0))
+    assert out["sized_peak_nm"] == 260
+    assert out["required_peak_nm"] <= 0.8 * out["sized_peak_nm"]
 
 
 def test_the_dynamic_requirement_is_below_the_default():
-    out = size_corner_actuator(_params(120.0))
-    assert out["dynamic_over_envelope_nm"] < 120.0
+    out = size_corner_actuator(_params(260.0))
+    assert out["dynamic_over_envelope_nm"] < 260.0

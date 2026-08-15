@@ -140,7 +140,7 @@ def step_cost(
     kwargs: dict[str, Any],
     *,
     inertia: float = 0.6, damping: float = 4.0,
-    friction_nm: float = 0.5, peak_torque_nm: float = 40.0,
+    friction_nm: float = 0.5, peak_torque_nm: float = 260.0,
     transmission_stiffness_nms_per_rad: float | None = None,
     backlash_rad: float = 0.0,
     motor_inertia_fraction: float = 0.2,

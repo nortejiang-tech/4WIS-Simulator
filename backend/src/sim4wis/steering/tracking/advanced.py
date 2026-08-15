@@ -99,7 +99,7 @@ class DobController(AngleTrackingController):
                  q_hz: float = 8.09, d_hat_limit_nm: float = 60.0,
                  base: dict[str, Any] | None = None,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
-                 torque_limit_nm: float = 120.0) -> None:
+                 torque_limit_nm: float = 260.0) -> None:
         self.j, self.b = float(inertia), float(damping)
         self.q_hz = float(q_hz)
         #: The observer's estimate is clamped at a physical bound: a
@@ -183,7 +183,7 @@ class AdrcController(AngleTrackingController):
                  # a real quantised sensor bounds omega_o in practice.
                  omega_c: float = 60.0, omega_o: float = 400.0,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
-                 torque_limit_nm: float = 120.0) -> None:
+                 torque_limit_nm: float = 260.0) -> None:
         # The limit must mirror the actuator's: the ESO integrates the
         # torque it believes was applied, and an unsaturated command against
         # a saturated plant is pure model mismatch (measured: the bench
@@ -279,6 +279,11 @@ class SmcController(AngleTrackingController):
         # low-mu cornering load in the disturbance arm (~40 N·m at 0.3 g
         # without load feedforward) and drifted 0.13 rad off the command.
         # 60 N·m covers ~3 kN of rack force, the aligning load at ~0.5 g.
+        # k is sized against the *uncompensated* load: the production FF
+        # stack removes the rack load (one step old), and the sized parking
+        # basis (207 N·m, rack-chain) is only reachable with that FF
+        # working — the dynamic model's parking boundary keeps the sim on
+        # the residual, which is what k = 60 dominates.
         self.k = float(switching_gain)
         self.phi = float(phi)
         self.ff = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
@@ -356,7 +361,7 @@ class MpcController(AngleTrackingController):
                  # first tuning round at u_max = 40 does not carry over —
                  # widening the box re-weights the whole QP).
                  q_integral: float = 103.5, q_angle: float = 2.0e4,
-                 q_rate: float = 1.0, r: float = 0.001, u_max: float = 120.0,
+                 q_rate: float = 1.0, r: float = 0.001, u_max: float = 260.0,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
                  dt: float = _DT) -> None:
         self.j, self.b = float(inertia), float(damping)
@@ -487,7 +492,7 @@ class HInfController(AngleTrackingController):
                  q_angle: float = 2.0e4, q_rate: float = 1.0,
                  r: float = 0.01,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
-                 torque_limit_nm: float = 120.0) -> None:
+                 torque_limit_nm: float = 260.0) -> None:
         self.j, self.b = float(inertia), float(damping)
         self.ff = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
         self.torque_limit = torque_limit_nm

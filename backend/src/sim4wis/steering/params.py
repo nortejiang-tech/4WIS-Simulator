@@ -186,13 +186,16 @@ class AngleControlParams:
     #: which was the tyre lateral force tire_fy mislabelled as rack force;
     #: see steering/sizing.size_corner_actuator), and the dynamic
     #: over-envelope step (5°@60 km/h ≈ 0.8 g) costs ~81 N·m
-    #: (scripts/devtools/over_envelope_study.py). The default 120 covers the
-    #: dynamic case; against the static rack-chain basis it is undersized —
-    #: invisible in the dynamic model because its parking loads are a known
-    #: model boundary. The original 40 N·m default sat exactly ON the 0.5 g
-    #: aligning load with zero margin and was blown off its command
-    #: (measured: 3° step @60 km/h, wheel driven to −0.34 rad).
-    plant_peak_torque_nm: float = 120.0
+    #: (scripts/devtools/over_envelope_study.py). The default is the sized
+    #: value: need/0.8 usage (the EPS design-margin convention) = 259 →
+    #: 260 N·m. The load convention is the pinion-equivalent wheel domain
+    #: (rack × pinion, see steering/tracking/coupling.py); the alternative
+    #: kingpin-direct module would face ~530 N·m dynamically and ~881 N·m
+    #: at full-lock parking — reported by size_corner_actuator, not used.
+    #: The original 40 N·m default sat exactly ON the 0.5 g aligning load
+    #: with zero margin and was blown off its command (measured: 3° step
+    #: @60 km/h, wheel driven to −0.34 rad).
+    plant_peak_torque_nm: float = 260.0
     #: Optional wheel-domain rate limit [rad/s]; None = off (the legacy
     #: rate limit lives in the open_loop controller itself).
     plant_rate_limit_rad_s: float | None = None

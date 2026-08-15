@@ -87,7 +87,7 @@ def test_analytic_gains_match_the_formulas():
 
 
 COMPLIANT_PLANT = {"transmission_stiffness_nms_per_rad": 1200.0,
-                   "peak_torque_nm": 120.0, "motor_inertia_fraction": 0.2}
+                   "peak_torque_nm": 260.0, "motor_inertia_fraction": 0.2}
 
 
 def _corner_step(controller: str, kwargs: dict,
@@ -96,7 +96,7 @@ def _corner_step(controller: str, kwargs: dict,
     c = make_controller(controller, **kwargs)
     plant = CornerActuatorPlant(
         inertia_kgm2=0.6, damping_nms_per_rad=4.0, coulomb_friction_nm=0.5,
-        peak_torque_nm=120.0, transmission_stiffness_nms_per_rad=1200.0,
+        peak_torque_nm=260.0, transmission_stiffness_nms_per_rad=1200.0,
         motor_inertia_fraction=0.2)
     sensor = AngleSensor(quant_rad=0.00017, delay_steps=1)
     target = 0.01745

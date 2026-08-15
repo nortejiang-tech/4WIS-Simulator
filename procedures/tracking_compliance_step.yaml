@@ -35,10 +35,10 @@ baseline:
           sensor_quant_rad: 0.00017
           sensor_delay_steps: 1
           controller_kwargs:
-            kp: 605.95
-            ki: 45.576
+            kp: 623.772
+            ki: 50.720
             kd: 41.716
-            deriv_tau_s: 0.051497
+            deriv_tau_s: 0.056375
             ff:
               blocks:
                 - {type: rack_force, gain: 1.0}
@@ -66,10 +66,10 @@ sweep:
         sensor_quant_rad: 0.00017
         sensor_delay_steps: 1
         controller_kwargs:
-          kp: 605.95
-          ki: 45.576
+          kp: 623.772
+          ki: 50.720
           kd: 41.716
-          deriv_tau_s: 0.051497
+          deriv_tau_s: 0.056375
           ff:
             blocks:
               - {type: rack_force, gain: 1.0}
@@ -84,11 +84,11 @@ sweep:
         sensor_quant_rad: 0.00017
         sensor_delay_steps: 1
         controller_kwargs:
-          kp_pos: 16.074
+          kp_pos: 17.091
           ki_pos: 0.0
-          kp_vel: 30.110
-          ki_vel: 48.274
-          deriv_tau_s: 0.046622
+          kp_vel: 30.297
+          ki_vel: 39.798
+          deriv_tau_s: 0.045003
           ff:
             blocks:
               - {type: rack_force, gain: 1.0}

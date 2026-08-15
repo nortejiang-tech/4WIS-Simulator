@@ -56,12 +56,19 @@
 - **超包线定量研究（方向 6）**：`scripts/devtools/over_envelope_study.py` 对
   5°@60 km/h（≈0.8 g）前轴阶跃做峰值扭矩扫掠。定量结论：动态需求 ≈**81 N·m**
   （峰值负载）、≥**60 N·m** 即不被深滑移回正吹离（40 N·m 被吹飞 0.698 rad 的
-  原始发现复现锚定；60 N·m 起 post-90% 偏差 0.026 rad），默认 120 N·m 覆盖动态
-  工况（余量 32%）。**静态口径勘误**：原"104 N·m（5.2 kN rack）"把轮胎侧向力
-  tire_fy 误标为齿条力，逐轮齿条链实为 ~**207 N·m/角**（kingpin 直驱 ~881 N·m）；
-  动态模型泊车负载缺失（模型边界）掩盖了该缺口。`steering/sizing.py` 新增
-  `size_corner_actuator()` 如实报告三个口径与判定；执行器规格模型与选型模块
-  闭环互证移交下一阶段。
+  原始发现复现锚定；60 N·m 起 post-90% 偏差 0.026 rad）。**静态口径勘误**：
+  原"104 N·m（5.2 kN rack）"把轮胎侧向力 tire_fy 误标为齿条力，逐轮齿条链实为
+  ~**207 N·m/角**。`steering/sizing.py` 新增 `size_corner_actuator()` 如实报告
+  各口径与判定。
+
+- **执行器规格模型与选型模块闭环互证（方向 6 收口）**：口径决策 = **pinion 等效
+  轮域**（rack × pinion，coupling.py 既定设计；kingpin 直驱口径动态即 400–530
+  N·m、驻车 881 N·m，采用即需整体重设计，如实报告不采用）。**默认峰值 120 →
+  260 N·m**（207 ÷ 80% 使用率 = 259 → 260），全部力矩限同步对齐：dob/adrc/
+  h_inf `torque_limit`、mpc `u_max`、`CornerActuatorPlant`/`step_cost` 默认峰值。
+  实测 120→260 限位在全部评估工况**从不绑定**（阶跃 procedure 5/5 逐位一致），
+  发布默认增益无需重调；SMC 的 k=60 口径明确为"FF 补偿后的残余负载"。动态模型
+  泊车负载缺失（模型边界）意味着 260 只在准静态口径下被需求。
 
 - **负载扰动评估协议（FR-10 扰动臂，三臂齐备）**：
   `procedures/tracking_disturbance_response.yaml` + `trk_dist_*` 指标族。

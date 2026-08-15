@@ -50,7 +50,7 @@ from sim4wis.study.tracking_step import _analyse_one  # noqa: E402
 
 STIFFNESS = 1200.0  # N·m/rad
 PLANT = {"transmission_stiffness_nms_per_rad": STIFFNESS,
-         "peak_torque_nm": 120.0, "motor_inertia_fraction": 0.2}
+         "peak_torque_nm": 260.0, "motor_inertia_fraction": 0.2}
 CONTROLLERS = ["pid_single", "pid_cascade", "lqr"]
 DT = 5.0e-4
 T_END = 3.0
