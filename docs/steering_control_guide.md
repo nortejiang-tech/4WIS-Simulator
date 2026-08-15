@@ -219,6 +219,12 @@ override 块见 `scripts/devtools/compliance_tuning.py`（角级表 → 车辆�
 真正的杠杆是更硬传动（抬高共振/反共振）或慢轮侧微调双环——均记录为硬件/设计项，
 不落控制层死代码。
 
+**柔度三臂齐备**：阶跃（`tracking_compliance_step.yaml`）之外，扫频
+（`tracking_compliance_sweep.yaml`：带宽实测 1.1–5.2 Hz，0.5 Hz 幅值比
+0.71–0.86——lqr 在 0.5 Hz 有车辆动态相互作用凹口；判据 0.65/0.7/相位 <60°）
+与扰动（`tracking_compliance_disturbance.yaml`：峰值偏差 <0.05 全过；
+cascade 纯 P 扰动后不回带、如实报"未恢复"——纯 P 外环的代价）。
+
 **传动刚度 k 扫掠研究（`scripts/devtools/stiffness_sweep_study.py`，量化上述杠杆）**：
 - 固定粘性阻尼（b=4 不随 k 缩放）下，稳定带宽天花板停滞在 ~2.5–3.1 Hz——共振随
   ω_res 升高越来越欠阻尼，规则设计（wn=ω_res/8、τ=5/ω_res）不可跨 k 迁移

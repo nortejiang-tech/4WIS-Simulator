@@ -1,0 +1,131 @@
+# 角度跟随层 —— 柔度传动扰动评估（方向 3 的扰动臂）
+#
+#   sim4wis study run procedures/tracking_compliance_disturbance.yaml
+#
+# 与 tracking_disturbance_response.yaml 同工况（60 km/h、前轴 1.8° 阶跃后
+# 突入低 μ 冰面），差别在被控对象：双质量传动（k=1200 → 17.8 Hz 共振）+
+# 柔度调参增益（出处 scripts/devtools/compliance_tuning.py 车辆级阶段）。
+# 柔度环带宽被共振压在 ~2–3 Hz，本模板如实给出该配置的扰动恢复。
+#
+# 每个 sweep 单元是一个完整的 angle_control 配置块，前馈与柔度调参口径
+# 一致（无低通齿条力前馈 + 速度 + 摩擦）。
+
+study: tracking_compliance_disturbance
+question: 柔度传动下，突遇低 μ 路面时柔度调参后的各控制策略被扰动多少、多久恢复？
+model: simplified_dynamic
+targets: null
+
+baseline:
+  name: compliance_dist_4wis
+  strategy: ideal_ackermann
+  record_hz: 200
+  scene:
+    base_mu: 0.85
+    disturbances:
+      - type: ice_patch
+        id: load_step_patch
+        x: 90.0
+        y: 0.0
+        width: 40.0
+        length: 6.0
+        mu: 0.35
+  vehicle:
+    overrides:
+      steering_system:
+        enabled: true
+        architecture: 4wis
+        angle_control:
+          enabled: true
+          controller: pid_single
+          plant_transmission_stiffness_nms_per_rad: 1200.0
+          plant_motor_inertia_fraction: 0.2
+          sensor_quant_rad: 0.00017
+          sensor_delay_steps: 1
+          controller_kwargs:
+            kp: 623.772
+            ki: 50.720
+            kd: 41.716
+            deriv_tau_s: 0.056375
+            ff:
+              blocks:
+                - {type: rack_force, gain: 1.0}
+                - {type: velocity, damping: 4.0, inertia: 0.6}
+                - {type: friction, friction_nm: 0.5}
+  maneuver:
+    steps:
+      - duration: 5.0
+        speed_kmh: 60
+        steer: {kind: constant, amplitude: 0.0}
+      - duration: 6.0
+        speed_kmh: 60
+        steer: {kind: step, amplitude: 1.8, unit: front_deg, t_step: 0.0}
+
+sweep:
+  profile:
+    values:
+      - controller: pid_single
+        enabled: true
+        plant_transmission_stiffness_nms_per_rad: 1200.0
+        plant_motor_inertia_fraction: 0.2
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          kp: 623.772
+          ki: 50.720
+          kd: 41.716
+          deriv_tau_s: 0.056375
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      - controller: pid_cascade
+        enabled: true
+        plant_transmission_stiffness_nms_per_rad: 1200.0
+        plant_motor_inertia_fraction: 0.2
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          kp_pos: 17.091
+          ki_pos: 0.0
+          kp_vel: 30.297
+          ki_vel: 39.798
+          deriv_tau_s: 0.045003
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+      - controller: lqr
+        enabled: true
+        plant_transmission_stiffness_nms_per_rad: 1200.0
+        plant_motor_inertia_fraction: 0.2
+        sensor_quant_rad: 0.00017
+        sensor_delay_steps: 1
+        controller_kwargs:
+          q_integral: 92.105
+          q_angle: 2859.476
+          q_rate: 0.20374
+          r: 0.041702
+          deriv_tau_s: 0.042555
+          ff:
+            blocks:
+              - {type: rack_force, gain: 1.0}
+              - {type: velocity, damping: 4.0, inertia: 0.6}
+              - {type: friction, friction_nm: 0.5}
+    bind: vehicle.overrides.steering_system.angle_control
+
+metrics:
+  - trk_dist_onset_s
+  - trk_dist_peak_dev_rad
+  - trk_dist_recover_s
+  - trk_dist_rack_step_n
+
+criteria:
+  # 扰动确实发生了（自检：齿条力阶跃显著）。
+  - {metric: trk_dist_rack_step_n, must: "> 100", at: all}
+  # 柔度环带宽低，恢复比刚性臂慢是物理——峰值偏差仍不得超出架构限。
+  - {metric: trk_dist_peak_dev_rad, must: "< 0.05", at: all}
+
+report:
+  template: sweep

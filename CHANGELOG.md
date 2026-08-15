@@ -73,6 +73,12 @@
   静差 14–129%）。**电机通道不是本对象的根本解**，杠杆是更硬传动或慢微调
   双环——记录为硬件/设计项，不落控制层死代码。
 
+- **柔度三臂齐备（方向 3 评估维度收口）**：新增
+  `procedures/tracking_compliance_sweep.yaml`（带宽实测 1.1–5.2 Hz，lqr 0.5 Hz
+  车辆动态凹口 0.71；判据 0.65/0.7/相位 <60°）与
+  `procedures/tracking_compliance_disturbance.yaml`（峰值偏差 <0.05 全过；
+  cascade 纯 P 扰动后不回带，如实报"未恢复"——纯 P 外环的代价）。两臂 3/3 判据绿。
+
 - **抗间隙结构研究（轮侧手段实测证伪）**：
   `scripts/devtools/backlash_structure_study.py` ——接合冲击 ∝ k·间隙（10 mrad →
   12 N·m 阶跃），轮侧传感器在接合前看不见间隙；积分死区/条件积分不动数字、
