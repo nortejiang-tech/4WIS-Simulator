@@ -75,20 +75,81 @@ TUNERS = {
         "lo": np.array([50.0, 100.0, 0.1, 0.001]),
         "hi": np.array([20000.0, 20000.0, 50.0, 0.5]),
     },
+    "dob": {
+        # Base is integral-free (the observer owns the DC action); tune the
+        # base stiffness and the observer bandwidth together.
+        "names": ["q_hz", "base.kp", "base.kd"],
+        "x0": np.array([6.0, 800.0, 50.0]),
+        "lo": np.array([2.0, 200.0, 10.0]),
+        "hi": np.array([30.0, 4000.0, 300.0]),
+        "kwargs": {"base": {"ki": 0.0}},  # merged into per-axis names below
+        "flat": {"base": {"ki": 0.0}},
+    },
+    "adrc": {
+        "names": ["omega_c", "omega_o"],
+        "x0": np.array([30.0, 120.0]),
+        "lo": np.array([10.0, 40.0]),
+        "hi": np.array([80.0, 400.0]),
+        "flat": {},
+    },
+    "mpc": {
+        "names": ["q_integral", "q_angle", "r"],
+        "x0": np.array([613.9, 4529.0, 0.02812]),
+        "lo": np.array([50.0, 300.0, 0.001]),
+        "hi": np.array([5000.0, 20000.0, 0.1]),
+        "flat": {},
+    },
+    "h_inf": {
+        "names": ["q_integral", "q_angle", "gamma"],
+        "x0": np.array([300.0, 900.0, 6.0]),
+        "lo": np.array([50.0, 200.0, 2.0]),
+        "hi": np.array([8000.0, 20000.0, 20.0]),
+        "flat": {},
+    },
 }
+
+
+def _kwargs(names: list[str], x: np.ndarray, flat: dict) -> dict:
+    """Axis vector → controller kwargs, unpacking dotted names (base.kp)."""
+    kwargs: dict = {} if _CURRENT[0] == "dob" else {**FF}
+    for name, value in zip(names, x, strict=True):
+        if "." in name:
+            outer, inner = name.split(".", 1)
+            kwargs.setdefault(outer, {})
+            if isinstance(kwargs[outer], dict):
+                kwargs[outer][inner] = float(value)
+        else:
+            kwargs[name] = float(value)
+    for outer, inner_kv in (flat or {}).items():
+        merged = dict(kwargs.get(outer) or {})
+        if isinstance(inner_kv, dict):
+            merged.update(inner_kv)
+            kwargs[outer] = merged
+    return kwargs
+
+
+_CURRENT: list[str] = [""]
 
 
 def main() -> None:
     for controller, cfg in TUNERS.items():
+        if controller != "mpc":
+            continue
         names, x0, lo, hi = cfg["names"], cfg["x0"], cfg["lo"], cfg["hi"]
+        flat = cfg.get("flat", {})
+        _CURRENT[0] = controller
 
         def f(x: np.ndarray) -> float:
-            kwargs = {**FF, **{n: float(v) for n, v in zip(names, x, strict=True)}}
-            return cost_of(controller, kwargs)
+            try:
+                return cost_of(controller, _kwargs(names, x, flat))
+            except ValueError:
+                # e.g. an infeasible H-inf gamma on this grid point: a large
+                # penalty, not a crash — the optimiser must walk around it.
+                return 100.0
 
         x, fx, n = nelder_mead(f, x0, lo=lo, hi=hi, max_evals=140)
         print(f"{controller}: cost {fx:.4f} ({n} evals)")
-        print("  " + ", ".join(f"{n}={v:.4g}" for n, v in zip(names, x, strict=True)))
+        print("  " + ", ".join(f"{nm}={v:.4g}" for nm, v in zip(names, x, strict=True)))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,86 @@
+# 角度跟随层 —— 阶梯正弦扫频评估（FR-10 的频域臂）
+#
+#   sim4wis study run procedures/tracking_sweep_response.yaml
+#
+# 4WIS + 层开启，60 km/h，前轴 0.2°（≈0.1 g，线性区）阶梯正弦：
+# 0.5 → 1 → 2 → 5 Hz 每段 4 个周期。分析器从命令信号自身分段
+# （过零半周期估计），逐段相关最小二乘拟合幅值/相位，对数插值
+# −3 dB 带宽。trk_amp_ratio_* / trk_phase_lag_2hz / trk_bw_hz 即出。
+#
+# 与阶跃模板互补：阶跃测瞬态（上升/超调/稳态），扫频测带宽与相位
+# ——带宽跟不上指令频谱的控制器，阶跃指标再好也会在连续换向上露馅。
+
+study: tracking_sweep_response
+question: 各控制策略的转角跟随带宽与相位滞后是多少？−3 dB 带宽落在哪个频率？
+
+model: simplified_dynamic
+targets: null
+
+baseline:
+  name: sweep_4wis
+  strategy: ideal_ackermann
+  record_hz: 200
+  vehicle:
+    overrides:
+      steering_system:
+        enabled: true
+        architecture: 4wis
+        angle_control:
+          enabled: true
+          controller: open_loop
+          sensor_quant_rad: 0.00017
+          sensor_delay_steps: 1
+          controller_kwargs:
+            ff:
+              blocks:
+                - {type: rack_force, gain: 1.0}
+                - {type: velocity, damping: 4.0, inertia: 0.6}
+                - {type: friction, friction_nm: 0.5}
+  maneuver:
+    steps:
+      # 直行放掉起步瞬态。
+      - duration: 2.0
+        speed_kmh: 60
+        steer: {kind: constant, amplitude: 0.0}
+      # 阶梯正弦：每段 4 个整周期（时长 = 4/freq）。
+      - duration: 8.0
+        speed_kmh: 60
+        steer: {kind: sine, amplitude: 0.2, unit: front_deg, freq_hz: 0.5}
+      - duration: 4.0
+        speed_kmh: 60
+        steer: {kind: sine, amplitude: 0.2, unit: front_deg, freq_hz: 1.0}
+      - duration: 2.0
+        speed_kmh: 60
+        steer: {kind: sine, amplitude: 0.2, unit: front_deg, freq_hz: 2.0}
+      - duration: 0.8
+        speed_kmh: 60
+        steer: {kind: sine, amplitude: 0.2, unit: front_deg, freq_hz: 5.0}
+      - duration: 0.4
+        speed_kmh: 60
+        steer: {kind: sine, amplitude: 0.2, unit: front_deg, freq_hz: 10.0}
+      # 收尾直行（让最后一段有完整的落尾）。
+      - duration: 1.0
+        speed_kmh: 60
+        steer: {kind: constant, amplitude: 0.0}
+
+sweep:
+  controller:
+    values: [open_loop, pid_single, pid_cascade, lqr]
+    bind: vehicle.overrides.steering_system.angle_control.controller
+
+metrics:
+  - trk_amp_ratio_0_5hz
+  - trk_amp_ratio_1hz
+  - trk_amp_ratio_2hz
+  - trk_amp_ratio_5hz
+  - trk_amp_ratio_10hz
+  - trk_phase_lag_2hz
+  - trk_bw_hz
+
+criteria:
+  # 低频必须跟得住（幅值比 ≥0.9），2 Hz 相位滞后有界。
+  - {metric: trk_amp_ratio_0_5hz, must: "> 0.9", at: all}
+  - {metric: trk_phase_lag_2hz, must: "< 60", at: all}
+
+report:
+  template: sweep

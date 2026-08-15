@@ -199,8 +199,49 @@ def _register_tracking_step() -> None:
         )
 
 
+def _register_tracking_sweep() -> None:
+    from sim4wis.study import tracking_sweep
+
+    def analysis(t: np.ndarray, ch: dict[str, np.ndarray]) -> Any:
+        return tracking_sweep.analyse_tracking_sweep(t, ch)
+
+    ANALYSES["tracking_sweep"] = analysis
+    entries: tuple[tuple[str, str, str, Callable[[Any], float]], ...] = (
+        ("trk_amp_ratio_0_5hz", "—", "0.5 Hz 幅值比（实际转角/指令）",
+         lambda m: m.get(0.5)[0]),
+        ("trk_amp_ratio_1hz", "—", "1 Hz 幅值比",
+         lambda m: m.get(1.0)[0]),
+        ("trk_amp_ratio_2hz", "—", "2 Hz 幅值比",
+         lambda m: m.get(2.0)[0]),
+        ("trk_amp_ratio_5hz", "—", "5 Hz 幅值比",
+         lambda m: m.get(5.0)[0]),
+        ("trk_amp_ratio_10hz", "—", "10 Hz 幅值比",
+         lambda m: m.get(10.0)[0]),
+        ("trk_phase_lag_2hz", "°", "2 Hz 相位滞后",
+         lambda m: m.get(2.0)[1]),
+        ("trk_bw_hz", "Hz", "−3 dB 跟踪带宽（对数插值；None=超出扫掠上界）",
+         lambda m: _need_bw(m)),
+    )
+    for name, unit, desc, getter in entries:
+        PROCEDURE[name] = (
+            "tracking_sweep", getter,
+            MetricInfo(name, unit, desc, requires=CAP_PLANT, source="procedure"),
+        )
+
+
+def _need_bw(m: Any) -> float:
+    from sim4wis.study.tracking_sweep import ProcedureError
+
+    if m.bandwidth_hz is None:
+        raise ProcedureError(
+            f"全扫掠段幅值比仍 ≥0.707 —— 带宽超出上界 {m.max_frequency_hz} Hz，"
+            "只知道下界；扩频段后重测")
+    return float(m.bandwidth_hz)
+
+
 _register_weave()
 _register_tracking_step()
+_register_tracking_sweep()
 
 
 def describe_metrics() -> list[dict[str, Any]]:

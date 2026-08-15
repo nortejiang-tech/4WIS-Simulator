@@ -69,7 +69,23 @@ angle_deviation 限（0.05 rad）判定。**当前全绿**（2026-08-15 轮）�
    回正力矩反转可把 120 N·m 执行器吹到限位——这是执行器选型维度的问题，
    由偏差通道如实标记，不属控制器对比。
 
-## 3b. 评估协议（FR-10 · 阶跃臂）
+## 3b. 扫频评估协议（FR-10 · 频域臂）
+
+```bash
+sim4wis study run procedures/tracking_sweep_response.yaml
+```
+
+60 km/h、0.2°（线性区）阶梯正弦 0.5→1→2→5→10 Hz。`trk_amp_ratio_*`、
+`trk_phase_lag_2hz`、`trk_bw_hz`（−3 dB，对数插值；超出上界时只报下界并
+拒绝给数）。首份：open_loop ≈10 Hz（设计参数即带宽）、LQR 更高、
+PID/级联 3.8–4.1 Hz——带宽精度受频段间距限制（2→5 Hz 跨膝 ~9%）。
+
+**进阶控制器默认值均为车辆闭环调参**（2026-08-15 第二轮）：dob/adrc/
+mpc/h_inf 的阶跃 settle 0.055–0.13 s，与 v1 同档；mpc（15 ms 上升、
+0 超调、55 ms settle）为当前全场最优。结构性约束：**dob 与 adrc 的
+观测器就是负载补偿器**——与 rack_force/friction 前馈块互斥（构造期拒绝）。
+
+## 3c. 评估协议（FR-10 · 阶跃臂）
 
 ```bash
 sim4wis study run procedures/tracking_step_response.yaml

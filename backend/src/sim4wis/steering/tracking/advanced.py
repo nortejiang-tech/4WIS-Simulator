@@ -43,6 +43,7 @@ from sim4wis.steering.tracking.controller import (
 )
 from sim4wis.steering.tracking.controllers import (
     PidSingleController,
+    _expm_taylor,
     _FilteredDerivative,
     solve_dare,
 )
@@ -93,10 +94,12 @@ class DobController(AngleTrackingController):
     _FORBIDDEN_FF = ("rack_force", "friction")
 
     def __init__(self, *, inertia: float = 0.6, damping: float = 4.0,
-                 q_hz: float = 6.0, d_hat_limit_nm: float = 60.0,
+                 # Defaults tuned in the vehicle loop against the step
+                 # procedure (scripts/tune_vehicle_defaults.py, 2026-08-15).
+                 q_hz: float = 8.09, d_hat_limit_nm: float = 60.0,
                  base: dict[str, Any] | None = None,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
-                 torque_limit_nm: float | None = None) -> None:
+                 torque_limit_nm: float = 120.0) -> None:
         self.j, self.b = float(inertia), float(damping)
         self.q_hz = float(q_hz)
         #: The observer's estimate is clamped at a physical bound: a
@@ -114,7 +117,7 @@ class DobController(AngleTrackingController):
                 "stacking them again double-counts the same disturbance "
                 "(measured: the wheel wanders off its command). Velocity "
                 "feedforward is fine.")
-        merged = {"kp": 800.0, "ki": 0.0, "kd": 50.0} | (base or {})
+        merged = {"kp": 1253.0, "ki": 0.0, "kd": 43.83} | (base or {})
         merged["ff"] = stack
         self.base = PidSingleController(**merged)
         self._d_hat = 0.0
@@ -166,38 +169,84 @@ class AdrcController(AngleTrackingController):
     name: ClassVar[str] = "adrc"
     inner_rate_hz: ClassVar[float | None] = INNER_RATE_HZ
 
-    def __init__(self, *, inertia: float = 0.6, omega_c: float = 30.0,
-                 omega_o: float = 120.0,
+    #: The ESO lumps load + friction + model error into f̂ and cancels it —
+    #: the same mutual exclusion as the DOB: rack-force/friction feedforward
+    #: on top double-counts the disturbance (measured: the vehicle-loop
+    #: tuner against a feedforward-carrying spec read a 12 s cost where the
+    #: bare controller settles in 0.3 s).
+    _FORBIDDEN_FF = ("rack_force", "friction")
+
+    def __init__(self, *, inertia: float = 0.6,
+                 # Defaults probed at procedure conditions after the
+                 # feedforward exclusion fix (30 km/h 1°: 0.10 s settle,
+                 # 0.8 % overshoot); the ESO runs on the plant truth here —
+                 # a real quantised sensor bounds omega_o in practice.
+                 omega_c: float = 60.0, omega_o: float = 400.0,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
-                 torque_limit_nm: float | None = None) -> None:
+                 torque_limit_nm: float = 120.0) -> None:
+        # The limit must mirror the actuator's: the ESO integrates the
+        # torque it believes was applied, and an unsaturated command against
+        # a saturated plant is pure model mismatch (measured: the bench
+        # diverged at large angles while small-angle vehicle runs passed).
         self.j = float(inertia)
         self.b0 = 1.0 / self.j
         self.wc, self.wo = float(omega_c), float(omega_o)
-        self.ff = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
+        stack = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
+        bad = [b.name for b in stack.blocks if b.name in self._FORBIDDEN_FF]
+        if bad:
+            raise ValueError(
+                f"adrc refuses feedforward block(s) {bad}: the extended state "
+                "observer already cancels the load and the friction — "
+                "stacking them again double-counts the disturbance.")
+        self.ff = stack
         self.torque_limit = torque_limit_nm
         self._z = np.zeros(3)  # [θ̂, ω̂, f̂]
-        # Gao's bandwidth parameterisation of the ESO gains.
-        self._l = np.array([3.0 * self.wo, 3.0 * self.wo ** 2, self.wo ** 3])
+        self._u_prev = 0.0
+        # Exact-discrete ESO (Gao's bandwidth parameterisation, ZOH form).
+        # The continuous observer with poles at −ωo is discretised exactly
+        # and the gain places the discrete poles at z = exp(−ωo·h): the
+        # explicit-Euler ESO turns sample-rate fragile above ωo·h ≈ 0.2
+        # (measured: divergence at ωo = 400 Hz on the plant bench while the
+        # small-angle vehicle runs looked fine — amplitude masked it).
+        h = 1.0 / INNER_RATE_HZ
+        a_obs = np.array([[0.0, 1.0, 0.0],
+                          [0.0, 0.0, 1.0],
+                          [0.0, 0.0, 0.0]])
+        b_obs = np.array([[0.0], [self.b0], [0.0]])
+        blk = np.zeros((4, 4))
+        blk[:3, :3] = a_obs
+        blk[:3, 3] = b_obs[:, 0]
+        e = _expm_taylor(blk, h)
+        self._a_d = e[:3, :3]
+        self._b_d = e[:3, 3]
+        rho = math.exp(-self.wo * h)
+        # Ackermann on the dual (controller) problem: K for (A', C') places
+        # the poles, then L = K'. φ is of the DUAL matrix A' — φ(A) ≠ φ(A')
+        # for a non-symmetric A, and using the wrong one hands back a gain
+        # that diverges instead of observing (found the hard way).
+        at, ct = self._a_d.T, np.array([[1.0, 0.0, 0.0]]).T
+        ctrb = np.hstack([ct, at @ ct, at @ at @ ct])
+        phi = np.linalg.matrix_power(at - rho * np.eye(3), 3)
+        e3 = np.zeros((1, 3))
+        e3[0, 2] = 1.0
+        self._l = (e3 @ np.linalg.inv(ctrb) @ phi).ravel()
 
     def reset(self) -> None:
         self._z = np.zeros(3)
+        self._u_prev = 0.0
 
     def step(self, dt, *, target_angle, target_rate, feedback_angle,
              plant_angle, load_torque, speed_ms):
-        dt = max(float(dt), 1e-9)
         z = self._z
         y = float(plant_angle)
-        e = y - z[0]
-        u_prev = self._u_prev if hasattr(self, "_u_prev") else 0.0
+        u_prev = self._u_prev
         u0 = self.wc ** 2 * (float(target_angle) - z[0]) - 2.0 * self.wc * z[1]
         u = (u0 - z[2]) / self.b0
         u += self.ff.compute(_ctx(dt, float(target_rate), float(load_torque),
                                   float(speed_ms)))
         if self.torque_limit is not None:
             u = max(-self.torque_limit, min(self.torque_limit, u))
-        z[0] += (z[1] + self._l[0] * e) * dt
-        z[1] += (z[2] + self._l[1] * e + self.b0 * u_prev) * dt
-        z[2] += (self._l[2] * e) * dt
+        self._z = self._a_d @ z + self._b_d * u_prev + self._l * (y - z[0])
         self._u_prev = u
         return TrackingOutput(
             torque_cmd=u,
@@ -300,9 +349,13 @@ class MpcController(AngleTrackingController):
     inner_rate_hz: ClassVar[float | None] = INNER_RATE_HZ
 
     def __init__(self, *, inertia: float = 0.6, damping: float = 4.0,
-                 horizon: int = 10, q_integral: float = 400.0,
-                 q_angle: float = 1500.0, q_rate: float = 1.0,
-                 r: float = 0.01, u_max: float = 40.0,
+                 horizon: int = 10,
+                 # Defaults tuned in the vehicle loop at the actuator-aligned
+                 # u_max (scripts/tune_vehicle_defaults.py, 2026-08-15; the
+                 # first tuning round at u_max = 40 does not carry over —
+                 # widening the box re-weights the whole QP).
+                 q_integral: float = 103.5, q_angle: float = 2.0e4,
+                 q_rate: float = 1.0, r: float = 0.001, u_max: float = 120.0,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
                  dt: float = _DT) -> None:
         self.j, self.b = float(inertia), float(damping)
@@ -312,7 +365,6 @@ class MpcController(AngleTrackingController):
         self.dt = float(dt)
         self._rate = _FilteredDerivative(0.005)
         self._integral = 0.0
-        from sim4wis.steering.tracking.controllers import _expm_taylor
         # Augmented plant [∫e, θ, ω]: d∫e = e = target − θ, θ̇ = ω,
         # ω̇ = −b/J·ω + u/J, ZOH-discretised.
         a_c = np.array([[0.0, -1.0, 0.0],
@@ -427,11 +479,14 @@ class HInfController(AngleTrackingController):
     inner_rate_hz: ClassVar[float | None] = INNER_RATE_HZ
 
     def __init__(self, *, inertia: float = 0.6, damping: float = 4.0,
-                 gamma: float = 6.0, q_integral: float = 300.0,
-                 q_angle: float = 900.0, q_rate: float = 1.0,
+                 # Defaults tuned in the vehicle loop (see pid/dob notes);
+                 # the tuner walked gamma down to 2 — a 3x tighter
+                 # disturbance bound than the plant-level default.
+                 gamma: float = 2.0, q_integral: float = 6324.0,
+                 q_angle: float = 2.0e4, q_rate: float = 1.0,
                  r: float = 0.01,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
-                 torque_limit_nm: float | None = None) -> None:
+                 torque_limit_nm: float = 120.0) -> None:
         self.j, self.b = float(inertia), float(damping)
         self.ff = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
         self.torque_limit = torque_limit_nm
