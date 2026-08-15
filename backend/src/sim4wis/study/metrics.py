@@ -239,9 +239,42 @@ def _need_bw(m: Any) -> float:
     return float(m.bandwidth_hz)
 
 
+def _register_tracking_disturbance() -> None:
+    from sim4wis.study import tracking_disturbance
+
+    def analysis(t: np.ndarray, ch: dict[str, np.ndarray]) -> Any:
+        return tracking_disturbance.analyse_tracking_disturbance(t, ch)
+
+    ANALYSES["tracking_disturbance"] = analysis
+    entries: tuple[tuple[str, str, str, Callable[[Any], float]], ...] = (
+        ("trk_dist_onset_s", "s", "负载扰动检测到的时刻（齿条力最大阶跃）",
+         lambda m: m.onset_s),
+        ("trk_dist_peak_dev_rad", "rad", "扰动后峰值跟踪偏差（fl）",
+         lambda m: m.peak_dev_rad),
+        ("trk_dist_recover_s", "s", "扰动后回到 ±0.01 rad 带内的时间；"
+         "未恢复为拒绝给出", lambda m: _need_recover(m)),
+        ("trk_dist_rack_step_n", "N", "引发本次恢复过程的齿条力阶跃幅值",
+         lambda m: m.rack_step_n),
+    )
+    for name, unit, desc, getter in entries:
+        PROCEDURE[name] = (
+            "tracking_disturbance", getter,
+            MetricInfo(name, unit, desc, requires=CAP_PLANT, source="procedure"),
+        )
+
+
+def _need_recover(m: Any) -> float:
+    from sim4wis.study.tracking_disturbance import ProcedureError
+
+    if m.recover_s is None:
+        raise ProcedureError("扰动后偏差未回到带内 —— 如实报告，不给恢复时间")
+    return float(m.recover_s)
+
+
 _register_weave()
 _register_tracking_step()
 _register_tracking_sweep()
+_register_tracking_disturbance()
 
 
 def describe_metrics() -> list[dict[str, Any]]:

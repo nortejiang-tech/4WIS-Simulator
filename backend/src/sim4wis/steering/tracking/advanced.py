@@ -267,17 +267,18 @@ class SmcController(AngleTrackingController):
     inner_rate_hz: ClassVar[float | None] = INNER_RATE_HZ
 
     def __init__(self, *, damping: float = 4.0, lam: float = 25.0,
-                 switching_gain: float = 25.0, phi: float = 0.05,
+                 switching_gain: float = 60.0, phi: float = 0.05,
                  ff: FeedforwardStack | dict[str, Any] | None = None,
                  torque_limit_nm: float | None = None) -> None:
         self.b = float(damping)
         self.lam = float(lam)
         # The switching gain must exceed the disturbance bound or the
-        # sliding condition is unreachable: at 100 km/h the straight-line
-        # aligning load alone is ~12 N·m (600 N rack × 0.02 m pinion), and
-        # with k = 12 the saturated tanh could not push back — the wheel was
-        # blown to the steer stop (measured, weave_100). 25 N·m covers the
-        # aligning load up to ~1.25 kN of rack force.
+        # sliding condition is unreachable — measured twice: k = 12 lost to
+        # the straight-line aligning load at 100 km/h (~12 N·m) and the
+        # wheel went to the steer stop; k = 25 lost to the sustained
+        # low-mu cornering load in the disturbance arm (~40 N·m at 0.3 g
+        # without load feedforward) and drifted 0.13 rad off the command.
+        # 60 N·m covers ~3 kN of rack force, the aligning load at ~0.5 g.
         self.k = float(switching_gain)
         self.phi = float(phi)
         self.ff = ff if isinstance(ff, FeedforwardStack) else make_feedforward(ff)
