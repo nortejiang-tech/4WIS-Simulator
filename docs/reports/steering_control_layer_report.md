@@ -249,6 +249,12 @@ ControllerStrategy.compute → delta_cmd[4]（rad，逐轮）
 轮侧设计已贴近天花板；共置结构最多 +10–20% 角级带宽且间隙下更差。杠杆是更硬
 传动或慢微调双环——记录为硬件/设计项，不落控制层死代码（§4b）。
 
+**传动刚度 k 扫掠研究（杠杆量化，`scripts/devtools/stiffness_sweep_study.py`）**：
+固定粘性阻尼下天花板停滞 ~2.5–3.1 Hz（共振欠阻尼），阻尼随 √k 缩放时按 √k 释放
+至 12.6 Hz@k=38400，采样极限 ω_res·h ≲ 0.2（f_res ≲ 60 Hz@2000 Hz）；车辆级
+k=4800 规则增益 settle 0.30 s（vs k=1200 调参 0.42 s）。**传动选型结论：带宽要连
+结构阻尼一起买，光加刚度不够。**
+
 **方向 4 调参工作台工程化**：多工况加权成本（`step_cost`/`tune` 的 `conditions`，
 加权聚合替换单点成本）、网格通道 `grid_search`（与 Nelder-Mead 同一条 110% 验收门，
 互为交叉验证——实测两通道落同一盆地）、**贝叶斯通道** `bayesian_search`（确定性 GP

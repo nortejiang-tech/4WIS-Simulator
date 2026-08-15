@@ -73,6 +73,13 @@
   静差 14–129%）。**电机通道不是本对象的根本解**，杠杆是更硬传动或慢微调
   双环——记录为硬件/设计项，不落控制层死代码。
 
+- **传动刚度 k 扫掠研究（电机通道研究的杠杆量化）**：
+  `scripts/devtools/stiffness_sweep_study.py` 四问钉住——①规则设计不可跨 k 迁移
+  （固定粘性阻尼下 7.1%→109% 超调）；②固定 b 天花板停滞 ~2.5–3.1 Hz，阻尼随
+  √k 缩放（结构阻尼）时按 √k 释放到 12.6 Hz@k=38400；③采样极限 ω_res·h ≲ 0.2
+  （2000 Hz 内环 → f_res ≲ 60 Hz）；④车辆级 k=4800 规则增益 settle 0.30 s。
+  **传动选型结论：带宽要连结构阻尼一起买，光加刚度不够。**
+
 - **阶跃/扫频 procedure 扩展到 9 控制器（§6.5）**：
   `tracking_step_response.yaml` / `tracking_sweep_response.yaml` 的 sweep
   改为 9 单元完整 angle_control 配置（dob/adrc 仅速度前馈——互斥契约；
