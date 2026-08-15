@@ -44,8 +44,15 @@ PEAKS_NM = [40.0, 60.0, 80.0, 100.0, 120.0]
 #: disappears.
 DEVIATION_LIMIT = 0.05  # rad — the by-wire architecture's angle_deviation limit
 
+#: The condition matrix (direction-6 generalisation): amplitude × speed at
+#: the sized peak (260 N·m) — where the deep-slip blow-back actually bites.
+CONDITIONS = [(3.0, 60.0), (5.0, 60.0), (5.0, 80.0), (8.0, 60.0), (8.0, 80.0)]
+SIZED_PEAK_NM = 260.0
 
-def build_experiment(controller: str, kwargs: dict, peak_nm: float) -> Experiment:
+
+def build_experiment(controller: str, kwargs: dict, peak_nm: float, *,
+                     amplitude_deg: float = 5.0,
+                     speed_kmh: float = 60.0) -> Experiment:
     raw = {
         "name": f"over_envelope_{controller}_{int(peak_nm)}",
         "strategy": "ideal_ackermann",
@@ -65,19 +72,21 @@ def build_experiment(controller: str, kwargs: dict, peak_nm: float) -> Experimen
             },
         }},
         "maneuver": {"steps": [
-            {"duration": 2.0, "speed_kmh": 60,
+            {"duration": 2.0, "speed_kmh": speed_kmh,
              "steer": {"kind": "constant", "amplitude": 0.0}},
-            # 5° front step at 60 km/h ≈ 0.8 g — deliberately over the envelope.
-            {"duration": 4.0, "speed_kmh": 60,
-             "steer": {"kind": "step", "amplitude": 5.0, "unit": "front_deg",
-                       "t_step": 0.0}},
+            # Front step deliberately over the tyre envelope at speed.
+            {"duration": 4.0, "speed_kmh": speed_kmh,
+             "steer": {"kind": "step", "amplitude": amplitude_deg,
+                       "unit": "front_deg", "t_step": 0.0}},
         ]},
     }
     return Experiment.model_validate(raw)
 
 
-def run_one(controller: str, kwargs: dict, peak_nm: float) -> dict:
-    exp = build_experiment(controller, kwargs, peak_nm)
+def run_one(controller: str, kwargs: dict, peak_nm: float, *,
+            amplitude_deg: float = 5.0, speed_kmh: float = 60.0) -> dict:
+    exp = build_experiment(controller, kwargs, peak_nm,
+                           amplitude_deg=amplitude_deg, speed_kmh=speed_kmh)
     t0 = time.perf_counter()
     result = SimSession(exp).run()
     wall = time.perf_counter() - t0
@@ -133,6 +142,19 @@ def main() -> int:
                   f"{r['violation_s']:>10.2f} {r['peak_load_torque_nm']:>8.1f} "
                   f"{r['peak_opposing_rack_n']:>8.0f} {r['wall_s']:>5.1f}s")
         print()
+    # The condition matrix at the sized peak: where the blow-back bites.
+    print(f"=== condition matrix @ {SIZED_PEAK_NM:.0f} N·m (pid_single) ===")
+    hdr2 = (f"{'amp°':>5} {'km/h':>6} {'post90|dev|':>11} {'end dev':>9} "
+            f"{'over0.05s':>10} {'load τ':>8} {'opp. F':>8}")
+    print(hdr2)
+    for amp, v in CONDITIONS:
+        r = run_one("pid_single", FF_STACK, SIZED_PEAK_NM,
+                    amplitude_deg=amp, speed_kmh=v)
+        print(f"{amp:>5.0f} {v:>6.0f} {r['peak_dev_after90_rad']:>11.4f} "
+              f"{r['end_dev_rad']:>9.4f} {r['violation_s']:>10.2f} "
+              f"{r['peak_load_torque_nm']:>8.1f} "
+              f"{r['peak_opposing_rack_n']:>8.0f}")
+    print()
     # The sizing answer: the smallest swept peak whose blow-back deviation
     # (post-90 %) stays inside the architecture limit.
     print("=== sizing answer ===")
