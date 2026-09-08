@@ -18,7 +18,7 @@
     "frontend": "type-check, production build, 54 Vitest tests passed",
     "browser": "57 Playwright Chromium production E2E tests passed",
     "macos_portable": "fresh extraction native smoke passed",
-    "windows_portable": "Initial GitHub native smoke exposed missing pywin32 from macOS cross-assembly; ASTRA repaired vendor selection and launcher paths, and the corrected archive passed local static checks. A GitHub Windows native smoke remains required before Release."
+    "windows_portable": "Initial GitHub native smoke exposed missing pywin32 from macOS cross-assembly; ASTRA repaired vendor selection and launcher paths. The corrected archive passed local static checks and GitHub Windows native smoke run 34274638172 on commit 0af22f1a80c0c68fe305b3e9515bbb5532e789c1."
   },
   "metrics": {
     "calls": 0,
