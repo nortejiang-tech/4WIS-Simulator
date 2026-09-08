@@ -94,6 +94,8 @@ export function sendMessage(m: ClientMessage) {
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(m));
   } else {
+    // Stale driving inputs must never replay after a reconnect.
+    if (m.type === "driver" || m.type === "release_input") return;
     pendingOutbox.push(m);
     if (pendingOutbox.length > 200) pendingOutbox.shift();
     connectSimSocket();
@@ -107,6 +109,10 @@ export interface DriverCommand {
   steering?: number;
   handbrake?: number;  // 0 | 1
   mode_params?: Record<string, unknown>;
+}
+
+export function releaseDriverInput() {
+  sendMessage({ type: "release_input" });
 }
 
 export function setDriver(
@@ -133,6 +139,7 @@ export function setStrategy(name: string) {
 }
 
 export function resetSim() {
+  useSimStore.getState().requestZero();
   sendMessage({ type: "reset" });
   useSimStore.getState().clearHistory();
 }

@@ -46,7 +46,7 @@ export default function Hud({ state }: { state: SimStateMessage }) {
 
   return (
     <div className="canvas-hud">
-      <Speedometer speedKmh={state.velocity.vx * 3.6} maxKmh={vMaxKmh}
+      <Speedometer speedKmh={Math.hypot(state.velocity.vx, state.velocity.vy) * 3.6} maxKmh={vMaxKmh}
                    targetKmh={targetKmh} label={targetLabel} />
       <div className="hud-row">
         <span className="hud-label">策略</span>
@@ -84,9 +84,9 @@ export default function Hud({ state }: { state: SimStateMessage }) {
         </span>
       </div>
       <div className="hud-row">
-        <span className="hud-label">δ (°)</span>
+        <span className="hud-label" title="左前 / 右前 / 左后 / 右后">δ (°)</span>
         <span className="hud-value hud-mono hud-small">
-          {state.wheels.map((w) => ((w.delta * 180) / Math.PI).toFixed(1)).join(" / ")}
+          {state.wheels.map((w, i) => `${["FL", "FR", "RL", "RR"][i]} ${((w.delta * 180) / Math.PI).toFixed(1)}`).join(" / ")}
         </span>
       </div>
       <div className="hud-row">

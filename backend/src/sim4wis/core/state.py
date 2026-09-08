@@ -499,9 +499,9 @@ class VehicleState:
 
     # Vertical / attitude DOF (used by MultiBodyModel — step 19; 0 for the
     # planar kinematic / simplified-dynamic models).
-    z: float = 0.0          # body CG heave above static ride height [m]
+    z: float = 0.0          # body-origin heave above static ride height [m]
     roll: float = 0.0       # roll angle about body X [rad] (+ = right side down)
-    pitch: float = 0.0      # pitch angle about body Y [rad] (+ = nose up)
+    pitch: float = 0.0      # pitch angle about negative body Y [rad] (+ = nose up)
 
     # Velocities (body frame, at body origin)
     vx: float = 0.0
@@ -521,8 +521,10 @@ class VehicleState:
     # they run *before* the tyre model, so they cannot query it themselves.
     mu_avg: float = 0.85
 
-    # Body-frame specific force (what an accelerometer at the CG would read):
-    #   ax = v̇x − ω·vy      ay = v̇y + ω·vx
+    # Inertial CG acceleration expressed in body axes, including grade gravity.
+    # e=L/2−a: ax=v̇x−r*vy−e*r²; ay=v̇y+r*vx+e*r_dot.
+    # Flat-ground specific force shares these planar components; a full IMU
+    # prediction on grades/banks requires gravity projection not supplied here.
     # Kept on the state because the g-g envelope is a vehicle-level readout and
     # every host needs the same number.
     ax: float = 0.0

@@ -117,7 +117,7 @@ export default function ControlPanel() {
             ))}
           </div>
           <div style={{ fontSize: 10, color: "var(--muted)", lineHeight: 1.45, marginTop: 4 }}>
-            主线工程曲线以后默认挂到「动力学」；多体保留作高阶验证，不牵动新接口。
+            动力学用于轮胎力与平面响应；多体增加垂向悬架自由度，仍需参数标定。
           </div>
         </div>
       </Panel>
@@ -134,6 +134,23 @@ export default function ControlPanel() {
             </button>
           ))}
         </div>
+        {current === "zero_radius" && (
+          <div className="panel-small" style={{ marginTop: 8, lineHeight: 1.5 }}>
+            <label>满输入旋转速率（°/s）
+              <input aria-label="满输入旋转速率" type="number" min={0} max={180} step={5}
+                value={Number(driver?.mode_params?.spin_rate_max_dps ?? 30)}
+                onChange={(e) => setDriverMode({ spin_rate_max_dps: Number(e.target.value) })}
+                style={{ width: 70, marginLeft: 6 }} />
+            </label>
+            <div>这是指令速率上限；实际角速度由模型与轮胎决定。</div>
+            {params && params.steer_limit < Math.atan2(params.wheelbase, Math.min(params.track_front, params.track_rear)) && (
+              <div role="status" style={{ color: "#fbbf24" }}>
+                纯滚动原地转向需约 {(Math.atan2(params.wheelbase, Math.min(params.track_front, params.track_rear)) * 180 / Math.PI).toFixed(1)}°；
+                当前轮角上限 {(params.steer_limit * 180 / Math.PI).toFixed(1)}°，会出现轮胎擦滑。
+              </div>
+            )}
+          </div>
+        )}
         {current === "rear_wheel_steer" && (
           <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

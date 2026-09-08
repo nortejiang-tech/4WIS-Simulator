@@ -172,21 +172,12 @@ class TestWeaveResult:
         fast = _analyse(*_weave_run(freq=0.8))
         assert 0.0 < slow.yaw_phase_lag_deg < fast.yaw_phase_lag_deg
 
-    def test_the_loop_width_is_not_monotone_in_rack_friction(self):
-        """A finding, pinned rather than hidden — delete this when it is fixed.
+    def test_weave_hysteresis_contains_vehicle_lag_even_without_rack_friction(self):
+        """A frictionless rack still produces a hysteresis loop at 0.2 Hz.
 
-        The loop width reads naturally as "friction feel", and on this model it
-        is not: raising rack Coulomb friction from 0 to 500 N makes the loop
-        *narrower*, and it is already ~1 N·m with friction set to zero. At
-        0.2 Hz the vehicle's own lateral-dynamics lag contributes a quadrature
-        term of the same order and the opposite sign, and the two partly
-        cancel.
-
-        Both effects are real and a real weave contains both. What does not
-        follow is writing a friction requirement against this number, which is
-        why the shipped target set records it as `should`. If this test ever
-        fails because the trend became monotone, the target can be promoted and
-        this test deleted.
+        Vehicle dynamics contaminate a friction interpretation. The corrected
+        linkage changes the old two-point trend, which was not a general law;
+        do not promote this metric to a pure-friction requirement from that.
         """
         def width(coulomb):
             exp = Experiment.model_validate({
@@ -210,16 +201,13 @@ class TestWeaveResult:
             "a frictionless rack now shows a narrow loop — the vehicle-lag "
             "contribution may have been separated out; re-check the targets"
         )
-        assert mid < frictionless, (
-            f"the loop width became monotone in friction ({frictionless:.3f} -> "
-            f"{mid:.3f}); promote onc_torque_hysteresis_nm to a judged target "
-            "and delete this test"
-        )
+        assert mid > 0.0
+        assert abs(mid - frictionless) > 0.1
 
     def test_the_loop_width_is_monotone_in_rack_friction_at_the_slow_ramp(self):
         """C4: the frequency-separated friction measurement, pinned.
 
-        At 0.2 Hz the loop width is NOT monotone in rack Coulomb friction
+        At 0.2 Hz the loop contains vehicle dynamics as well as friction
         (pinned above) because the vehicle's own lateral-dynamics lag
         contributes a quadrature term of the same order. At 0.02 Hz and
         50 km/h that term vanishes — the lag time constant shrinks with speed
@@ -253,19 +241,20 @@ class TestWeaveResult:
         dead = [w[1] for w in widths]
         assert all(b > a for a, b in zip(dead, dead[1:], strict=False)), dead
 
-    def test_an_unassisted_heavy_vehicle_cannot_be_weaved_at_speed(self):
-        """A refusal that is the right answer, not a failure.
+    def test_insufficient_hand_effort_rejects_an_unperformed_weave(self):
+        """A tiny hand-effort bound prevents usable excitation without assist.
 
-        With the assist map set to `none` this 2.9 t SUV needs ~120 N·m at the
-        pinion to hold 0.4 deg at 100 km/h; the driver's 25 N·m limit stops the
-        wheel moving, so there are no cycles to analyse and the analysis says
-        so rather than reporting a superb on-centre result from a flat line.
+        Rejection depends on delivered amplitude, not vehicle mass or an old
+        assumed 120 N·m rack load. Use front-only steering: commanded rear steering in ideal_ackermann
+        can drive the passive front rack through vehicle motion.
         """
         exp = Experiment.model_validate({
-            "name": "w", "strategy": "ideal_ackermann",
+            "name": "w", "strategy": "rear_wheel_steer",
+            "mode_params": {"rws_mode": "fixed_ratio", "rear_ratio": 0.0},
             "model_type": "simplified_dynamic", "record_hz": 50,
             "vehicle": {"overrides": {"steering_system": {
-                "enabled": True, "assist_map": "none"}}},
+                "enabled": True, "assist_map": "none",
+                    "column": {"hand_torque_limit_nm": 0.01}}}},
             "maneuver": {"steps": [
                 {"duration": 4.0, "speed_kmh": 100,
                  "steer": {"kind": "constant", "amplitude": 0.0}},

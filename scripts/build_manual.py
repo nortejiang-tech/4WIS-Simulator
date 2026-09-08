@@ -472,7 +472,7 @@ def build_html() -> None:
 </style></head><body>
 
 <h1>4WIS Simulator 使用说明书 <span style="font-size:15px;color:#718096">v{VER} · 图文版</span></h1>
-<p class="meta">四轮独立转向（4WIS）仿真平台 —— 交互驾驶 · 批量实验 · 结果分析 · 负载选型 · 功能安全研究。
+<p class="meta">四轮独立转向（4WIS）仿真平台 —— 人工驾驶 · 脚本工况 · Agent 标准接口 · 批量实验 · 结果分析 · 负载选型 · 功能安全研究。
 本说明书全部截图由 <code>python scripts/build_manual.py</code> 从当前版本实跑生成。</p>
 
 <div class="toc"><b>目录</b><br>
@@ -495,6 +495,10 @@ def build_html() -> None:
 <p><b>便携版（推荐）</b>：解压对应平台的 zip → macOS 双击 <code>start.command</code>（首次被 Gatekeeper
 拦截时右键→打开），Windows 双击 <code>start.bat</code> → 浏览器自动打开
 <code>http://127.0.0.1:8010/</code>。无需安装 Python / Node。关掉终端窗口即停止。</p>
+<p><b>AI Agent（MCP stdio）</b>：同一便携包还提供 <code>agent_mcp.command</code>（macOS）或
+<code>agent_mcp.bat</code>（Windows）。它是给 Agent 宿主启动的标准输入输出进程，不是图形界面；在
+终端运行 <code>./agent_mcp.command --print-config</code> 或 <code>agent_mcp.bat --print-config</code>
+会输出带当前解压绝对路径的可粘贴配置。若本地 8010 后端未启动，MCP 进程只会启动它自己需要的后端。</p>
 <p><b>开发态</b>：<code>backend</code> 下 <code>python -m uvicorn sim4wis.main:app --port 8010</code>，
 <code>frontend</code> 下 <code>npm run dev</code>（Vite :5173 代理到 8010）。</p>
 <p>首次进入有「快速开始」四步引导（右上 <kbd>?</kbd> 可随时唤回）：</p>
@@ -520,6 +524,10 @@ def build_html() -> None:
 四轮实际转角、每轮转向中心线、整车瞬心与行驶轨迹；HUD 给出车速/横摆/位姿/四轮转角/μ/瞬心偏差。</p>
 {img("01_run_overview", "键盘 W+A 驾驶后的运行页：轨迹、四轮转角、HUD 实时量")}
 {gif("gif_drive", "键盘绕桩驾驶：正弦转向下四轮转角与轨迹的实时响应")}
+<h3>3.0 三种交互方式</h3>
+<p>运行页顶部在<b>手动驾驶</b>、<b>脚本工况</b>和<b>Agent</b>之间切换。手动模式用于键盘、
+手柄或方向盘的实时驾驶；脚本模式把 YAML 动作序列绑定到同一驾驶台；Agent 模式创建与人工窗口
+完全隔离的固定步长会话。三种路径都能保存到结果库，并输出图形、全量 CSV/JSON/ZIP 与 SVG 图表。</p>
 <h3>3.1 视图</h3>
 <p>右上 2D/3D 切换。3D 场景包含车身、可转向车轮、场景路面与轨迹带；相机可拖拽环绕。</p>
 {img("02_view3d", "3D 视图")}
@@ -561,8 +569,16 @@ def build_html() -> None:
 <ul>
 <li><b>设计</b>：策略设计器（k(vx) 调度曲线编辑）、Python/JS 自定义策略热加载。</li>
 <li><b>验证</b>：开环激励（角阶跃/正弦/扫频/双移线）、策略评分（7 项 KPI 实时）、A/B 轨迹对比叠加。</li>
-<li><b>数据</b>：两点测距、通道录制与 CSV 导出、动作脚本、实时曲线（转角/主销力矩/齿条力/侧偏角…）。</li>
+<li><b>数据</b>：两点测距、通道录制、CSV 导出或保存到结果库；停止后的录制可明确丢弃，动作脚本与实时曲线（转角/主销力矩/齿条力/侧偏角…）。</li>
 </ul>
+<h3>3.6 Agent 工作台与标准接口</h3>
+<p>Agent 页面显示独立会话的时间、修订号、状态、四轮 FL/FR/RL/RR 读数、轨迹和横摆图。创建会话后，
+每次提交完整控制并推进 1–1,000 个固定积分步；若网络响应不确定，使用相同 <code>request_id</code>
+和请求体重试，服务端会回放已接受结果而不会重复积分。导出会生成可追溯 run，包含 CSV、JSON、ZIP、
+轨迹 SVG、曲线 SVG、manifest 和校验和。</p>
+<p>外部 Agent 可调用同一份 REST 契约（<code>/api/agent/capabilities</code>）或便携包的 stdio MCP
+入口。先查询能力清单，再创建会话、推进、观察、导出；单位为 m、m/s、rad、N、N·m，轮序固定
+FL/FR/RL/RR。完整 Schema、失败语义和宿主配置见包内 <code>docs/interaction_guide.md</code>。</p>
 
 <h2 id="s4">4　手柄：六种映射模式与校准</h2>
 <p>「驾驶」tab 底部的 <b>🎮 手柄映射与校准</b> 面板。接入任意标准手柄/USB 方向盘即用；
@@ -693,6 +709,7 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>8010 端口被占？</td><td>本机若跑其它服务（如本地 LLM 常占 8000）不冲突；8010 被占时改
 <code>start</code> 脚本里的端口。</td></tr>
 <tr><td>分析页 run 从哪来？</td><td>试验页跑的批量实验（含安全研究脚本产生的）都会落盘到 runs/。</td></tr>
+<tr><td>怎么让 AI Agent 调用便携版？</td><td>在解压目录的终端运行 <code>agent_mcp.command --print-config</code>（macOS）或 <code>agent_mcp.bat --print-config</code>（Windows），把输出粘贴到 Agent 宿主的 MCP 配置；它会按需启动本地后端。</td></tr>
 </table>
 
 <h2 id="s14">14　版本纪要 v0.9 → v{VER}</h2>
@@ -707,7 +724,8 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>v0.99–0.99.3</td><td>2D/3D 渲染兼容性修复；标准工况场地重制；3D 车顶视角</td></tr>
 <tr><td>v0.100.0</td><td>研究报告流水线：单轮失效安全分析、解耦价值研究、后轮转角范围研究自包含 HTML</td></tr>
 <tr><td>v0.101.0–0.101.1</td><td>K&C 表驱动悬架特性；显示可读性与 3D 运动重建（航位推算去拍频）</td></tr>
-<tr><td>v{VER}</td><td>P0 正确性（D1 轴侧偏分配单源化、D5 多速率转向）；v2 转向层黄金锚点与摩擦频域分离；objective-test 体系统一；MCP 服务器；标定残差面板（C3a）；3D 平滑性机器验证</td></tr>
+<tr><td>v0.103.0</td><td>转向控制层主线收尾：柔度三臂、调参工作台五通道、超包线定量研究、规格/选型闭环和研究交接</td></tr>
+<tr><td>v{VER}</td><td>物理数学与底盘动力学审查修订（质心力矩、轮胎接触、几何/齿条虚功、状态复位与步进）；三种交互路径与隔离 Agent 会话；完整图形、全量数据和图表工件；Mac/Windows 便携包含 MCP Agent 入口</td></tr>
 </table>
 <p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v{VER}</p>
 </body></html>"""

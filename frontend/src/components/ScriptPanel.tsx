@@ -15,6 +15,7 @@ interface ScriptStatus {
   t_in_script: number;
   script_name: string;
   loop_count: number;
+  error?: string | null;
 }
 
 import { fetchJSON } from "@/api/http";
@@ -136,6 +137,7 @@ export default function ScriptPanel() {
       </div>
 
       <textarea
+        aria-label="动作脚本 YAML"
         value={scriptYaml}
         onChange={(e) => setScriptYaml(e.target.value)}
         readOnly={running}
@@ -148,6 +150,8 @@ export default function ScriptPanel() {
           fontSize: 11, lineHeight: 1.4, resize: "vertical",
         }}
       />
+      <p className="interaction-note">动作时间与渐变跟随仿真时钟；暂停仿真会冻结脚本时间。脚本结束或停止后释放输入。</p>
+      {status?.error && <p className="interaction-error" role="alert">脚本执行失败：{status.error}</p>}
 
       <div className="btn-row" style={{ marginTop: 6 }}>
         {running ? (

@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import math
 from bisect import bisect_left, bisect_right
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -36,64 +36,7 @@ import numpy as np
 
 from sim4wis.core.state import ControlCommand, VehicleState
 
-# Type for a per-sample value extractor.
-Extractor = Callable[[VehicleState, ControlCommand], float]
-
-
-def _wheel_extractor(field_name: str, idx: int) -> Extractor:
-    def get(s: VehicleState, _c: ControlCommand) -> float:
-        return float(getattr(s, field_name)[idx])
-    return get
-
-
-def _cmd_wheel_extractor(field_name: str, idx: int) -> Extractor:
-    def get(_s: VehicleState, c: ControlCommand) -> float:
-        return float(getattr(c, field_name)[idx])
-    return get
-
-
-def _icr_extractor(source: str, axis: int) -> Extractor:
-    def get(s: VehicleState, c: ControlCommand) -> float:
-        v = s.vehicle_icr_body[axis] if source == "vehicle" else c.icr_target_body[axis]
-        return float(v) if math.isfinite(v) else math.nan
-    return get
-
-
-_WHEEL_NAMES = ("fl", "fr", "rl", "rr")
-
-
-AVAILABLE_CHANNELS: dict[str, Extractor] = {
-    "pose_x":    lambda s, c: s.x,
-    "pose_y":    lambda s, c: s.y,
-    "pose_psi":  lambda s, c: s.psi,
-    "vx":        lambda s, c: s.vx,
-    "vy":        lambda s, c: s.vy,
-    "yaw_rate":  lambda s, c: s.yaw_rate,
-}
-for _i, _w in enumerate(_WHEEL_NAMES):
-    AVAILABLE_CHANNELS[f"delta_{_w}"] = _wheel_extractor("delta", _i)
-    AVAILABLE_CHANNELS[f"deltacmd_{_w}"] = _cmd_wheel_extractor("delta_cmd", _i)
-    AVAILABLE_CHANNELS[f"omega_{_w}"] = _wheel_extractor("wheel_omega", _i)
-    AVAILABLE_CHANNELS[f"fz_{_w}"] = _wheel_extractor("fz", _i)
-    AVAILABLE_CHANNELS[f"torque_steer_{_w}"] = _wheel_extractor("torque_steer", _i)
-    # Per-wheel steering centre: signed deviation from vehicle ICR [m] and
-    # the projected point itself (body frame) — NaN when driving straight.
-    AVAILABLE_CHANNELS[f"icr_dev_{_w}"] = _wheel_extractor("wheel_icr_dev", _i)
-for _i, _w in enumerate(_WHEEL_NAMES):
-    def _wheel_icr_axis(idx: int, axis: int) -> Extractor:
-        def get(s: VehicleState, _c: ControlCommand) -> float:
-            v = s.wheel_icr_body[idx, axis]
-            return float(v) if math.isfinite(v) else math.nan
-        return get
-    AVAILABLE_CHANNELS[f"icr_x_{_w}"] = _wheel_icr_axis(_i, 0)
-    AVAILABLE_CHANNELS[f"icr_y_{_w}"] = _wheel_icr_axis(_i, 1)
-AVAILABLE_CHANNELS["icr_vehicle_body_x"] = _icr_extractor("vehicle", 0)
-AVAILABLE_CHANNELS["icr_vehicle_body_y"] = _icr_extractor("vehicle", 1)
-AVAILABLE_CHANNELS["icr_target_body_x"]  = _icr_extractor("target", 0)
-AVAILABLE_CHANNELS["icr_target_body_y"]  = _icr_extractor("target", 1)
-for _i, _w in enumerate(_WHEEL_NAMES):
-    AVAILABLE_CHANNELS[f"rack_force_{_w}"]   = _wheel_extractor("rack_force", _i)
-    AVAILABLE_CHANNELS[f"motor_torque_{_w}"] = _wheel_extractor("motor_torque_demand", _i)
+from sim4wis.core.telemetry import AVAILABLE_CHANNELS, sample_channels
 
 
 # Default recording set — the channels we believe are useful for almost
@@ -135,10 +78,16 @@ class Recorder:
         self._t: list[float] = []
         self._strategy: list[str] = []
         self._data: dict[str, list[float]] = {c: [] for c in self._channels}
+        self.generation = 0
+        self.dropped_samples = 0
+        self.stop_reason: str | None = None
 
     # ---- mutators ----------------------------------------------------------
 
     def start(self) -> None:
+        self.generation += 1
+        self.dropped_samples = 0
+        self.stop_reason = None
         self._t.clear()
         self._strategy.clear()
         for c in self._channels:
@@ -147,6 +96,24 @@ class Recorder:
 
     def stop(self) -> None:
         self._recording = False
+
+    def clear(self) -> None:
+        """Discard a stopped recording and make the buffer explicitly empty.
+
+        Stopping deliberately preserves samples so they can be exported or
+        saved.  Clearing is a separate, irreversible-in-memory user action;
+        callers must stop first so an active recording is never silently cut
+        short.
+        """
+        if self._recording:
+            raise RuntimeError("stop recording before clearing")
+        self.generation += 1
+        self.dropped_samples = 0
+        self.stop_reason = None
+        self._t.clear()
+        self._strategy.clear()
+        for values in self._data.values():
+            values.clear()
 
     def set_channels(self, channels: list[str]) -> None:
         """Reset the buffer with a new channel selection."""
@@ -159,16 +126,21 @@ class Recorder:
         if was_recording:
             self._recording = True
 
-    def write(self, state: VehicleState, cmd: ControlCommand, strategy: str) -> None:
+    def write(self, state: VehicleState, cmd: ControlCommand, strategy: str, driver=None, model=None) -> None:
         if not self._recording:
+            return
+        if self._t and float(state.t) <= self._t[-1]:
+            self.stop_reason = "simulation_time_reset"
+            self.stop()
             return
         self._t.append(float(state.t))
         self._strategy.append(strategy)
-        for c in self._channels:
-            self._data[c].append(AVAILABLE_CHANNELS[c](state, cmd))
+        for c, value in sample_channels(state, cmd, driver, model, self._channels).items():
+            self._data[c].append(value)
         # Trim from the front if we exceeded buffer capacity.
         excess = len(self._t) - self.max_samples
         if excess > 0:
+            self.dropped_samples += excess
             del self._t[:excess]
             del self._strategy[:excess]
             for c in self._channels:
@@ -189,7 +161,27 @@ class Recorder:
             "channels": list(self._channels),
             "buffer_seconds": self.cfg.buffer_seconds,
             "available_channels": list(AVAILABLE_CHANNELS.keys()),
+            "generation": self.generation,
+            "dropped_samples": self.dropped_samples,
+            "complete": self.dropped_samples == 0 and self.stop_reason is None,
+            "stop_reason": self.stop_reason,
         }
+
+    def result_snapshot(self, meta: dict):
+        """A stopped recording becomes the same durable run used by batch/Agent."""
+        from sim4wis.experiment.session import RunResult
+        if self.is_recording:
+            raise ValueError("stop recording before saving a stable result")
+        if not self._t:
+            raise ValueError("no recorded samples")
+        catalogue = list(dict.fromkeys(self._strategy))
+        channels = {k: list(v) for k, v in self._data.items()}
+        channels["strategy_index"] = [float(catalogue.index(s)) for s in self._strategy]
+        return RunResult(list(self._t), channels, self._t[-1]-self._t[0], len(self._t),
+                         {**meta, "source": "realtime", "strategy_catalog": catalogue,
+                          "recording": self.status(), "record_hz": self.cfg.rate_hz,
+                          "n_steps": len(self._t) if meta.get("sampling") == "every integration step" else None,
+                          "complete": self.status()["complete"]})
 
     def to_csv(
         self,
@@ -232,5 +224,5 @@ def _fmt(v: float) -> str:
         return ""
     if not math.isfinite(f):
         return ""
-    # 6 significant digits is enough for engineering analysis and keeps CSVs small.
-    return f"{f:.6g}"
+    # Preserve a float64 round trip in full-data exports.
+    return f"{f:.17g}"

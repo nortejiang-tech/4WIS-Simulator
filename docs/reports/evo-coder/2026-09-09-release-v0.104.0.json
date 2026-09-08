@@ -1,0 +1,36 @@
+{
+  "schema_version": "evo-coder.report.v1",
+  "task": "v0.104.0 发布收尾与双平台交付",
+  "task_date": "2026-09-09",
+  "planner": "ASTRA",
+  "calls": [],
+  "not_invoked": {
+    "reason": "发布门禁、便携包装配、跨平台启动验证、GitHub workflow、标签和发布资产属于交付边界；由 Planner 直接实施和独立验收，不以本地 Coder 结构化 PASS 代替发布证据。",
+    "spark_fallback_calls": 0,
+    "luna_fallback_calls": 0,
+    "prompt_or_receipt": "not_applicable"
+  },
+  "independent_verification": {
+    "backend_pytest": "987 passed; 2 upstream WebSocket deprecation warnings",
+    "smoke": "32/32 passed",
+    "golden": "6/6 passed",
+    "analytic_reference": "2/2 benchmarks; 15 metrics",
+    "frontend": "type-check, production build, 54 Vitest tests passed",
+    "browser": "57 Playwright Chromium production E2E tests passed",
+    "macos_portable": "fresh extraction native smoke passed",
+    "windows_portable": "static archive check passed locally; native smoke is a required post-tag GitHub Windows gate"
+  },
+  "metrics": {
+    "calls": 0,
+    "supervisor_pass": { "numerator": 0, "denominator": 0, "rate": null },
+    "first_independent_acceptance": { "numerator": 0, "denominator": 0, "rate": null },
+    "useful_contribution_adopted": { "numerator": 0, "denominator": 0, "rate": null },
+    "partial_acceptance": 0,
+    "rejected": 0,
+    "pending_review": 0
+  },
+  "v1_external_validation": {
+    "status": "PENDING",
+    "reason": "No passing external_tool, bench, scaled_vehicle, or full_vehicle benchmark is present."
+  }
+}

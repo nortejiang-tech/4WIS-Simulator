@@ -151,7 +151,7 @@ def _fmt(v: float) -> str:
     f = float(v)
     if not math.isfinite(f):
         return ""
-    return f"{f:.6g}"
+    return f"{f:.17g}"
 
 
 def list_runs() -> list[dict[str, Any]]:

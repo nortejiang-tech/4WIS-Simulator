@@ -137,7 +137,7 @@ export const HELP: Record<string, ReactNode> = {
       <br />⚠ 与画布放置扰动/航点互斥。
     </>
   ),
-  recording: <>整段录制 CSV(含 ICR、力链 8 通道、侧偏角等)。开始→行驶→停止→导出。</>,
+  recording: <>整段录制 CSV/结果库（含 ICR、力链、侧偏角等）。停止会保留数据供导出；确认不要时点「丢弃录制」。</>,
   script: <>加载 YAML 动作脚本(<code>scripts_lib/*.yaml</code>)自动执行预设工况序列。</>,
   chart: (
     <>

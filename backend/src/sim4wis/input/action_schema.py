@@ -23,6 +23,7 @@ the script schema is importable even in slim envs like the dev sandbox).
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -47,6 +48,8 @@ def validate_actions(raw_actions: list[dict[str, Any]]) -> list[Action]:
             raise ValueError(f"action {i} missing 't' field")
         name = str(a["action"])
         t = float(a["t"])
+        if not math.isfinite(t) or t < 0:
+            raise ValueError(f"action {i}: t must be finite and non-negative")
         args = {k: v for k, v in a.items() if k not in ("action", "t")}
         _check_action_args(name, args, i)
         actions.append(Action(t=t, action=name, args=args))
@@ -62,6 +65,16 @@ def _check_action_args(name: str, args: dict[str, Any], idx: int) -> None:
     missing = [k for k in expected if k not in args]
     if missing:
         raise ValueError(f"action {idx} ({name}): missing args {missing}")
+    for key in ("duration", "distance", "speed_below", "until_t"):
+        if key in args:
+            value = float(args[key])
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(f"action {idx}: {key} must be finite and non-negative")
+    for key in ("throttle", "steering", "from_", "to"):
+        if key in args:
+            value = float(args[key])
+            if not math.isfinite(value) or abs(value) > 1:
+                raise ValueError(f"action {idx}: {key} must be finite within [-1,1]")
 
 
 _EXPECTED_ARGS: dict[str, tuple[str, ...]] = {

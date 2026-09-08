@@ -21,13 +21,13 @@ from __future__ import annotations
 import numpy as np
 
 from sim4wis.controller.base import ControllerStrategy
-from sim4wis.controller.longitudinal import speed_command
-from sim4wis.controller.steering_feel import front_steer_angle
+from sim4wis.controller.longitudinal import cornering_accel_limit, speed_command
 from sim4wis.controller.rws_common import (
     command_from_axle_angles,
     reference_yaw_rate,
     zero_sideslip_ratio,
 )
+from sim4wis.controller.steering_feel import front_steer_angle
 from sim4wis.core.state import ControlCommand, DriverInput, VehicleState
 
 MODES = ("fixed_ratio", "speed_schedule", "yaw_feedback", "transient", "model_following")
@@ -122,4 +122,4 @@ class RearWheelSteerStrategy(ControllerStrategy):
             r_ref = reference_yaw_rate(p, v, df)
             dr = zero_sideslip_ratio(p, v) * df + g * (r_ref - self._yaw_f)
 
-        return command_from_axle_angles(p, df, dr, v_cmd)
+        return command_from_axle_angles(p, df, dr, v_cmd, cornering_accel_limit(p, driver, state))

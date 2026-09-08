@@ -8,13 +8,14 @@ combined force magnitude is capped at μ·Fz (the friction circle).
 friction-ellipse combined-slip clipping). Select via
 `VehicleParams.tire_model = "linear" | "pacejka"` and `make_tire()`.
 
-Slip convention (matches Pacejka / SAE):
+Slip convention (project X-forward, Y-left, Z-up; not SAE axes):
     α (slip angle) [rad] — angle between wheel rolling axis and actual
                             wheel velocity. Positive when wheel moves to the
                             left of its rolling direction.
-    κ (slip ratio) [-]   — (r·ω - vx_wheel) / vx_wheel, with sign such that
-                            κ > 0 when wheel is driving (spinning faster than
-                            ground), κ < 0 when braking.
+    κ (slip ratio) [-]   — (r·ω - vx_wheel) / max(|vx_wheel|, epsilon).
+                            Positive means positive longitudinal slip velocity,
+                            including in reverse; drive/brake labels depend on
+                            travel direction.
 
 Force convention (returned in wheel-aligned frame):
     Fx > 0  → wheel pushes vehicle forward (along rolling axis)
@@ -49,7 +50,9 @@ def pacejka_pure_slip_forces(
     load-sensitive stiffness without constructing temporary model objects.
     """
 
-    d = max(float(mu) * float(fz), 1e-3)
+    d = max(float(mu) * float(fz), 0.0)
+    if d == 0.0:
+        return 0.0, 0.0
     bx = float(c_kappa) / (float(cx) * d)
     by = float(c_alpha) / (float(cy) * d)
     xk = bx * float(kappa)
@@ -68,7 +71,9 @@ def friction_ellipse_clip(
 ) -> tuple[float, float]:
     """Clip Fx/Fy to the combined-slip friction ellipse."""
 
-    d = max(float(mu) * float(fz), 1e-3)
+    d = max(float(mu) * float(fz), 0.0)
+    if d == 0.0:
+        return 0.0, 0.0
     r = (float(fx) / d) ** 2 + (float(fy) / d) ** 2
     if r > 1.0:
         scale = 1.0 / math.sqrt(r)

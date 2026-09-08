@@ -219,6 +219,8 @@ def steering_linkage_metrics(
         efficiency: ``sin(arm_tie) * cos(tie_rack) * rack_mech_efficiency``
         arm_length: instantaneous kingpin-to-outer-ball length [m]
         rack_travel: inner joint travel along rack axis from zero [m]
+        rack_travel_derivative: signed ds/d(delta) [m/rad], from the constraint
+        valid: whether this wheel angle is reachable with the given rack stroke
     """
     d = np.asarray(delta, dtype=np.float64).reshape(4)
     arm_tie = np.zeros(4)
@@ -226,6 +228,8 @@ def steering_linkage_metrics(
     eff = np.zeros(4)
     arm_len = np.zeros(4)
     travel = np.zeros(4)
+    derivative = np.zeros(4)
+    valid = np.ones(4, dtype=bool)
     eta = float(np.clip(rack_mech_efficiency, 1e-6, 1.0))
 
     for i in range(4):
@@ -262,10 +266,12 @@ def steering_linkage_metrics(
             cand = [(-b + root) * 0.5, (-b - root) * 0.5]
             t = min(cand, key=abs)
         else:
+            valid[i] = False
             # Geometry is over-constrained at this angle; use closest point on
             # the rack axis so efficiency still degrades smoothly.
             t = -float(np.dot(axis, rel))
         if t_limit > 0.0:
+            valid[i] = valid[i] and abs(t) <= t_limit + 1e-10
             t = float(np.clip(t, -t_limit, t_limit))
         inner = inner0 + t * axis
 
@@ -278,12 +284,19 @@ def steering_linkage_metrics(
         dot_at = float(np.clip(np.dot(ua, ut), -1.0, 1.0))
         cross_at = float(ua[0] * ut[1] - ua[1] * ut[0])
         rack_projection = abs(float(np.dot(ut, axis)))
+        valid[i] = valid[i] and la > 1e-8 and lt > 1e-8 and abs(cross_at) > 1e-10
 
         arm_tie[i] = float(np.arccos(dot_at))
         tie_rack[i] = float(np.arccos(np.clip(rack_projection, 0.0, 1.0)))
         eff[i] = max(abs(cross_at) * rack_projection * eta, 1e-6)
-        arm_len[i] = max(la, steering_arm_length_fallback)
+        arm_len[i] = la if la > 1e-8 else steering_arm_length_fallback
         travel[i] = t
+        projection_signed = float(np.dot(ut, axis))
+        if abs(projection_signed) > 1e-12:
+            derivative[i] = la * cross_at / projection_signed
+        else:
+            derivative[i] = np.copysign(np.inf, cross_at)
+            valid[i] = False
 
     return {
         "arm_tie_angle": arm_tie,
@@ -291,6 +304,8 @@ def steering_linkage_metrics(
         "efficiency": eff,
         "arm_length": arm_len,
         "rack_travel": travel,
+        "rack_travel_derivative": derivative,
+        "valid": valid,
     }
 
 
@@ -311,12 +326,17 @@ def wheel_rack_force_from_linkage(
         steering_arm_length_fallback=steering_arm_length_fallback,
     )
     tau = np.asarray(kingpin_torques, dtype=np.float64).reshape(4)
-    arm = np.maximum(metrics["arm_length"], 1e-6)
-    eff = np.maximum(metrics["efficiency"], 1e-6)
+    # Virtual work: F*ds = tau*d(delta). Geometry is a motion ratio,
+    # not an efficiency loss; the tie/rack cosine belongs in the numerator
+    # of F = tau*cos(beta)/(arm*sin(theta)), not the denominator.
+    lever = np.maximum(np.abs(metrics["rack_travel_derivative"]), 1e-6)
+    eta = max(float(rack_mech_efficiency), 1e-6)
     r_p = max(float(pinion_radius), 1e-6)
     ratio = max(float(motor_gear_ratio), 1e-6)
-    rack_forces = tau / (arm * eff)
-    motor_torques = rack_forces * r_p / ratio
+    # Public rack-force signs remain steering-positive per corner. The signed
+    # local-axis motion Jacobian is supplied separately in the metrics.
+    rack_forces = tau / lever
+    motor_torques = rack_forces * r_p / (ratio * eta)
     return rack_forces, motor_torques, metrics
 
 

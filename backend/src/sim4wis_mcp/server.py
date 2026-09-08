@@ -52,6 +52,42 @@ _JOB_TIMEOUT_S = 1800.0
 _started_by_us: subprocess.Popen | None = None
 
 
+def _mcp_host_config() -> dict[str, Any]:
+    """Return a copy-pasteable MCP host entry for this exact installation.
+
+    The facade can run from a development virtualenv or from a portable
+    archive.  A portable archive cannot assume where it was unpacked, so it
+    exposes this tiny discovery surface instead of asking users to hand-copy a
+    path into their host configuration.
+    """
+    package_root = Path(__file__).resolve().parents[3]
+    if sys.platform.startswith("win"):
+        launcher = package_root / "agent_mcp.bat"
+        if launcher.is_file():
+            return {
+                "mcpServers": {
+                    "sim4wis": {
+                        "command": "cmd.exe",
+                        "args": ["/d", "/c", str(launcher)],
+                    }
+                }
+            }
+    else:
+        launcher = package_root / "agent_mcp.command"
+        if launcher.is_file():
+            return {"mcpServers": {"sim4wis": {"command": str(launcher), "args": []}}}
+
+    # Development fallback: this does not claim to be a portable configuration.
+    return {
+        "mcpServers": {
+            "sim4wis": {
+                "command": sys.executable,
+                "args": ["-m", "sim4wis_mcp.server"],
+            }
+        }
+    }
+
+
 # ---------------------------------------------------------------------------
 # HTTP — the whole facade is this plus the tool descriptions
 # ---------------------------------------------------------------------------
@@ -87,8 +123,8 @@ def _request(
 
 def _backend_up() -> bool:
     try:
-        _request("GET", "/api/version", timeout_s=1.0)
-        return True
+        status, result = _request("GET", "/api/version", timeout_s=1.0)
+        return status == 200 and isinstance(result, dict) and isinstance(result.get("version"), str)
     except OSError:
         return False
 
@@ -105,8 +141,12 @@ def _ensure_backend() -> None:
     global _started_by_us
     if _backend_up():
         return
+    parsed = urllib.parse.urlparse(BASE)
+    if parsed.scheme != "http" or parsed.hostname not in {"localhost", "127.0.0.1"}:
+        raise RuntimeError("automatic startup requires a local HTTP backend; start this backend explicitly")
     _started_by_us = subprocess.Popen(
-        [sys.executable, "-m", "sim4wis.main"],
+        [sys.executable, "-m", "uvicorn", "sim4wis.main:app", "--host", parsed.hostname,
+         "--port", str(parsed.port or 8010)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
@@ -138,7 +178,20 @@ def _describe() -> dict[str, Any]:
     except OSError:
         caps["backend_version"] = None
     caps["mcp_facade"] = {"version": __version__, "base": BASE}
+    caps["interaction"] = _checked_request("GET", "/api/agent/capabilities")
     return caps
+
+
+class BackendError(RuntimeError):
+    def __init__(self, status, detail):
+        self.status, self.detail = status, detail
+        super().__init__(f"HTTP {status}: {json.dumps(detail, ensure_ascii=False)[:1000]}")
+
+
+def _checked_request(method, path, body=None):
+    status, data = _request(method, path, body)
+    if status >= 400: raise BackendError(status, data)
+    return data
 
 
 def _list_studies() -> dict[str, Any]:
@@ -268,6 +321,40 @@ TOOL_DESCRIPTIONS: list[Tool] = [
          inputSchema={"type": "object", "properties": {}}),
 ]
 
+_ID_SCHEMA = {"type": "string", "minLength": 1}
+_CONTROL_SCHEMA = {"type": "object", "additionalProperties": False,
+    "properties": {"throttle": {"type": "number", "minimum": 0, "maximum": 1},
+        "brake": {"type": "number", "minimum": 0, "maximum": 1},
+        "steering": {"type": "number", "minimum": -1, "maximum": 1},
+        "gear": {"type": "integer", "enum": [-1, 0, 1]},
+        "handbrake": {"type": "integer", "enum": [0, 1]},
+        "speed_target_ms": {"type": "number", "minimum": -60, "maximum": 60},
+        "front_angle_rad": {"type": "number", "minimum": -1.5, "maximum": 1.5},
+        "wheel_norm": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": -1, "maximum": 1}},
+        "body_fraction": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number", "minimum": -1, "maximum": 1}}}}
+
+def _tool(name, description, properties, required=()):
+    return Tool(name=name, description=description,
+                inputSchema={"type": "object", "additionalProperties": False,
+                             "properties": properties, "required": list(required)})
+
+TOOL_DESCRIPTIONS.extend([
+    _tool("create_session", "Create an isolated fixed-step Agent session. Human GUI inputs cannot alter it. experiment requires name and explicit model_type/strategy; omit maneuver steps. Use describe_capabilities for the full schema.",
+          {"experiment": {"type": "object"}, "label": {"type": "string", "maxLength": 120}}, ["experiment"]),
+    _tool("list_sessions", "List live Agent sessions, revisions, status and sample counts.", {}),
+    _tool("observe_session", "Read current state without advancing simulation time.", {"session_id": _ID_SCHEMA}, ["session_id"]),
+    _tool("step_session", "Apply complete controls for 1..1000 fixed steps. Use the last revision. Retry uncertain responses with the SAME request_id and body; different bodies with the same id are refused. Physical units: rad, m/s, FL/FR/RL/RR.",
+          {"session_id": _ID_SCHEMA, "request_id": {"type": "string", "maxLength": 80, "pattern": "^[A-Za-z0-9_.:-]+$"},
+           "expected_revision": {"type": "integer", "minimum": 0}, "steps": {"type": "integer", "minimum": 1, "maximum": 1000},
+           "control": _CONTROL_SCHEMA}, ["session_id", "request_id", "expected_revision", "steps", "control"]),
+    _tool("export_session", "Persist all accepted samples into a run; return full CSV/JSON/ZIP and SVG chart/trajectory URLs, schema and checksum. Repeated export of the same revision returns the same run.",
+          {"session_id": _ID_SCHEMA}, ["session_id"]),
+    _tool("close_session", "Release in-memory session resources. Export first if the trace must be retained.", {"session_id": _ID_SCHEMA}, ["session_id"]),
+    _tool("get_run_artifacts", "Discover complete data and graphical artifacts for any run, including human recordings and batch/study runs. Data remain outside the model context unless explicitly fetched.", {"run_id": _ID_SCHEMA}, ["run_id"]),
+    _tool("start_study", "Submit a StudySpec and immediately return job_id. Use run_study with dry_run=true first; poll get_study_job until done/error. Does not block for completion.", {"spec": {"type": "object"}}, ["spec"]),
+    _tool("get_study_job", "Poll an asynchronous study job for progress, explicit failure and results.", {"job_id": _ID_SCHEMA}, ["job_id"]),
+])
+
 
 async def _list_tools(ctx: Any, params: Any) -> ListToolsResult:
     return ListToolsResult(tools=TOOL_DESCRIPTIONS)
@@ -277,7 +364,7 @@ async def _call_tool(ctx: Any, params: CallToolRequestParams) -> CallToolResult:
     name = params.name
     args = dict(params.arguments or {})
     try:
-        _ensure_backend()
+        await asyncio.to_thread(_ensure_backend)
         if name == "describe_capabilities":
             result = _describe()
         elif name == "run_study":
@@ -294,11 +381,37 @@ async def _call_tool(ctx: Any, params: CallToolRequestParams) -> CallToolResult:
         elif name == "read_report":
             result = _read_report(str(args["study_id"]))
         elif name == "verify_golden":
-            result = _verify_golden()
+            result = await asyncio.to_thread(_verify_golden)
+        elif name == "create_session":
+            result = await asyncio.to_thread(_checked_request, "POST", "/api/agent/sessions", args)
+        elif name == "list_sessions":
+            result = await asyncio.to_thread(_checked_request, "GET", "/api/agent/sessions")
+        elif name in {"observe_session", "step_session", "export_session", "close_session"}:
+            sid = urllib.parse.quote(str(args.pop("session_id")), safe="")
+            method, suffix = {"observe_session": ("GET", ""), "step_session": ("POST", "/step"),
+                              "export_session": ("POST", "/export"), "close_session": ("DELETE", "")}[name]
+            result = await asyncio.to_thread(_checked_request, method, f"/api/agent/sessions/{sid}{suffix}", args if name == "step_session" else None)
+        elif name == "get_run_artifacts":
+            rid = urllib.parse.quote(str(args["run_id"]), safe="")
+            result = await asyncio.to_thread(_checked_request, "GET", f"/api/runs/{rid}/artifacts")
+        elif name == "start_study":
+            result = await asyncio.to_thread(_checked_request, "POST", "/api/study/run", args["spec"])
+        elif name == "get_study_job":
+            jid = urllib.parse.quote(str(args["job_id"]), safe="")
+            result = await asyncio.to_thread(_checked_request, "GET", f"/api/study/jobs/{jid}")
         else:
             raise RuntimeError(f"unknown tool: {name}")
         text = json.dumps(result, ensure_ascii=False, indent=1, default=str)
-        return CallToolResult(content=[TextContent(type="text", text=text)], is_error=False)
+        if isinstance(result, dict) and "outputs" in result:
+            result["outputs"] = {k: urllib.parse.urljoin(BASE, v) for k,v in result["outputs"].items()}
+            text = json.dumps(result, ensure_ascii=False, indent=1, default=str)
+        return CallToolResult(content=[TextContent(type="text", text=text)],
+                              structured_content=result if isinstance(result, dict) else {"result": result},
+                              is_error=isinstance(result, dict) and result.get("status") in {"error", "failed"})
+    except BackendError as exc:
+        error = {"error": {"code": "backend_error", "http_status": exc.status, "detail": exc.detail}}
+        return CallToolResult(content=[TextContent(type="text", text=json.dumps(error, ensure_ascii=False))],
+                              structured_content=error, is_error=True)
     except Exception as exc:  # noqa: BLE001 - the agent sees the failure, not a crash
         return CallToolResult(
             content=[TextContent(type="text", text=f"error: {type(exc).__name__}: {exc}")],
@@ -324,7 +437,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="sim4wis-mcp")
     parser.add_argument("--base", default=None,
                         help="backend base URL (default: $SIM4WIS_BACKEND_HTTP or http://127.0.0.1:8010)")
+    parser.add_argument(
+        "--print-config",
+        action="store_true",
+        help="print a copy-pasteable MCP host configuration for this installation and exit",
+    )
     args = parser.parse_args()
+    if args.print_config:
+        print(json.dumps(_mcp_host_config(), ensure_ascii=False, indent=2))
+        return 0
     global BASE
     if args.base:
         BASE = args.base

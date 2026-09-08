@@ -9,12 +9,13 @@ becoming tightly coupled to each other.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 import numpy as np
 
 from sim4wis.core.state import N_WHEELS, VehicleParams
+from sim4wis.vehicle.wheel_dynamics import implicit_spin
 
 G_ACCEL = 9.80665
 VMIN_SLIP = 0.5  # [m/s] floor for slip-angle/slip-ratio denominators
@@ -415,10 +416,10 @@ def fz_with_aero_lift(
     lift_f = float(params.aero_lift_coeff_front) * q
     lift_r = float(params.aero_lift_coeff_rear) * q
     fz = np.asarray(fz_static, dtype=np.float64).reshape(N_WHEELS).copy()
-    fz[0] = max(float(fz_static[0]) - 0.5 * lift_f, 1e-3)
-    fz[1] = max(float(fz_static[1]) - 0.5 * lift_f, 1e-3)
-    fz[2] = max(float(fz_static[2]) - 0.5 * lift_r, 1e-3)
-    fz[3] = max(float(fz_static[3]) - 0.5 * lift_r, 1e-3)
+    fz[0] = max(float(fz_static[0]) - 0.5 * lift_f, 0.0)
+    fz[1] = max(float(fz_static[1]) - 0.5 * lift_f, 0.0)
+    fz[2] = max(float(fz_static[2]) - 0.5 * lift_r, 0.0)
+    fz[3] = max(float(fz_static[3]) - 0.5 * lift_r, 0.0)
     return fz
 
 
@@ -503,6 +504,7 @@ def solve_steady_state_body(
     c_alpha: np.ndarray,
     wheel_positions_body: np.ndarray,
     mass: float,
+    cg_x: float = 0.0,
 ) -> tuple[float, float]:
     """Linear-bicycle (beta, yaw_rate) for a general 4-wheel steer pattern.
 
@@ -511,7 +513,7 @@ def solve_steady_state_body(
         alpha_i ~= beta + yaw_rate*x_i/V - delta_i
         Fy_i = -c_alpha_i * alpha_i
         sum(Fy_i) = m*V*yaw_rate
-        sum(x_i*Fy_i) = 0
+        sum((x_i-cg_x)*Fy_i) = 0
 
     The function returns (0, 0) for singular or non-finite systems so callers
     can gracefully fall back to direct kinematic slip.
@@ -528,8 +530,9 @@ def solve_steady_state_body(
     C = float(np.sum(ca * x * x))
     D = float(np.sum(ca * d))
     E = float(np.sum(ca * x * d))
-    mat = np.array([[A, B / V + float(mass) * V], [B, C / V]], dtype=np.float64)
-    rhs = np.array([D, E], dtype=np.float64)
+    mat = np.array([[A, B / V + float(mass) * V],
+                    [B - cg_x * A, (C - cg_x * B) / V]], dtype=np.float64)
+    rhs = np.array([D, E - cg_x * D], dtype=np.float64)
     try:
         sol = np.linalg.solve(mat, rhs)
     except np.linalg.LinAlgError:
@@ -546,6 +549,7 @@ def steady_state_slip_angles(
     c_alpha: np.ndarray,
     wheel_positions_body: np.ndarray,
     mass: float,
+    cg_x: float = 0.0,
     body_coupling: BodyCoupling = "vehicle",
     bicycle_min_speed: float = 1.0,
     min_longitudinal_speed: float = VMIN_SLIP,
@@ -572,6 +576,7 @@ def steady_state_slip_angles(
             c_alpha=c_alpha,
             wheel_positions_body=wp,
             mass=mass,
+            cg_x=cg_x,
         )
         alpha = beta + yaw_rate * wp[:, 0] / max(float(speed), 1e-3) - d
         return alpha, SteadyStateBody(beta=beta, yaw_rate=yaw_rate, used_bicycle=True)
@@ -817,17 +822,16 @@ def semi_implicit_wheel_spin(
     (pre-v0.9 flat-road cruise) but erupts as sustained κ oscillation the
     moment any steady longitudinal force exists (drag, slope, accel).
 
-    Scheme: backward-Euler on the *linear* slip force (unconditionally stable
-    in the stiff regime), switching to forward-Euler when the tyre is
-    friction-saturated (∂Fx/∂ω ≈ 0 there, so the ODE is non-stiff and the
-    implicit-linear denominator would wrongly suppress wheelspin).
+    Scheme: backward Euler on the selected tyre's actual combined-slip Fx.
+    A capacity-bracketed scalar solve preserves nonlinear torque equilibrium
+    and free wheelspin beyond the friction budget. Body integration remains
+    partitioned: this first-order wheel update limits overall time accuracy.
 
     Returns (omega_new, WheelForceSet at the new slip, kappa_new).
     """
 
     r = float(tire_radius)
     iw = max(float(wheel_inertia), 1e-6)
-    c_kappa = float(getattr(tire, "c_kappa", 100_000.0))
     omega = np.asarray(wheel_omega, dtype=np.float64).reshape(N_WHEELS)
     vxw = np.asarray(vx_wheel, dtype=np.float64).reshape(N_WHEELS)
     al = np.asarray(alpha, dtype=np.float64).reshape(N_WHEELS)
@@ -845,16 +849,9 @@ def semi_implicit_wheel_spin(
 
     for i in range(N_WHEELS):
         d = max(abs(float(vxw[i])), float(min_longitudinal_speed))
-        kappa_n = (r * float(omega[i]) - float(vxw[i])) / d
-        fx_n, fy_n, _mz_n = tire.forces(float(al[i]), kappa_n, float(fz_arr[i]), float(mu_arr[i]))
-        cap = float(mu_arr[i]) * float(fz_arr[i])
-        saturated = cap > 1e-6 and math.hypot(fx_n, fy_n) >= 0.98 * cap
-        if saturated:
-            w = float(omega[i]) + dt / iw * (float(tq[i]) - r * fx_n)
-        else:
-            w = (iw * float(omega[i]) + dt * (float(tq[i]) + r * c_kappa * float(vxw[i]) / d)) / (
-                iw + dt * r * r * c_kappa / d
-            )
+        w = implicit_spin(omega=float(omega[i]), vx=float(vxw[i]), alpha=float(al[i]),
+                          fz=float(fz_arr[i]), mu=float(mu_arr[i]), torque=float(tq[i]),
+                          dt=dt, radius=r, inertia=iw, denom=d, tire=tire)
         # Brake zero-crossing clamp. A friction brake can bring a wheel to rest
         # but cannot spin it up backwards — it only ever opposes motion. Without
         # this the brake makes κ chatter sign→sign across zero every step, and

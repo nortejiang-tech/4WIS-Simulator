@@ -21,10 +21,12 @@ Assumptions:
       Slope disturbances in step 12.
 
 Integration:
-    Fixed-step RK4 at `dt_sim` (default 5 ms). State vector
-        y = [vx, vy, ω, ω_FL, ω_FR, ω_RL, ω_RR]
-    Pose (x, y, ψ) is integrated separately by forward Euler over the same dt
-    using the RK4-final body velocity (good enough at 200 Hz).
+    Fixed-step RK4 for y=[vx,vy,r], holding wheel speed and the accepted
+    previous load over each body step. Actual nonlinear backward Euler for
+    wheel spin, once per step. This partitioned method is first order overall;
+    200 Hz is a default, not an accuracy guarantee. Pose uses a centred SE(2)
+    increment. Quantitative studies must check step-size sensitivity.
+
 """
 
 from __future__ import annotations
@@ -66,6 +68,12 @@ from sim4wis.vehicle.model_core import (
 )
 from sim4wis.vehicle.model_core import (
     store_grip_state as _store_grip,
+)
+from sim4wis.vehicle.rigid_body import (
+    cg_acceleration,
+    integrate_pose,
+    planar_derivatives,
+    road_warp,
 )
 from sim4wis.vehicle.steering_link import (
     front_axle_step,
@@ -145,6 +153,7 @@ class SimplifiedDynamicModel(VehicleModel):
         self._brake_f = np.zeros(N_WHEELS)
         # Initialize static vertical loads
         self.state.fz = vertical_loads(params, ax=0.0, ay=0.0)
+        self._fz_base = self.state.fz.copy()
 
     # ---- API ---------------------------------------------------------------
 
@@ -160,6 +169,19 @@ class SimplifiedDynamicModel(VehicleModel):
                 tracker.reset()
         self._prev_delta_cmd = np.zeros(N_WHEELS)
         self.state.fz = vertical_loads(self.params, 0.0, 0.0)
+        self._fz_base = self.state.fz.copy()
+        self._brake_f[:] = 0.0
+        self._alpha_lag[:] = 0.0
+        self._kappa_lag[:] = 0.0
+        self._kc_fx[:] = self._kc_fy[:] = self._kc_mz[:] = 0.0
+        self._kc_fz = self.state.fz.copy()
+        self._kc_camber[:] = self._kc_jounce[:] = 0.0
+        self.kc_toe[:] = self.kc_camber[:] = 0.0
+        self.tire_fx[:] = self.tire_fy[:] = self.tire_mz[:] = 0.0
+        if self._steering is not None:
+            self._steering.reset()
+        self._prev_hand = 0.0
+        self.steering_channels = idle_channels()
 
     def step(
         self,
@@ -213,12 +235,12 @@ class SimplifiedDynamicModel(VehicleModel):
 
         # 1b) K&C. This model carries no suspension DOF, so travel is inferred
         #     from the load it already computes: z = (Fz − Fz_static)/k_spring,
-        #     plus whatever vertical displacement the road itself imposes. That
+        #     plus non-planar road warp after removing heave/grade/bank. That
         #     is exactly as quasi-static as the rest of this model's vertical
         #     behaviour, costs nothing extra, and lets one K&C table drive both
         #     models rather than each having its own approximation.
         self._kc_jounce = ((self.state.fz - self._fz_static)
-                           / max(float(p.suspension.spring_rate), 1.0)) + ground_z
+                           / max(float(p.suspension.spring_rate), 1.0)) + road_warp(p.wheel_positions_body(), ground_z)
         kc_toe, self._kc_camber = kc_wheel_offsets(
             self._kc, jounce=self._kc_jounce, fx=self._kc_fx, fy=self._kc_fy,
             fz=self._kc_fz, mz=self._kc_mz)
@@ -263,15 +285,21 @@ class SimplifiedDynamicModel(VehicleModel):
         k4 = f(y0 + h * k3)
         y1 = y0 + (h / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
 
-        # Body-frame specific force (what an accelerometer at the CG reads).
+        # Inertial CG acceleration in body axes (grade gravity included).
         # Taken from the RK4 slope at the accepted state rather than from a
         # finite difference of vx/vy, so it stays clean at 200 Hz.
-        s.ax = float(y1[0] - y0[0]) / dt - float(y1[2]) * float(y1[1])
-        s.ay = float(y1[1] - y0[1]) / dt + float(y1[2]) * float(y1[0])
+        accepted_derivative = f(y1)
+        s.ax, s.ay = cg_acceleration(p, *y1, accepted_derivative)
 
         s.vx = float(y1[0])
         s.vy = float(y1[1])
         s.yaw_rate = float(y1[2])
+
+        # Loads are held over all RK stages, then committed exactly once.
+        # Road-force pulses are kept separate so the reported Fz never feeds
+        # the same pulse back into itself on the following step.
+        self._fz_base = fz_with_aero_lift(p, vertical_loads(p, s.ax, s.ay), abs(s.vx))
+        s.fz = self._fz_base.copy()
 
         # 2b) Wheel-spin update at the final body state (semi-implicit, stiff-
         #     stable) + final consistent tyre forces for the diagnostics.
@@ -347,11 +375,7 @@ class SimplifiedDynamicModel(VehicleModel):
             s.fz = np.clip(s.fz + fz_offset, 0.0, p.mass * 9.81)
 
         # 3) Pose integration (forward Euler at dt — good enough at 200 Hz)
-        cp = math.cos(s.psi)
-        sp = math.sin(s.psi)
-        s.x += dt * (s.vx * cp - s.vy * sp)
-        s.y += dt * (s.vx * sp + s.vy * cp)
-        s.psi += dt * s.yaw_rate
+        s.x, s.y, s.psi = integrate_pose(s.x, s.y, s.psi, *(0.5 * (y0 + y1)), dt)
 
         # 4) Update derived geometry from the final state
         s.vehicle_icr_body = vehicle_icr_from_velocity(s.vx, s.vy, s.yaw_rate)
@@ -462,7 +486,7 @@ class SimplifiedDynamicModel(VehicleModel):
         # The upper clamp (≈ 4× static per-wheel load = m·g) is a safety net so a
         # mis-configured / very stiff bump can't blow up the tyre + wheel-spin ODE.
         fz_max = self.params.mass * 9.81
-        fz = np.clip(self.state.fz + fz_offset, 0.0, fz_max)
+        fz = np.clip(self._fz_base + fz_offset, 0.0, fz_max)
 
         kin = wheel_slip_kinematics(
             vx=float(vx),
@@ -482,9 +506,8 @@ class SimplifiedDynamicModel(VehicleModel):
         # Relaxation-lagged slip. When enabled, the slip the tyre works at is
         # held over the RK4 sub-steps and advanced once per step (the same
         # treatment wheel spin already gets) rather than being added to the
-        # integrated state vector. At 200 Hz against a ~30 ms lag the
-        # difference is not resolvable, and it keeps the state vector — and the
-        # stiff-mode analysis behind it — unchanged.
+        # integrated state vector. This introduces splitting error, to be assessed by step-size
+        # convergence; it keeps the state vector unchanged.
         #
         # With sigma = 0 the fresh per-stage slip is used exactly as before, so
         # the feature off is bit-identical to not having it.
@@ -529,19 +552,5 @@ class SimplifiedDynamicModel(VehicleModel):
         # drive-force balance) — opposes body-X motion, vanishes at standstill.
         fx_total += body_resistance_force(p, vx)
 
-        # Newton-Euler in body frame (with Coriolis terms)
-        iz = p.inertia_z
-        vx_dot = fx_total / m + omega * vy
-        vy_dot = fy_total / m - omega * vx
-        omega_dot = m_z_total / iz
-
-        # Update Fz from latest accel estimate (so the NEXT step uses fresh loads).
-        # Aero lift (per axle, ∝ v²) is applied on top of the quasi-static
-        # transfer so high speed unloads the tyres — same as the load page.
-        ax_body = vx_dot - omega * vy   # body-frame longitudinal accel
-        ay_body = vy_dot + omega * vx   # body-frame lateral accel
-        self.state.fz = fz_with_aero_lift(
-            self.params, vertical_loads(self.params, ax_body, ay_body), abs(vx)
-        )
-
-        return np.array([vx_dot, vy_dot, omega_dot])
+        # Pure RHS: repeated evaluation at one state must give the same result.
+        return planar_derivatives(p, vx, vy, omega, fx_total, fy_total, m_z_total)

@@ -1,0 +1,127 @@
+{
+  "schema_version": "evo-coder.report.v1",
+  "task": "第二轮交互接口与界面重构",
+  "task_date": "2026-09-09",
+  "generated_at": "2026-09-09T00:24:15.642505+08:00",
+  "planner": "ASTRA",
+  "baseline": "隔离目录 /tmp/4wis-interaction-coder，仅有已审查编译配置及已安装依赖链接。主项目基线为上一轮所有未提交物理修正；本轮快照 /tmp/4wis-interaction-review/baseline-manifest.json。",
+  "planner_scope": "Agent 生命周期/步进幂等、共享输入仲裁、脚本时钟、遥测/导出、MCP、其余工作台与集成由 ASTRA 完成。高耦合状态控制和数据边界直接由 Planner 实施；未调用 Spark/Luna fallback。",
+  "calls": [
+    {
+      "stage_goal": "隔离实现无业务状态的三模式导航栏 InteractionModeBar.tsx/css。",
+      "receipt": {
+        "changed_paths": [
+          "src/InteractionModeBar.css",
+          "src/InteractionModeBar.tsx"
+        ],
+        "classification": "CODER_DONE_PENDING_REVIEW",
+        "config_sha256": {
+          "extension": "e5f3ffbfcd3ad230ea950fe65e649c798c1059a61c5d7a256cd2f478557753e3",
+          "models": "b45d46ad9d485255d974733d3e458207729626b045ac2f26d25d3c91fb5e165b",
+          "policy": "03ba61a71edc5ea35402a52ea66340c0d91a5c9e93ccfc09d66886bdf68c6218",
+          "supervisor": "3f7cf4908814222f3f40ce599f3b98af5b3068119e385ab1841809b05e81283e"
+        },
+        "duration_seconds": 49.862,
+        "failure_reason": null,
+        "final_message_characters": 0,
+        "final_message_sha256": null,
+        "interrupt_signal": null,
+        "max_context_tokens": 5493,
+        "max_output_tokens": 4096,
+        "model": "qwen3-coder-next-q5-k-m",
+        "out_of_scope_paths": [],
+        "parse_errors": 0,
+        "prompt_sha256": "5a71c0af14bc57fe972340937b1a3543117c82a7ada2f0ce70331ee8ef8fca81",
+        "provider": "evo-coder",
+        "run_id": "3fbe957f-326c-4d3f-a016-e75867cda06a",
+        "schema_version": 1,
+        "source_generation": 4,
+        "started_at_unix": 1788881319.847,
+        "status": "PASS",
+        "stderr_bytes": 0,
+        "stop_reason": "toolUse",
+        "structured_terminal": true,
+        "temperature": 0.0,
+        "tool_calls": 10,
+        "top_p": 1,
+        "turns": 7,
+        "verification_expected": 1,
+        "verification_pass_indexes": [
+          0
+        ],
+        "verification_passes": 1,
+        "verification_runs": 2,
+        "verification_source_generation": 4,
+        "workdir": "/private/tmp/4wis-interaction-coder"
+      },
+      "evidence": {
+        "ledger": "/Users/nortepro/.local/state/evo-coder/runs.jsonl",
+        "ledger_line": 95,
+        "prompt_file": "2026-09-09-interaction.prompt.txt",
+        "prompt_hash_matches_ledger": true
+      },
+      "allowed_paths": [
+        "src/InteractionModeBar.tsx",
+        "src/InteractionModeBar.css"
+      ],
+      "declared_verification_commands": [
+        "./node_modules/.bin/tsc --noEmit"
+      ],
+      "independent_review": {
+        "outcome": "PARTIALLY_ACCEPTED_WITH_PLANNER_REWORK",
+        "first_pass": false,
+        "useful_output_adopted": true,
+        "failure_classification": "LOCAL_POSTWRITE_FAILURE",
+        "accepted_contribution": "采用导航栏结构、模式回调、aria-pressed、连接/停止控件与基础样式。",
+        "rework": [
+          "props 虽声明 sourceLabel，实际未解构或显示；Planner 补入控制来源读数。",
+          "遗漏提示词明确要求的 CSS import；Planner 补入。",
+          "集成后 Planner 调整换行/间距，并修正宿主 grid 的窄屏裁切和脚本视图区高度。宿主布局问题不归因于 Coder。"
+        ],
+        "verification": "最终声明的 tsc 检查通过；Planner 独立再次编译并审阅语义后认定需补改。补改集成后 57 项完整浏览器回归、54 项前端单元、类型与生产构建通过。后端/MCP 的整体验收见本轮 STAGE，不能计作 Coder 自己完成的验证。"
+      },
+      "total_input_tokens": null,
+      "total_output_tokens": null,
+      "tokens_per_second": null,
+      "exact_code_contribution_fraction": null,
+      "unavailable_reason": "Supervisor ledger does not record these quantities; max_context_tokens is a peak, not total usage.",
+      "source_hashes": {
+        "InteractionModeBar.tsx": {
+          "coder_original": "177979c7004b4a46ac9be424030ff443e4b670ff3459b6c59ecb9927f5e683e8",
+          "after_planner_integration": "84f581cb32db4218b2dc61e670cc0cf4d2dc3b383772348d42d40a52bc2150c3"
+        },
+        "InteractionModeBar.css": {
+          "coder_original": "3593e078de29fc6c6b04d3e0d8b6429ac91e03b2774787d97b4980347d113f6e",
+          "after_planner_integration": "dfd7e2d96d01b2325a08034a5b308d1e71506e8618d94995ffd0a2dd64cffca8"
+        }
+      }
+    }
+  ],
+  "metrics": {
+    "calls": 1,
+    "supervisor_pass": {
+      "numerator": 1,
+      "denominator": 1,
+      "rate": 1.0
+    },
+    "first_independent_acceptance": {
+      "numerator": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "useful_contribution_adopted": {
+      "numerator": 1,
+      "denominator": 1,
+      "rate": 1.0
+    },
+    "partial_acceptance": 1,
+    "rejected": 0,
+    "pending_review": 0
+  },
+  "configuration_changed": false,
+  "fallback_calls": 0,
+  "tuning_hypotheses": [
+    "Add explicit semantic acceptance for visible required props and unit/geometry meaning; successful tsc alone is insufficient.",
+    "Keep current temperature/top_p while gathering comparable samples; two narrow UI calls do not establish model-wide acceptance rates."
+  ]
+}

@@ -16,12 +16,13 @@ from __future__ import annotations
 import numpy as np
 
 from sim4wis.controller.base import (
+    N_WHEELS,
     BodyMotionTarget,
     ControllerStrategy,
-    N_WHEELS,
     compute_commands,
+    limit_target_to_grip,
 )
-from sim4wis.controller.longitudinal import speed_command
+from sim4wis.controller.longitudinal import cornering_accel_limit, speed_command
 from sim4wis.core.state import ControlCommand, DriverInput, VehicleState
 
 
@@ -53,6 +54,8 @@ class AckermannStrategy(ControllerStrategy):
         delta_lock = np.array([np.nan, np.nan, 0.0, 0.0])
         assert delta_lock.shape == (N_WHEELS,)
 
+        target = limit_target_to_grip(target, cornering_accel_limit(p, driver, state),
+                                      p.wheelbase / 2.0 - p.cg_to_front)
         return compute_commands(
             wheels=p.wheel_positions_body(),
             target=target,

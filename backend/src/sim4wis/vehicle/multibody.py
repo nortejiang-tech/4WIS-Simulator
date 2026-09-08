@@ -1,11 +1,11 @@
-"""Multibody 4WIS vehicle model (step 19) — 14 DOF, fixed-step RK4.
+"""Multibody 4WIS vehicle model (step 19) — 14 DOF, partitioned fixed-step integration.
 
 Degrees of freedom (14):
     * Sprung body 6:  x, y (planar) · ψ yaw · z heave · φ roll · θ pitch
     * Suspension  4:  per-corner unsprung vertical position z_u[i]
     * Wheel spin  4:  ω_w[i]
 
-This is the high-fidelity model. Over `SimplifiedDynamicModel` it adds:
+This reduced small-angle research model, compared with `SimplifiedDynamicModel` it adds:
     * Real vertical dynamics — heave/bounce over bumps (quarter-car per corner
       with tyre vertical stiffness + suspension spring/damper).
     * Roll & pitch as actual DOF → load transfer is *dynamic* (lags lateral /
@@ -16,8 +16,9 @@ This is the high-fidelity model. Over `SimplifiedDynamicModel` it adds:
 
 Design choice: implemented directly in NumPy (no Pinocchio / PyDy dependency)
 to stay consistent with the rest of the codebase and the real-time budget.
-At dt_sim = 5 ms the stiffest mode (wheel hop ≈ 11 Hz) is well within RK4
-stability.
+RK4 advances body/suspension states; nonlinear backward Euler advances spin.
+The split scheme is first order overall. Wheel-hop stability depends on the
+configured masses and stiffnesses; check step convergence after changing them.
 
 Frames & signs (see docs/design.md §2):
     z up, roll φ + = right side down, pitch θ + = nose up. Body origin = axle
@@ -31,39 +32,42 @@ import math
 import numpy as np
 
 from sim4wis.core.state import (
+    N_WHEELS,
     ControlCommand,
     EnvironmentState,
-    N_WHEELS,
     VehicleParams,
     VehicleState,
-)
-from sim4wis.vehicle.base import VehicleModel
-from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
-from sim4wis.vehicle.steering_link import (
-    front_axle_step,
-    idle_channels,
-    make_steering_plant,
 )
 from sim4wis.steering.tracking.coupling import (
     corner_tracking_step,
     make_corner_trackers,
 )
+from sim4wis.vehicle.base import VehicleModel
+from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.model_core import (
-    body_resistance_force,
     axle_cornering_scale,
+    body_resistance_force,
     camber_thrust_alpha_offset,
     friction_brake_torques,
     kc_wheel_offsets,
     load_sensitive_mu,
     relax_slip,
     resolve_kc,
-    store_grip_state as _store_grip,
-    wheel_grip_state,
     rotate_wheel_forces_to_body,
     semi_implicit_wheel_spin,
     static_toe_offsets,
+    wheel_grip_state,
     wheel_slip_kinematics,
+)
+from sim4wis.vehicle.model_core import (
+    store_grip_state as _store_grip,
+)
+from sim4wis.vehicle.rigid_body import cg_acceleration, planar_derivatives
+from sim4wis.vehicle.steering_link import (
+    front_axle_step,
+    idle_channels,
+    make_steering_plant,
 )
 from sim4wis.vehicle.tire import TireModel, make_tire
 from sim4wis.vehicle.wheel_servo import WheelSpeedServo
@@ -81,7 +85,7 @@ IWW = slice(20, 24)
 
 
 class MultiBodyModel(VehicleModel):
-    """High-fidelity 3D body + 4 quarter-car suspensions + 4 wheel spins."""
+    """Reduced body + 4 quarter-car suspensions + 4 wheel spins."""
 
     def __init__(self, params: VehicleParams, tire: TireModel | None = None) -> None:
         super().__init__(params)
@@ -142,11 +146,12 @@ class MultiBodyModel(VehicleModel):
         a = p.cg_to_front
         b = L - a
         # Sprung static corner loads (front pair / rear pair)
-        wf = self.m_s * G * b / (2.0 * L)
-        wr = self.m_s * G * a / (2.0 * L)
+        wf = self.m * G * b / (2.0 * L) - self.m_u * G
+        wr = self.m * G * a / (2.0 * L) - self.m_u * G
         self._W = np.array([wf, wf, wr, wr])              # FL,FR,RL,RR
         self._corner_static_full = self._W + self.m_u * G  # tyre vertical static
         self.x_cg = L / 2.0 - a                            # CG x in body frame
+        self._sprung_cg_x = self.m * self.x_cg / self.m_s
         self.h_cg = getattr(p, "cg_height", 0.55)
 
         self.k_s = p.suspension.spring_rate
@@ -222,6 +227,13 @@ class MultiBodyModel(VehicleModel):
         self.slip_kappa[:] = 0.0
         self.state.fz = self._corner_static_full.copy()
         self.state.susp_defl = np.zeros(N_WHEELS)
+        self._brake_f[:] = 0.0
+        self._alpha_lag[:] = self._kappa_lag[:] = 0.0
+        self._kc_fx[:] = self._kc_fy[:] = self._kc_mz[:] = 0.0
+        self._kc_fz = self._corner_static_full.copy()
+        self.kc_toe[:] = self.kc_camber[:] = 0.0
+        self.tire_fx[:] = self.tire_fy[:] = self.tire_mz[:] = 0.0
+        self.steering_channels = idle_channels()
 
     def step(self, dt: float, cmd: ControlCommand, env: EnvironmentState) -> VehicleState:
         s = self.state
@@ -294,8 +306,9 @@ class MultiBodyModel(VehicleModel):
         s.z, s.roll, s.pitch = float(y1[IZ]), float(y1[IROLL]), float(y1[IPITCH])
         self._zu = y1[IZU]
         # Body-frame specific force (accelerometer reading at the CG).
-        s.ax = float(y1[IVX] - y0[IVX]) / dt - float(y1[IOMEGA]) * float(y1[IVY])
-        s.ay = float(y1[IVY] - y0[IVY]) / dt + float(y1[IOMEGA]) * float(y1[IVX])
+        accepted_derivative = f(y1)
+        s.ax, s.ay = cg_acceleration(p, y1[IVX], y1[IVY], y1[IOMEGA],
+                                    accepted_derivative[[IVX, IVY, IOMEGA]])
         s.vx, s.vy, s.yaw_rate = float(y1[IVX]), float(y1[IVY]), float(y1[IOMEGA])
         self._vz = float(y1[IVZ])
         self._roll_rate = float(y1[IROLLR])
@@ -348,7 +361,7 @@ class MultiBodyModel(VehicleModel):
                     mus[i] = local.mu_override
         return road_z, mus
 
-    def _suspension_forces(self, y: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _suspension_forces(self, y: np.ndarray, road_z: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Return (F_spring up on body, F_tire_z up on unsprung, comp) per corner."""
         xw = self._wheels[:, 0]
         yw = self._wheels[:, 1]
@@ -377,7 +390,7 @@ class MultiBodyModel(VehicleModel):
 
         f_spring = np.maximum(f_spring, 0.0)
 
-        f_tire_z = np.maximum(self._corner_static_full + self.k_t * (self._road_z - z_u), 0.0)
+        f_tire_z = np.maximum(self._corner_static_full + self.k_t * (road_z - z_u), 0.0)
         return f_spring, f_tire_z, comp
 
     def _arb_corner(self, roll: float) -> np.ndarray:
@@ -394,12 +407,11 @@ class MultiBodyModel(VehicleModel):
         return -k * float(roll) * self._toe_sign
 
     def _derivatives(self, y, delta_cmd, wheel_mus, road_z) -> np.ndarray:
-        self._road_z = road_z  # used inside _suspension_forces
         p = self.params
         xw = self._wheels[:, 0]
         yw = self._wheels[:, 1]
 
-        f_spring, f_tire_z, comp = self._suspension_forces(y)
+        f_spring, f_tire_z, comp = self._suspension_forces(y, road_z)
 
         # Static toe + bump-steer from actual suspension compression.
         # K&C: kinematic toe/camber from actual suspension travel, plus the
@@ -426,15 +438,14 @@ class MultiBodyModel(VehicleModel):
         )
 
         fy_wheel = np.zeros(N_WHEELS)
+        mz_wheel = np.zeros(N_WHEELS)
         # Camber thrust as an equivalent slip-angle offset (same absorption as
         # the load page / simplified dynamic model); diagnostics keep true α.
         alpha_camber = camber_thrust_alpha_offset(p, f_tire_z, extra_camber=kc_camber)
         # Relaxation-lagged slip. When enabled, the slip the tyre works at is
         # held over the RK4 sub-steps and advanced once per step (the same
         # treatment wheel spin already gets) rather than being added to the
-        # integrated state vector. At 200 Hz against a ~30 ms lag the
-        # difference is not resolvable, and it keeps the state vector — and the
-        # stiff-mode analysis behind it — unchanged.
+        # integrated state vector. This adds splitting error that requires a step-size check.
         #
         # With sigma = 0 the fresh per-stage slip is used exactly as before, so
         # the feature off is bit-identical to not having it.
@@ -455,17 +466,13 @@ class MultiBodyModel(VehicleModel):
             )
             fx_wheel[i] = fx
             fy_wheel[i] = fy
-            self.slip_alpha[i] = alpha
-            self.slip_kappa[i] = kappa
-            self.tire_fx[i] = fx
-            self.tire_fy[i] = fy
-            self.tire_mz[i] = mz
+            mz_wheel[i] = mz
 
         fx_body, fy_body = rotate_wheel_forces_to_body(fx_wheel, fy_wheel, delta)
 
         fx_total = float(np.sum(fx_body))
         fy_total = float(np.sum(fy_body))
-        mz_total = float(np.sum(xw * fy_body - yw * fx_body + self.tire_mz))
+        mz_total = float(np.sum(xw * fy_body - yw * fx_body + mz_wheel))
 
         # Longitudinal grade gravity — same engineering approximation as the
         # simplified model: the road-height difference front↔rear gives a body
@@ -480,12 +487,9 @@ class MultiBodyModel(VehicleModel):
         fx_total += body_resistance_force(p, vx)
 
         # Planar (whole-vehicle mass) with Coriolis terms.
-        m = self.m
-        vx_dot = fx_total / m + omega * vy
-        vy_dot = fy_total / m - omega * vx
-        omega_dot = mz_total / p.inertia_z
-        ax_body = vx_dot - omega * vy
-        ay_body = vy_dot + omega * vx
+        planar = planar_derivatives(p, vx, vy, omega, fx_total, fy_total, mz_total)
+        vx_dot, vy_dot, omega_dot = planar
+        ax_body, ay_body = cg_acceleration(p, vx, vy, omega, planar)
 
         # Per-axle aero lift (∝ v², positive = unloads the axle) acts on the
         # sprung body: heave force + pitch moment; the suspension then passes
@@ -504,10 +508,14 @@ class MultiBodyModel(VehicleModel):
 
         # Pitch: spring moment − gravity pitch moment + long-accel pitch moment
         # + per-axle aero lift moment (front lift at +L/2 pitches nose up).
-        q_pitch = float(np.sum(xw * f_spring)) - self.m_s * G * self.x_cg
+        q_pitch = float(np.sum(xw * f_spring)) - self.m_s * G * self._sprung_cg_x
         m_pitch_ext = self.m_s * ax_body * self.h_cg
         m_pitch_aero = 0.5 * p.wheelbase * (lift_f - lift_r)
-        pitch_dd = (q_pitch + m_pitch_ext + m_pitch_aero) / self.I_pitch
+        # Heave is at O, pitch inertia is at the sprung CG: solve their 2x2
+        # mass coupling rather than treating O as a centre of mass.
+        pitch_dd = (q_pitch + m_pitch_ext + m_pitch_aero
+                    - self._sprung_cg_x * self.m_s * vz_dot) / self.I_pitch
+        vz_dot -= self._sprung_cg_x * pitch_dd
 
         # Unsprung vertical (quarter-car).
         zu_dd = (f_tire_z - f_spring - self.m_u * G) / self.m_u
@@ -545,8 +553,7 @@ class MultiBodyModel(VehicleModel):
         y[IZU] = self._zu
         y[IVZ], y[IROLLR], y[IPITCHR] = self._vz, self._roll_rate, self._pitch_rate
         y[IZUD] = self._zu_dot
-        self._road_z = road_z
-        f_spring, f_tire_z, comp = self._suspension_forces(y)
+        f_spring, f_tire_z, comp = self._suspension_forces(y, road_z)
         s.fz = f_tire_z
         s.susp_defl = comp
         # Apply static toe + bump-steer to the reported actual steer angle too.

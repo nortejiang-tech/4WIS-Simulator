@@ -48,13 +48,14 @@ def test_ideal_ackermann_circle(model: KinematicModel) -> None:
     cmd0 = strat.compute(driver, model.state)
     expected_radius = abs(cmd0.icr_target_body[1])
 
-    # Simulate ~one revolution
-    omega = model.params.v_max * driver.throttle / expected_radius
-    T = 2 * np.pi / omega
-    steps = int(T / dt)
-    for _ in range(steps):
+    # Complete one revolution at the realised (possibly grip-limited) speed.
+    # Pedal position no longer guarantees an infeasible v_max*throttle turn.
+    for _ in range(10000):
         cmd = strat.compute(driver, model.state)
         model.step(dt, cmd, env)
+        if model.state.psi >= 2 * np.pi:
+            break
+    assert model.state.psi >= 2 * np.pi
 
     # Should be back to the starting pose, approximately.
     assert abs(model.state.x) < expected_radius * 0.03

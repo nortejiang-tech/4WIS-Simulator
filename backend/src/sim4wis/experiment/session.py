@@ -20,9 +20,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from sim4wis.controller.longitudinal import apply_brake_command, apply_drive_command
+from sim4wis.core.step import advance_model
 from sim4wis.controller.registry import make_strategy
-from sim4wis.core.derived import update_derived_outputs
 from sim4wis.core.state import DriverInput, EnvironmentState, VehicleParams
 from sim4wis.environment.disturbance import Scene
 from sim4wis.experiment.schema import Experiment, PathSpec
@@ -202,10 +201,7 @@ class SimSession:
                 self._apply_faults(cmd)
                 # Fill the friction-brake actuator command (same helper the
                 # live loop uses, so the two cannot drift apart).
-                apply_brake_command(cmd, driver, self.params)
-                apply_drive_command(cmd, driver, self.params, self.model.state)
-                self.model.step(dt, cmd, self.env)
-                update_derived_outputs(self.model.state, self.params)
+                advance_model(self.model, self.params, driver, cmd, dt, self.env)
                 if n_steps % record_every == 0:
                     self._sample(t_out, chans, cmd, driver)
                 n_steps += 1

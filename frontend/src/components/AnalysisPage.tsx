@@ -21,6 +21,7 @@ import {
 } from "@/api/experiments";
 import { exportPNG, useLiveChart } from "@/charts/uplotFactory";
 import ReplayPanel from "@/components/ReplayPanel";
+import ResultArtifacts from "@/components/ResultArtifacts";
 import { useSimStore } from "@/store/sim";
 import "./WorkflowPage.css";
 
@@ -209,6 +210,7 @@ export default function AnalysisPage() {
         <div className="wf-small" style={{ color: "var(--muted)", padding: "6px 2px" }}>
           点击选择（最多 {MAX_SELECT} 个）进行叠加对比
         </div>
+        {selected[0] && <ResultArtifacts runId={selected[0]} showAnalysis={false} />}
       </aside>
 
       {/* ── main: KPI + charts ────────────────────────────────────── */}

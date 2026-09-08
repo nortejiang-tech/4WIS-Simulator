@@ -1,11 +1,11 @@
 """Kingpin steering-resistance torque from contact-patch forces + suspension geometry.
 
-Industry-standard estimation following Reimpell §3.10 / Pacejka §9, with the
+Reduced contact-plane moment estimate, with the
 mechanical and pneumatic trail kept as *separate* channels (Steering Handbook
 Ch.6 / change-report §5.5):
 
-    τ_steer = Fy · (scrub + mechanical_trail)      ← lateral force, MECHANICAL trail
-            + Fx · scrub_radius                     ← driving/braking torque transfer
+    τ_steer = Fy · mechanical_trail                ← lateral-force lever along X
+            + side · Fx · scrub_radius              ← side = +1 left, −1 right
             − Mz_self_aligning                      ← tyre pneumatic SAT (own channel)
             + Fz · sin(KPI) · scrub · sin(δ)        ← kingpin-inclination jacking
 
@@ -43,9 +43,8 @@ small angles and made τ non-monotonic.
 What is deliberately NOT modelled here:
     * Fx coupling through a tilted kingpin axis (caster/KPI rotated frame).
       In a strict cross-product derivation this contributes additional
-      `−sin(caster)·scrub·Fz` and `±sin(KPI)·trail·Fz` style terms; for our
-      sizing-grade use these are absorbed into the KPI jacking term above and
-      the experimentally calibrated Reimpell coefficients.
+      `−sin(caster)·scrub·Fz` and `±sin(KPI)·trail·Fz` style terms; the KPI term above is only a reduced approximation. No experimental
+      calibration data for these coefficients is bundled with the simulator.
     * Self-steer from drive force at non-zero δ via mechanical_trail. An
       earlier version had `m_from_fx_caster = −Fx·trail·sin(δ)` but that
       cross-product is geometrically null (Fx ∥ trail for a longitudinal
@@ -77,8 +76,8 @@ def kingpin_torque_terms(
     the model-doc page's term-decomposition demo.
 
     Returns dict of length-4 arrays:
-        m_fy  — lateral force × (scrub + caster MECHANICAL trail)
-        m_fx  — longitudinal force × scrub radius
+        m_fy  — lateral force × caster mechanical trail
+        m_fx  — longitudinal force × signed outboard scrub radius
         m_mz  — pneumatic self-aligning torque as steering resistance (−Mz);
                 reinforces m_fy (mechanical + pneumatic trail both self-centre)
         m_kpi — kingpin-inclination jacking, ∝ sin(δ)
@@ -89,15 +88,15 @@ def kingpin_torque_terms(
     if delta is None:
         delta = np.zeros_like(fy)
 
-    # 1) Lateral force × effective lever (scrub + caster MECHANICAL trail only).
+    # 1) Contact vector (-trail, side*scrub): actuator effort = -(r x F)_z.
+    #    Scrub is a lateral offset, parallel to Fy, so contributes no Fy moment.
     #    Pneumatic trail is NOT added here — it lives entirely in the Mz channel
     #    below (see module docstring: avoids double-counting t_p).
     mechanical_trail = tire_radius * math.tan(caster)
-    lever_y = scrub + mechanical_trail
-    m_from_fy = fy * lever_y
+    m_from_fy = fy * mechanical_trail
 
     # 2) Driving/braking torque around kingpin via scrub radius.
-    m_from_fx = fx * scrub
+    m_from_fx = np.asarray(fx) * scrub * np.array([1.0, -1.0, 1.0, -1.0])
 
     # 3) Tyre self-aligning torque (pneumatic-trail channel). Mz = −Fy·t_p(α) is
     #    the raw aligning moment; its contribution to steering *effort* is −Mz,

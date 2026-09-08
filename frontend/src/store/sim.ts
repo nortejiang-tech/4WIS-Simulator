@@ -27,7 +27,7 @@ export type RunSlot = "A" | "B";
 // Top-level workflow pages (CarMaker-style rail): drive workbench, experiment
 // composer, analysis workbench, vehicle datasets, scene editor, plus the two
 // knowledge pages.
-export type AppPage = "run" | "experiment" | "analysis" | "vehicle" | "scene" | "load" | "model";
+export type AppPage = "agent" | "script" | "run" | "experiment" | "analysis" | "vehicle" | "scene" | "load" | "model";
 export interface RunSnapshot {
   trajectory: number[];   // flat [x0,y0,x1,y1,...] world frame
   t: number[];
@@ -40,6 +40,8 @@ export interface RunSnapshot {
 }
 
 interface SimStore {
+  manualArmed: boolean;
+  setManualArmed: (armed: boolean) => void;
   online: boolean;
   state: SimStateMessage | null;
   strategies: string[];
@@ -176,6 +178,8 @@ function emptyHistory(): SimStore["history"] {
 let toastSeq = 1;
 
 export const useSimStore = create<SimStore>((set, get) => ({
+  manualArmed: true,
+  setManualArmed: (manualArmed) => set({ manualArmed }),
   online: false,
   state: null,
   strategies: [],
@@ -296,7 +300,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
     if (typeof localStorage !== "undefined") localStorage.setItem("sim4wis-theme", t);
     set({ theme: t });
   },
-  requestZero: () => set({ zeroRequest: get().zeroRequest + 1 }),
+  requestZero: () => set({ zeroRequest: get().zeroRequest + 1, cruiseOn: false, holdSpeed: false }),
   saveRun: (slot) => {
     const s = get();
     const h = s.history;

@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-08T21:43:17+08:00",
+  "baseline_commit": "bf0c1873914350e27b80b2e623e97a8aece13dd4",
+  "branch": "codex/astra-dynamics-review",
+  "working_directory": "/Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator",
+  "committed": false,
+  "deployed": false,
+  "scope": "First scientific review, targeted fixes, local refactoring and internal verification. No measured vehicle or independent simulator validation.",
+  "internal_review_status": "PASS",
+  "external_validation_status": "PENDING",
+  "original_baseline": {
+    "backend_passed": 913,
+    "frontend_passed": 37
+  },
+  "new_physics_regressions": 41,
+  "tests": [
+    {
+      "id": "backend",
+      "reproduce_command": "PYTHONPATH=backend/src backend/.venv/bin/python -m pytest backend/tests -n 4 -q",
+      "status": "PASS",
+      "observed_exit_code": 0,
+      "passed": 955,
+      "result_excerpt": [
+        "955 passed, 2 warnings in 176.73s (0:02:56)"
+      ],
+      "local_log": "/tmp/4wis-astra-full-pytest-final.log",
+      "log_sha256": "2527cacdef0e34750d2bfbfae7db7b365bedbaf11698064ed933518b94d8d91c"
+    },
+    {
+      "id": "frontend",
+      "reproduce_command": "npm --prefix frontend test",
+      "status": "PASS",
+      "observed_exit_code": 0,
+      "passed": 40,
+      "result_excerpt": [
+        "Tests  40 passed (40)"
+      ],
+      "local_log": "/tmp/4wis-astra-vitest.log",
+      "log_sha256": "88bd6070f1141d98c614f888ff381c29fe236d28824a646472347fdfef34752e"
+    },
+    {
+      "id": "type_check",
+      "reproduce_command": "npm --prefix frontend run type-check",
+      "status": "PASS",
+      "observed_exit_code": 0,
+      "passed": null,
+      "result_excerpt": [
+        "> tsc --noEmit"
+      ],
+      "local_log": "/tmp/4wis-astra-typecheck.log",
+      "log_sha256": "51522888751e6839e516b1f67d1221a3272f180e64591e3446c767dd30b74412"
+    },
+    {
+      "id": "production_build",
+      "reproduce_command": "npm --prefix frontend run build",
+      "status": "PASS",
+      "observed_exit_code": 0,
+      "passed": null,
+      "result_excerpt": [
+        "✓ built in 1.83s"
+      ],
+      "local_log": "/tmp/4wis-astra-build.log",
+      "log_sha256": "bcb358ae57a770639853fa2110fc6445e1136d3dc64fb128bc374d6b927dbf61"
+    },
+    {
+      "id": "browser_e2e",
+      "reproduce_command": "PW_E2E_PORT=8022 npm --prefix frontend run e2e:prod",
+      "status": "PASS",
+      "observed_exit_code": 0,
+      "passed": 54,
+      "result_excerpt": [
+        "54 passed (42.1s)"
+      ],
+      "local_log": "/tmp/4wis-astra-e2e-final.log",
+      "log_sha256": "f728a406cb77f0380ead00f0eb89d14b9f1decdf552d6b35d4eb163696f42c8d"
+    },
+    {
+      "id": "smoke",
+      "reproduce_command": "backend/.venv/bin/python scripts/smoke_test.py",
+      "status": "PASS",
+      "observed_exit_code": 0,
+      "passed": 32,
+      "result_excerpt": [
+        "结果：32/32 通过"
+      ],
+      "local_log": "/tmp/4wis-astra-smoke-final.log",
+      "log_sha256": "60d43fbd92467b2589dbc5c2c8cc1c4eba00f3cc27c2b702f60f95b6298b3705"
+    },
+    {
+      "id": "golden",
+      "reproduce_command": "backend/.venv/bin/python scripts/check_golden_experiments.py",
+      "status": "PASS",
+      "observed_exit_code": 0,
+      "passed": 6,
+      "result_excerpt": [
+        "step_steer_60kmh: ok (600 samples)",
+        "iso3888_dlc_60kmh: ok (800 samples)",
+        "oncentre_weave_100kmh: ok (1700 samples)",
+        "sw_straight100_rl_stuck_value_baseline: ok (1600 samples)",
+        "sw_straight100_rl_stuck_value_mitigated: ok (1600 samples)",
+        "sw_curve60_fl_free_caster_baseline: ok (1600 samples)"
+      ],
+      "local_log": "/tmp/4wis-astra-golden-check.log",
+      "log_sha256": "a52c85c208d985f1f19374f4cbf0dd00d54e2e51cf1ba339cd16334a8e3a43d5"
+    },
+    {
+      "id": "analytic_reference",
+      "reproduce_command": "backend/.venv/bin/python scripts/check_reference_benchmarks.py",
+      "status": "PASS",
+      "observed_exit_code": 0,
+      "passed": 2,
+      "result_excerpt": [
+        "analytic_steady_circle_30kmh: ok (6 metrics)",
+        "analytic_step_steer_30kmh: ok (9 metrics)"
+      ],
+      "local_log": "/tmp/4wis-astra-reference.log",
+      "log_sha256": "8fea9eb86e6436ba0a93df8f45058c375edb73bc83303daf58e493abeed1d6e5"
+    },
+    {
+      "id": "independent_reference",
+      "reproduce_command": "backend/.venv/bin/python scripts/check_reference_benchmarks.py --require-independent-source",
+      "status": "PENDING_EXTERNAL_DATA",
+      "observed_exit_code": 1,
+      "passed": 0,
+      "result_excerpt": [
+        "/Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/validation_data: no passing independent external-tool, bench, scaled-vehicle, or full-vehicle benchmark found",
+        "analytic_steady_circle_30kmh: ok (6 metrics)",
+        "analytic_step_steer_30kmh: ok (9 metrics)"
+      ],
+      "local_log": "/tmp/4wis-astra-independent-source.log",
+      "log_sha256": "7a08dd4638b9a3786583b65edf1c98a3edaa668b334c82e35af768d7046f3923"
+    },
+    {
+      "id": "v1_readiness",
+      "reproduce_command": "backend/.venv/bin/python scripts/check_v1_readiness.py --report docs/reports/v1_readiness.md",
+      "status": "NOT_READY",
+      "observed_exit_code": 0,
+      "passed": null,
+      "result_excerpt": [
+        "v1 readiness: NOT READY (1 strict blocker(s))"
+      ],
+      "local_log": "/tmp/4wis-astra-readiness.log",
+      "log_sha256": "47f10d79797ee9efe02c6b3ff365bc5ec0f883ea7ba3d40a99daa9b873bc1b4f"
+    }
+  ],
+  "other_evidence": {
+    "physics_script": "scripts/review_physics.py",
+    "physics_before": "docs/reports/astra_physics_before_2026-09-08.json",
+    "physics_after": "docs/reports/astra_physics_after_2026-09-08.json",
+    "runtime": "docs/reports/astra_runtime_2026-09-08.json",
+    "manual_browser_review": "Keyboard driving, 2D/3D, model switching, crab HUD speed readback, formulas and geometry warnings; no pageerror or KaTeX error.",
+    "golden_tolerances": "Compared with baseline: all tolerance configurations exactly unchanged.",
+    "static_checks": "git diff --check and Ruff fatal-error subset passed; full-repository lint cleanliness is not claimed."
+  },
+  "limitations": [
+    "Independent external_tool/bench/scaled_vehicle/full_vehicle benchmark count remains zero.",
+    "955 tests include 41 new focused physics cases; tests are not 955 independent scientific validations.",
+    "Step-size sensitivity covers four stated model/tire combinations and one smooth steering input, not a universal error bound.",
+    "Reduced multibody model, parking contact, road normals, axle/hardpoint calibration and actuator reachability require further work.",
+    "Historical reports, manuals, portable builds and old runs are not all regenerated.",
+    "Full local logs remain temporary; durable result excerpts and their hashes are recorded here.",
+    "Manifest excludes itself from file hashes; no digital signature or certification is implied."
+  ],
+  "file_sha256": {
+    "README.md": "6d05966cacf305a0f9b482786d7a67ed98af39309a4d1e509a176e45b0acf804",
+    "backend/src/sim4wis/api/routers/model_demo.py": "f3301ab97b702fc40ee644ab30a39139904bc56235ea9e291178658f8bc86b6f",
+    "backend/src/sim4wis/controller/ackermann.py": "40e3cfe020ce193831160b7df66ed0aa5238234b6f6549a48b82b9ca195cb5cc",
+    "backend/src/sim4wis/controller/base.py": "4af0bc85dd8d5e6bfc0e180548c8cfdf756751abad1ff33dc633e2285c245224",
+    "backend/src/sim4wis/controller/ideal_ackermann.py": "ae73d22446296bf756ccd7eaa06464ff5ed6ee8aa7772e997286ccd04abe83b2",
+    "backend/src/sim4wis/controller/longitudinal.py": "92ae07a5cbf852e2fd11cc40ffb0f9bfaf03147d40a257eb3f92867b86b39176",
+    "backend/src/sim4wis/controller/rear_wheel_steer.py": "f21381452599fc598097f5aeb9bfdc1049258e20f852f569c2401ae2ddca4707",
+    "backend/src/sim4wis/controller/rws_common.py": "647557bf80d6938ba3d7570c86532c6e9461755de86e599f8a3af582d00d5c64",
+    "backend/src/sim4wis/controller/zero_radius.py": "b44a6584e729b95e9856dc0cc9aa8c78cb836aaed5ed0a50d0222755d1f8825f",
+    "backend/src/sim4wis/core/state.py": "b8e4d51cc4e07d423d6660873c6dc4f1b0131d0638358aeeda7c3a970f373009",
+    "backend/src/sim4wis/steering/sizing.py": "e6638d0f60a58aa3d1751af8e6d150cdc93cfd8712474d1e38222346111362c8",
+    "backend/src/sim4wis/vehicle/dynamic.py": "0884ffa7f65a084e8561ea7ea50a28e191c6a81cabc56761885180947bf7e94d",
+    "backend/src/sim4wis/vehicle/geometry.py": "1531b4e9fd6fea9347ff70e4d6fb41a23a16bce351f63c9f7f50e99effc7f94a",
+    "backend/src/sim4wis/vehicle/kinematic.py": "44e0492b9cceebb495c70fe3f6018362b42df299279ed5d87b28cd13365dfe28",
+    "backend/src/sim4wis/vehicle/kingpin.py": "bbfe3452ed0d40eebb5b5d0bd78649d7ab83671c34c3f4270163f2b831a368a6",
+    "backend/src/sim4wis/vehicle/load_analysis.py": "67fdd637d9d31d27cdd907c5f1fb9174ad6b3ddf0d308ca97788e5da661beeb4",
+    "backend/src/sim4wis/vehicle/load_transfer.py": "c3181679b3747e341f7d634151893ea6bedf28e8d58f8e518f6178e06a11ef53",
+    "backend/src/sim4wis/vehicle/model_core.py": "420fd998bc32327f71fcb98eed30f11a462047e169eafdf6355d1df942b1e81d",
+    "backend/src/sim4wis/vehicle/multibody.py": "a24f9b8eb8210cf48066d06bc528141922f3838dad4ab8fc6255a4b765c64354",
+    "backend/src/sim4wis/vehicle/rigid_body.py": "c345d9926a31255f5f65817fbaedfce8719420f142dfda3ac086b15552674208",
+    "backend/src/sim4wis/vehicle/tire.py": "afed5c0b995bf207090ccb8723ebe6702d30b11f8a2b3cab081adab0d4feb3cc",
+    "backend/src/sim4wis/vehicle/wheel_dynamics.py": "c8bf2975873b43013c7ce80c7fafb8f9602f9714bf913880e0ded5192d7d9932",
+    "backend/tests/test_corner_sizing.py": "165d9e267272a3b44dcd0f3d367fc0c4af40dd1bbc3f84b8d294b7f6121cccd1",
+    "backend/tests/test_kinematic.py": "f7491b9a203383df19d27c9ec181c9eb4847fc362050ae0e5787718d947d8876",
+    "backend/tests/test_kingpin.py": "53e47419f8c1d72fe7d4b857f9ff81394cff858923eb016b5f44187906db41b5",
+    "backend/tests/test_oncentre.py": "b450d23298d82b3e63d225b54d86efdee96ab8ddeb9b5786d22c98558b42c2c8",
+    "backend/tests/test_physics_review.py": "0742f0ddd2ab5d9e5fd8caed9ec26a20fa3d34eb69b7f694287d04cc57b0ec30",
+    "backend/tests/test_steering_sizing.py": "baaeaa36f4d1244157539618d7330695e0b556255ae0847e84b6113c18465473",
+    "docs/adr/ADR-2026-09-08-physics-reference-and-integrator.md": "be8f389b8fef1a8f83c310a0ed595acd351ee56f716e64f1b0e38c1fed6be472",
+    "docs/design.md": "cf98abd6061a51ee1eac2bc0ae5406afbd0afbd7d69879d2f178c8176eca3ab1",
+    "docs/golden_experiments.json": "8c402f0f04aeaa6b43bf450c195c97b46d3004bbb9ee7828108064c910c7c42a",
+    "docs/reports/STAGE_astra_review_2026-09-08.md": "fa508bcc68f27aa8dff0820e2988372803b8dbb4f2c7d3593a1ff15a13b050a1",
+    "docs/reports/astra_frame_after_2026-09-08.png": "c870f46de23f18c3437011d72a0bd14edc0b87b4df1cdca159d71d09510b723c",
+    "docs/reports/astra_frame_before_2026-09-08.png": "c1bb9270ddcd6d85a458abca6c7c1187f6f2e394c3a52e68aeaa825c2e58f16d",
+    "docs/reports/astra_physics_after_2026-09-08.json": "89580f13778f79a456f7f4cfc66de595bdab9cdd996cbe97510e14465df711ad",
+    "docs/reports/astra_physics_before_2026-09-08.json": "374716d53b00b9c06199794fa9332512eadca04e730418ae736722ba14a0071c",
+    "docs/reports/astra_physics_review_2026-09-08.png": "c13d1b864ea64c4cb02bd67b8edd1dc93334f38e2689bfb6a8cfdc852762e06c",
+    "docs/reports/astra_review_2026-09-08.md": "d1c366e7feab298881a9709ed14e2acb12554c3281631e09b8e5fb2e5f2503b0",
+    "docs/reports/astra_runtime_2026-09-08.json": "256d175d8f2143e27c33ca20e9904c16b626c620b31605d967570d1ecc4ab6f9",
+    "docs/reports/reference_benchmark_review.md": "057096f4a0a67b016ae164efedcdb7060916f957b11951ee7210dd58125f1166",
+    "docs/tire_model.md": "345d6d7f9f170e5e4a78f53ad3599a55c967fdf7bedea084e817226275905277",
+    "docs/validation_matrix.md": "6bb7a997186a783241b0f1f843d902160bbb6fd08fda0af8061d250951fd9413",
+    "frontend/src/components/ControlPanel.tsx": "b9806c3ad6b373a4ccdc34e615bdb1c135b46dc57ebbc881c1973823f1269bc7",
+    "frontend/src/components/canvas2d/Hud.tsx": "eb2aed07299d97fae752a9ce8c83b24b450c7e97a08536d4267d88af8711bbe8",
+    "frontend/src/components/load/LoadKpis.tsx": "0e097ca627de8928709021f814414465881505c75c788969bea161798b3a1fb6",
+    "frontend/src/components/load/chartCatalog.ts": "3c5d98fc74e51a9aa00c66223233ffa097e072fd23872ff43aaf978c44e68e39",
+    "frontend/src/components/load/chartExplanations.ts": "c908c3541a3205b4be968d21568ab64a8e7681df11f586f8aebdb8a691d0b62e",
+    "frontend/src/components/load/metricExplanations.ts": "311d0cdf86b6aee404e5b6a2c511c5cef7eaf18a906a2fea7f13952264940cdc",
+    "frontend/src/components/model/diagrams.test.tsx": "54a905bdeed42fd46c7ee2a2b74e64f6f20a4a6ed1f437fc1254b14ed28c1d8a",
+    "frontend/src/components/model/diagrams.tsx": "8695966ed3c66866aabdb8a628e5d3b79bd134c864164aec9122460506c7dbb9",
+    "frontend/src/components/model/modelChapters.tsx": "70dfe4c1bf54674d08b8755eadfbc75aca861e85f3431de49e1c6a8705cbea8f",
+    "frontend/src/components/model/physicsExplanations.ts": "f7b6640d5ec425d0c816f415c44965f12f5eb18a287d7ffae8b51b251a8b4cf1",
+    "frontend/src/vehicle/geometryModel.test.ts": "237b5a3afbadc071448fdeeb80f6a00b107268d09b8723348db60453e0497b7c",
+    "frontend/src/vehicle/geometryModel.ts": "cf4230ef71da6a79f9e0b5cc21b424b367ae9a8f96376fdd1011b8d4858e8c90",
+    "scripts/decoupling_study/algorithms_deep.py": "4e785852a74f2a4067ddbb28a444a730f1763cb6f537b84fc702211f0465869d",
+    "scripts/review_physics.py": "a0e622816c411d0f75b5634b069d18f7b7602e8f7347528b8cca9f7801f58bf9",
+    "scripts/smoke_test.py": "348f4bdaf42c0883c1625f9b4fa2941017989fdd1d2b7cd07b02b3834873ac78"
+  }
+}

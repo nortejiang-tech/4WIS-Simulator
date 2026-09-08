@@ -1,6 +1,6 @@
 # 4WIS v1 Readiness Report
 
-- Version inspected: `v0.103.0`
+- Version inspected: `v0.104.0`
 - Status: **NOT READY**
 - Strict v1 blockers: 1
 - Advisory gaps: 0

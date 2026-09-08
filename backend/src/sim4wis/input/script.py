@@ -1,4 +1,4 @@
-"""ScriptRunner — execute a Script against a Simulator over wall clock.
+"""ScriptRunner — execute a Script against a Simulator on simulation time.
 
 Design notes:
     * The runner is a single async task. It pulls actions in time order, sleeps
@@ -10,8 +10,8 @@ Design notes:
         - `distance`      until distance travelled from script start exceeds value
         - `speed_below`   until |v| < value (used for "come to a stop")
     * The script overrides keyboard input *only while running*. On stop it
-      leaves the driver state untouched (frontend's keyboard layer takes over
-      again automatically on its next push).
+      releases the driver channels, so a disconnected GUI cannot leave a
+      completed script holding throttle.
     * If `loop` is true, the runner repeats the action list indefinitely
       (with t reset each loop) until stopped.
 """
@@ -40,6 +40,7 @@ class ScriptStatus:
     t_in_script: float
     script_name: str
     loop_count: int
+    error: str | None = None
 
 
 class ScriptRunner:
@@ -53,6 +54,8 @@ class ScriptRunner:
         self._t_start_sim: float = 0.0
         self._pose_at_start: tuple[float, float] = (0.0, 0.0)
         self._loop_count: int = 0
+        self.error: str | None = None
+        self._last_elapsed = 0.0
 
     # ---- public API --------------------------------------------------------
 
@@ -69,6 +72,7 @@ class ScriptRunner:
         if self.is_running:
             return
         self._stop_event.clear()
+        self.error = None
         self._task = asyncio.create_task(self._run(), name=f"script:{self.script.name}")
 
     async def stop(self) -> None:
@@ -88,9 +92,10 @@ class ScriptRunner:
         return ScriptStatus(
             running=self.is_running,
             current_action_idx=self._current_idx,
-            t_in_script=(time.time() - self._t_start_wall) if self.is_running else 0.0,
+            t_in_script=max(0.0, self.sim.model.state.t - self._t_start_sim) if self.is_running else self._last_elapsed,
             script_name=self.script.name if self.script else "",
             loop_count=self._loop_count,
+            error=self.error,
         )
 
     # ---- runner loop -------------------------------------------------------
@@ -106,7 +111,15 @@ class ScriptRunner:
                     break
                 if self._stop_event.is_set():
                     break
+                # A loop containing only t=0 actions must still yield, so stop
+                # requests and the integrator cannot be starved indefinitely.
+                await asyncio.sleep(TICK_DT)
+        except Exception as exc:
+            self.error = f"{type(exc).__name__}: {exc}"
+            logger.exception("Script stopped after action failure")
         finally:
+            self._last_elapsed = max(0.0, self.sim.model.state.t - self._t_start_sim)
+            self.sim.release_input()
             self._current_idx = -1
 
     async def _run_once(self) -> None:
@@ -120,18 +133,15 @@ class ScriptRunner:
             await self._sleep_until_t(action.t)
             if self._stop_event.is_set():
                 return
-            try:
-                await self._dispatch(action)
-            except Exception:
-                logger.exception("Script action %d (%s) failed", i, action.action)
+            await self._dispatch(action)
             if self._stop_event.is_set():
                 return
 
     async def _sleep_until_t(self, t: float) -> None:
-        """Wait wall-clock until elapsed seconds since start == t."""
-        target_wall = self._t_start_wall + t
+        """Pause-aware scheduling; the integration clock owns action timing."""
+        target_sim = self._t_start_sim + t
         while True:
-            remaining = target_wall - time.time()
+            remaining = target_sim - self.sim.model.state.t
             if remaining <= 0:
                 return
             try:
@@ -158,33 +168,29 @@ class ScriptRunner:
         elif name == "wait_until":
             await self._wait_until(args)
         elif name == "reset":
+            elapsed = self.sim.model.state.t - self._t_start_sim
             self.sim.reset()
+            self._t_start_sim = self.sim.model.state.t - elapsed
             self._pose_at_start = (self.sim.model.state.x, self.sim.model.state.y)
         elif name == "stop":
             self._stop_event.set()
         else:
-            logger.warning("Unknown action %r — ignored", name)
+            raise ValueError(f"unknown script action: {name}")
 
     async def _ramp(self, channel: str, v0: float, v1: float, duration: float) -> None:
         if duration <= 0:
             self.sim.set_driver(**{channel: v1})
             return
-        t_start = time.time()
-        steps = max(1, int(duration / TICK_DT))
-        for k in range(1, steps + 1):
-            if self._stop_event.is_set():
+        t_start = self.sim.model.state.t
+        while not self._stop_event.is_set():
+            alpha = min(1.0, max(0.0, (self.sim.model.state.t - t_start) / duration))
+            self.sim.set_driver(**{channel: v0 + (v1-v0) * alpha})
+            if alpha >= 1.0:
                 return
-            alpha = k / steps
-            value = v0 + (v1 - v0) * alpha
-            self.sim.set_driver(**{channel: value})
-            elapsed = time.time() - t_start
-            wait = (k * duration / steps) - elapsed
-            if wait > 0:
-                try:
-                    await asyncio.wait_for(self._stop_event.wait(), timeout=wait)
-                    return
-                except asyncio.TimeoutError:
-                    pass
+            try:
+                await asyncio.wait_for(self._stop_event.wait(), timeout=TICK_DT)
+            except asyncio.TimeoutError:
+                pass
 
     async def _brake(self, duration: float) -> None:
         # Full friction-brake pedal (gear stays in D; reverse is a separate
@@ -194,8 +200,8 @@ class ScriptRunner:
         # rather than "hold the previous throttle and fight it".
         self.sim.set_driver(throttle=0.0, brake=1.0)
         # Wait either duration or until vehicle stopped, whichever sooner.
-        t_start = time.time()
-        while time.time() - t_start < duration:
+        t_start = self.sim.model.state.t
+        while self.sim.model.state.t - t_start < duration:
             if self._stop_event.is_set():
                 return
             v = self.sim.model.state.vx
@@ -209,9 +215,13 @@ class ScriptRunner:
         self.sim.set_driver(brake=0.0)
 
     async def _wait_until(self, args: dict) -> None:
-        t_target = args.get("t")
+        # Action.t is already consumed by the scheduler; until_t is an
+        # optional absolute simulation-clock predicate within this action.
+        t_target = args.get("until_t", args.get("t"))
         dist_target = args.get("distance")
         speed_below = args.get("speed_below")
+        if t_target is None and dist_target is None and speed_below is None:
+            return
         while True:
             if self._stop_event.is_set():
                 return

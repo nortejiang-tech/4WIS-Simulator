@@ -22,6 +22,8 @@ async def script_status() -> dict[str, Any]:
         "t_in_script": st.t_in_script,
         "script_name": st.script_name,
         "loop_count": st.loop_count,
+        "error": st.error,
+        "clock": "simulation_time",
     }
 
 

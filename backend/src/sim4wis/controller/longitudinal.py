@@ -37,9 +37,9 @@ from __future__ import annotations
 import numpy as np
 
 from sim4wis.core.state import (
+    N_WHEELS,
     ControlCommand,
     DriverInput,
-    N_WHEELS,
     VehicleParams,
     VehicleState,
 )
@@ -48,6 +48,14 @@ from sim4wis.core.state import (
 # brake command still brakes (toward 0) but a direction change cannot engage.
 # Matches the front-end direction-intent state machine threshold.
 _GEAR_CHANGE_SPEED = 0.3   # m/s
+
+
+def cornering_accel_limit(params: VehicleParams, driver: DriverInput,
+                          state: VehicleState) -> float | None:
+    """Grip envelope for interactive speed references; explicit tests bypass."""
+    if (driver.mode_params or {}).get("speed_target_ms") is not None:
+        return None
+    return max(float(state.mu_avg), 0.0) * 9.81
 
 
 def speed_command(params: VehicleParams, driver: DriverInput,

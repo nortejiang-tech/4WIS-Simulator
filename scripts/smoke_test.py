@@ -113,9 +113,10 @@ def case_kinematic_circle_closure() -> bool:
     dt = 0.005
     # Use the steer_raw_rad bypass (v0.100) so this tests the ICR geometry
     # directly — the speed-dependent feel layer would otherwise change κ as v
-    # rises from standstill and the path wouldn't close.
+    # rises from standstill and the path wouldn't close. The explicit speed
+    # bypass also keeps the driver grip governor out of this geometry oracle.
     driver = DriverInput(throttle=0.3, steering=0.0,
-                         mode_params={"steer_raw_rad": 0.15})
+                         mode_params={"steer_raw_rad": 0.15, "speed_target_ms": 0.3 * params.v_max})
     cmd0 = strat.compute(driver, model.state)
     R = abs(cmd0.icr_target_body[1])
     v = 0.3 * params.v_max
@@ -577,21 +578,22 @@ def case_kingpin_torque_scales_with_steering() -> bool:
 
 def case_dynamic_low_mu_slip() -> bool:
     """Cornering on lower μ produces noticeably larger slip than on high μ."""
-    from sim4wis.environment.disturbance import Scene, IcePatch
     from sim4wis.vehicle.dynamic import SimplifiedDynamicModel
 
     params = VehicleParams()
     strat = make_strategy("ideal_ackermann", params)
     dt = 0.005
 
-    # Throttle scaled to keep cornering speed ≈8 m/s (v_max is now ~56 m/s for
-    # the LS9 default; at full-ish throttle both μ levels saturate the linear
-    # tyre and the contrast disappears). 8/55.6 ≈ 0.14.
+    # Compare the tyre/vehicle at identical speed and angle excitation. A
+    # grip-aware driver deliberately slows on ice and is a different test.
     def run(mu: float) -> float:
         model = SimplifiedDynamicModel(params)
+        model.state.vx = 8.0
+        model.state.wheel_omega[:] = 8.0 / params.tire_radius
         env = EnvironmentState(mu=mu)
         for _ in range(int(2.0 / dt)):
-            cmd = strat.compute(DriverInput(throttle=0.15, steering=0.5), model.state)
+            cmd = strat.compute(DriverInput(throttle=0.15, steering=0.0,
+                mode_params={"speed_target_ms": 8.0, "steer_raw_rad": 0.16}), model.state)
             model.step(dt, cmd, env)
         return float(np.max(np.abs(model.slip_alpha)))
 

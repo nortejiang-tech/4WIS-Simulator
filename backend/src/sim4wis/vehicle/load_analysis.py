@@ -27,15 +27,15 @@ from sim4wis.vehicle.geometry import wheel_rack_force_from_linkage
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.load_transfer import vertical_loads
 from sim4wis.vehicle.model_core import (
+    WheelAlignment,
+    WheelForceSet,
+    WheelLoads,
     drive_force_per_wheel,
     low_speed_blend,
     parking_turn_scale,
     quasi_static_wheel_loads,
     steady_state_slip_angles,
     wheel_alignment,
-    WheelAlignment,
-    WheelForceSet,
-    WheelLoads,
 )
 from sim4wis.vehicle.tire import pacejka_combined_forces
 
@@ -230,6 +230,7 @@ def _analyze_state(
         c_alpha=c_alpha_eff,
         wheel_positions_body=wheel_positions,
         mass=float(params.mass),
+        cg_x=params.wheelbase / 2.0 - params.cg_to_front,
         body_coupling=body_coupling,
     )
 
@@ -364,6 +365,7 @@ def _analyze_state(
             "tie_rack_angle": float(linkage["tie_rack_angle"][i]),
             "geometry_efficiency": float(linkage["efficiency"][i]),
             "rack_travel": float(linkage["rack_travel"][i]),
+            "linkage_valid": bool(linkage["valid"][i]),
             "friction_utilization": float(utilization[i]),
         })
     return rows
@@ -420,6 +422,8 @@ def _summary(rows: list[dict[str, Any]], wheel_index: int) -> dict[str, Any]:
     min_eff = min(rows, key=lambda r: float(r["geometry_efficiency"]))
     max_util = max(rows, key=lambda r: float(r["friction_utilization"]))
     warnings: list[str] = []
+    if any(not r.get("linkage_valid", True) for r in rows):
+        warnings.append("存在超出齿条行程或硬点不可达的转角；该区间负载为外推值，不能用于选型验收")
     if float(min_eff["geometry_efficiency"]) < 0.20:
         warnings.append("低几何效率：存在接近奇异或力臂不足的转角区间")
     if float(max_util["friction_utilization"]) > 0.95:

@@ -126,6 +126,7 @@ export interface SceneSnapshot {
 }
 
 export interface SimStateMessage {
+  interaction?: { paused: boolean; source: "idle" | "manual" | "script" };
   type: "state";
   t: number;             // simulation time [s]
   wall: number;          // server wall-clock at emission
@@ -214,7 +215,7 @@ export interface DriverMsg {
 }
 export interface StrategyMsg { type: "strategy"; name: string }
 export interface ResetMsg { type: "reset" }
-export type ClientMessage = DriverMsg | StrategyMsg | ResetMsg;
+export type ClientMessage = DriverMsg | StrategyMsg | ResetMsg | { type: "release_input" };
 
 export const WHEEL_LABELS = ["FL", "FR", "RL", "RR"] as const;
 export type WheelLabel = typeof WHEEL_LABELS[number];

@@ -24,9 +24,9 @@ from dataclasses import dataclass
 import numpy as np
 
 from sim4wis.core.state import (
+    N_WHEELS,
     ControlCommand,
     DriverInput,
-    N_WHEELS,
     VehicleParams,
     VehicleState,
     WheelIndex,
@@ -47,6 +47,25 @@ class BodyMotionTarget:
     vy: float
     omega: float
     icr_target_body: np.ndarray | None = None
+    heading_at_rest: float = 0.0
+
+
+def limit_target_to_grip(target: BodyMotionTarget, accel_limit: float | None,
+                         cg_x: float = 0.0) -> BodyMotionTarget:
+    """Limit a driver's steady-turn speed without changing its ICR/angles.
+
+    Scaling the whole twist by q scales centripetal demand by q². Explicit
+    experiment speed commands pass None so the requested test is not altered.
+    This is a reference governor, not a stability controller or tyre model.
+    """
+    if accel_limit is None:
+        return target
+    demand = abs(target.omega) * np.hypot(target.vx, target.vy + cg_x * target.omega)
+    if demand <= max(accel_limit, 0.0) or demand < 1e-12:
+        return target
+    scale = float(np.sqrt(max(accel_limit, 0.0) / demand))
+    return BodyMotionTarget(target.vx * scale, target.vy * scale, target.omega * scale,
+                            target.icr_target_body, target.heading_at_rest)
 
 
 def compute_commands(
@@ -88,7 +107,15 @@ def compute_commands(
         if np.isfinite(delta_lock[i]):
             delta[i] = float(delta_lock[i])
         else:
-            raw = np.arctan2(v_wheel_y[i], v_wheel_x[i])
+            if abs(v_wheel_x[i]) + abs(v_wheel_y[i]) < 1e-12:
+                # Steering geometry exists at standstill too. Velocity atan2
+                # alone loses it when throttle=0, preventing parking steer.
+                icr = target.icr_target_body
+                raw = (np.arctan2(wheels[i, 0] - icr[0], icr[1] - wheels[i, 1])
+                       if icr is not None and np.all(np.isfinite(icr))
+                       else target.heading_at_rest)
+            else:
+                raw = np.arctan2(v_wheel_y[i], v_wheel_x[i])
             delta[i] = float(wrap_to_pmhalfpi(raw))
     # Clip to physical steering limit.
     delta = np.clip(delta, -steer_limit, +steer_limit)

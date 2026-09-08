@@ -1,0 +1,116 @@
+{
+  "schema_version": "evo-coder.report.v1",
+  "task": "第一轮科学模型评审",
+  "task_date": "2026-09-08",
+  "generated_at": "2026-09-09T00:24:15.642117+08:00",
+  "planner": "ASTRA",
+  "baseline": "bf0c1873914350e27b80b2e623e97a8aece13dd4；codex/astra-dynamics-review。保留当时 Planner 已有修改，精确单文件写入。",
+  "planner_scope": "车辆动力学、数学推导、轮速与力链、状态生命周期、集成、文档和整体验收由 ASTRA 完成。只凭一个被触及文件不能计算代码行/工作量贡献百分比。",
+  "calls": [
+    {
+      "stage_goal": "只修 BodyFrameDiagram 的 FL/FR/RL/RR 标签及轴距/轮距标注。",
+      "receipt": {
+        "changed_paths": [
+          "frontend/src/components/model/diagrams.tsx"
+        ],
+        "classification": "CODER_DONE_PENDING_REVIEW",
+        "config_sha256": {
+          "extension": "e5f3ffbfcd3ad230ea950fe65e649c798c1059a61c5d7a256cd2f478557753e3",
+          "models": "b45d46ad9d485255d974733d3e458207729626b045ac2f26d25d3c91fb5e165b",
+          "policy": "03ba61a71edc5ea35402a52ea66340c0d91a5c9e93ccfc09d66886bdf68c6218",
+          "supervisor": "3f7cf4908814222f3f40ce599f3b98af5b3068119e385ab1841809b05e81283e"
+        },
+        "duration_seconds": 49.002,
+        "failure_reason": null,
+        "final_message_characters": 43,
+        "final_message_sha256": "76a904a76dd59cd7bf418fe508b52352b7fb3deceb2fca4d25c1a1b5c3e15126",
+        "interrupt_signal": null,
+        "max_context_tokens": 10809,
+        "max_output_tokens": 4096,
+        "model": "qwen3-coder-next-q5-k-m",
+        "out_of_scope_paths": [],
+        "parse_errors": 0,
+        "prompt_sha256": "9adac28bf3324aac8f890aa10a1bbeca9b318413af1877caba26bdd5eaa801f3",
+        "provider": "evo-coder",
+        "run_id": "560ac1e5-a3f3-4d51-b41d-833104c41aeb",
+        "schema_version": 1,
+        "source_generation": 1,
+        "started_at_unix": 1788871650.93,
+        "status": "PASS",
+        "stderr_bytes": 0,
+        "stop_reason": "toolUse",
+        "structured_terminal": true,
+        "temperature": 0.0,
+        "tool_calls": 5,
+        "top_p": 1,
+        "turns": 4,
+        "verification_expected": 2,
+        "verification_pass_indexes": [
+          0,
+          1
+        ],
+        "verification_passes": 2,
+        "verification_runs": 2,
+        "verification_source_generation": 1,
+        "workdir": "/Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator"
+      },
+      "evidence": {
+        "ledger": "/Users/nortepro/.local/state/evo-coder/runs.jsonl",
+        "ledger_line": 94,
+        "prompt_file": "2026-09-08-physics.prompt.txt",
+        "prompt_hash_matches_ledger": true
+      },
+      "allowed_paths": [
+        "frontend/src/components/model/diagrams.tsx"
+      ],
+      "declared_verification_commands": [
+        "npm --prefix frontend test -- src/components/model/diagrams.test.tsx",
+        "npm --prefix frontend run type-check"
+      ],
+      "independent_review": {
+        "outcome": "PARTIALLY_ACCEPTED_WITH_PLANNER_REWORK",
+        "first_pass": false,
+        "useful_output_adopted": true,
+        "failure_classification": "LOCAL_POSTWRITE_FAILURE",
+        "accepted_contribution": "采用与 X 向右、Y 向上相符的四轮标签/布局变更。",
+        "rework": [
+          "尺寸箭头/文字的位置与轴距、轮距物理意义仍需 Planner 校正。",
+          "Planner 进一步校正车体原点/坐标示意并完成实际浏览器检查。"
+        ],
+        "verification": "Coder 的聚焦 SVG 测试与 TypeScript 检查均通过；独立图形/物理语义检查发现遗漏。修正后第一轮验收：955 后端、40 前端单元、54 E2E、32 冒烟、6 黄金工况通过。"
+      },
+      "total_input_tokens": null,
+      "total_output_tokens": null,
+      "tokens_per_second": null,
+      "exact_code_contribution_fraction": null,
+      "unavailable_reason": "Supervisor ledger does not record these quantities; max_context_tokens is a peak, not total usage."
+    }
+  ],
+  "metrics": {
+    "calls": 1,
+    "supervisor_pass": {
+      "numerator": 1,
+      "denominator": 1,
+      "rate": 1.0
+    },
+    "first_independent_acceptance": {
+      "numerator": 0,
+      "denominator": 1,
+      "rate": 0.0
+    },
+    "useful_contribution_adopted": {
+      "numerator": 1,
+      "denominator": 1,
+      "rate": 1.0
+    },
+    "partial_acceptance": 1,
+    "rejected": 0,
+    "pending_review": 0
+  },
+  "configuration_changed": false,
+  "fallback_calls": 0,
+  "tuning_hypotheses": [
+    "Add explicit semantic acceptance for visible required props and unit/geometry meaning; successful tsc alone is insufficient.",
+    "Keep current temperature/top_p while gathering comparable samples; two narrow UI calls do not establish model-wide acceptance rates."
+  ]
+}

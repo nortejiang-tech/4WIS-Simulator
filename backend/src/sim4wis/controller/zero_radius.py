@@ -4,7 +4,7 @@ ICR is at the vehicle geometric centre (body origin). Each wheel's perpendicular
 line is forced to pass through the origin, so the four wheels point
 "tangentially around the centre".
 
-Geometry (no clipping needed since wheels are at L/2 and track/2 from origin):
+Geometry (pure rolling requires steer_limit >= atan(L/min(track))):
     For wheel at (x, y):
         δ_i = atan2(x, -y)  (raw, then wrapped to [-π/2, π/2])
     Forward-FL = (+L/2, +tf/2) →  atan2(L/2, -tf/2) ≈ +119°  → wrapped: ≈ -61°
@@ -24,7 +24,9 @@ from sim4wis.controller.base import (
     BodyMotionTarget,
     ControllerStrategy,
     compute_commands,
+    limit_target_to_grip,
 )
+from sim4wis.controller.longitudinal import cornering_accel_limit
 from sim4wis.core.state import ControlCommand, DriverInput, VehicleState
 
 
@@ -34,14 +36,16 @@ class ZeroRadiusStrategy(ControllerStrategy):
     def compute(self, driver: DriverInput, state: VehicleState, dt: float = 0.0) -> ControlCommand:  # noqa: ARG002
         p = self.params
 
-        # Yaw-rate magnitude: scale so the outer wheel's linear speed equals v_max
-        # at full throttle. Outer wheel is at distance R_outer from origin.
-        # NOTE: zero-radius pivots in place (vx=0); `throttle` here is the spin
-        # rate command, not the longitudinal drive pedal, so it deliberately
-        # does NOT go through the longitudinal speed_command layer.
+        # A manoeuvre rate is independent of the vehicle's highway top speed.
+        # 30 deg/s is a configurable interactive command ceiling, not a tyre
+        # capability prediction. Explicit tests may choose another ceiling.
         wheels = p.wheel_positions_body()
         R_max = float(np.max(np.linalg.norm(wheels, axis=1)))
-        omega_max = p.v_max / R_max if R_max > 1e-6 else 1.0
+        rate = float((driver.mode_params or {}).get("spin_rate_max_dps", 30.0))
+        if not np.isfinite(rate):
+            rate = 30.0
+        omega_max = min(float(np.deg2rad(np.clip(rate, 0.0, 180.0))),
+                        p.v_max / max(R_max, 1e-6))
         omega = omega_max * float(driver.throttle) * float(np.sign(driver.steering) or 1.0)
 
         target = BodyMotionTarget(
@@ -51,6 +55,8 @@ class ZeroRadiusStrategy(ControllerStrategy):
             icr_target_body=np.array([0.0, 0.0]),
         )
 
+        target = limit_target_to_grip(target, cornering_accel_limit(p, driver, state),
+                                      p.wheelbase / 2.0 - p.cg_to_front)
         return compute_commands(
             wheels=wheels,
             target=target,

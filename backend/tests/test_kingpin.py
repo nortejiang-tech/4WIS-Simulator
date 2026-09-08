@@ -33,7 +33,7 @@ def test_lateral_force_lever() -> None:
     fy = np.full(4, 1000.0)
     tau = kingpin_torque(fx=ZEROS, fy=fy, mz=ZEROS, fz=ZEROS,
                          suspension=susp, delta=ZEROS, tire_radius=0.395)
-    lever = susp.scrub_radius + 0.395 * np.tan(susp.caster_angle)
+    lever = 0.395 * np.tan(susp.caster_angle)
     assert np.allclose(tau, 1000.0 * lever, rtol=1e-9)
 
 
@@ -42,7 +42,7 @@ def test_fx_scrub_term() -> None:
     fx = np.full(4, 2000.0)
     tau = kingpin_torque(fx=fx, fy=ZEROS, mz=ZEROS, fz=ZEROS,
                          suspension=susp, delta=ZEROS)
-    assert np.allclose(tau, 2000.0 * susp.scrub_radius, rtol=1e-9)
+    assert np.allclose(tau, 2000.0 * susp.scrub_radius * np.array([1., -1., 1., -1.]), rtol=1e-9)
 
 
 def test_mz_enters_as_negative() -> None:

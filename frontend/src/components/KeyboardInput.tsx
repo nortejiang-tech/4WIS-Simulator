@@ -22,9 +22,10 @@
  */
 
 import { useEffect, useRef } from "react";
-import { resetSim, setDriver, setStrategy } from "@/api/ws";
+import { releaseDriverInput, resetSim, setDriver, setStrategy } from "@/api/ws";
 import { computeGamepadOutput, firstGamepad, GamepadConfig } from "@/input/gamepadConfig";
 import { useSimStore } from "@/store/sim";
+import { canDriveInput, isEditingTarget } from "@/input/focusPolicy";
 import {
   initialIntentState,
   releaseBackward,
@@ -64,6 +65,19 @@ export default function KeyboardInput() {
   const intent = useRef(initialIntentState());
   const last = useRef(performance.now());
   const lastPush = useRef(performance.now());
+  const wasActive = useRef(false);
+
+  const release = () => {
+    pressed.current = {};
+    throttle.current = 0; brake.current = 0;
+    zeroSteerRamp(steer.current);
+    intent.current = initialIntentState();
+    if (wasActive.current) {
+      releaseDriverInput();
+      useSimStore.getState().requestZero();
+    }
+    wasActive.current = false;
+  };
 
   // Strategies need to be read inside handlers — keep a ref that's updated
   // whenever the store's list changes.
@@ -95,6 +109,8 @@ export default function KeyboardInput() {
       throttle.current = 0;
       brake.current = 0;
       zeroSteerRamp(steer.current);
+      pressed.current = {};
+      intent.current = initialIntentState();
     }
   }), []);
 
@@ -103,7 +119,12 @@ export default function KeyboardInput() {
       if (e.repeat) return;
       // Don't swallow typing in inputs (none yet, but future-proof).
       const tgt = e.target as HTMLElement | null;
-      if (tgt && /^(INPUT|TEXTAREA|SELECT)$/.test(tgt.tagName)) return;
+      const store = useSimStore.getState();
+      if (!canDriveInput({ page: store.page, armed: store.manualArmed, online: store.online,
+        visible: !document.hidden, focused: document.hasFocus(), editing: isEditingTarget(tgt),
+        paused: store.state?.interaction?.paused ?? false,
+        scripted: store.state?.interaction?.source === "script" })) return;
+      if (["KeyW", "KeyS", "KeyA", "KeyD", "Space"].includes(e.code)) e.preventDefault();
 
       if (e.code === "KeyR") {
         resetSim();
@@ -125,9 +146,14 @@ export default function KeyboardInput() {
     };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    window.addEventListener("blur", release);
+    const visibility = () => { if (document.hidden) release(); };
+    document.addEventListener("visibilitychange", visibility);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", release);
+      document.removeEventListener("visibilitychange", visibility);
     };
   }, []);
 
@@ -155,6 +181,13 @@ export default function KeyboardInput() {
       const now = performance.now();
       const dt = Math.min(0.1, (now - last.current) / 1000);
       last.current = now;
+      const store = useSimStore.getState();
+      if (!canDriveInput({ page: store.page, armed: store.manualArmed, online: store.online,
+        visible: !document.hidden, focused: document.hasFocus(), editing: isEditingTarget(document.activeElement),
+        paused: store.state?.interaction?.paused ?? false, scripted: store.state?.interaction?.source === "script" })) {
+        release(); raf = requestAnimationFrame(step); return;
+      }
+      wasActive.current = true;
 
       const p = pressed.current;
       // Two distinct ranges — do not conflate them. `clampUnit` is for the

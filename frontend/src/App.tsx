@@ -12,6 +12,12 @@ import { connectSimSocket, fetchPath, fetchScenario } from "@/api/ws";
 import { fetchJSON } from "@/api/http";
 import { AppPage, useSimStore } from "@/store/sim";
 import "./App.css";
+import InteractionModeBar from "@/components/InteractionModeBar";
+import ManualLifecycle from "@/components/ManualLifecycle";
+import { postJSON } from "@/api/http";
+
+const AgentWorkspace = lazy(() => import("@/components/AgentWorkspace"));
+const ScriptWorkspace = lazy(() => import("@/components/ScriptWorkspace"));
 
 const LoadAnalysisPage = lazy(() => import("@/components/LoadAnalysisPage"));
 const ModelTheoryPage = lazy(() => import("@/components/ModelTheoryPage"));
@@ -49,6 +55,7 @@ type TabId = (typeof TABS)[number]["id"];
 const RAIL: { id: AppPage; icon: string; label: string; hint: string }[] = [
   { id: "run", icon: "🕹", label: "运行", hint: "交互驾驶工作台（键盘/手柄实时仿真）" },
   { id: "experiment", icon: "🧪", label: "试验", hint: "定义可复现实验，批量运行策略×车速矩阵" },
+  { id: "agent", icon: "⌘", label: "Agent", hint: "独立仿真会话 / MCP 与 OpenAPI / 完整结果" },
   { id: "analysis", icon: "📊", label: "分析", hint: "run 结果库：KPI 对比 / 多 run 叠图 / 轨迹" },
   { id: "vehicle", icon: "🚗", label: "车辆", hint: "车辆/悬架/转向几何参数与项目管理" },
   { id: "scene", icon: "🛣", label: "场景", hint: "参考路径 / 扰动（冰面·减速带·坡道）/ 故障注入" },
@@ -100,6 +107,8 @@ export default function App() {
   const page = useSimStore((s) => s.page);
   const setPage = useSimStore((s) => s.setPage);
   const pushToast = useSimStore((s) => s.pushToast);
+  const source = useSimStore(s => s.state?.interaction?.source ?? "idle");
+  const gamepadId = useSimStore(s => s.gamepadId);
   const [tab, setTab] = useState<TabId>("drive");
   const [visitedTabs, setVisitedTabs] = useState<TabId[]>(["drive"]);
   const [version, setVersion] = useState<string | null>(null);
@@ -133,6 +142,11 @@ export default function App() {
   // Connect WebSocket on mount.
   useEffect(() => {
     connectSimSocket();
+    const runId = new URLSearchParams(window.location.search).get("run");
+    if (runId) {
+      useSimStore.getState().setAnalysisPreselect([runId]);
+      useSimStore.getState().setPage("analysis");
+    }
   }, []);
 
   // Pull strategy list once from REST.
@@ -170,7 +184,7 @@ export default function App() {
         <span className="title">Simulator</span>
         {version && (
           <span
-            className="app-xs app-mono"
+            className="app-xs app-mono app-version"
             style={{ color: "var(--muted)", fontSize: 10, alignSelf: "flex-end", paddingBottom: 2 }}
             title="后端版本（/api/version）"
           >
@@ -189,8 +203,9 @@ export default function App() {
         >
           未经实车验证
         </span>
-        <span className="page-title">{RAIL.find((r) => r.id === page)?.label ?? ""}</span>
+        <span className="page-title">{page === "script" ? "脚本工况" : RAIL.find((r) => r.id === page)?.label ?? ""}</span>
         <div className="header-summary" aria-label="当前状态摘要">
+          {page === "agent" ? <span className="app-xs" style={{ color: "var(--muted)" }}>状态以所选 Agent 会话为准</span> : <>
           <span className="hs-item">
             <span className="hs-k">车速</span>
             <span className="hs-v">{speedKmh.toFixed(1)}<i>km/h</i></span>
@@ -199,6 +214,7 @@ export default function App() {
             <span className="hs-k">策略</span>
             <span className="hs-v" title={strategy}>{strategy}</span>
           </span>
+          </>}
         </div>
         {page === "run" && (
           <button
@@ -221,6 +237,18 @@ export default function App() {
           {online ? "● 已连接" : "○ 未连接"}
         </span>
       </header>
+
+      <InteractionModeBar
+        mode={page === "run" ? "manual" : page === "script" || page === "experiment" ? "script" : page === "agent" ? "agent" : null}
+        onChange={mode => { setPage(mode === "manual" ? "run" : mode === "script" ? "script" : "agent"); }}
+        sourceLabel={page === "agent" ? "独立 Agent 会话" : source === "script" ? "实时脚本" : source === "manual" ? (gamepadId ? "键盘 / 手柄·方向盘" : "键盘") : "输入已释放"}
+        connected={online}
+        onStop={page === "run" || page === "script" ? () => {
+          useSimStore.getState().requestZero(); useSimStore.getState().setManualArmed(false);
+          postJSON("/api/interaction/control", { action: "stop" })
+            .catch(err => pushToast("error", `停止输入失败：${String(err)}`));
+        } : undefined}
+      />
 
       <div className="app-body">
         {/* ── workflow rail ── */}
@@ -255,6 +283,7 @@ export default function App() {
             </section>
 
             <aside className="side-pane">
+              <ManualLifecycle />
               <nav className="side-tabs" role="tablist" aria-label="功能分组">
                 {TABS.map((t) => (
                   <button
@@ -310,6 +339,8 @@ export default function App() {
         )}
 
         <Suspense fallback={<PageLoader />}>
+          {page === "agent" && <ErrorBoundary label="Agent 工作台"><AgentWorkspace /></ErrorBoundary>}
+          {page === "script" && <ErrorBoundary label="脚本工况"><ScriptWorkspace /></ErrorBoundary>}
           {page === "experiment" && (
             <ErrorBoundary label="试验">
               <ExperimentPage />

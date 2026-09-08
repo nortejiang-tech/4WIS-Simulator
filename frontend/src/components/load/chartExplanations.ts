@@ -1,3 +1,4 @@
+import { KINGPIN_FORMULA, KINGPIN_DERIVATION, RACK_FORMULA, LINKAGE_INDICATOR, STEADY_BODY } from "../model/physicsExplanations";
 // 教科书风格的原理讲解：每张图都按「现象 → 直觉解释 → 物理推导 → 公式 → 边界」结构。
 // 公式用 LaTeX，包在 $...$ / $$...$$ 里由 KaTeX 在弹窗里渲染。
 // SVG 图示用纯文本嵌入。
@@ -25,7 +26,7 @@ const svgKingpinDiagram = `
   <line x1="190" y1="170" x2="260" y2="170" stroke="#f59e0b" stroke-width="2" marker-end="url(#kpArrFx)"/>
   <text x="250" y="163" fill="#f59e0b" font-size="12">F_x 纵向力</text>
   <line x1="170" y1="170" x2="190" y2="170" stroke="#a78bfa" stroke-width="3"/>
-  <text x="160" y="200" fill="#a78bfa" font-size="11">机械拖距 t = r·tan(ε) + scrub</text>
+  <text x="160" y="200" fill="#a78bfa" font-size="11">机械拖距 t = R·tan(ε)</text>
 </svg>`;
 
 const svgTwoCurves = `
@@ -166,26 +167,9 @@ const dualCurveSection = {
 };
 
 // W1 单独一节：解释 bicycle coupling 把速度依赖引入 α 的物理来源
-const bicycleSection = {
-  heading: "2. 为什么车速会这样改变曲线形状 —— bicycle coupling",
-  body: `<p>这是 v0.7.5 加入的核心物理升级。原本的台架口径 $\\alpha_i = -\\delta_i$（速度被约掉）<strong>不符合实车</strong>：
-当 FL 转 $\\delta$ 而其他三轮锁 0 时，车身一定会发展出<strong>侧偏 $\\beta$</strong> 和<strong>横摆角速度 $r$</strong> 才能达到稳态平衡。</p>
-<p>解 2×2 稳态 bicycle 方程：</p>
-$$\\begin{cases} \\sum_i F_{y,i} = m V r \\\\ \\sum_i x_i F_{y,i} = 0 \\end{cases}$$
-<p>其中 $F_{y,i} = -c_\\alpha(F_{z,i}) \\cdot \\alpha_i$ 且 $\\alpha_i = \\beta + r\\,x_i/V - \\delta_i$。
-对 LS9 对称底盘 + 单 FL 转 $\\delta$ 的情形解析解为：</p>
-$$r = \\frac{\\delta\\,V}{2L}, \\quad \\beta = \\frac{\\delta}{4}\\left(1 - \\frac{mV^2}{2 c_\\alpha L}\\right)$$
-$$\\boxed{\\;\\alpha_{FL} = -\\delta \\cdot \\left(\\frac{1}{2} + \\frac{mV^2}{8 c_\\alpha L}\\right)\\;}$$
-<p>所以斜率增益是 $(1/2 + mV^2/(8c_\\alpha L))$：</p>
-<table style="font-family:ui-monospace,monospace;font-size:13px;border-collapse:collapse;margin:8px 0">
-<tr><th style="padding:4px 12px;border-bottom:1px solid #475569;text-align:right">V (km/h)</th><th style="padding:4px 12px;border-bottom:1px solid #475569;text-align:right">增益</th><th style="padding:4px 12px;border-bottom:1px solid #475569;text-align:right">饱和 δ</th></tr>
-<tr><td style="text-align:right;padding:2px 12px">0</td><td style="text-align:right;padding:2px 12px">0.50</td><td style="text-align:right;padding:2px 12px">~5.7°</td></tr>
-<tr><td style="text-align:right;padding:2px 12px">36</td><td style="text-align:right;padding:2px 12px">0.60</td><td style="text-align:right;padding:2px 12px">~4.75°</td></tr>
-<tr><td style="text-align:right;padding:2px 12px">108</td><td style="text-align:right;padding:2px 12px">1.36</td><td style="text-align:right;padding:2px 12px">~2.1°</td></tr>
-<tr><td style="text-align:right;padding:2px 12px">180</td><td style="text-align:right;padding:2px 12px">2.89</td><td style="text-align:right;padding:2px 12px">~1.0°</td></tr>
-</table>
-<p>所以高速下：<strong>线性区收缩</strong>（饱和早）、<strong>线性斜率变大</strong>（同 $\\delta$ 拿到更多 α）。
-这两个现象都是 4WIS 工程师熟悉的常识，台架口径模型只是把它们藏起来了。</p>`,
+const bicycleSection: ExplanationContent["sections"][number] = {
+  heading: "整车响应的线性近似",
+  body: STEADY_BODY,
 };
 
 export const EXPLANATIONS: Record<string, ExplanationContent> = {
@@ -196,13 +180,7 @@ export const EXPLANATIONS: Record<string, ExplanationContent> = {
         heading: "1. 看到什么",
         body: `<p>横轴是命令车轮转角 $\\delta_{cmd}$（度），纵轴是该轮主销总阻力矩 $\\tau$（N·m）。曲线大致呈"S 形"：
 中央近线性，两侧逐渐进入<strong>饱和平台</strong>。</p>
-<p><strong>不同剖面车速差异巨大</strong>：</p>
-<ul>
-<li><strong>线性区斜率</strong>随车速 $\\propto v^2$ 增长（v=10→200 km/h 增长约 5.8 倍）；</li>
-<li><strong>饱和发生点</strong>随车速向中央<strong>收缩</strong>（高速下 $\\delta = 1°$ 就快到饱和）；</li>
-<li><strong>饱和平台高度</strong>随车速略下降（气动升力降 $F_z$）。</li>
-</ul>
-<p>这<strong>不是</strong>简单的"$\\mu F_z$ 平台变低"那么简单——根本原因是 v0.7.5+ 加入了 <strong>bicycle coupling</strong> 让单轮 sweep 不再假设车身锁直行（详见下方第 2 节）。</p>`,
+<p>不同车速会改变车身响应、气动载荷和饱和位置。以当前参数的计算曲线为准；未标定模型的量级不等同于实车数据。</p>`,
       },
       dualCurveSection,
       bicycleSection,
@@ -216,21 +194,7 @@ export const EXPLANATIONS: Record<string, ExplanationContent> = {
       },
       {
         heading: "3. 物理推导",
-        body: `<p>主销力矩 $\\tau$ 来自 4 项 (Reimpell §3.10)：</p>
-$$\\tau = \\underbrace{F_y \\cdot (s + t_m + t_p)}_{\\text{侧向力 × 等效拖距}}
-     + \\underbrace{F_x \\cdot s}_{\\text{纵向力 × scrub}}
-     + \\underbrace{M_z}_{\\text{自回正}}
-     + \\underbrace{F_z \\sin(KPI) \\cdot s \\sin\\delta}_{\\text{KPI 抬升}}$$
-<p>其中 $t_m = r\\tan\\varepsilon$ 为机械拖距，$s$ 为主销偏置（scrub_radius），$t_p$ 为气胎拖距。</p>
-<p>注：$F_y \\cdot (s + t_m + t_p)$ 是 Reimpell 的<strong>工程等效力臂</strong>写法，把 $F_y$ 通过倾斜的主销轴产生的一阶 3D 耦合折算成一个有效杠杆，严格 3D 推导会得到稍小一点的 $F_y \\cdot t_m$ 但要补 $F_z$ 的二阶项。EPS 选型行业用前者作标准。</p>
-<p><strong>蓝线（actual）</strong>用 Pacejka 平滑饱和后的 $F_y, F_x$ —— 摩擦椭圆一次成型：</p>
-$$\\left(\\frac{F_x}{\\mu F_z}\\right)^2 + \\left(\\frac{F_y}{\\mu F_z}\\right)^2 \\le 1$$
-<p>其中 $F_y$ 用<strong>等效滑移角</strong>把 camber 折进去：$\\alpha_{eq} = \\alpha - \\dfrac{C_\\gamma \\gamma F_z}{c_\\alpha(F_z)}$；
-$F_x$ 用<strong>等效滑移率</strong>把驱动力折进去：$\\kappa_{eq} = F_{x,drive}/c_\\kappa$。
-这样 camber thrust 和 driving force 都通过同一个 Pacejka 共享 friction ellipse，避免之前"二次裁剪"造成的硬拐角。</p>
-<p><strong>红线（ideal）</strong>用线性 demand（不裁）：</p>
-$$F_{y,ideal} = -c_\\alpha(F_z) \\cdot \\alpha + C_\\gamma \\gamma F_z + F_{y,parking}$$
-<p>注意 $c_\\alpha(F_z) = c_{\\alpha,0}(F_z/F_{z,nom})^{0.8}$ —— 随<strong>动态 $F_z$</strong>软化，所以高速气动升力降 $F_z$ 时<strong>红线斜率也跟着软化</strong>，不是定值。</p>`,
+        body: KINGPIN_FORMULA + KINGPIN_DERIVATION,
         figure: svgKingpinDiagram,
       },
       {
@@ -248,25 +212,21 @@ $$F_{y,ideal} = -c_\\alpha(F_z) \\cdot \\alpha + C_\\gamma \\gamma F_z + F_{y,pa
       {
         heading: "1. 看到什么",
         body: `<p>横轴 $\\delta_{cmd}$，纵轴齿条轴向力 $F_{rack}$（N）。形状和 $\\tau$ 高度相似，
-但是 $|F_{rack}|$ 比 $|\\tau|$ 数值高很多（典型 60-200×），因为梯形臂 $r \\approx 0.15$ m 是力臂的倒数关系。
-车速越高，线性区斜率越陡、饱和发生得越早——同 $\\tau$ 一样来自 bicycle coupling。</p>`,
+但是 $|F_{rack}|$ 比 $|\\tau|$ 数值高很多（单位分别为 N 和 N·m，不应将数值比例视作无量纲倍数），因为梯形臂 $r \\approx 0.15$ m 是力臂的倒数关系。
+车速、轴荷、前后侧偏刚度会共同改变曲线，应在稳态近似适用范围内解释。</p>`,
       },
       dualCurveSection,
       bicycleSection,
       {
         heading: "2. 物理推导",
-        body: `<p>梯形机构本质是一个 4 连杆：主销转动 $\\delta$ → 梯形臂转动 → 拉动横拉杆 → 推齿条。
-力的关系：</p>
-$$F_{rack} = \\frac{\\tau}{r \\cdot \\eta_{linkage}}$$
-$$\\eta_{linkage} = |\\sin(\\theta_{arm{\\text -}tie})| \\cdot \\cos(\\theta_{tie{\\text -}rack}) \\cdot \\eta_{rack}$$
-<p>当 $\\delta = 0$ 时 arm-tie 接近 $90°$（高效），$\\eta$ 最大；当 $\\delta$ 偏离零位很多时 arm-tie 偏离 $90°$（拉杆和梯形臂越接近共线），<strong>$\\eta$ 下降很快</strong>，相同的 $\\tau$ 需要更大的 $F_{rack}$。这就是为什么 $|F_{rack}|$ 曲线两端比 $|\\tau|$ 曲线两端"翘"得更厉害。</p>`,
+        body: RACK_FORMULA,
         figure: svgLinkage,
       },
       {
         heading: "3. 工程价值",
         body: `<p>$|F_{rack}|$ 的<strong>峰值</strong>决定 → 齿条受力上限，对滚珠丝杠/齿轮选型至关重要；
 $\\delta=0$ 处的 $F_{rack}$ 决定 → 直行位齿条恒载（即"电机零输出"的关键）；
-<strong>两侧的非对称性</strong>反映 → 梯形机构本身的几何不对称（一般来说应该对称）。</p>
+<strong>两侧的非对称性</strong>反映 → 梯形机构本身的几何不对称（单轮曲线未必奇对称；左右轮在镜像转角下才应对应）。</p>
 <p>注意：电机扭矩需求 $\\tau_{motor} = F_{rack} \\cdot r_p / (i \\cdot \\eta)$，其中 $r_p$ 是齿轮节圆半径，$i$ 是减速比。</p>`,
       },
     ],
@@ -316,7 +276,7 @@ $$F_{y,parking} = k_{lat} \\cdot \\mu F_z \\cdot \\tanh\\left(\\frac{\\delta}{\\
         body: `<p>从 v0.7.5 开始，单轮 sweep 已经包含了<strong>稳态 bicycle coupling</strong>：</p>
 <ul>
 <li>选中的那一只轮按命令角 $\\delta$ 转动，其它三轮锁 0；</li>
-<li>车身按 2×2 稳态 bicycle 方程 $\\sum F_y = m V r,\\ \\sum x_i F_{y,i} = 0$ 解出 $(\\beta, r)$；</li>
+<li>车身按 2×2 稳态 bicycle 方程 $\\sum F_y = m V r,\\ \\sum (x_i-e) F_{y,i} = 0$ 解出 $(\\beta, r)$；</li>
 <li>每个轮的实际 $\\alpha_i = \\beta + r \\cdot x_i/V - \\delta_i$ 反应到 Pacejka 拿到真实力；</li>
 <li>$F_{rack}$ 由真实 $\\tau$ 经梯形机构得到，零交点就是 $\\delta_{eq}$。</li>
 </ul>
@@ -352,29 +312,8 @@ $$F_{y,parking} = k_{lat} \\cdot \\mu F_z \\cdot \\tanh\\left(\\frac{\\delta}{\\
   },
 
   efficiency: {
-    title: "几何效率 η_linkage vs δ —— 梯形机构传力的「利用率」",
-    sections: [
-      {
-        heading: "1. 看到什么",
-        body: `<p>横轴 $\\delta_{cmd}$，纵轴是<strong>主销梯形 + 齿条传动</strong>的瞬时机械效率（0–1 之间）。
-通常在 $\\delta=0$ 附近最高（≈ 0.8–0.9），在 $\\delta$ 接近最大转角时陡降到 0.5 以下。</p>
-<p>注：这张图<strong>仅看蓝线</strong>，因为效率是纯几何量，与轮胎是否饱和无关。</p>`,
-      },
-      {
-        heading: "2. 物理含义",
-        body: `<p>$$\\eta_{linkage} = |\\sin(\\theta_{arm{\\text -}tie})| \\cdot \\cos(\\theta_{tie{\\text -}rack}) \\cdot \\eta_{rack}$$
-<p>当 $\\theta_{arm{\\text -}tie} = 90°$ 时 $\\sin = 1$（机构臂力最大）；
-当 $\\theta_{tie{\\text -}rack} = 0°$ 时 $\\cos = 1$（拉杆方向与齿条同向，分量损失最小）。</p>`,
-        figure: svgLinkage,
-      },
-      {
-        heading: "3. 为什么 δ 大时 η 会降",
-        body: `<p>这是<strong>四连杆机构在极限位置的奇异性</strong>。
-车轮转到极限角度时，梯形臂和拉杆逐渐共线，arm-tie 偏离 90°，杠杆比恶化。
-所以同样的主销力矩 $\\tau$，需要更大的齿条力 $F_{rack}$，相当于"效率下降"。</p>
-<p>底盘设计上希望 $\\eta \\ge 0.6$ 在工作转角范围内。如果某段 $\\eta < 0.3$，说明梯形几何选得不好（很可能 c/r 比例失调）。</p>`,
-      },
-    ],
+    title: "机构几何指标 η_linkage vs δ",
+    sections: [{ heading: "指标的用途与边界", body: LINKAGE_INDICATOR, figure: svgLinkage }],
   },
 
   armTie: {
@@ -405,7 +344,7 @@ $\\sin(\\theta_{arm{\\text -}tie})$ 越接近 1，力臂越接近于梯形臂全
       {
         heading: "2. 物理意义",
         body: `<p>拉杆要把推/拉力传给齿条，<strong>只有沿齿条轴线的分量有用</strong>，垂直分量被齿条轴承吃掉。
-$\\cos(\\theta_{tie{\\text -}rack})$ 就是这个有效系数。$\\theta_{tie{\\text -}rack} = 0°$ 时分量全部有效；越大，"白干活"的部分越多。</p>
+$\\cos(\\theta_{tie{\\text -}rack})$ 就是这个有效系数。$\\theta_{tie{\\text -}rack} = 0°$ 时分量全部有效；越大，轴承承受的横向反力越大；几何投影本身不代表能量损耗。</p>
 <p>典型设计在 5°–15° 之间。如果在零位就 $> 20°$，说明硬点几何选得不合理（h 偏置过大）。</p>`,
         figure: svgLinkage,
       },

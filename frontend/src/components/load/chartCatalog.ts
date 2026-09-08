@@ -275,8 +275,8 @@ export const CHART_CATALOG: Record<ChartId, ChartConfig> = {
   },
   efficiency: {
     id: "efficiency",
-    label: "η 几何效率 (多车速)",
-    title: () => "几何效率（各车速对比）",
+    label: "η 机构几何指标 (多车速)",
+    title: () => "机构几何指标（各车速对比）",
     filename: "load_efficiency",
     series: bySpeedSeries,
     data: (ctx) => bySpeedData(ctx, "geometry_efficiency"),

@@ -26,7 +26,7 @@ import math
 import time
 from typing import Any
 
-from sim4wis.controller.longitudinal import apply_brake_command, apply_drive_command
+from sim4wis.core.step import advance_model
 from sim4wis.controller.registry import available_strategies, make_strategy
 from sim4wis.controller.steering_feel import front_steer_angle as _front_steer_angle
 from sim4wis.controller.steering_feel import gear_ratio as _gear_ratio
@@ -40,7 +40,6 @@ from sim4wis.core.state import (
 from sim4wis.environment.disturbance import Scene
 from sim4wis.fault import FaultInjector
 from sim4wis.recorder.buffer import Recorder, RecorderConfig
-from sim4wis.core.derived import update_derived_outputs
 from sim4wis.vehicle.base import VehicleModel
 from sim4wis.vehicle.model_registry import make_vehicle_model
 # ScriptRunner is imported lazily inside Simulator to avoid an import cycle
@@ -86,6 +85,11 @@ class Simulator:
         self.script_runner = ScriptRunner(self)
         self._task: asyncio.Task | None = None
         self._running = False
+        self.paused = False
+        self.input_owner: str | None = None
+        self.input_seen: float | None = None
+        self.record_full_rate = False
+        self.recording_meta: dict = {}
 
     # ---- lifecycle ----------------------------------------------------------
 
@@ -97,6 +101,7 @@ class Simulator:
         logger.info("Simulator started (dt_sim=%g, dt_push=%g)", self.dt_sim, self.dt_push)
 
     async def stop(self) -> None:
+        await self.script_runner.stop()
         self._running = False
         if self._task is not None:
             self._task.cancel()
@@ -198,6 +203,24 @@ class Simulator:
     def reset(self) -> None:
         self.model.reset()
 
+    def release_input(self) -> None:
+        transient = {"wheel_norm", "vx_frac", "vy_frac", "yaw_frac", "speed_target_ms", "steer_raw_rad"}
+        self.driver = DriverInput(mode_params={k: v for k, v in self.driver.mode_params.items() if k not in transient})
+        self.input_owner = None
+        self.input_seen = None
+
+    def expire_input(self, now: float | None = None) -> None:
+        """Release a lost human stream; scripts have an independent lifetime."""
+        if self.input_seen is not None and not self.script_runner.is_running:
+            if (time.monotonic() if now is None else now) - self.input_seen > .75:
+                self.release_input()
+
+    def interaction_status(self) -> dict:
+        return {"paused": self.paused,
+                "source": "script" if self.script_runner.is_running else "manual" if self.input_owner else "idle",
+                "script": self.script_runner.status().__dict__,
+                "recording": self.recorder.status()}
+
     # ---- main loop ----------------------------------------------------------
 
     async def _loop(self) -> None:
@@ -207,8 +230,15 @@ class Simulator:
         next_time = loop.time()
 
         while self._running:
+            self.expire_input()
             # 1) Control & integrate
             try:
+                if self.paused:
+                    await asyncio.sleep(self.dt_push)
+                    for q in self.subscribers:
+                        if not q.full(): q.put_nowait(self._serialize_state())
+                    next_time = loop.time()
+                    continue
                 cmd = self.strategy.compute(self.driver, self.model.state, self.dt_sim)
                 if self.fault_injector.has_active:
                     from sim4wis.core.state import ControlCommand
@@ -219,13 +249,10 @@ class Simulator:
                     )
                 # Fill the friction-brake actuator command from the driver
                 # (strategies don't touch braking — it's a vehicle concern).
-                apply_brake_command(cmd, self.driver, self.params)
-                apply_drive_command(cmd, self.driver, self.params, self.model.state)
                 self.last_cmd = cmd
-                self.model.step(self.dt_sim, cmd, self.env)
-                # Per-wheel steering centre + split-rack force chain (shared
-                # with the headless batch SimSession).
-                update_derived_outputs(self.model.state, self.params)
+                advance_model(self.model, self.params, self.driver, cmd, self.dt_sim, self.env)
+                if self.record_full_rate:
+                    self.recorder.write(self.model.state, self.last_cmd, self.strategy_name, self.driver, self.model)
             except Exception:
                 logger.exception("Simulator loop step failed")
                 # Recover by resetting the model so we don't get NaN-locked.
@@ -236,7 +263,8 @@ class Simulator:
             # 2) Push downsampled state
             if step_count % push_interval_steps == 0:
                 # Recorder writes happen at the push rate (60 Hz default).
-                self.recorder.write(self.model.state, self.last_cmd, self.strategy_name)
+                if not self.record_full_rate:
+                    self.recorder.write(self.model.state, self.last_cmd, self.strategy_name, self.driver, self.model)
                 msg = self._serialize_state()
                 stale_queues = []
                 for q in self.subscribers:
@@ -303,6 +331,8 @@ class Simulator:
             "t": s.t,
             "wall": time.time(),
             "strategy": self.strategy_name,
+            "interaction": {"paused": self.paused,
+                            "source": "script" if self.script_runner.is_running else "manual" if self.input_owner else "idle"},
             "fault_active": self.fault_injector.has_active,
             "driver": {
                 "throttle": self.driver.throttle,

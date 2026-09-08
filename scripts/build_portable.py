@@ -2,8 +2,10 @@
 """Assemble portable, one-click 4WIS Simulator packages.
 
 A portable package bundles an embedded Python (python-build-standalone), the
-backend source, the built frontend, vendored dependencies, and the editable
-data folders (projects / scripts_lib / plugins), plus a double-click launcher.
+ backend source (including the stdio MCP facade), the built frontend, vendored
+ dependencies, editable data folders, release documentation, and double-click
+ launchers.  The normal UI and the Agent interface therefore use the same
+ self-contained archive on both supported platforms.
 No Python/Node needs to be installed on the target machine.
 
 Cross-assembly: this runs on macOS but can assemble Windows packages too, by
@@ -33,7 +35,29 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 FRONTEND_DIST = REPO / "frontend" / "dist"
 BACKEND_SRC = REPO / "backend" / "src"
-DATA_FOLDERS = ["projects", "scripts_lib", "plugins", "targets", "procedures"]
+# These directories are resolved via sim4wis.paths.data_root().  Leaving one
+# out makes a portable archive start but silently loses a feature (for example
+# the experiment library or vehicle profiles), so keep this list explicit and
+# covered by check_portable_package.py.
+DATA_FOLDERS = [
+    "projects",
+    "scripts_lib",
+    "plugins",
+    "targets",
+    "procedures",
+    "experiments",
+    "vehicle_profiles",
+    "kc_profiles",
+]
+# The MCP facade exposes `verify_golden`; its narrowly-scoped support files
+# must travel with it.  They are not a general-purpose copy of the development
+# scripts directory.
+MCP_SUPPORT_FILES = (
+    "scripts/check_golden_experiments.py",
+    "scripts/study_single_wheel_failure.py",
+    "scripts/reporting.py",
+    "docs/golden_experiments.json",
+)
 OUT_ROOT = REPO / "dist_portable"
 CACHE = OUT_ROOT / ".cache"
 
@@ -134,12 +158,21 @@ def vendor_deps(vendor: Path, pip_platforms: list[str]) -> None:
 
 
 def copy_app_and_data(pkg: Path) -> None:
-    # backend source
+    # Backend source.  sim4wis_mcp is deliberately a separate package, so copy
+    # both packages instead of assuming the Web server is the only product
+    # entry point.
     app_src = pkg / "app" / "src"
     if app_src.exists():
         shutil.rmtree(app_src)
-    shutil.copytree(BACKEND_SRC / "sim4wis", app_src / "sim4wis",
-                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.egg-info"))
+    for package in ("sim4wis", "sim4wis_mcp"):
+        src = BACKEND_SRC / package
+        if not src.is_dir():
+            raise FileNotFoundError(f"portable package source missing: {src}")
+        shutil.copytree(
+            src,
+            app_src / package,
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.egg-info"),
+        )
     # frontend dist
     app_dist = pkg / "app" / "dist"
     if app_dist.exists():
@@ -155,6 +188,40 @@ def copy_app_and_data(pkg: Path) -> None:
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         else:
             dst.mkdir(parents=True, exist_ok=True)
+
+    # A release starts with no developer run/study history, while still making
+    # both persistence roots writable from the first launch.
+    for d in ("runs", "studies"):
+        dst = pkg / d
+        if dst.exists():
+            shutil.rmtree(dst)
+        dst.mkdir(parents=True)
+
+    # Keep the portable Agent's documented golden verification capability
+    # executable.  Copy only its direct, reviewed support set.
+    for rel in MCP_SUPPORT_FILES:
+        src = REPO / rel
+        if not src.is_file():
+            raise FileNotFoundError(f"portable MCP support file missing: {src}")
+        dst = pkg / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+
+    # User-facing release material belongs in the archive too.  The detailed
+    # changelog is versioned with the package rather than inferred from HEAD.
+    for rel in (
+        "docs/user_manual.html",
+        "docs/interaction_guide.md",
+        "docs/agent_interface_design.md",
+        f"docs/v{VERSION}_changelog.md",
+        f"docs/reports/evo-coder/2026-09-09-release-v{VERSION}.md",
+    ):
+        src = REPO / rel
+        if not src.is_file():
+            raise FileNotFoundError(f"portable release document missing: {src}")
+        dst = pkg / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
 
 
 LAUNCHER_COMMAND = """#!/bin/sh
@@ -180,6 +247,24 @@ echo 4WIS Simulator -^> http://127.0.0.1:%PORT%/  (close this window to stop)
 "%DIR%runtime\\python.exe" -m uvicorn sim4wis.main:app --host 127.0.0.1 --port %PORT%
 """
 
+MCP_LAUNCHER_COMMAND = """#!/bin/sh
+# 4WIS Simulator Agent interface — stdio MCP process.
+# Configure an MCP host to run this file; do not use it as a GUI launcher.
+DIR="$(cd "$(dirname "$0")" && pwd)"
+export SIM4WIS_DATA_DIR="$DIR"
+export PYTHONPATH="$DIR/app/src:$DIR/vendor"
+exec "$DIR/runtime/bin/python3" -m sim4wis_mcp.server "$@"
+"""
+
+MCP_LAUNCHER_BAT = """@echo off
+REM 4WIS Simulator Agent interface - stdio MCP process.
+REM Configure an MCP host to run this file; do not use it as a GUI launcher.
+set "DIR=%~dp0"
+set "SIM4WIS_DATA_DIR=%DIR%"
+set "PYTHONPATH=%DIR%app\\src;%DIR%vendor"
+"%DIR%runtime\\python.exe" -m sim4wis_mcp.server %*
+"""
+
 README = """4WIS Simulator — 便携版使用说明
 ==================================
 
@@ -203,11 +288,22 @@ README = """4WIS Simulator — 便携版使用说明
 
 【改界面】 需要在开发机上改 React 源码并 npm run build,再替换 app/dist。
 
+【AI Agent 标准接口（MCP stdio）】
+  包含独立 MCP 服务：macOS 为 agent_mcp.command，Windows 为 agent_mcp.bat。
+  在 Agent 宿主的 MCP 配置中把它作为 command；服务会在 8010 未启动时只启动
+  自己需要的本地后端，退出时只停止自己启动的后端。
+  从终端执行以下命令可输出已填入当前绝对路径、可直接粘贴的配置：
+    macOS:    ./agent_mcp.command --print-config
+    Windows:  agent_mcp.bat --print-config
+  更完整的三种交互、接口、单位和导出说明见 docs/interaction_guide.md。
+
 目录结构:
-  start.command / start.bat   启动器
+  start.command / start.bat       图形界面启动器
+  agent_mcp.command / .bat        Agent 的 stdio MCP 启动器
   runtime/                     内嵌 Python
   vendor/                      Python 依赖
-  app/src, app/dist            后端源码 + 前端
+  app/src, app/dist            后端源码（含 sim4wis_mcp）+ 前端
+  docs/                        当前手册、交互指南、变更说明
   projects/ scripts_lib/ plugins/   可编辑配置
 """
 
@@ -215,13 +311,18 @@ README = """4WIS Simulator — 便携版使用说明
 def write_launcher_and_readme(pkg: Path, kind: str) -> None:
     if kind == "command":
         p = pkg / "start.command"
-        p.write_text(LAUNCHER_COMMAND)
+        p.write_text(LAUNCHER_COMMAND, encoding="utf-8")
         p.chmod(0o755)
+        mcp = pkg / "agent_mcp.command"
+        mcp.write_text(MCP_LAUNCHER_COMMAND, encoding="utf-8")
+        mcp.chmod(0o755)
     else:
         # Path.write_text doesn't accept newline= until 3.10; force CRLF
         # explicitly using write_bytes so the .bat works on Windows.
         crlf = LAUNCHER_BAT.replace("\r\n", "\n").replace("\n", "\r\n")
         (pkg / "start.bat").write_bytes(crlf.encode("utf-8"))
+        mcp_crlf = MCP_LAUNCHER_BAT.replace("\r\n", "\n").replace("\n", "\r\n")
+        (pkg / "agent_mcp.bat").write_bytes(mcp_crlf.encode("utf-8"))
     (pkg / "使用说明.txt").write_text(README, encoding="utf-8")
 
 

@@ -5,7 +5,7 @@ Assumes:
     * Vehicle is a rigid body on a flat ground (z, roll, pitch ignored).
     * Tyre side-slip = 0, weight transfer = 0 (these are Phase 2 territory).
 
-Update rule per step (semi-implicit / forward Euler):
+Update rule per step (algebraic velocity + exact constant-twist pose):
 
     1. Accept commanded (δ_i, ω_i) from the controller as ground truth — i.e.
        the kinematic model does no actuator dynamics. (Phase 2 will add a
@@ -38,14 +38,16 @@ from __future__ import annotations
 import numpy as np
 
 from sim4wis.core.state import (
+    N_WHEELS,
     ControlCommand,
     EnvironmentState,
-    N_WHEELS,
     VehicleParams,
     VehicleState,
 )
 from sim4wis.vehicle.base import VehicleModel
 from sim4wis.vehicle.geometry import vehicle_icr_from_velocity
+from sim4wis.vehicle.load_transfer import vertical_loads
+from sim4wis.vehicle.rigid_body import integrate_pose
 
 
 class KinematicModel(VehicleModel):
@@ -59,8 +61,11 @@ class KinematicModel(VehicleModel):
         super().__init__(params)
         # static vertical load (used as a Phase-1 placeholder for steering
         # resistance torque)
-        g = 9.81
-        self.state.fz = np.full(N_WHEELS, params.mass * g / N_WHEELS)
+        self.state.fz = vertical_loads(params, 0.0, 0.0)
+
+    def reset(self, init: VehicleState | None = None) -> None:
+        super().reset(init)
+        self.state.fz = vertical_loads(self.params, 0.0, 0.0)
 
     def step(
         self,
@@ -134,12 +139,8 @@ class KinematicModel(VehicleModel):
         s.ax = 0.0
         s.ay = 0.0
 
-        # 3. Integrate world-frame pose (forward Euler — adequate at 200 Hz)
-        cp = np.cos(s.psi)
-        sp = np.sin(s.psi)
-        s.x += dt * (s.vx * cp - s.vy * sp)
-        s.y += dt * (s.vx * sp + s.vy * cp)
-        s.psi += dt * s.yaw_rate
+        # 3. Exact pose increment for the commanded constant body twist.
+        s.x, s.y, s.psi = integrate_pose(s.x, s.y, s.psi, s.vx, s.vy, s.yaw_rate, dt)
 
         # 4. Derived geometry — vehicle ICR (body frame)
         s.vehicle_icr_body = vehicle_icr_from_velocity(s.vx, s.vy, s.yaw_rate)

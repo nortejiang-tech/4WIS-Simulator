@@ -3,6 +3,7 @@
 // render them with KaTeX out of the box.
 
 import type { ExplanationContent } from "./ChartBox";
+import { KINGPIN_FORMULA, KINGPIN_DERIVATION, RACK_FORMULA, LINKAGE_INDICATOR } from "../model/physicsExplanations";
 
 // ───────── 实时四轮负载（per-wheel live data from WebSocket） ─────────
 
@@ -32,46 +33,16 @@ $$\\delta_{actual}(t+dt) = \\delta_{actual}(t) + \\dot\\delta \\cdot dt$$
 export const LIVE_TAU: ExplanationContent = {
   title: "τ —— 主销阻力矩",
   sections: [
-    {
-      heading: "含义",
-      body: `<p>该轮主销轴上、由<strong>轮胎力 + 主销几何</strong>共同产生的阻力矩。正号表示作动器需要往 CCW（$+\\delta$ 方向）输出力矩才能维持。</p>`,
-    },
-    {
-      heading: "怎么算（Reimpell §3.10 四项）",
-      body: `$$\\tau = F_y(s + t_m + t_p) + F_x s + M_z + F_z \\sin(KPI)\\cdot s\\sin\\delta$$
-<ul>
-<li>$F_y(s + t_m + t_p)$ — 侧向力经 scrub + caster trail + 气胎拖距 的回正力臂；最大头；</li>
-<li>$F_x \\cdot s$ — 驱动/制动力经主销偏置；正负 scrub 决定 self-steer 方向；</li>
-<li>$M_z$ — 气胎自回正力矩（Pacejka 给的）；</li>
-<li>$F_z \\sin(KPI)\\cdot s\\sin\\delta$ — KPI jacking，把车顶起来产生的回正，$\\delta=0$ 时为 0。</li>
-</ul>
-<p>$F_x, F_y, M_z$ 由轮胎模型给出；在<strong>运动学模型</strong>下没有真实轮胎力，会显示 0；只有<strong>动力学/多体</strong>模型才有非零值。</p>`,
-    },
-    {
-      heading: "工程价值",
-      body: `<p>决定该轮作动器电机要克服多大的负载力矩。配合 $\\eta_{linkage}$ 算齿条力，配合减速比算电机扭矩。</p>`,
-    },
+    { heading: "力矩与符号", body: KINGPIN_FORMULA },
+    { heading: "来源与适用范围", body: KINGPIN_DERIVATION },
   ],
 };
 
 export const LIVE_RACK: ExplanationContent = {
-  title: "Rack —— 齿条轴向力",
+  title: "Rack —— 齿条力",
   sections: [
-    {
-      heading: "含义",
-      body: `<p>该轮齿条的<strong>瞬时轴向力</strong>。正号 = 推齿条；负号 = 拉齿条。</p>`,
-    },
-    {
-      heading: "怎么算",
-      body: `<p>主销力矩 $\\tau$ 经梯形机构传到齿条：</p>
-$$F_{rack} = \\frac{\\tau}{L_{arm} \\cdot \\eta_{linkage}}$$
-<p>其中 $L_{arm}$ 是梯形臂长，$\\eta_{linkage} = |\\sin(\\theta_{arm\\text{-}tie})|\\cdot \\cos(\\theta_{tie\\text{-}rack})\\cdot \\eta_{rack}$ 是几何效率（实时随 $\\delta$ 变化）。</p>
-<p>电机扭矩需求顺手算出：$\\tau_{motor} = F_{rack}\\cdot r_p / i$，其中 $r_p$ 是齿轮节圆半径，$i$ 是减速比。</p>`,
-    },
-    {
-      heading: "工程价值",
-      body: `<p>齿条力的峰值直接决定齿条/轴承/滚珠丝杠的<strong>选型上限</strong>。瞬态峰值 ≫ 静态保持力，特别是急转弯+高 μ 路面。</p>`,
-    },
+    { heading: "虚功与传动比", body: RACK_FORMULA },
+    { heading: "几何边界", body: LINKAGE_INDICATOR },
   ],
 };
 
@@ -92,39 +63,15 @@ $$F_{y,body} = \\sin(\\delta)\\cdot F_x + \\cos(\\delta)\\cdot F_y$$
     {
       heading: "工程价值",
       body: `<p>各模式下四轮对车身的<strong>横向贡献分布</strong>可视化。
-蟹行时四轮同号；零半径时左右镜像异号；阿克曼时前轮异号（左推左、右推右）。
-如果四个 $F_{y,body}$ 加起来跟期望模式不符，说明某轮策略实现错了。</p>`,
+各轮力的符号取决于实际滑移、toe/camber 和瞬态状态，不能仅由策略名称判断。平稳左转时，前后轮的侧向合力通常均朝左。</p>`,
     },
   ],
 };
 
 export const LIVE_ETA: ExplanationContent = {
-  title: "η —— 齿条机构几何效率",
-  sections: [
-    {
-      heading: "含义",
-      body: `<p>梯形臂+横拉杆+齿条组成的<strong>4 连杆机构</strong>瞬时机械效率，0–1 之间。
-$\\eta = 1$ 表示力臂完美最优；$\\eta = 0$ 表示机构卡死/奇异。</p>`,
-    },
-    {
-      heading: "怎么算",
-      body: `$$\\eta_{linkage} = |\\sin(\\theta_{arm\\text{-}tie})|\\cdot \\cos(\\theta_{tie\\text{-}rack})\\cdot \\eta_{rack}$$
-<ul>
-<li>$\\theta_{arm\\text{-}tie}$ ≈ 90° 时 $\\sin\\approx 1$（梯形臂杠杆最佳）；</li>
-<li>$\\theta_{tie\\text{-}rack}$ ≈ 0° 时 $\\cos\\approx 1$（拉杆沿齿条轴方向，分量损失最小）；</li>
-<li>$\\eta_{rack}$ ≈ 0.85~0.95 是齿条机械正效率（齿轮摩擦损耗）。</li>
-</ul>
-<p>每个仿真步对每只轮的当前 $\\delta$ 实时求一次硬点几何（圆-圆交点）得到。</p>`,
-    },
-    {
-      heading: "工程价值",
-      body: `<p>$\\delta = 0$ 附近 $\\eta$ 通常 0.85–0.9 最佳；$\\delta$ 接近极限位时 $\\eta$ 急降到 0.5 以下，意味着<strong>相同的主销力矩需要更大的齿条力</strong>。
-对作动器极限工况选型很关键。</p>`,
-    },
-  ],
+  title: "η —— 机构几何指标",
+  sections: [{ heading: "含义与边界", body: LINKAGE_INDICATOR }],
 };
-
-// ───────── 侧向力合力 + source（panel 底栏） ─────────
 
 export const LIVE_SIDE_LEFT: ExplanationContent = {
   title: "左侧 —— 左两轮 Fy_body 合力",
@@ -137,7 +84,7 @@ export const LIVE_SIDE_LEFT: ExplanationContent = {
     {
       heading: "工程价值",
       body: `<p>结合右侧合力看车身整体的<strong>横向拉力对称性</strong>。
-理想对称模式（蟹行直行/直线行驶）左右应该相等；如果差很多，说明轮胎-路面 μ 分布或者四轮 $\\delta$ 同步出了问题。</p>`,
+直行时对称 toe/camber 可产生左右反向力而合力为零；不应仅以左右单轮力不同判定故障。结合实际滑移、载荷与路面 μ 检查。</p>`,
     },
   ],
 };
@@ -152,7 +99,7 @@ export const LIVE_SIDE_RIGHT: ExplanationContent = {
     },
     {
       heading: "工程价值",
-      body: `<p>同左侧。两者之差就是<strong>侧向横风/路面拖拽</strong>的体现；两者之和就是整车 $\\Sigma F_y$。</p>`,
+      body: `<p>同左侧。两者之差可能来自轮胎、载荷、定位角和路面差异；两者之和就是整车 $\\Sigma F_y$。</p>`,
     },
   ],
 };
@@ -188,7 +135,7 @@ export const LIVE_SOURCE: ExplanationContent = {
 <strong>从假设的车身侧向加速度反推</strong>的估算值（用整车质量 × 估算的 $a_y$ 再按 Fz 比例分配）。
 仅供"知道大致量级"参考，<strong>不要</strong>当真做选型。</li>
 <li><code>tire_model</code>：<strong>简化动力学模型</strong>。用 Pacejka/linear 轮胎模型算的真实 $F_y$。</li>
-<li><code>multibody</code>：<strong>多体 14DOF 模型</strong>。带悬架自由度的 $F_y$，最接近实车。</li>
+<li><code>multibody</code>：<strong>多体 14DOF 模型</strong>。带垂向悬架自由度的 $F_y$；是否更接近实车仍取决于标定与验证。</li>
 </ul>
 <p>右上角的"动力学模型"切换可改这个。</p>`,
     },
@@ -212,31 +159,14 @@ export const KPI_PEAK_RACK: ExplanationContent = {
     {
       heading: "工程价值",
       body: `<p>这是<strong>齿条 / 滚珠丝杠 / 轴承的最大受力上限</strong>，直接对应零件选型。
-为了不让齿条断，工程上要求安全系数 $\\ge 2$，即所选齿条额定承载 $\\ge 2 \\cdot F_{rack,peak}$。</p>`,
+该峰值只覆盖当前扫描范围；实际选型须另行验证载荷包络、疲劳、温升和设计裕量。</p>`,
     },
   ],
 };
 
 export const KPI_MIN_EFF: ExplanationContent = {
-  title: "最低几何效率",
-  sections: [
-    {
-      heading: "含义",
-      body: `<p>整个 sweep 范围内梯形机构几何效率 $\\eta_{linkage}$ 的<strong>最小值</strong>。
-靠近 0 = 机构在某些转角进入<strong>奇异</strong>（梯形臂和拉杆共线）。</p>`,
-    },
-    {
-      heading: "怎么算",
-      body: `$$\\eta_{min} = \\min_{\\delta\\in[-\\delta_{max},+\\delta_{max}]} \\eta_{linkage}(\\delta)$$
-<p>实测：LS9 默认硬点下，极限转角附近 $\\eta$ 降到 0.5–0.6，过低就要警告。</p>`,
-    },
-    {
-      heading: "工程价值",
-      body: `<p>$\\eta_{min} < 0.3$ → 红色警告 "低几何效率：存在接近奇异或力臂不足的转角区间"。
-说明梯形几何选错了（典型是 c/r 比例失调）。
-机构 sizing 阶段应当回去改硬点。</p>`,
-    },
-  ],
+  title: "最低机构几何指标",
+  sections: [{ heading: "含义与边界", body: LINKAGE_INDICATOR }],
 };
 
 export const KPI_MAX_UTIL: ExplanationContent = {

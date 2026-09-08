@@ -27,7 +27,6 @@ from sim4wis.vehicle.kingpin import kingpin_torque_terms
 from sim4wis.vehicle.load_analysis import sweep_load_analysis
 from sim4wis.vehicle.load_transfer import vertical_loads
 from sim4wis.vehicle.model_core import (
-    G_ACCEL,
     load_sensitive_cornering_stiffness,
     quasi_static_wheel_loads,
     solve_steady_state_body,
@@ -80,6 +79,7 @@ async def bicycle_gain(body: BicycleGainRequest) -> dict[str, Any]:
         beta, yaw_rate = solve_steady_state_body(
             speed=v, delta=deltas, c_alpha=loads.c_alpha,
             wheel_positions_body=wp, mass=float(p.mass),
+            cg_x=p.wheelbase / 2.0 - p.cg_to_front,
         )
         alpha_w = beta + yaw_rate * float(wp[wheel_index, 0]) / v - ref_delta
         gain = abs(alpha_w / ref_delta) if ref_delta > 1e-9 else 0.0

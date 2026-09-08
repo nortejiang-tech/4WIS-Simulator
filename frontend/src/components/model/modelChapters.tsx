@@ -7,6 +7,7 @@
 // rendered container (reusing components/load/latex.ts).
 
 import type { DiagramKey } from "./diagrams";
+import { KINGPIN_FORMULA, KINGPIN_DERIVATION, RACK_FORMULA, LINKAGE_INDICATOR, STEADY_BODY } from "./physicsExplanations";
 
 export type DemoKey = "bicycleGain" | "tireCurve" | "kingpinBreakdown";
 
@@ -36,7 +37,7 @@ export const CHAPTERS: Chapter[] = [
     intuitionHtml: `
 <p><strong>一句话</strong>：这是整个 4WIS 仿真器背后的"数学发动机"。你在仿真工作台看到的车怎么动、在负载特性页看到的每条曲线，
 都是这一套模型算出来的——这一页把它从头讲清楚。</p>
-<p>四轮独立转向（4WIS）意味着<strong>四个车轮的转角和转速都能各自独立控制</strong>，没有传统转向那根机械连杆。
+<p>四轮独立转向（4WIS）意味着<strong>四个车轮的转角能各自独立控制</strong>。独立驱动是另一项能力，本仿真器也提供四轮独立驱动的抽象。
 好处是能蟹行、能原地转、能高速稳态更好；代价是每个轮的受力、每个电机要出多大力，都得算准——这正是这套模型要回答的。</p>
 <p>模型按 <strong>车 → 轴 → 轮</strong> 三层组织（见右图）：整车定平动和横摆，轴负责左右镜像，单轮算真正的轮胎力与主销力矩。
 指令（转角 δ、转速 ω）自上而下分发，力和力矩自下而上汇总。</p>`,
@@ -62,7 +63,7 @@ $X$ 朝前、$Y$ 朝左、$Z$ 朝上。四个轮固定编号 FL / FR / RL / RR�
 <tr><td>$\\kappa_i$</td><td>第 $i$ 轮纵滑率</td></tr>
 <tr><td>$v_x, v_y$</td><td>车身原点纵/侧向速度</td></tr>
 <tr><td>$r$</td><td>横摆角速度（yaw rate）</td></tr>
-<tr><td>$\\beta$</td><td>车身侧偏角 $=\\arctan(v_y/v_x)$</td></tr>
+<tr><td>$\\beta$</td><td>原点侧偏角 $=\\operatorname{atan2}(v_y,v_x)$</td></tr>
 <tr><td>$F_{z,i}$</td><td>第 $i$ 轮垂向载荷</td></tr>
 </table>`,
   },
@@ -103,7 +104,7 @@ $$F_{y0} = -D\\,\\sin\\!\\big(C_y \\arctan(B_y\\alpha - E_y(B_y\\alpha - \\arcta
 $$\\Big(\\tfrac{F_x}{\\mu F_z}\\Big)^2 + \\Big(\\tfrac{F_y}{\\mu F_z}\\Big)^2 \\le 1 \\quad\\text{(摩擦椭圆裁剪)}$$`,
     derivationHtml: `
 <p>采用简化魔术公式（Magic Formula）：$B$ 由小信号刚度反推（$B_y=C_\\alpha/(C_y D)$），保证<strong>原点斜率严格等于 Cα</strong>、
-峰值等于 $\\mu F_z$。组合滑移用摩擦椭圆一次裁剪（friction ellipse），是线性 friction circle 的光滑版本，避免硬拐角。
+峰值等于 $\\mu F_z$。组合滑移用摩擦椭圆一次裁剪（friction ellipse），是合力超限时的径向投影，边界处不保证导数光滑。
 载荷敏感性 $C_\\alpha(F_z)=C_{\\alpha 0}(F_z/F_{z,\\text{nom}})^{p}$（默认 $p=0.8$）：高速气动升力降低 $F_z$ 时，
 线性区斜率和饱和峰值<strong>同时</strong>下降。唯一内核 <code>tire.pacejka_combined_forces</code>，时域与准静态共用。</p>
 <p>口径说明：更一般的摩擦椭圆允许纵横峰值不同 $\\big((F_x/\\mu_x F_z)^2+(F_y/\\mu_y F_z)^2\\le1\\big)$；本模型取 $\\mu_x=\\mu_y=\\mu$（圆），$\\mu$ 由场景逐轮给定。</p>`,
@@ -127,7 +128,7 @@ $$F_{z,i} = \\underbrace{F_{z,\\text{static}}}_{mgb/2L\\ \\text{或}\\ mga/2L}
     derivationHtml: `
 <p>准静态载荷转移（无悬架柔度的刚体近似）：纵向加速度 $a_x$ 经质心高度 $h$ 在前后轴间转移 $m a_x h / 2L$；
 横向加速度 $a_y$ 按各轴质量份额在左右轮间转移。气动升力按前/后轴系数 $C_{l,f}, C_{l,r}$ 扣减。
-实现 <code>load_transfer.vertical_loads</code> + <code>model_core.fz_with_aero_lift</code>。多体研究模型会用真实悬架自由度替代这个准静态式。</p>`,
+实现 <code>load_transfer.vertical_loads</code> + <code>model_core.fz_with_aero_lift</code>。多体研究模型使用垂向悬架自由度。四轮离地/翻滚超出该准静态模型边界。</p>`,
   },
   {
     id: "kingpin",
@@ -138,24 +139,8 @@ $$F_{z,i} = \\underbrace{F_{z,\\text{static}}}_{mgb/2L\\ \\text{或}\\ mga/2L}
 <p>轮胎力并不直接顶在转向电机上，而是通过<strong>主销轴</strong>（车轮转动绕的那根轴）形成力矩。
 主销有后倾（caster）、有偏置（scrub）——这些几何决定了同样的轮胎力会产生多大的转向阻力矩 $\\tau_{KP}$。
 这就是电机选型最关心的量。</p>`,
-    formulaHtml: `
-$$\\tau_{KP} = \\underbrace{F_y\\,(s + t_m)}_{\\text{侧向力×（偏置+机械拖距）}}
-+ \\underbrace{F_x\\,s}_{\\text{纵向力×偏置}}
-+ \\underbrace{M_z}_{\\text{气胎拖距自回正}}
-+ \\underbrace{F_z\\sin(\\text{KPI})\\,s\\sin\\delta}_{\\text{主销内倾抬升}}$$
-<p>其中机械拖距 $t_m = R\\tan\\varepsilon$（$\\varepsilon$ 后倾角），$s$ 主销偏置；气胎拖距 $t_p$ <strong>只</strong>经
-$M_z \\approx -F_y\\,t_p(\\alpha)$ 进入，<strong>不</strong>再加进 $F_y$ 力臂——否则同一份 $t_p$ 被算两次（重复计算）。</p>`,
-    derivationHtml: `
-<p>四项依 Reimpell §3.10 / Pacejka §9（口径与《Steering Handbook》Ch.6 一致）：</p>
-<ul>
-<li>① <strong>侧向力经拖距回正</strong>：$F_y$ 经机械拖距 $t_m=R\\tan\\varepsilon$ 对主销形成回正力矩（最大头）。</li>
-<li>② <strong>纵向力转向</strong>：驱动/制动力 $F_x$ 经主销偏置 $s$ 形成力矩，即 torque-steer（轮毂电机尤其敏感，$s\\to 0$ 可抑制）。</li>
-<li>③ <strong>气胎自回正 $M_z$</strong>：轮胎自身回正力矩 $M_z\\approx -F_y\\,t_p(\\alpha)$ 直接进链——气胎拖距 $t_p$ 的贡献<strong>已经在这里</strong>，且 $t_p(\\alpha)$ 随滑移衰减（大滑移趋零）。它与 $t_m$ 项<strong>同向叠加</strong>（都把轮回正）。</li>
-<li>④ <strong>主销内倾抬升</strong>：转角下 KPI"把车顶起来"的回正分量，$\\propto\\sin\\delta$，直行为 0。</li>
-</ul>
-<p><strong>易错点（本版已修正）</strong>：$M_z$ 已含气胎拖距贡献，<strong>不能</strong>再把 $t_p$ 加进 $F_y$ 机械力臂。旧版两处都写了 $t_p$——力臂里 $+F_y t_p$、求和里又 $+M_z=-F_y t_p$，二者符号相反相互抵消，反把气胎回正抹平（小转角处最明显，正是 $\\delta_{eq}$ 所在区）。现仅经 $M_z$ 计一次。</p>
-<p>关于 $s$：严格 3D 视角下主销偏置是<strong>正视面</strong>力臂、本不该与<strong>侧视</strong>拖距 $t_m$ 直接相加；这里沿用 Reimpell 工程等效写法把 $s$ 并进 $F_y$ 力臂（EPS 选型行业惯例），会略高估 $F_y$ 项。</p>
-<p>唯一来源 <code>kingpin.kingpin_torque</code>（<code>kingpin_torque_terms</code> 给分项，本页第 5 节交互演示就用它）。</p>`,
+    formulaHtml: KINGPIN_FORMULA,
+    derivationHtml: KINGPIN_DERIVATION,
     demo: "kingpinBreakdown",
   },
   {
@@ -163,17 +148,9 @@ $M_z \\approx -F_y\\,t_p(\\alpha)$ 进入，<strong>不</strong>再加进 $F_y$ 
     num: "6",
     title: "齿条与电机：力链的最后一环",
     diagram: "linkage",
-    intuitionHtml: `
-<p>主销力矩经<strong>梯形臂 + 横拉杆</strong>转换成齿条的轴向力，再经齿轮和减速比变成电机扭矩。
-机构几何效率 η 在转角大时会变差——同样的主销力矩，会被放大成更大的齿条力（这就是为什么极限转角处特别费劲）。</p>`,
-    formulaHtml: `
-$$F_{\\text{rack}} = \\frac{\\tau_{KP}}{L_{\\text{arm}}\\cdot\\eta},\\qquad
-\\eta = |\\sin\\theta_{\\text{臂-杆}}|\\cdot\\cos\\theta_{\\text{杆-齿条}}\\cdot\\eta_{\\text{rack}},\\qquad
-T_{\\text{motor}} = F_{\\text{rack}}\\,\\frac{r_p}{i}$$`,
-    derivationHtml: `
-<p>梯形机构是一个四连杆：主销转 δ → 梯形臂端点画弧 → 横拉杆推动齿条沿轴平移。
-几何效率 η 由"臂-杆夹角"的正弦和"杆-齿条夹角"的余弦决定，乘上齿条机械效率 $\\eta_{\\text{rack}}$。
-η 越低，相同 $\\tau_{KP}$ 需要越大的 $F_{\\text{rack}}$。实现 <code>geometry.wheel_rack_force_from_linkage</code>，硬点几何可在负载页编辑。</p>`,
+    intuitionHtml: `<p>主销力矩通过梯形臂与横拉杆传到齿条，再经小齿轮和减速器传到电机。传动比由机构运动决定，必须同时满足力平衡与虚功。</p>`,
+    formulaHtml: RACK_FORMULA,
+    derivationHtml: LINKAGE_INDICATOR,
   },
   {
     id: "vehicle",
@@ -186,48 +163,23 @@ T_{\\text{motor}} = F_{\\text{rack}}\\,\\frac{r_p}{i}$$`,
     formulaHtml: `
 <p>运动学（最小二乘反解车身速度）：</p>
 $$\\min_{v_x,v_y,r}\\ \\sum_i \\big\\| \\mathbf v_i - s_i\\,(\\cos\\delta_i,\\sin\\delta_i) \\big\\|^2$$
-<p>动力学（Newton–Euler，车体系含 Coriolis）：</p>
-$$m(\\dot v_x - r v_y) = \\textstyle\\sum F_{x,i},\\quad
-m(\\dot v_y + r v_x) = \\textstyle\\sum F_{y,i},\\quad
-I_z\\dot r = \\textstyle\\sum (x_i F_{y,i} - y_i F_{x,i} + M_{z,i})$$`,
-    derivationHtml: `
-<p>运动学层：四轮的滚动方向给出 8 个速度约束、3 个未知量（$v_x,v_y,r$），超定 → 最小二乘解（<code>kinematic.py</code>）。
-动力学层：3-DOF 平面车身 + 4 个轮速自由度，固定步长 RK4 积分（<code>dynamic.py</code>），轮胎力来自上面的 Pacejka 内核，载荷来自准静态转移。
-两层都通过 <code>model_core</code> 的滑移/旋转/力组装函数共用底层数学，互不耦合各自的高层职责。</p>`,
+<p>动力学：公开速度在轴距中点 O，质心位于 $(e,0)$，$e=L/2-a$。</p>
+$$I_z\dot r=M_O-eF_y,\qquad
+\dot v_x=F_x/m+rv_y+er^2,\qquad
+\dot v_y=F_y/m-rv_x-e\dot r$$`,
+    derivationHtml: `<p>车身速度在旋转坐标系中表达；惯量定义在质心，先将外力矩从 O 平移到质心。
+载荷转移使用质心加速度。平面车身用 RK4 子步，轮速使用实际非线性轮胎力的后向欧拉求解；
+载荷、轮速与车身分步耦合，因此整个算法不具有四阶收敛保证。分析结果需要步长收敛检查。</p>
+<p>运动学忽略力的可实现性；多体模型增加垂向悬架自由度，但仍是小角、低阶研究模型。</p>`,
   },
   {
     id: "bicycle",
     num: "8",
     title: "稳态 bicycle 耦合：为什么高速更敏感",
     diagram: "bicycle",
-    intuitionHtml: `
-<p>有个常见误区：以为转角 δ 就等于侧偏角（α=−δ）。<strong>错。</strong>
-实车一转向，车身会自己发展出侧偏 β 和横摆 r，每个轮真正的 α 是这三者的合成。
-结果是：<strong>车速越高，同样的 δ 产生的 α 越大</strong>——线性区越窄、越容易饱和、回正越重。这就是为什么高速转向"发沉发贼"。</p>`,
-    formulaHtml: `
-$$\\textstyle\\sum F_{y,i} = m V r,\\qquad \\sum x_i F_{y,i} = 0
-\\quad\\Longrightarrow\\quad (\\beta, r)$$
-$$\\alpha_i = \\beta + \\frac{r\\,x_i}{V} - \\delta_i
-\\qquad\\Rightarrow\\qquad
-\\alpha_{FL} \\approx -\\delta\\Big(\\tfrac12 + \\frac{mV^2}{8 C_\\alpha L}\\Big)$$`,
-    derivationHtml: `
-<p>把四轮当广义线性 bicycle：侧向力平衡 $\\sum F_y=mVr$（向心力）+ 稳态横摆 $\\sum x_i F_{y,i}=0$（无角加速度），
-代入 $F_{y,i}=-C_\\alpha\\alpha_i$ 与 $\\alpha_i=\\beta+rx_i/V-\\delta_i$，得 2×2 线性方程组解 $(\\beta,r)$。
-对单轮转向的对称底盘可得闭式增益 $\\big(\\tfrac12+mV^2/(8C_\\alpha L)\\big)$，随 $V^2$ 增长。
-实现 <code>model_core.solve_steady_state_body</code> / <code>steady_state_slip_angles</code>，负载页 sweep 用它把"台架口径 α=−δ"修正成"行驶口径"。下面的演示直接来自该求解器。</p>
-<h4 style="margin-top:16px">v0.8.1：两种单轮分析口径开关</h4>
-<p>负载页顶栏和本页第 5 章的主销力矩演示都有一个<strong>受力口径</strong>开关，让你在两种物理框架之间切换：</p>
-<ul>
-<li><strong>整车装载（vehicle，默认）</strong>：本节描述的稳态 bicycle 耦合。轮装在车身上、车身按 $(\\beta, r)$ 响应。
-工程用途：<em>驾驶手感、$\\delta_{eq}$ 真实预测</em>。</li>
-<li><strong>单轮台架（isolated）</strong>：把被分析轮视为独立台架上的单元，车身锁定直行 $(V, 0)$，
-$\\alpha = -\\delta$ 与车速无关。轮自身物理（载荷敏感 $C_\\alpha(F_z)$、气动升力降 $F_z$、驱动力 $F_x$、camber thrust、toe、parking）<strong>全部照算</strong>，
-但<strong>不发展车身响应</strong>。工程用途：<em>作动器/电机最差工况（worst-case）选型</em>——它给的是"无论车身怎么响应，单轮自己一定要扛住多少力"。</li>
-</ul>
-<p>两种口径下 $\\delta_{cmd}=0$ 处的残余力<strong>完全一致</strong>（无 forcing → 无 $\\beta, r$），但<strong>曲线斜率与饱和位置截然不同</strong>。
-LS9 默认参数下 isolated 模式 $\\delta_{eq}$ 在 10→200 km/h 仅从 0.13° 降到 0.08°（载荷敏感二阶效应），vehicle 模式从 0.25° 显著降到 0.02°（bicycle 主导）——并排比较能给出立竿见影的物理直觉。</p>`,
-    calloutHtml: `<strong>LS9 量级</strong>：vehicle 模式下增益从 v=10 km/h 的 ~0.5 涨到 v=200 km/h 的 ~3（同样转角下 α 大 6 倍，
-饱和转角从 ~6° 收缩到 ~1°）；isolated 模式下增益基本恒定 0.5，仅 $C_\\alpha(F_z)$ 随气动升力小幅软化。`,
+    intuitionHtml: `<p>车轮转角与轮胎侧偏角不同：车身的横向速度与横摆会改变各轮实际滑移。稳态 bicycle 近似用来解释这种耦合，并估计小信号响应。</p>`,
+    formulaHtml: STEADY_BODY,
+    derivationHtml: `<p>每轮侧偏刚度包括前/后轴比例。独立转角经侧向合力和质心横摆力矩平衡共同确定响应；正、反向转弯应在对称参数下互为镜像。交互演示直接调用后端求解器。</p>`,
     demo: "bicycleGain",
   },
   {
@@ -237,14 +189,14 @@ LS9 默认参数下 isolated 模式 $\\delta_{eq}$ 在 10→200 km/h 仅从 0.13
     intuitionHtml: `
 <p>负载页那条"δ_eq 随车速"的曲线问的是：<strong>电机不出力时，车轮会停在哪个角度？</strong>
 理想对称车是 0°，但真车有 toe、camber、驱动力经主销偏置等"偏置源"，让这个角度偏离 0 并随车速漂移。</p>
-<p>⚠ 注意口径：当前 δ_eq 是<strong>单轮台架 + bicycle 耦合</strong>下该轮齿条力的零点，用于<strong>作动器/电机选型</strong>是合适的；
+<p>⚠ 注意口径：当前 δ_eq 是<strong>单轮台架 + bicycle 耦合</strong>下该轮齿条力的零点，可为<strong>作动器概念设计</strong>提供参考；
 它<strong>不是</strong>整车四轮联立的真自由稳态（那需要 3-DOF 耦合 + 四轮力矩平衡，是后续版本计划）。</p>`,
     formulaHtml: `
 $$\\delta_{eq}(V) := \\arg\\min_{\\delta}\\ \\big|F_{\\text{rack}}(\\delta, V)\\big|_{\\text{single-wheel}}$$`,
     derivationHtml: `
 <p>偏置源拆解：静态 toe 直接移轴（速度无关偏置）；camber thrust $C_\\gamma\\gamma F_z$ 在 α=0 也产生侧向力；
 维持车速的驱动力 $F_x=C_{rr}mg+\\tfrac12\\rho C_d A V^2$ 经主销偏置 $s$ 产生力矩（随 $V^2$）；气动升力改变 $F_z$ 从而改变 $\\mu F_z$ 与 $C_\\alpha$。
-工程用法：$F_{\\text{rack}}$ 在 $\\delta_{cmd}=0$ 的残值 = 直行位电机持续保持力 → 决定电机静态发热电流；峰值 $F_{\\text{rack}}$ → 齿条/丝杠选型上限（安全系数 ≥2）。</p>`,
+工程用法：$F_{\\text{rack}}$ 在 $\\delta_{cmd}=0$ 的残值 = 直行位电机持续保持力 → 决定电机静态发热电流；峰值 $F_{\\text{rack}}$ → 齿条/丝杠选型上限（须另行定义任务谱、载荷包络与设计裕量）。</p>`,
   },
   {
     id: "bounds",

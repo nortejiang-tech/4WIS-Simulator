@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -35,6 +37,7 @@ router = APIRouter()
 async def stream_state(ws: WebSocket) -> None:
     await ws.accept()
     sim = get_simulator()
+    client_id = uuid.uuid4().hex
     queue = sim.subscribe(maxsize=8)
     logger.info("WS /ws/state connected — subscribers=%d", len(sim.subscribers))
 
@@ -72,7 +75,7 @@ async def stream_state(ws: WebSocket) -> None:
                     return
                 continue
             try:
-                _apply_client_message(data, sim)
+                _apply_client_message(data, sim, client_id)
             except Exception:
                 logger.exception("WS: failed applying client message")
 
@@ -90,6 +93,8 @@ async def stream_state(ws: WebSocket) -> None:
             if exc and not isinstance(exc, (WebSocketDisconnect, asyncio.CancelledError)):
                 logger.warning("WS task ended with %r", exc)
     finally:
+        if sim.input_owner == client_id and not sim.script_runner.is_running:
+            sim.release_input()
         sim.unsubscribe(queue)
         logger.info("WS /ws/state disconnected — subscribers=%d", len(sim.subscribers))
         try:
@@ -98,11 +103,17 @@ async def stream_state(ws: WebSocket) -> None:
             pass
 
 
-def _apply_client_message(data: Any, sim) -> None:
+def _apply_client_message(data: Any, sim, client_id: str = "legacy") -> None:
     """Apply a single decoded client message to the simulator."""
     if not isinstance(data, dict):
         return
     mtype = data.get("type")
+    if mtype == "release_input":
+        # Release transient per-wheel/body/cruise values too; a scalar zero
+        # driver packet would otherwise leave these latched in mode_params.
+        if sim.input_owner == client_id and not sim.script_runner.is_running:
+            sim.release_input()
+        return
     if mtype == "driver":
         # A running action script owns the driver channel. The keyboard input
         # loop pushes driver state at 50 Hz even when idle, so without this
@@ -119,6 +130,8 @@ def _apply_client_message(data: Any, sim) -> None:
             handbrake=data.get("handbrake"),
             mode_params=data.get("mode_params"),
         )
+        sim.input_owner = client_id
+        sim.input_seen = time.monotonic()
     elif mtype == "strategy":
         name = data.get("name")
         if isinstance(name, str):

@@ -34,6 +34,21 @@ from sim4wis.experiment.session import RunResult, WHEELS
 R2D = 180.0 / math.pi
 
 
+def compute_recorded_kpis(result: RunResult) -> dict[str, float]:
+    """Descriptive motion metrics for arbitrary human input/channel selection.
+
+    No invented speed target or step response is inferred from a recording.
+    Unrecorded channels do not turn into zero-valued measurements.
+    """
+    out = {}
+    for channel, metric, scale in (("yaw_rate", "yaw_rate_peak_dps", R2D), ("vy", "vy_peak_kmh", 3.6)):
+        values = np.asarray(result.channels.get(channel, []), dtype=float)
+        values = values[np.isfinite(values)]
+        if values.size:
+            out[metric] = float(np.max(np.abs(values))) * scale
+    return out
+
+
 def compute_kpis(result: RunResult, exp: Experiment) -> dict[str, Any]:
     t = np.asarray(result.t, dtype=np.float64)
     ch = {k: np.asarray(v, dtype=np.float64) for k, v in result.channels.items()}

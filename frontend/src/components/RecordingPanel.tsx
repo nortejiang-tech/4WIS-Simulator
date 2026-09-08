@@ -15,11 +15,15 @@ interface RecorderStatus {
   channels: string[];
   buffer_seconds: number;
   available_channels: string[];
+  dropped_samples?: number;
+  stop_reason?: string | null;
 }
 
-import { fetchBlob, fetchJSON } from "@/api/http";
+import { fetchBlob, fetchJSON, postJSON } from "@/api/http";
 import Panel from "@/components/Panel";
 import { HELP } from "@/ui/help";
+import ResultArtifacts from "./ResultArtifacts";
+import type { ArtifactManifest } from "./ResultArtifacts";
 
 function fmt(t: number | null): string {
   return t == null ? "—" : t.toFixed(2);
@@ -33,6 +37,8 @@ export default function RecordingPanel() {
   const [status, setStatus] = useState<RecorderStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [full, setFull] = useState(true);
+  const [runId, setRunId] = useState("");
 
   const refresh = useCallback(() => {
     fetchJSON<RecorderStatus>("/api/recording/status")
@@ -50,7 +56,12 @@ export default function RecordingPanel() {
   const onStart = async () => {
     setError(null);
     try {
-      const s = await fetchJSON<RecorderStatus>("/api/recording/start", { method: "POST" });
+      const channels = full ? (status?.available_channels ??
+        (await fetchJSON<RecorderStatus>("/api/recording/status")).available_channels) : undefined;
+      const s = await postJSON<RecorderStatus>("/api/recording/start", {
+        channels, full_rate: full,
+      });
+      setRunId("");
       setStatus(s);
     } catch (e: any) { setError(String(e?.message ?? e)) }
   };
@@ -60,6 +71,16 @@ export default function RecordingPanel() {
       const s = await fetchJSON<RecorderStatus>("/api/recording/stop", { method: "POST" });
       setStatus(s);
     } catch (e: any) { setError(String(e?.message ?? e)) }
+  };
+  const onClear = async () => {
+    setError(null);
+    setExporting(true);
+    try {
+      const s = await postJSON<RecorderStatus>("/api/recording/clear");
+      setRunId("");
+      setStatus(s);
+    } catch (e: any) { setError(`丢弃录制失败：${String(e?.message ?? e)}`) }
+    finally { setExporting(false); }
   };
   const onExport = async () => {
     setError(null);
@@ -87,6 +108,7 @@ export default function RecordingPanel() {
 
   return (
     <Panel title="数据录制" help={HELP.recording}>
+      <label className="interaction-note"><input type="checkbox" checked={full} disabled={recording} onChange={e => setFull(e.target.checked)} /> 全部可用通道 · 每个积分步采样</label>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         {recording ? (
           <button onClick={onStop} style={btnRecording}>
@@ -100,7 +122,26 @@ export default function RecordingPanel() {
         <button data-testid="recording-export" onClick={onExport} disabled={samples === 0 || exporting}>
           {exporting ? "导出中..." : "导出 CSV"}
         </button>
+        <button
+          data-testid="recording-clear"
+          onClick={onClear}
+          disabled={recording || samples === 0 || exporting}
+          title="丢弃当前未保存的录制数据"
+        >
+          丢弃录制
+        </button>
       </div>
+      <button disabled={recording || samples === 0 || exporting} onClick={async () => {
+        setError(null); setExporting(true);
+        try {
+          const saved = await postJSON<ArtifactManifest>("/api/recording/save", undefined, 60000);
+          setRunId(saved.run_id);
+        } catch (err) { setError(String(err)); }
+        finally { setExporting(false); }
+      }}>保存到结果库</button>
+      {!!status?.dropped_samples && <p className="interaction-error" role="alert">缓冲区已丢弃 {status.dropped_samples} 个早期样本；当前录制不是完整起始记录。</p>}
+      {status?.stop_reason && <p className="interaction-note">时间轴已重置，录制自动停止并保留此前数据。</p>}
+      {runId && <ResultArtifacts runId={runId} />}
       <div className="params-list" style={{ marginTop: 6 }}>
         <span>状态</span>
         <span

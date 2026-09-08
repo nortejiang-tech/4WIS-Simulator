@@ -190,15 +190,10 @@ def theory_table(p: VehicleParams):
     L, a = float(p.wheelbase), float(p.cg_to_front)
     b = L - a
     m = float(p.mass)
-    # What the CONTROL LAW believes the axle stiffnesses are...
+    # Current controller and vehicle use the same axle stiffness scales.
     cf, cr = axle_cornering_stiffness(p)
-    # ...versus what the vehicle actually has. `axle_cornering_stiffness`
-    # returns 2*tire_c_alpha for both axles and does not apply
-    # tire_c_alpha_front_scale / _rear_scale, so every law built on it is
-    # solving for a car that is not the car it is steering.
-    sf = float(getattr(p, "tire_c_alpha_front_scale", 1.0))
-    sr = float(getattr(p, "tire_c_alpha_rear_scale", 1.0))
-    cf_true, cr_true = cf * sf, cr * sr
+    sf, sr = float(p.tire_c_alpha_front_scale), float(p.tire_c_alpha_rear_scale)
+    cf_true, cr_true = cf, cr
 
     def K_us(cff, crr):
         """Understeer gradient, deg/g. K = (m/L)*(b/Cf - a/Cr)."""
@@ -237,16 +232,17 @@ def job_corrected(args):
     p = VehicleParams()
     arch = BY_KEY[CARRIER]
     mp = {"rws_mode": "speed_schedule"}
-    if corrected:
-        L, a, m = float(p.wheelbase), float(p.cg_to_front), float(p.mass)
-        b = L - a
-        cf, cr = axle_cornering_stiffness(p)
-        cf *= float(getattr(p, "tire_c_alpha_front_scale", 1.0))
-        cr *= float(getattr(p, "tire_c_alpha_rear_scale", 1.0))
-        mp["k_curve"] = [
-            [s, (-b + a * m * (s / 3.6) ** 2 / (cr * L))
-                / (a + b * m * (s / 3.6) ** 2 / (cf * L))]
-            for s in (0, 20, 40, 60, 90, 130, 200)]
+    L, a, m = float(p.wheelbase), float(p.cg_to_front), float(p.mass)
+    b = L - a
+    cf, cr = axle_cornering_stiffness(p)
+    if not corrected:
+        # Explicit historical counterfactual; never double-apply scales to the
+        # current helper's result or call the fixed current law "uncorrected".
+        cf = cr = 2.0 * float(p.tire_c_alpha)
+    mp["k_curve"] = [
+        [s, (-b + a * m * (s / 3.6) ** 2 / (cr * L))
+            / (a + b * m * (s / 3.6) ** 2 / (cf * L))]
+        for s in (0, 20, 40, 60, 90, 130, 200)]
     delta, ay = calibrate_steer_for_ay(arch, mp, v, AY, iters=10)
     r = step_steer(arch, mp, v, delta, secs=4.0)
     return dict(v=v, corrected=corrected, delta_deg=delta,

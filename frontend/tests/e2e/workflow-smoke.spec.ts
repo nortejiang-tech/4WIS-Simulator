@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { expectFailureHonesty, failApi } from "./failureHonesty";
 
 async function dragBy(locator: Locator, dx: number, dy: number) {
@@ -50,6 +50,13 @@ async function attachPageScreenshot(page: Page, testInfo: TestInfo, name: string
   const screenshot = await page.screenshot({ fullPage: true });
   expect(screenshot.length).toBeGreaterThan(10_000);
   await testInfo.attach(name, { body: screenshot, contentType: "image/png" });
+}
+
+async function stopAndDiscardRecording(request: APIRequestContext) {
+  const stopped = await request.post("/api/recording/stop");
+  expect(stopped.ok()).toBeTruthy();
+  const cleared = await request.post("/api/recording/clear");
+  expect(cleared.ok()).toBeTruthy();
 }
 
 async function chartCursorX(locator: Locator) {
@@ -227,7 +234,7 @@ test("analysis data load failure surfaces an error state with screenshot evidenc
   await expect(page.getByText("Run 库（1）")).toBeVisible();
   await page.getByText("synthetic error run").click();
 
-  const alert = page.getByRole("alert");
+  const alert = page.getByTestId("toast-error");
   await expect(alert).toContainText("读取 run 数据失败：synthetic channel load failure");
   await expect(page.getByText("KPI 对比")).toBeVisible();
   await expect(page.getByTestId("analysis-kpi-table")).toContainText("横摆角速度峰值 °/s");
@@ -1680,7 +1687,7 @@ test("script status failure stays visible without blocking script editing", asyn
 });
 
 test("recording panel records samples and exports csv", async ({ page, request }, testInfo) => {
-  await request.post("/api/recording/stop");
+  await stopAndDiscardRecording(request);
 
   await page.goto("/");
   await page.getByRole("tab", { name: "数据" }).click();
@@ -1704,11 +1711,15 @@ test("recording panel records samples and exports csv", async ({ page, request }
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/^sim4wis_\d+\.csv$/);
 
+  await recordingPanel.getByTestId("recording-clear").click();
+  await expect(recordingPanel.getByTestId("recording-samples")).toHaveText("0");
+  await expect(recordingPanel.getByTestId("recording-export")).toBeDisabled();
+
   await attachPageScreenshot(page, testInfo, "workflow-recording-export");
 });
 
 test("recording export failure stays visible in the recording panel", async ({ page, request }, testInfo) => {
-  await request.post("/api/recording/stop");
+  await stopAndDiscardRecording(request);
 
   await page.route("**/api/recording/export.csv", async (route) => {
     await route.fulfill({
@@ -1739,7 +1750,7 @@ test("recording export failure stays visible in the recording panel", async ({ p
 });
 
 test("recording status failure stays visible without disabling controls", async ({ page, request }, testInfo) => {
-  await request.post("/api/recording/stop");
+  await stopAndDiscardRecording(request);
 
   await page.route("**/api/recording/status", async (route) => {
     await route.fulfill({
@@ -1763,7 +1774,7 @@ test("recording status failure stays visible without disabling controls", async 
 });
 
 test("recording start and stop failures keep recording controls recoverable", async ({ page, request }, testInfo) => {
-  await request.post("/api/recording/stop");
+  await stopAndDiscardRecording(request);
 
   await page.route("**/api/recording/start", async (route) => {
     await route.fulfill({
@@ -1956,7 +1967,7 @@ test("gamepad mapping panel edits persist without a physical controller", async 
 // noticing. Refresh deliberately with --update-snapshots.
 // ---------------------------------------------------------------------------
 
-test("visual baselines pin the analysis chart, 3D roof view, and geometry studio", async ({ page }, testInfo) => {
+test("visual baselines pin the analysis chart, 3D roof view, and geometry studio", async ({ page, request }, testInfo) => {
   test.setTimeout(60_000);
   // The quickstart card overlays the viewport HUD on a fresh profile; the
   // 3D camera controls live underneath it.
@@ -1979,6 +1990,13 @@ test("visual baselines pin the analysis chart, 3D roof view, and geometry studio
 
   // --- 2. 3D roof view: the parked car at the origin renders the same scene.
   // The view switch lives on the driving page, not the analysis page.
+  // Other tests edit this shared backend: explicitly construct this scene.
+  await request.post("/api/interaction/control", { data: { action: "stop" } });
+  await request.post("/api/path/clear");
+  await request.post("/api/scenario/clear");
+  await request.delete("/api/faults");
+  await request.post("/api/strategy", { data: { name: "ideal_ackermann" } });
+  await request.post("/api/reset");
   await page.goto("/");
   await page.locator(".view-switch button", { hasText: "3D" }).click();
   await page.locator(".canvas-hud").getByRole("button", { name: "车顶" }).click();

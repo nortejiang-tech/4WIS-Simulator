@@ -102,7 +102,7 @@ class TestBeyondCapability:
         saturated run simply goes heavy, which is what an undersized EPS *is*.
         Voiding it would throw away the one result that says so.
         """
-        r = run_scenario(_params(peak_torque=8.0), PARKING)
+        r = run_scenario(_params(peak_torque=6.0), PARKING)
         assert r.saturated_fraction > DELIVERY_TRUST_LIMIT
         assert r.hand_limited_fraction == 0.0
         assert not r.beyond_capability

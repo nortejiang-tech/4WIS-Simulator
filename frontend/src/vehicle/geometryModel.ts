@@ -56,7 +56,7 @@ export function vehicleGeom(p: Params | null): VehicleGeom {
   const a = getP(p, "cg_to_front", 1.55);
   const b = Math.max(L - a, 1e-6);
   const steerLimit = getP(p, "steer_limit", 0.61);
-  const invKappa = (L / 2) / Math.tan(Math.max(steerLimit, 1e-3)) + tf / 2;
+  const invKappa = (L / 2) / Math.tan(Math.max(steerLimit, 1e-3)) + Math.max(tf, tr) / 2;
   const mass = getP(p, "mass", 2900);
   return {
     L, tf, tr, a, b, h: getP(p, "cg_height", 0.62),
@@ -200,14 +200,16 @@ export function axleState(p: Params | null, rackTravel: number): AxleState {
   const dL = left.delta, dR = right.delta;
   const inner = Math.max(Math.abs(dL), Math.abs(dR));
   const outer = Math.min(Math.abs(dL), Math.abs(dR));
-  // Ideal Ackermann: cot(δ_inner) − cot(δ_outer) = tf / L.
+  // Ideal Ackermann: cot(δ_outer) − cot(δ_inner) = tf / L.
   let ackIdeal = inner;
   if (outer > 1e-4) {
     const cotInner = 1 / Math.tan(outer) - tf / L;
     ackIdeal = cotInner > 1e-6 ? Math.atan(1 / cotInner) : inner;
   }
-  // Turn radius from the outer wheel angle: R ≈ L / tan(outer) + tf/2.
-  const turnRadius = outer > 1e-4 ? L / Math.tan(outer) + tf / 2 : Infinity;
+  // Outer-wheel Ackermann estimate: rear-axle R = L*cot(outer) − tf/2.
+  // Report the trajectory radius of the public body origin (axle midpoint).
+  const rearRadius = L / Math.tan(outer) - tf / 2;
+  const turnRadius = outer > 1e-4 ? Math.hypot(rearRadius, L / 2) : Infinity;
   return {
     rackTravel: rt, limit, left, right, deltaLeft: dL, deltaRight: dR,
     inner, outer, ackermannIdeal: ackIdeal,
@@ -242,8 +244,8 @@ export function kingpinFlags(k: KingpinGeom): Flag[] {
 
 export function axleFlags(a: AxleState): Flag[] {
   const f: Flag[] = [];
-  if (a.singular) f.push({ level: "bad", text: "连杆接近奇异（效率→0），该行程车轮无法有效转向" });
-  else if (a.minEfficiency < 0.25) f.push({ level: "warn", text: `连杆效率偏低（η=${a.minEfficiency.toFixed(2)}）` });
+  if (a.singular) f.push({ level: "bad", text: "连杆不可达或接近奇异，请检查硬点与行程" });
+  else if (a.minEfficiency < 0.25) f.push({ level: "warn", text: `连杆几何指标偏低（η=${a.minEfficiency.toFixed(2)}）` });
   if (Math.abs(a.ackermannErrorDeg) > 3) f.push({ level: "warn", text: `阿克曼误差 ${a.ackermannErrorDeg.toFixed(1)}°（内轮偏离理想值）` });
   return f;
 }

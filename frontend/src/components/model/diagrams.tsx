@@ -62,7 +62,7 @@ function HierarchyDiagram() {
 // 1 — body frame + wheel positions
 function BodyFrameDiagram() {
   const wheels: [number, number, number, string][] = [
-    [285, 70, -18, "FL"], [455, 70, 18, "FR"], [285, 225, 18, "RL"], [455, 225, -18, "RR"],
+    [475, 70, -18, "FL"], [475, 240, -18, "FR"], [285, 70, 18, "RL"], [285, 240, 18, "RR"],
   ];
   return (
     <Svg vb="0 0 720 320" label="车体坐标与轮位">
@@ -82,10 +82,10 @@ function BodyFrameDiagram() {
           <text x="-10" y="-22" transform={`rotate(${-rot})`}>{label}</text>
         </g>
       ))}
-      <line x1="248" y1="70" x2="248" y2="240" className="model-measure" />
-      <text x="150" y="160">轴距 L</text>
-      <line x1="285" y1="56" x2="455" y2="56" className="model-measure" />
-      <text x="338" y="44">轮距 t</text>
+      <line x1="235" y1="70" x2="235" y2="240" className="model-measure" />
+      <text x="150" y="160">轮距 t</text>
+      <line x1="285" y1="26" x2="475" y2="26" className="model-measure" />
+      <text x="352" y="16">轴距 L</text>
       <text x="300" y="285" className="model-muted">δᵢ 为各轮相对车体 X 的转角（CCW 正）</text>
     </Svg>
   );
@@ -194,9 +194,9 @@ function KingpinSideDiagram() {
 function KingpinTopDiagram() {
   const k = kingpinGeom(null);
   const gY = 210, contactX = 300, sc = 2600;
-  const kpG = { x: contactX + k.scrub * sc, y: gY };
+  const kpG = { x: contactX - k.scrub * sc, y: gY };
   const H = 150;
-  const kpT = { x: kpG.x + Math.sin(k.kpi) * H, y: gY - Math.cos(k.kpi) * H };
+  const kpT = { x: kpG.x - Math.sin(k.kpi) * H, y: gY - Math.cos(k.kpi) * H };
   return (
     <Svg vb="0 0 560 280" label="主销几何正视">
       <line x1="60" y1={gY} x2="520" y2={gY} className="model-measure" />
@@ -209,7 +209,7 @@ function KingpinTopDiagram() {
       <text x={(contactX + kpG.x) / 2} y={gY + 30} textAnchor="middle" className="model-muted">
         主销偏置 s（scrub）= {(k.scrub * MM).toFixed(0)} mm
       </text>
-      <text x="96" y="264" className="model-muted">Fy 经 (s+t_m)、Fx 经 s 产生主销力矩；t_p 只走 Mz</text>
+      <text x="96" y="264" className="model-muted">Fy 经机械拖距 t_m；Fx 经左右镜像的 s；气胎拖距只走 −Mz</text>
     </Svg>
   );
 }
@@ -246,13 +246,13 @@ function BicycleDiagram() {
       <circle cx="320" cy="180" r="5" className="model-dot" />
       <text x="328" y="178">CG</text>
       {/* velocity & sideslip */}
-      <line x1="320" y1="180" x2="470" y2="150" className="model-wheel-axis" markerEnd="url(#md-arrow)" />
-      <text x="450" y="140" className="model-accent">v（β：与 X 夹角）</text>
-      <line x1="320" y1="180" x2="470" y2="180" className="model-axis-dash" />
+      <line x1="320" y1="180" x2="275" y2="45" className="model-wheel-axis" markerEnd="url(#md-arrow)" />
+      <text x="85" y="40" className="model-accent">v（β_G：与 X 夹角）</text>
+      <line x1="320" y1="180" x2="320" y2="25" className="model-axis-dash" />
       {/* yaw */}
-      <path d="M 360 180 A 40 40 0 0 1 350 215" className="model-path" fill="none" markerEnd="url(#md-arrow)" />
+      <path d="M 360 180 A 40 40 0 0 0 320 140" className="model-path" fill="none" markerEnd="url(#md-arrow)" />
       <text x="366" y="210" className="model-accent">r（横摆角速度）</text>
-      <text x="120" y="320" className="model-muted">前轮转 δ → 车身发展出 β 和 r → 各轮真实 αᵢ = β + r·xᵢ/V − δᵢ</text>
+      <text x="120" y="320" className="model-muted">前轮转 δ → 车身发展出 β 和 r → 小角近似 αᵢ = β_G + r·(xᵢ−e)/V − δᵢ</text>
     </Svg>
   );
 }
@@ -281,7 +281,7 @@ function LinkageDiagram() {
       <circle cx={K.x} cy={K.y} r="6" className="model-dot" /><text x={K.x + 8} y={K.y - 6}>主销 K</text>
       <circle cx={O.x} cy={O.y} r="5" className="model-dot" />
       <circle cx={I.x} cy={I.y} r="5" className="model-dot" />
-      <text x="120" y="266" className="model-muted">F_rack = τ_KP /(L_arm·η)，η = |sin(臂-杆)|·cos(杆-齿条)·η_rack</text>
+      <text x="120" y="266" className="model-muted">虚功：τ_KP·dδ = F_rack·ds；力比由齿条行程导数 ds/dδ 决定</text>
     </Svg>
   );
 }

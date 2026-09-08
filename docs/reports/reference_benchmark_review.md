@@ -19,9 +19,9 @@
 | `yaw_rate_peak_dps` | 7.8559 | 7.8559 | 3.3412e-07 | 0.001 | PASS |
 | `vy_peak_kmh` | 1.9984e-16 | 0 | 1.9984e-16 | 0.001 | PASS |
 | `speed_error_rms_kmh` | 6.39488e-15 | 0 | 6.39488e-15 | 0.001 | PASS |
-| `pose_y_peak_abs_m` | 32.9113 | 32.9298 | 0.0185202 | 0.05 | PASS |
-| `trajectory_error_rms_m` | 0.0127912 | 0 | 0.0127912 | 0.02 | PASS |
-| `trajectory_error_peak_m` | 0.0216883 | 0 | 0.0216883 | 0.03 | PASS |
+| `pose_y_peak_abs_m` | 32.9298 | 32.9298 | 1.11488e-06 | 0.05 | PASS |
+| `trajectory_error_rms_m` | 6.7795e-07 | 0 | 6.7795e-07 | 0.02 | PASS |
+| `trajectory_error_peak_m` | 1.49821e-06 | 0 | 1.49821e-06 | 0.03 | PASS |
 
 ### Reviewer Notes
 
@@ -50,9 +50,9 @@ Reference construction:
 | `yaw_settling_time_s` | 0 | 0 | 0 | 0.001 | PASS |
 | `vy_peak_kmh` | 1.9984e-16 | 0 | 1.9984e-16 | 0.001 | PASS |
 | `speed_error_rms_kmh` | 6.39488e-15 | 0 | 6.39488e-15 | 0.001 | PASS |
-| `pose_y_peak_abs_m` | 25.7902 | 25.8072 | 0.0170412 | 0.05 | PASS |
-| `trajectory_error_rms_m` | 0.0105421 | 0 | 0.0105421 | 0.02 | PASS |
-| `trajectory_error_peak_m` | 0.0191998 | 0 | 0.0191998 | 0.03 | PASS |
+| `pose_y_peak_abs_m` | 25.8072 | 25.8072 | 9.2717e-07 | 0.05 | PASS |
+| `trajectory_error_rms_m` | 4.88147e-07 | 0 | 4.88147e-07 | 0.02 | PASS |
+| `trajectory_error_peak_m` | 1.15555e-06 | 0 | 1.15555e-06 | 0.03 | PASS |
 
 ### Reviewer Notes
 

@@ -27,8 +27,9 @@ from sim4wis.controller.base import (
     BodyMotionTarget,
     ControllerStrategy,
     compute_commands,
+    limit_target_to_grip,
 )
-from sim4wis.controller.longitudinal import speed_command
+from sim4wis.controller.longitudinal import cornering_accel_limit, speed_command
 from sim4wis.controller.steering_feel import front_steer_angle
 from sim4wis.core.state import ControlCommand, DriverInput, VehicleParams, VehicleState
 
@@ -45,7 +46,7 @@ def _max_curvature(params: VehicleParams) -> float:
         1/κ = (L/2) / tan(steer_limit) + tf/2
     """
     L = params.wheelbase
-    tf = params.track_front
+    tf = max(params.track_front, params.track_rear)
     inv_kappa_min = (L / 2.0) / np.tan(params.steer_limit) + tf / 2.0
     return 1.0 / inv_kappa_min
 
@@ -124,7 +125,8 @@ class IdealAckermannStrategy(ControllerStrategy):
         # Convert with THIS strategy's geometry (symmetric 4WIS, ICR on the
         # lateral axis through the vehicle centre), not the bicycle formula —
         # see curvature_from_inner_front_angle.
-        kappa = curvature_from_inner_front_angle(p, delta_eff)
+        kappa = float(np.clip(curvature_from_inner_front_angle(p, delta_eff),
+                              -self._kappa_max, self._kappa_max))
         v_cmd = speed_command(p, driver, float(state.vx), dt, float(state.mu_avg))
 
         if abs(kappa) < 1e-9:
@@ -140,6 +142,8 @@ class IdealAckermannStrategy(ControllerStrategy):
                 icr_target_body=np.array([0.0, y_R]),
             )
 
+        target = limit_target_to_grip(target, cornering_accel_limit(p, driver, state),
+                                      p.wheelbase / 2.0 - p.cg_to_front)
         return compute_commands(
             wheels=p.wheel_positions_body(),
             target=target,

@@ -1,0 +1,39 @@
+{
+  "machine": "arm64",
+  "step_budget_ms": 5.0,
+  "scope": "single-process wall time; not hard real-time guarantee",
+  "cases": [
+    {
+      "model": "SimplifiedDynamicModel",
+      "tire": "linear",
+      "steps": 1200,
+      "median_ms": 0.1471671275794506,
+      "p95_ms": 0.1610892009921372,
+      "max_ms": 0.26899995282292366
+    },
+    {
+      "model": "SimplifiedDynamicModel",
+      "tire": "pacejka",
+      "steps": 1200,
+      "median_ms": 0.1821459736675024,
+      "p95_ms": 0.19900635816156864,
+      "max_ms": 0.2454170025885105
+    },
+    {
+      "model": "MultiBodyModel",
+      "tire": "linear",
+      "steps": 1200,
+      "median_ms": 0.19839557353407145,
+      "p95_ms": 0.21250429563224316,
+      "max_ms": 0.26641692966222763
+    },
+    {
+      "model": "MultiBodyModel",
+      "tire": "pacejka",
+      "steps": 1200,
+      "median_ms": 0.23102050181478262,
+      "p95_ms": 0.2505880780518055,
+      "max_ms": 0.304708955809474
+    }
+  ]
+}

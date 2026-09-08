@@ -37,7 +37,7 @@ export function LoadKpis({
         <b>{fmt(utilPct, 1)}%</b>
       </div>
       <div className="load-kpi">
-        <span>最低几何效率<MetricInfo explanation={KPI_MIN_EFF} /></span>
+        <span>最低机构几何指标<MetricInfo explanation={KPI_MIN_EFF} /></span>
         <b>{fmt(minEfficiency, 3)}</b>
       </div>
     </div>

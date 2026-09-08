@@ -32,7 +32,6 @@ def vertical_loads(params: VehicleParams, ax: float, ay: float) -> np.ndarray:
 
     # Static per-wheel (each axle has 2 wheels — divide by 2)
     fz_static_f = m * G * b / (2.0 * L)
-    fz_static_r = m * G * a / (2.0 * L)
 
     # Longitudinal transfer (per wheel: divide by 2 for the 2 wheels on each axle)
     dfz_long = m * ax * h / (2.0 * L)
@@ -59,11 +58,13 @@ def vertical_loads(params: VehicleParams, ax: float, ay: float) -> np.ndarray:
     dfz_lat_f = eps_f * roll_couple / tF
     dfz_lat_r = (1.0 - eps_f) * roll_couple / tR
 
-    fz = np.array([
-        fz_static_f - dfz_long - dfz_lat_f,   # FL
-        fz_static_f - dfz_long + dfz_lat_f,   # FR
-        fz_static_r + dfz_long - dfz_lat_r,   # RL
-        fz_static_r + dfz_long + dfz_lat_r,   # RR
-    ])
-    # Tyres can lift off — clamp to ≥ 0.
-    return np.maximum(fz, 0.0)
+    # Limit each transfer by the available support. Clamping four negative
+    # loads independently invents vertical force (and therefore tyre grip).
+    # Beyond lift-off this reduced model saturates support; it cannot predict
+    # rollover/heave. The total supported weight must still remain m*g.
+    front = float(np.clip(2.0 * (fz_static_f - dfz_long), 0.0, m * G))
+    rear = m * G - front
+    dfz_lat_f = float(np.clip(dfz_lat_f, -front / 2, front / 2))
+    dfz_lat_r = float(np.clip(dfz_lat_r, -rear / 2, rear / 2))
+    return np.array([front / 2 - dfz_lat_f, front / 2 + dfz_lat_f,
+                     rear / 2 - dfz_lat_r, rear / 2 + dfz_lat_r])

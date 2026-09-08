@@ -10,10 +10,12 @@ exercise the error path through the tool handler itself.
 from __future__ import annotations
 
 import asyncio
+import json
 import threading
 import time
 
 import sys
+from pathlib import Path
 
 import pytest
 import uvicorn
@@ -166,3 +168,71 @@ def test_the_stdio_transport_serves_tools_end_to_end(backend):
                 assert "models" in res.content[0].text
 
     asyncio.run(run())
+
+
+def test_stdio_agent_closed_loop_and_async_study(backend):
+    """Real stdio client drives a session and discovers its full-data artifacts."""
+    import json
+    import urllib.request
+
+    async def run():
+        params = StdioServerParameters(command=sys.executable,
+            args=["-m", "sim4wis_mcp.server", "--base", mcp_server.BASE])
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                async def call(name, args):
+                    response = await session.call_tool(name, args)
+                    assert not response.is_error, response.content
+                    return json.loads(response.content[0].text)
+                opened = await call("create_session", {"experiment": {"name": "mcp_loop",
+                    "model_type": "simplified_dynamic", "strategy": "ideal_ackermann"}})
+                sid = opened["session_id"]
+                cmd = {"session_id": sid, "request_id": "first", "expected_revision": 0,
+                       "steps": 200, "control": {"throttle": .1, "steering": .04}}
+                moved = await call("step_session", cmd)
+                assert moved["samples"] == 200 and moved["state"]["pose"]["x"] > 0
+                assert (await call("step_session", cmd))["replayed"]
+                seen = await call("observe_session", {"session_id": sid})
+                assert seen["steps"] == 200
+                bad = await session.call_tool("step_session", {**cmd, "request_id": "stale"})
+                assert bad.is_error and "revision_conflict" in bad.content[0].text
+                artifact = await call("export_session", {"session_id": sid})
+                with urllib.request.urlopen(artifact["outputs"]["json"]) as response:
+                    full = json.load(response)
+                assert len(full["rows"]) == 200
+                assert (await call("get_run_artifacts", {"run_id": artifact["run_id"]}))["csv_sha256"] == artifact["csv_sha256"]
+                await call("close_session", {"session_id": sid})
+                job = await call("start_study", {"spec": _spec()})
+                for _ in range(100):
+                    status = await call("get_study_job", {"job_id": job["job_id"]})
+                    if status["status"] == "done": break
+                    await asyncio.sleep(.05)
+                assert status["status"] == "done" and status["result"]["rows"]
+    asyncio.run(run())
+
+
+def test_portable_mcp_config_discovers_the_archive_launcher(monkeypatch, tmp_path, capsys):
+    """A portable archive must not require a user to hand-copy its path."""
+    package = tmp_path / "4WIS Simulator portable"
+    source = package / "app" / "src" / "sim4wis_mcp" / "server.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("# synthetic portable location\n", encoding="utf-8")
+
+    monkeypatch.setattr(mcp_server, "__file__", str(source))
+    monkeypatch.setattr(sys, "platform", "darwin")
+    launcher = package / "agent_mcp.command"
+    launcher.write_text("#!/bin/sh\n", encoding="utf-8")
+    config = mcp_server._mcp_host_config()
+    assert config["mcpServers"]["sim4wis"] == {"command": str(launcher), "args": []}
+
+    monkeypatch.setattr(sys, "argv", ["sim4wis-mcp", "--print-config"])
+    assert mcp_server.main() == 0
+    assert json.loads(capsys.readouterr().out) == config
+
+    launcher.unlink()
+    win_launcher = package / "agent_mcp.bat"
+    win_launcher.write_text("@echo off\r\n", encoding="utf-8", newline="")
+    monkeypatch.setattr(sys, "platform", "win32")
+    windows = mcp_server._mcp_host_config()["mcpServers"]["sim4wis"]
+    assert windows == {"command": "cmd.exe", "args": ["/d", "/c", str(win_launcher)]}

@@ -4,7 +4,7 @@ The over-envelope study (scripts/devtools/over_envelope_study.py) produced
 three numbers: the dynamic requirement (~81 N·m), the survival floor
 (~60 N·m), and — as the sizing cross-check — the finding that the earlier
 "104 N·m" basis mislabelled the tyre lateral force as the rack force. The
-rack chain gives ~2× that. These tests pin what the sizing module now
+rack-chain requirement must come from a work-consistent linkage Jacobian. These tests pin what the sizing module now
 reports, including the honest failing verdict for the current default.
 """
 
@@ -32,9 +32,10 @@ def test_the_static_basis_is_the_rack_chain_not_the_tyre_force():
     out = size_corner_actuator(_params(120.0))
     # The mislabelled basis: 5.2 kN tire_fy × pinion ≈ 104 N·m.
     assert 95.0 < out["static_tire_fy_basis_nm"] < 115.0
-    # The honest rack chain is ~2× that.
-    assert out["static_parking_nm"] > 1.8 * out["static_tire_fy_basis_nm"]
-    assert 190.0 < out["static_parking_nm"] < 230.0
+    # Correct contact-plane torque + virtual-work Jacobian: 167.6 N·m.
+    # Independently covered by test_physics_review cross-product/work oracles.
+    assert out["static_parking_nm"] > out["static_tire_fy_basis_nm"]
+    assert 165.0 < out["static_parking_nm"] < 170.0
 
 
 def test_dynamic_over_envelope_numbers_are_pinned():
@@ -52,9 +53,10 @@ def test_a_peak_below_the_static_basis_fails_honestly():
     assert out["required_peak_nm"] > 120.0
 
 
-def test_the_sized_default_covers_the_static_basis():
+def test_numeric_margin_does_not_hide_unreachable_default_geometry():
     out = size_corner_actuator(_params(260.0))
-    assert out["pass"]
+    assert not out["geometry_valid"]
+    assert not out["pass"]
     assert out["usage_pct"] <= 80.0
     assert out["margin_pct"] > 0.0
     assert out["driven_by"] == "parking_full_lock"
@@ -62,10 +64,19 @@ def test_the_sized_default_covers_the_static_basis():
 
 def test_sized_peak_follows_the_80_percent_convention():
     out = size_corner_actuator(_params(260.0))
-    assert out["sized_peak_nm"] == 260
+    assert out["sized_peak_nm"] == 210
     assert out["required_peak_nm"] <= 0.8 * out["sized_peak_nm"]
 
 
 def test_the_dynamic_requirement_is_below_the_default():
     out = size_corner_actuator(_params(260.0))
     assert out["dynamic_over_envelope_nm"] < 260.0
+
+
+def test_reachable_geometry_can_pass_the_internal_numeric_screen():
+    p = _params(260.0)
+    geom = dataclasses.replace(p.steering_geometry, front_rack_travel_limit=.12,
+                               rear_rack_travel_limit=.12)
+    out = size_corner_actuator(dataclasses.replace(p, steering_geometry=geom))
+    assert out["geometry_valid"] and out["pass"]
+    assert out["assessment_status"] == "PENDING_EXTERNAL_VALIDATION"

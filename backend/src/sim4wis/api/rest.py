@@ -9,7 +9,9 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from sim4wis.api.routers import (
+    agent,
     experiments,
+    interaction,
     fault,
     load_analysis,
     meta,
@@ -28,6 +30,8 @@ from sim4wis.api.routers import (
 
 router = APIRouter(prefix="/api", tags=["api"])
 router.include_router(meta.router)
+router.include_router(agent.router)
+router.include_router(interaction.router)
 router.include_router(fault.router)
 router.include_router(load_analysis.router)
 router.include_router(model_demo.router)

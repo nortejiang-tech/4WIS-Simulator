@@ -2,6 +2,16 @@
 
 本文记录当前仿真平台各能力的验证等级、证据位置和已知边界。它不是宣传材料；用途是帮助后续开发判断哪些结论可以直接复用，哪些结论只能作为内部研究假设。
 
+## 2026-09-08 评审增量
+
+[ASTRA 科学模型评审](reports/astra_review_2026-09-08.md)是本轮修正的依据。新增物理反例、虚功/力矩不变量、重置重放和步长对照，加强的是**内部验证**，没有新增独立实测来源，因此不自动提高整车模型等级。
+
+- 质心偏置、轮胎平衡、主销力臂与齿条虚功的旧错误已修正；黄金实验按有证据的数值差异迁移，阈值未放宽。
+- 默认硬点在部分方向不能覆盖 ±35°；默认角度也不具备无擦滑原地转向能力。负载/选型结果明确标注这些边界。
+- `CORNER_OVER_ENVELOPE_PEAK_NM=81`、`FLOOR=60` 是历史研究参考，当前参数适用性 **PENDING**；当前 `size_corner_actuator` 输出已携带历史状态与几何可达性，不能把数值余量等同实车验收。
+- 旧版研究报告、已记录 run、发布包与 HTML 手册保留作历史资产。跨版本比较需记录模型版本；重要载荷/故障结论必须按当前内核重新运行。
+- 高阶优先项：统一时域与负载分析的轮胎/停车口径、接地印迹扭转、三维路面法向/横坡、硬点行程与实际执行器联动、实测参数辨识和独立工具对照。
+
 ## 等级定义
 
 | 等级 | 含义 |
@@ -20,7 +30,7 @@
 | 简化动力学模型 | L2 | `backend/tests/test_time_domain_models.py`, `backend/tests/test_load_transfer.py`, smoke 动力学稳定性检查 | 已覆盖阻力、升力、toe、camber、坡道和载荷转移，但仍缺外部车辆模型对照。 |
 | 多体动力学模型 | L2 | smoke 静平衡、侧倾、俯仰、坡度回归；`backend/tests/test_time_domain_models.py` | 14 DOF 为工程近似模型，尚未与 CarSim/CarMaker 或台架数据对齐。 |
 | 轮胎与载荷敏感度 | L3 | `backend/tests/test_tire.py`, `backend/tests/test_time_domain_models.py`, `CHANGELOG.md` v0.12 记录 | `c_alpha(Fz)` 指数模型来自工程假设；缺同款轮胎实测曲线。 |
-| 主销/齿条负载分析 | L3 | `backend/tests/test_kingpin.py`, `backend/tests/test_rack_force.py`, `backend/tests/test_load_analysis.py`, `docs/load_analysis_handoff.md` | LS9 参数和机构效率仍是标定快照；负载页不等价于完整台架校准。 |
+| 主销/齿条负载分析 | L3 | `backend/tests/test_kingpin.py`, `backend/tests/test_rack_force.py`, `backend/tests/test_load_analysis.py`, `docs/load_analysis_handoff.md` | 机械部分已有接地点叉积/虚功校核；KPI/停车经验项未标定，几何指标不等同能量效率，负载页不等价于台架校准。 |
 | 实验批跑与 KPI | L2 | `backend/tests/test_experiment_batch.py`, `frontend/src/components/ExperimentPage.tsx`, `frontend/src/components/AnalysisPage.tsx` | KPI 足够用于内部比较；跨版本稳定性由黄金实验回归补充。 |
 | 黄金实验回归 | L2 | `scripts/check_golden_experiments.py`, `docs/golden_experiments.json` | 当前覆盖 step steer、ISO 3888 DLC 和 3 个单轮失效快速样本；仍缺外部基准对照。 |
 | run 回放与分析页 | L2 | `frontend/tests/e2e/workflow-smoke.spec.ts`, `frontend/src/components/ReplayPanel.tsx`, `frontend/src/charts/uplotFactory.ts` | 已有浏览器 smoke 覆盖实验到分析页链路、通道增删/加图、hover cursor/drag-to-zoom/双击复位、PNG 导出、工作区与关键 workflow 页截图 attachment、数据录制开始/停止/CSV 导出、回放时间轴 scrub、回放 meta 读取失败默认尺寸 fallback、负载页图表绘制/原理说明弹窗、原理页 demo 计算失败、场景页标准路径生成/跟踪/清除、路面扰动编辑新建/编辑/清空、故障注入添加/启停/清空，以及分析页 run 列表读取失败、run 数据读取失败、run 删除失败、试验页实验库读取/保存/删除失败、试验页机动模板读取失败、试验页 batch 启动失败、运行页模型/路面控制失败、Python 策略状态读取和手动重载失败、车辆页参数应用被拒绝、车辆页项目列表读取失败、车辆页项目 YAML 加载/保存失败、场景列表读取失败、场景加载失败、场景清除失败、路径模板读取失败、路径版本刷新失败、场景版本刷新失败、扰动更新/删除/清空失败、2D 画布扰动放置/拖动失败、故障列表读取失败、故障添加/切换/删除/清空失败、脚本库读取失败、脚本状态读取失败、脚本启动/停止失败、负载页扫图计算失败、负载页车型库读取失败、负载页参数读取失败、负载页车型载入/保存/应用失败、负载页敏感度扫描失败、命令面板模型切换失败、录制状态读取/开始/停止/CSV 导出失败异常态；仍需扩展更多深层页面状态和更少见后端失败分支截图。 |

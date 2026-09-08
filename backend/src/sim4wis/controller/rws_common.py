@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from sim4wis.controller.base import BodyMotionTarget, compute_commands
+from sim4wis.controller.base import BodyMotionTarget, compute_commands, limit_target_to_grip
 from sim4wis.core.state import ControlCommand, VehicleParams
 
 
@@ -30,7 +30,7 @@ def axle_cornering_stiffness(p: VehicleParams) -> tuple[float, float]:
     (`tire_c_alpha`); an axle has two tyres.
     """
     c_axle = 2.0 * float(p.tire_c_alpha)
-    return c_axle, c_axle
+    return (c_axle * p.tire_c_alpha_front_scale, c_axle * p.tire_c_alpha_rear_scale)
 
 
 def zero_sideslip_ratio(p: VehicleParams, u: float) -> float:
@@ -82,6 +82,7 @@ def command_from_axle_angles(
     delta_f: float,
     delta_r: float,
     v_cmd: float,
+    accel_limit: float | None = None,
 ) -> ControlCommand:
     """Build a ControlCommand from front/rear axle-equivalent steer angles.
 
@@ -101,10 +102,11 @@ def command_from_axle_angles(
     elif abs(delta_f - delta_r) < 1e-9:
         # Parallel front/rear (in-phase 1:1) → pure translation, ICR at ∞.
         target = BodyMotionTarget(
-            vx=v_cmd * np.cos(delta_f),
-            vy=v_cmd * np.sin(delta_f),
+            vx=v_cmd,
+            vy=v_cmd * np.tan(delta_f),
             omega=0.0,
             icr_target_body=np.array([np.nan, np.nan]),
+            heading_at_rest=delta_f,
         )
     else:
         sf, cf = np.sin(delta_f), np.cos(delta_f)
@@ -122,6 +124,7 @@ def command_from_axle_angles(
             icr_target_body=icr,
         )
 
+    target = limit_target_to_grip(target, accel_limit, p.wheelbase / 2.0 - p.cg_to_front)
     return compute_commands(
         wheels=p.wheel_positions_body(),
         target=target,

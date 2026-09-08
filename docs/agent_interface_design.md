@@ -1,5 +1,7 @@
 # Agent 研究接口设计 — study 层 + MCP/CLI 双门面
 
+> 2026-09-09 实施状态：当前接口和操作方法以 [三种交互使用说明](interaction_guide.md) 及 [隔离会话 ADR](adr/ADR-2026-09-09-interaction-sessions.md) 为准。v0.104.0 已把 MCP 源码、依赖、`agent_mcp` 双平台启动器和 `--print-config` 纳入便携包并加入包内容门禁。本文保留为早期设计背景；其中实时驾驶租约/人工抢占协议不能当作已实现功能。
+
 > 状态：**设计稿，待评审**　·　基线：v0.101.1　·　2026-08-10
 >
 > 目标：让 Agent 能按人的研究需求高效驱动这个仿真器，同时完整保留人自己用 GUI 的能力。
@@ -415,7 +417,7 @@ sim4wis realtime acquire|release|drive|observe
 | **P2** | 能力边界守卫 + 出处字段 + `--dry-run` | 模型能力矩阵有测试守着；对运动学问 `grip_util` 被拒绝且给出 `use_instead` | 0.5–1 天 |
 | **P2.5** | 求解轴 `solve_for`（§4）：一维求根、上升支约束与 `unreachable`、标定缓存、`--dry-run` 报成本 | 目标 a_y 超过该工况极限时返回 `unreachable` 并给出实际峰值，**不**收敛到下降支；改车辆参数后缓存自动失效 | 0.5–1 天 |
 | **P3** | MCP server（独立进程 / stdio，§13）：工具面、后端自动拉起与回收、版本协商 | 在 Claude Code 里端到端跑通一次真实研究；后端未启动时能自己拉起，退出时不误杀用户的后端 | 0.5–1 天 |
-| **P3.5** | 随便携版分发（§13）：打包、`print-mcp-config`、说明书一节、发布门禁一条 | 解压一份新包，粘贴生成的配置，Agent 能直接跑通一次 study | 0.5 天 |
+| **P3.5** ✅ | 随便携版分发（§13）：打包、`--print-config`、说明书一节、发布门禁一条 | 解压一份新包，`agent_mcp` 输出当前绝对路径配置，包内容门禁检查入口/MCP SDK/支持文件，原生包冒烟验证后端、Agent API 与 Web UI | v0.104.0 |
 | **P4** | 实时租约 + Script 驱动 + GUI 让位提示 | 人在 Agent 持租约时点一下 GUI，租约立即吊销且状态被恢复 | 1 天 |
 | **P5** | Python 插件档：自定义指标插件 + `in_loop` 钩子 + 多命名策略插件 | **用 spec 复刻 decoupling study 的六控制律阶梯** | 1–1.5 天 |
 
@@ -542,13 +544,14 @@ MCP server 与后端可能不同版本（同事更新了包但没更新 MCP serv
 1. **依赖体积。** MCP Python SDK 要进 vendor 集。若体积不可接受，退路是**手写 JSON-RPC over
    stdio**——协议本身不复杂，但要自己维护 schema 序列化与生命周期，风险更高。**先按引 SDK 做，
    量出来再评估**，不要为了省几 MB 提前上手写。
-2. **路径是每台机器不同的。** 用户解压到哪都行，配置里得写绝对路径。所以包里要带一个
-   `print-mcp-config` 之类的小命令，直接打印一段可粘贴的 `.mcp.json`，路径已经填好。
-   让人手抄路径是必错的。
-3. **说明书要写。** iCloud 的 `4WIS_Simulator_便携版_说明.txt` 加一节，讲怎么把这段配置贴进
-   Claude Code / 其它宿主，以及"Agent 会自己拉起后端，不用你先开"。
-4. **发布门禁要覆盖。** `check_release_assets.py` 加一条：便携包内必须存在 MCP server 入口，
-   且 `print-mcp-config` 能跑通。否则某次打包漏了没人会发现。
+2. **路径是每台机器不同的。** v0.104.0 包含 `agent_mcp.command` / `agent_mcp.bat`，并通过
+   `--print-config` 直接打印一段含当前绝对路径的 MCP JSON；Windows 形式使用
+   `cmd.exe /d /c` 调用 `.bat`，避免空格路径和关联程序差异。用户不必手抄路径。
+3. **说明书要写。** 便携包根目录的 `使用说明.txt` 与 `docs/interaction_guide.md` 都说明如何粘贴配置，
+   以及 Agent 会按需拉起、只回收自己启动的后端。
+4. **发布门禁要覆盖。** `scripts/check_portable_package.py` 断言 zip 内存在 MCP server、SDK、启动器、
+   `--print-config` 参数转发和 golden 支持文件；在原生目标还会提取新 zip，运行 `--print-config`、后端、
+   Agent API 与 Web UI 冒烟，避免某次打包漏项无人发现。
 
 ### 配置形态
 

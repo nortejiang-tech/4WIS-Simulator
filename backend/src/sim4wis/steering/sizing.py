@@ -188,14 +188,9 @@ class ActuatorRequirement:
         }
 
 
-#: Direction 6 — the **dynamic over-envelope requirement** for the by-wire
-#: corner actuator, measured by `scripts/devtools/over_envelope_study.py`
-#: (5° front step @ 60 km/h ≈ 0.8 g, deep-slip blow-back): the peak
-#: per-corner load torque the actuator must hold is ~81 N·m. Below ~60 N·m
-#: the wheel is blown 0.7 rad off command and stays there — the original
-#: 40 N·m finding, reproduced and anchored by that study. Full-lock parking
-#: (~104 N·m) remains the binding driver, so the corner sizing rule is
-#: unchanged; these numbers are what the margin is measured against.
+#: Historical internal study observations, NOT revalidated for arbitrary
+#: current parameters or the corrected kingpin/linkage. Preserve as reference
+#: fields only; see the explicit PENDING applicability in size_corner_actuator.
 CORNER_OVER_ENVELOPE_PEAK_NM = 81.0
 CORNER_OVER_ENVELOPE_FLOOR_NM = 60.0
 
@@ -446,16 +441,22 @@ def size_corner_actuator(params: VehicleParams) -> dict[str, Any]:
 
     Honesty notes carried in the output: the earlier documented basis
     (104 N·m = "5.2 kN rack × pinion") mislabeled the tyre lateral force
-    `tire_fy` as the rack force — the rack chain gives ~2× that; and the
+    `tire_fy` as the rack force; and the
     layer's load convention is rack × pinion, while a kingpin-direct
     corner module would face the full kingpin torque (reported as
     `static_kingpin_direct_nm` for the sizing/规格 model closure work).
     """
     pinion = float(params.pinion_radius)
     limit = float(params.steer_limit)
-    data = sweep_load_analysis(params, speeds=[0.0], angles=[limit],
-                               wheel_index=0, mu=0.9)
-    row = data["rows"][0]
+    # Scan both directions and all corners: a single FL end point is not an
+    # envelope when the user edits asymmetric front/rear geometry.
+    rows = []
+    angles = np.linspace(-limit, limit, 71).tolist()
+    for wheel in range(4):
+        data = sweep_load_analysis(params, speeds=[0.0], angles=angles,
+                                   wheel_index=wheel, mu=0.9)
+        rows.extend(r for r in data["rows"] if r["wheel_index"] == wheel)
+    row = max(rows, key=lambda r: abs(float(r["rack_force"])))
     rack_n = abs(float(row["rack_force"]))
     static_nm = rack_n * pinion
     tire_fy_basis_nm = abs(float(row["tire_fy"])) * pinion
@@ -467,6 +468,12 @@ def size_corner_actuator(params: VehicleParams) -> dict[str, Any]:
     have = float(params.steering_system.angle_control.plant_peak_torque_nm)
     margin = (have - need) / have if have else float("-inf")
     return {
+        "assessment_status": "PENDING_EXTERNAL_VALIDATION",
+        "dynamic_reference_status": "HISTORICAL_NOT_REVALIDATED",
+        "geometry_valid": all(r["linkage_valid"] for r in rows),
+        "limitations": ["内部概念选型估算，pass 仅表示配置峰值覆盖所列数值。",
+                        "81/60 N·m 动态参考来自历史版本，须按当前参数重新计算。",
+                        "停车接地印迹扭转为经验项；实测载荷、疲劳及温升未验证。"],
         "static_parking_nm": round(static_nm, 1),
         "static_tire_fy_basis_nm": round(tire_fy_basis_nm, 1),
         "static_kingpin_direct_nm": round(kingpin_direct_nm, 1),
@@ -477,7 +484,7 @@ def size_corner_actuator(params: VehicleParams) -> dict[str, Any]:
         "configured_peak_nm": round(have, 1),
         "usage_pct": round(need / have * 100, 1) if have else None,
         "margin_pct": round(margin * 100, 1),
-        "pass": have >= need,
+        "pass": have >= need and all(r["linkage_valid"] for r in rows),
         "driven_by": ("parking_full_lock" if static_nm >= dynamic_nm
                       else "over_envelope_step"),
     }
