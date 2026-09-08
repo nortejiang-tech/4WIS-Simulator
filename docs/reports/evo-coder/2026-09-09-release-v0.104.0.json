@@ -18,7 +18,7 @@
     "frontend": "type-check, production build, 54 Vitest tests passed",
     "browser": "57 Playwright Chromium production E2E tests passed",
     "macos_portable": "fresh extraction native smoke passed",
-    "windows_portable": "static archive check passed locally; native smoke is a required post-tag GitHub Windows gate"
+    "windows_portable": "Initial GitHub native smoke exposed missing pywin32 from macOS cross-assembly; ASTRA repaired vendor selection and launcher paths, and the corrected archive passed local static checks. A GitHub Windows native smoke remains required before Release."
   },
   "metrics": {
     "calls": 0,

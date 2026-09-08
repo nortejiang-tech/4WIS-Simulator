@@ -124,6 +124,19 @@ def _static_checks(target: str, version: str) -> list[Check]:
                 present = _entry(prefix, rel) in names
                 checks.append(Check(target, rel, present, "present" if present else "missing"))
 
+            if target == "windows-x64":
+                # A cross-built MCP package must bring the Windows-only
+                # pywin32 runtime and make it importable through the launcher.
+                pywin32 = (
+                    "vendor/pywin32.pth",
+                    "vendor/pywin32_system32/pywintypes312.dll",
+                    "vendor/win32/lib/pywintypes.py",
+                )
+                for rel in pywin32:
+                    present = _entry(prefix, rel) in names
+                    checks.append(Check(target, rel, present,
+                                        "present" if present else "missing Windows MCP dependency"))
+
             for rel in ("app/src/sim4wis/__init__.py", "app/src/sim4wis/main.py",
                         "app/src/sim4wis_mcp/server.py"):
                 source = ROOT / "backend" / "src" / rel.removeprefix("app/src/")
@@ -150,6 +163,19 @@ def _static_checks(target: str, version: str) -> list[Check]:
                 if target == "windows-x64":
                     checks.append(Check(target, "Windows launcher line endings", b"\r\n" in raw,
                                         "CRLF" if b"\r\n" in raw else "expected CRLF"))
+                    pywin32_paths = (
+                        b"%DIR%vendor\\win32",
+                        b"%DIR%vendor\\win32\\lib",
+                        b"%DIR%vendor\\pywin32_system32",
+                    )
+                    has_pywin32_paths = all(path in raw for path in pywin32_paths)
+                    checks.append(Check(
+                        target,
+                        "Windows pywin32 import paths",
+                        has_pywin32_paths,
+                        "launcher exposes pywin32 directories" if has_pywin32_paths
+                        else "launcher omits a required pywin32 directory",
+                    ))
                 else:
                     mode = (archive.getinfo(launcher).external_attr >> 16) & 0o777
                     checks.append(Check(target, "macOS MCP launcher executable", bool(mode & 0o111),
@@ -215,7 +241,14 @@ def _native_smoke(target: str, version: str) -> list[Check]:
         python = pkg / ("runtime/bin/python3" if target == "macos-arm64" else "runtime/python.exe")
         env = os.environ.copy()
         env["SIM4WIS_DATA_DIR"] = str(pkg)
-        env["PYTHONPATH"] = os.pathsep.join((str(pkg / "app" / "src"), str(pkg / "vendor")))
+        python_paths = [str(pkg / "app" / "src"), str(pkg / "vendor")]
+        if target == "windows-x64":
+            # pywin32's .pth file is not processed for a directory injected
+            # through PYTHONPATH, so mirror the Windows launchers explicitly.
+            vendor = pkg / "vendor"
+            python_paths.extend((str(vendor / "win32"), str(vendor / "win32" / "lib"),
+                                 str(vendor / "pywin32_system32")))
+        env["PYTHONPATH"] = os.pathsep.join(python_paths)
 
         imports = subprocess.run(
             [str(python), "-c", "import sim4wis, sim4wis_mcp; from sim4wis.main import create_app; assert create_app(); print(sim4wis.__version__)"],

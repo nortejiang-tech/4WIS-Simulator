@@ -91,6 +91,10 @@ TARGETS = {
     "windows-x64": {
         "pbs_glob": "cpython-3.12.*-x86_64-pc-windows-msvc-install_only.tar.gz",
         "pip_platforms": ["win_amd64"],
+        # ``mcp`` declares pywin32 only behind a sys_platform marker.  A
+        # cross-platform pip install evaluates that marker on the build host,
+        # so make the Windows stdio dependency explicit for the archive.
+        "extra_deps": ["pywin32>=311"],
         "python_rel": "python.exe",
         "launcher": "bat",
     },
@@ -115,15 +119,34 @@ def resolve_pbs_asset(glob: str) -> tuple[str, str]:
 def download(url: str, dest: Path) -> Path:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists() and dest.stat().st_size > 0:
-        log(f"cached {dest.name}")
-        return dest
+        # Cache files from older releases may have been interrupted while curl
+        # wrote directly to their final name.  Reading the full tar index is a
+        # cheap integrity check compared with extracting a broken runtime later.
+        try:
+            with tarfile.open(dest) as archive:
+                archive.getmembers()
+        except (OSError, tarfile.TarError, EOFError):
+            log(f"discarding incomplete cache {dest.name}")
+            dest.unlink()
+        else:
+            log(f"cached {dest.name}")
+            return dest
+    partial = dest.with_suffix(dest.suffix + ".partial")
+    partial.unlink(missing_ok=True)
     log(f"downloading {dest.name} …")
-    # curl handles the GitHub→CDN redirect + retries more reliably than urllib here.
-    subprocess.run(
-        ["curl", "-fL", "--retry", "3", "--retry-delay", "2", "-m", "600",
-         "-o", str(dest), url],
-        check=True,
-    )
+    try:
+        # curl handles the GitHub→CDN redirect + retries more reliably than urllib here.
+        subprocess.run(
+            ["curl", "-fL", "--retry", "3", "--retry-delay", "2", "-m", "600",
+             "-o", str(partial), url],
+            check=True,
+        )
+        if not partial.is_file() or partial.stat().st_size == 0:
+            raise RuntimeError(f"download produced no data: {dest.name}")
+        partial.replace(dest)
+    except BaseException:
+        partial.unlink(missing_ok=True)
+        raise
     return dest
 
 
@@ -138,7 +161,7 @@ def extract_runtime(tarball: Path, dest: Path) -> None:
     (dest / "python").rename(runtime)
 
 
-def vendor_deps(vendor: Path, pip_platforms: list[str]) -> None:
+def vendor_deps(vendor: Path, pip_platforms: list[str], deps: list[str]) -> None:
     if vendor.exists():
         shutil.rmtree(vendor)
     vendor.mkdir(parents=True)
@@ -152,9 +175,21 @@ def vendor_deps(vendor: Path, pip_platforms: list[str]) -> None:
     ]
     for plat in pip_platforms:
         cmd += ["--platform", plat]
-    cmd += DEPS
-    log("vendoring deps: " + " ".join(DEPS))
+    cmd += deps
+    log("vendoring deps: " + " ".join(deps))
     subprocess.run(cmd, check=True)
+
+
+def vendor_is_ready(vendor: Path, target: str) -> bool:
+    """Return whether an --update build can safely preserve target dependencies."""
+    required = [vendor / "mcp" / "__init__.py"]
+    if target == "windows-x64":
+        required.extend((
+            vendor / "pywin32.pth",
+            vendor / "pywin32_system32" / "pywintypes312.dll",
+            vendor / "win32" / "lib" / "pywintypes.py",
+        ))
+    return all(path.is_file() for path in required)
 
 
 def copy_app_and_data(pkg: Path) -> None:
@@ -240,7 +275,7 @@ LAUNCHER_BAT = """@echo off
 REM 4WIS Simulator - double-click to start. Opens in your default browser.
 set "DIR=%~dp0"
 set "SIM4WIS_DATA_DIR=%DIR%"
-set "PYTHONPATH=%DIR%app\\src;%DIR%vendor"
+set "PYTHONPATH=%DIR%app\\src;%DIR%vendor;%DIR%vendor\\win32;%DIR%vendor\\win32\\lib;%DIR%vendor\\pywin32_system32"
 set PORT=8010
 start "" "http://127.0.0.1:%PORT%/"
 echo 4WIS Simulator -^> http://127.0.0.1:%PORT%/  (close this window to stop)
@@ -261,7 +296,7 @@ REM 4WIS Simulator Agent interface - stdio MCP process.
 REM Configure an MCP host to run this file; do not use it as a GUI launcher.
 set "DIR=%~dp0"
 set "SIM4WIS_DATA_DIR=%DIR%"
-set "PYTHONPATH=%DIR%app\\src;%DIR%vendor"
+set "PYTHONPATH=%DIR%app\\src;%DIR%vendor;%DIR%vendor\\win32;%DIR%vendor\\win32\\lib;%DIR%vendor\\pywin32_system32"
 "%DIR%runtime\\python.exe" -m sim4wis_mcp.server %*
 """
 
@@ -336,7 +371,14 @@ def build(target: str, update: bool) -> Path:
         tarball = download(url, CACHE / name)
         log(f"extracting runtime for {target}")
         extract_runtime(tarball, pkg)
-        vendor_deps(pkg / "vendor", spec["pip_platforms"])
+    elif not (pkg / "runtime" / spec["python_rel"]).is_file():
+        raise FileNotFoundError(f"--update needs an existing runtime for {target}; rerun without --update")
+
+    vendor = pkg / "vendor"
+    if not update or not vendor_is_ready(vendor, target):
+        if update:
+            log(f"[update] refreshing missing target dependencies for {target}")
+        vendor_deps(vendor, spec["pip_platforms"], [*DEPS, *spec.get("extra_deps", [])])
     else:
         log(f"[update] keeping runtime + vendor for {target}")
 
