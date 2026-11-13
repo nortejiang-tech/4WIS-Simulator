@@ -1,0 +1,306 @@
+macos-arm64: safe archive paths: PASS (no absolute/traversal entries)
+macos-arm64: zip CRC: PASS (all members readable)
+macos-arm64: app/dist/index.html: PASS (present)
+macos-arm64: app/src/sim4wis/__init__.py: PASS (present)
+macos-arm64: app/src/sim4wis/main.py: PASS (present)
+macos-arm64: app/src/sim4wis_mcp/__init__.py: PASS (present)
+macos-arm64: app/src/sim4wis_mcp/server.py: PASS (present)
+macos-arm64: vendor/mcp/__init__.py: PASS (present)
+macos-arm64: scripts/check_golden_experiments.py: PASS (present)
+macos-arm64: scripts/study_single_wheel_failure.py: PASS (present)
+macos-arm64: scripts/reporting.py: PASS (present)
+macos-arm64: docs/golden_experiments.json: PASS (present)
+macos-arm64: docs/user_manual.html: PASS (present)
+macos-arm64: docs/interaction_guide.md: PASS (present)
+macos-arm64: docs/multipoint_faults.md: PASS (present)
+macos-arm64: scripts/portable_fault_smoke.py: PASS (present)
+macos-arm64: app/src/sim4wis/fault/schema.py: PASS (present)
+macos-arm64: app/src/sim4wis/vehicle/steering_actuation.py: PASS (present)
+macos-arm64: docs/agent_interface_design.md: PASS (present)
+macos-arm64: docs/v0.106.0_changelog.md: PASS (present)
+macos-arm64: docs/reports/evo-coder/release-v0.106.0.md: PASS (present)
+macos-arm64: projects/default.yaml: PASS (present)
+macos-arm64: scripts_lib/slalom.yaml: PASS (present)
+macos-arm64: procedures/step_steer_golden.yaml: PASS (present)
+macos-arm64: runtime/bin/python3: PASS (present)
+macos-arm64: start.command: PASS (present)
+macos-arm64: agent_mcp.command: PASS (present)
+macos-arm64: current source app/src/sim4wis/__init__.py: PASS (SHA-256 matches source)
+macos-arm64: current source app/src/sim4wis/main.py: PASS (SHA-256 matches source)
+macos-arm64: current source app/src/sim4wis_mcp/server.py: PASS (SHA-256 matches source)
+macos-arm64: all backend source hashes: PASS (141 Python files match)
+macos-arm64: native core source and binary provenance: PASS (matching version/platform/source and binary SHA-256)
+macos-arm64: package version: PASS (v0.106.0)
+macos-arm64: MCP launcher: PASS (starts facade and forwards arguments)
+macos-arm64: macOS MCP launcher executable: PASS (0o755)
+macos-arm64: embedded C++ integration both models: PASS ({"requested": "native", "native_available": true, "numerical_core": "cpp17", "abi": 1, "native_source_sha256": "59c3cb2b411f4c5d1471fe43695b8cd281e663a1e96069788058ef732a712fc4", "integration": "RK4 body + nonlinear backward-Euler wheel spin; partitioned"}
+)
+macos-arm64: embedded imports: PASS (0.106.0)
+macos-arm64: MCP --print-config: PASS (valid MCP host JSON)
+macos-arm64: embedded backend health: PASS (GET /health = ok)
+macos-arm64: embedded backend version: PASS (v0.106.0)
+macos-arm64: embedded Agent API: PASS (4wis.agent.v1)
+macos-arm64: packaged MCP multipoint E2E: PASS ({"model": "simplified_dynamic", "status": "PASS", "samples": 24, "activation_times": [0.023, 0.023, 0.037, 0.047]}
+{"model": "multibody", "status": "PASS", "samples": 24, "activation_times": [0.023, 0.023, 0.037, 0.047]}
+)
+macos-arm64: embedded Web UI: PASS (served from app/dist)
+[
+  {
+    "target": "macos-arm64",
+    "name": "safe archive paths",
+    "ok": true,
+    "detail": "no absolute/traversal entries"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "zip CRC",
+    "ok": true,
+    "detail": "all members readable"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "app/dist/index.html",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "app/src/sim4wis/__init__.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "app/src/sim4wis/main.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "app/src/sim4wis_mcp/__init__.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "app/src/sim4wis_mcp/server.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "vendor/mcp/__init__.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "scripts/check_golden_experiments.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "scripts/study_single_wheel_failure.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "scripts/reporting.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "docs/golden_experiments.json",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "docs/user_manual.html",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "docs/interaction_guide.md",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "docs/multipoint_faults.md",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "scripts/portable_fault_smoke.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "app/src/sim4wis/fault/schema.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "app/src/sim4wis/vehicle/steering_actuation.py",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "docs/agent_interface_design.md",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "docs/v0.106.0_changelog.md",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "docs/reports/evo-coder/release-v0.106.0.md",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "projects/default.yaml",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "scripts_lib/slalom.yaml",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "procedures/step_steer_golden.yaml",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "runtime/bin/python3",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "start.command",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "agent_mcp.command",
+    "ok": true,
+    "detail": "present"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "current source app/src/sim4wis/__init__.py",
+    "ok": true,
+    "detail": "SHA-256 matches source"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "current source app/src/sim4wis/main.py",
+    "ok": true,
+    "detail": "SHA-256 matches source"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "current source app/src/sim4wis_mcp/server.py",
+    "ok": true,
+    "detail": "SHA-256 matches source"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "all backend source hashes",
+    "ok": true,
+    "detail": "141 Python files match"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "native core source and binary provenance",
+    "ok": true,
+    "detail": "matching version/platform/source and binary SHA-256"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "package version",
+    "ok": true,
+    "detail": "v0.106.0"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "MCP launcher",
+    "ok": true,
+    "detail": "starts facade and forwards arguments"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "macOS MCP launcher executable",
+    "ok": true,
+    "detail": "0o755"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "embedded C++ integration both models",
+    "ok": true,
+    "detail": "{\"requested\": \"native\", \"native_available\": true, \"numerical_core\": \"cpp17\", \"abi\": 1, \"native_source_sha256\": \"59c3cb2b411f4c5d1471fe43695b8cd281e663a1e96069788058ef732a712fc4\", \"integration\": \"RK4 body + nonlinear backward-Euler wheel spin; partitioned\"}\n"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "embedded imports",
+    "ok": true,
+    "detail": "0.106.0"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "MCP --print-config",
+    "ok": true,
+    "detail": "valid MCP host JSON"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "embedded backend health",
+    "ok": true,
+    "detail": "GET /health = ok"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "embedded backend version",
+    "ok": true,
+    "detail": "v0.106.0"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "embedded Agent API",
+    "ok": true,
+    "detail": "4wis.agent.v1"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "packaged MCP multipoint E2E",
+    "ok": true,
+    "detail": "{\"model\": \"simplified_dynamic\", \"status\": \"PASS\", \"samples\": 24, \"activation_times\": [0.023, 0.023, 0.037, 0.047]}\n{\"model\": \"multibody\", \"status\": \"PASS\", \"samples\": 24, \"activation_times\": [0.023, 0.023, 0.037, 0.047]}\n"
+  },
+  {
+    "target": "macos-arm64",
+    "name": "embedded Web UI",
+    "ok": true,
+    "detail": "served from app/dist"
+  }
+]
