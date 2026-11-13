@@ -1,0 +1,472 @@
+{
+  "$defs": {
+    "ControllerSection": {
+      "properties": {
+        "type": {
+          "default": "ideal_ackermann",
+          "title": "Type",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": true,
+          "title": "Params",
+          "type": "object"
+        }
+      },
+      "title": "ControllerSection",
+      "type": "object"
+    },
+    "ProjectMeta": {
+      "properties": {
+        "name": {
+          "default": "default",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "title": "ProjectMeta",
+      "type": "object"
+    },
+    "RecordingSection": {
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "channels": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Channels",
+          "type": "array"
+        }
+      },
+      "title": "RecordingSection",
+      "type": "object"
+    },
+    "SceneSection": {
+      "properties": {
+        "surface": {
+          "default": "flat",
+          "title": "Surface",
+          "type": "string"
+        },
+        "base_mu": {
+          "default": 0.85,
+          "title": "Base Mu",
+          "type": "number"
+        },
+        "disturbances": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Disturbances",
+          "type": "array"
+        }
+      },
+      "title": "SceneSection",
+      "type": "object"
+    },
+    "SteeringGeometrySection": {
+      "properties": {
+        "front_outer_x": {
+          "default": -0.145971235,
+          "title": "Front Outer X",
+          "type": "number"
+        },
+        "front_outer_y": {
+          "default": -0.011844575,
+          "title": "Front Outer Y",
+          "type": "number"
+        },
+        "front_inner_x": {
+          "default": -0.176324,
+          "title": "Front Inner X",
+          "type": "number"
+        },
+        "front_inner_y": {
+          "default": -0.362586,
+          "title": "Front Inner Y",
+          "type": "number"
+        },
+        "front_rack_axis_deg": {
+          "default": 90.0,
+          "title": "Front Rack Axis Deg",
+          "type": "number"
+        },
+        "front_rack_travel_limit": {
+          "default": 0.085,
+          "title": "Front Rack Travel Limit",
+          "type": "number"
+        },
+        "rear_outer_x": {
+          "default": 0.145971235,
+          "title": "Rear Outer X",
+          "type": "number"
+        },
+        "rear_outer_y": {
+          "default": -0.011844575,
+          "title": "Rear Outer Y",
+          "type": "number"
+        },
+        "rear_inner_x": {
+          "default": 0.176324,
+          "title": "Rear Inner X",
+          "type": "number"
+        },
+        "rear_inner_y": {
+          "default": -0.362586,
+          "title": "Rear Inner Y",
+          "type": "number"
+        },
+        "rear_rack_axis_deg": {
+          "default": 90.0,
+          "title": "Rear Rack Axis Deg",
+          "type": "number"
+        },
+        "rear_rack_travel_limit": {
+          "default": 0.085,
+          "title": "Rear Rack Travel Limit",
+          "type": "number"
+        }
+      },
+      "title": "SteeringGeometrySection",
+      "type": "object"
+    },
+    "SuspensionSection": {
+      "properties": {
+        "caster_angle": {
+          "default": 0.1047,
+          "title": "Caster Angle",
+          "type": "number"
+        },
+        "kingpin_inclination": {
+          "default": 0.2094,
+          "title": "Kingpin Inclination",
+          "type": "number"
+        },
+        "camber": {
+          "default": -0.0131,
+          "title": "Camber",
+          "type": "number"
+        },
+        "scrub_radius": {
+          "default": 0.015,
+          "title": "Scrub Radius",
+          "type": "number"
+        },
+        "spring_rate": {
+          "default": 70000.0,
+          "title": "Spring Rate",
+          "type": "number"
+        },
+        "damper_rate": {
+          "default": 4000.0,
+          "title": "Damper Rate",
+          "type": "number"
+        },
+        "anti_roll_rate": {
+          "default": 30000.0,
+          "title": "Anti Roll Rate",
+          "type": "number"
+        },
+        "kingpin_mu": {
+          "default": 0.6,
+          "title": "Kingpin Mu",
+          "type": "number"
+        }
+      },
+      "title": "SuspensionSection",
+      "type": "object"
+    },
+    "VehicleSection": {
+      "properties": {
+        "model": {
+          "default": "kinematic",
+          "title": "Model",
+          "type": "string"
+        },
+        "wheelbase": {
+          "default": 3.16,
+          "title": "Wheelbase",
+          "type": "number"
+        },
+        "track_front": {
+          "default": 1.565172,
+          "title": "Track Front",
+          "type": "number"
+        },
+        "track_rear": {
+          "default": 1.565172,
+          "title": "Track Rear",
+          "type": "number"
+        },
+        "mass": {
+          "default": 2900.0,
+          "title": "Mass",
+          "type": "number"
+        },
+        "inertia_z": {
+          "default": 7500.0,
+          "title": "Inertia Z",
+          "type": "number"
+        },
+        "cg_to_front": {
+          "default": 1.55,
+          "title": "Cg To Front",
+          "type": "number"
+        },
+        "cg_height": {
+          "default": 0.62,
+          "title": "Cg Height",
+          "type": "number"
+        },
+        "tire_radius": {
+          "default": 0.395,
+          "title": "Tire Radius",
+          "type": "number"
+        },
+        "tire_width": {
+          "default": 0.265,
+          "title": "Tire Width",
+          "type": "number"
+        },
+        "contact_patch_radius": {
+          "default": 0.11,
+          "title": "Contact Patch Radius",
+          "type": "number"
+        },
+        "steer_limit": {
+          "default": 0.6109,
+          "title": "Steer Limit",
+          "type": "number"
+        },
+        "v_max": {
+          "default": 55.6,
+          "title": "V Max",
+          "type": "number"
+        },
+        "wheel_inertia": {
+          "default": 2.5,
+          "title": "Wheel Inertia",
+          "type": "number"
+        },
+        "motor_torque_max": {
+          "default": 3000.0,
+          "title": "Motor Torque Max",
+          "type": "number"
+        },
+        "bump_steer_coeff": {
+          "default": 0.0,
+          "title": "Bump Steer Coeff",
+          "type": "number"
+        },
+        "unsprung_mass": {
+          "default": 55.0,
+          "title": "Unsprung Mass",
+          "type": "number"
+        },
+        "tire_vertical_stiffness": {
+          "default": 280000.0,
+          "title": "Tire Vertical Stiffness",
+          "type": "number"
+        },
+        "steer_tau": {
+          "default": 0.06,
+          "title": "Steer Tau",
+          "type": "number"
+        },
+        "steer_rate_max": {
+          "default": 8.0,
+          "title": "Steer Rate Max",
+          "type": "number"
+        },
+        "tire_model": {
+          "default": "linear",
+          "title": "Tire Model",
+          "type": "string"
+        },
+        "tire_c_alpha": {
+          "default": 120000.0,
+          "title": "Tire C Alpha",
+          "type": "number"
+        },
+        "tire_c_kappa": {
+          "default": 100000.0,
+          "title": "Tire C Kappa",
+          "type": "number"
+        },
+        "tire_t_pneumatic": {
+          "default": 0.03,
+          "title": "Tire T Pneumatic",
+          "type": "number"
+        },
+        "tire_load_sensitivity_exp": {
+          "default": 0.8,
+          "title": "Tire Load Sensitivity Exp",
+          "type": "number"
+        },
+        "parking_scrub_coeff": {
+          "default": 0.8,
+          "title": "Parking Scrub Coeff",
+          "type": "number"
+        },
+        "parking_lateral_coeff": {
+          "default": 0.8,
+          "title": "Parking Lateral Coeff",
+          "type": "number"
+        },
+        "parking_torque_coeff": {
+          "default": 0.8,
+          "title": "Parking Torque Coeff",
+          "type": "number"
+        },
+        "low_speed_blend_ms": {
+          "default": 1.5,
+          "title": "Low Speed Blend Ms",
+          "type": "number"
+        },
+        "static_tire_deflection_deg": {
+          "default": 8.0,
+          "title": "Static Tire Deflection Deg",
+          "type": "number"
+        },
+        "rolling_resistance_coeff": {
+          "default": 0.012,
+          "title": "Rolling Resistance Coeff",
+          "type": "number"
+        },
+        "drag_coeff_cd": {
+          "default": 0.3,
+          "title": "Drag Coeff Cd",
+          "type": "number"
+        },
+        "frontal_area": {
+          "default": 2.8,
+          "title": "Frontal Area",
+          "type": "number"
+        },
+        "air_density": {
+          "default": 1.225,
+          "title": "Air Density",
+          "type": "number"
+        },
+        "aero_lift_coeff_front": {
+          "default": 0.3,
+          "title": "Aero Lift Coeff Front",
+          "type": "number"
+        },
+        "aero_lift_coeff_rear": {
+          "default": 0.15,
+          "title": "Aero Lift Coeff Rear",
+          "type": "number"
+        },
+        "camber_thrust_coeff": {
+          "default": 1.0,
+          "title": "Camber Thrust Coeff",
+          "type": "number"
+        },
+        "static_toe_front": {
+          "default": 0.001745,
+          "title": "Static Toe Front",
+          "type": "number"
+        },
+        "static_toe_rear": {
+          "default": 0.0,
+          "title": "Static Toe Rear",
+          "type": "number"
+        },
+        "tire_cx": {
+          "default": 1.65,
+          "title": "Tire Cx",
+          "type": "number"
+        },
+        "tire_cy": {
+          "default": 1.3,
+          "title": "Tire Cy",
+          "type": "number"
+        },
+        "tire_ex": {
+          "default": -0.5,
+          "title": "Tire Ex",
+          "type": "number"
+        },
+        "tire_ey": {
+          "default": -1.0,
+          "title": "Tire Ey",
+          "type": "number"
+        },
+        "servo_kp": {
+          "default": 200.0,
+          "title": "Servo Kp",
+          "type": "number"
+        },
+        "servo_ki": {
+          "default": 50.0,
+          "title": "Servo Ki",
+          "type": "number"
+        },
+        "steering_arm_length": {
+          "default": 0.146451,
+          "title": "Steering Arm Length",
+          "type": "number"
+        },
+        "pinion_radius": {
+          "default": 0.02,
+          "title": "Pinion Radius",
+          "type": "number"
+        },
+        "tie_rod_angle_deg": {
+          "default": 6.67,
+          "title": "Tie Rod Angle Deg",
+          "type": "number"
+        },
+        "rack_mech_efficiency": {
+          "default": 0.92,
+          "title": "Rack Mech Efficiency",
+          "type": "number"
+        },
+        "motor_gear_ratio": {
+          "default": 10.0,
+          "title": "Motor Gear Ratio",
+          "type": "number"
+        }
+      },
+      "title": "VehicleSection",
+      "type": "object"
+    }
+  },
+  "description": "Top-level project file.",
+  "properties": {
+    "project": {
+      "$ref": "#/$defs/ProjectMeta"
+    },
+    "vehicle": {
+      "$ref": "#/$defs/VehicleSection"
+    },
+    "suspension": {
+      "$ref": "#/$defs/SuspensionSection"
+    },
+    "steering_geometry": {
+      "$ref": "#/$defs/SteeringGeometrySection"
+    },
+    "controller": {
+      "$ref": "#/$defs/ControllerSection"
+    },
+    "scene": {
+      "$ref": "#/$defs/SceneSection"
+    },
+    "recording": {
+      "$ref": "#/$defs/RecordingSection"
+    }
+  },
+  "title": "ProjectFile",
+  "type": "object"
+}

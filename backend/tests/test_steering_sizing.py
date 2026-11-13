@@ -71,9 +71,11 @@ class TestWithinCapability:
         # Both sizes must be *within* capability or the comparison is being
         # made against an oscillation — the module's own rule, and this test
         # broke it on the first attempt by reaching for a 4 N.m motor.
-        small = run_scenario(_params(peak_torque=3.0), LOW_SPEED)
+        small = run_scenario(_params(peak_torque=2.0), LOW_SPEED)
         big = run_scenario(_params(peak_torque=8.0), LOW_SPEED)
         assert not small.beyond_capability and not big.beyond_capability
+        assert small.saturated_fraction > DELIVERY_TRUST_LIMIT
+        assert big.saturated_fraction == 0.0
         assert big.peak_hand_torque < small.peak_hand_torque
 
 
@@ -166,3 +168,24 @@ class TestRequirement:
                                     no_load_speed_rpm=20_000.0),
                             scenarios=(LOW_SPEED,))
         assert all(c["pass"] for c in req.verdict["checks"].values())
+
+
+@pytest.mark.parametrize("speed_kmh", [0.0, 20.0, 100.0])
+def test_rack_curve_uses_selected_actuator_coordinate(monkeypatch, speed_kmh):
+    """Other wheels and static toe cannot contaminate a one-wheel load LUT."""
+    import sim4wis.steering.sizing as sizing
+    rows = []
+    for command, force in ((0.0, 10.0), (1.0, 20.0)):
+        rows.append({"wheel_index": 0, "delta_cmd": command,
+                     "delta": command + .1, "rack_force": force})
+        for wheel in (1, 2, 3):
+            rows.append({"wheel_index": wheel, "delta_cmd": 0.0,
+                         "delta": 0.0, "rack_force": 1e6 * wheel})
+    monkeypatch.setattr(sizing, "sweep_load_analysis", lambda *a, **k: {"rows": rows})
+    curve = sizing._rack_force_curve(_params(), speed_kmh, .9)
+    rolling = (speed_kmh / 3.6) / (speed_kmh / 3.6 + 1.5)
+    for angle in (-.5, .5):
+        aligning, scrub = curve(angle)
+        assert aligning == pytest.approx(math.copysign(30 * rolling, angle))
+        assert scrub == pytest.approx(30 * (1 - rolling))
+    assert sum(abs(value) for value in curve(0.0)) == pytest.approx(20.0)

@@ -1,0 +1,528 @@
+[
+  {
+    "name": "step_steer_60kmh",
+    "kind": "procedure",
+    "path": "procedures/step_steer_golden.yaml",
+    "library": "experiments/step_steer_60kmh.yaml"
+  },
+  {
+    "name": "iso3888_dlc_60kmh",
+    "kind": "procedure",
+    "path": "procedures/iso3888_dlc_golden.yaml",
+    "library": "experiments/iso3888_dlc_60kmh.yaml"
+  },
+  {
+    "name": "oncentre_weave_100kmh",
+    "kind": "procedure",
+    "path": "procedures/iso13674_oncentre.yaml",
+    "library": null
+  },
+  {
+    "name": "sw_straight100_rl_stuck_value_baseline",
+    "kind": "single_wheel",
+    "reference": {
+      "name": "sw_straight100",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {}
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "ideal_ackermann",
+      "mode_params": {},
+      "scene": null,
+      "path": null,
+      "faults": [],
+      "fault_seed": 0,
+      "maneuver": {
+        "name": "straight100",
+        "steps": [
+          {
+            "name": "加速",
+            "duration": 8.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 100.0,
+            "speed_ramp_s": 5.0,
+            "mode_params": {}
+          },
+          {
+            "name": "直行",
+            "duration": 8.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 100.0,
+      "kpis": []
+    },
+    "experiment": {
+      "name": "sw_straight100",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {}
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "ideal_ackermann",
+      "mode_params": {},
+      "scene": null,
+      "path": null,
+      "faults": [
+        {
+          "fault_type": "stuck_value",
+          "wheel": 2,
+          "value": 0.06981317007977318,
+          "t_start": 9.0,
+          "t_end": null,
+          "active": true,
+          "id": null,
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        }
+      ],
+      "fault_seed": 0,
+      "maneuver": {
+        "name": "straight100",
+        "steps": [
+          {
+            "name": "加速",
+            "duration": 8.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 100.0,
+            "speed_ramp_s": 5.0,
+            "mode_params": {}
+          },
+          {
+            "name": "直行",
+            "duration": 8.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 100.0,
+      "kpis": []
+    },
+    "t_fault": 9.0
+  },
+  {
+    "name": "sw_straight100_rl_stuck_value_mitigated",
+    "kind": "single_wheel",
+    "reference": {
+      "name": "sw_straight100",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {}
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "ideal_ackermann",
+      "mode_params": {},
+      "scene": null,
+      "path": null,
+      "faults": [],
+      "fault_seed": 0,
+      "maneuver": {
+        "name": "straight100",
+        "steps": [
+          {
+            "name": "加速",
+            "duration": 8.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 100.0,
+            "speed_ramp_s": 5.0,
+            "mode_params": {}
+          },
+          {
+            "name": "直行",
+            "duration": 8.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 100.0,
+      "kpis": []
+    },
+    "experiment": {
+      "name": "sw_straight100",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {}
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "fault_reconfig",
+      "mode_params": {
+        "fault_wheel": 2,
+        "fault_kind": "stuck",
+        "fault_angle": 0.06981317007977318,
+        "fault_time": 9.0,
+        "detect_delay": 0.15,
+        "v_limit_kmh": 60.0
+      },
+      "scene": null,
+      "path": null,
+      "faults": [
+        {
+          "fault_type": "stuck_value",
+          "wheel": 2,
+          "value": 0.06981317007977318,
+          "t_start": 9.0,
+          "t_end": null,
+          "active": true,
+          "id": null,
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        }
+      ],
+      "fault_seed": 0,
+      "maneuver": {
+        "name": "straight100",
+        "steps": [
+          {
+            "name": "加速",
+            "duration": 8.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 100.0,
+            "speed_ramp_s": 5.0,
+            "mode_params": {}
+          },
+          {
+            "name": "直行",
+            "duration": 8.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 100.0,
+      "kpis": []
+    },
+    "t_fault": 9.0
+  },
+  {
+    "name": "sw_curve60_fl_free_caster_baseline",
+    "kind": "single_wheel",
+    "reference": {
+      "name": "sw_curve60",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {}
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "ideal_ackermann",
+      "mode_params": {},
+      "scene": null,
+      "path": null,
+      "faults": [],
+      "fault_seed": 0,
+      "maneuver": {
+        "name": "curve60",
+        "steps": [
+          {
+            "name": "加速",
+            "duration": 6.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 60.0,
+            "speed_ramp_s": 4.0,
+            "mode_params": {}
+          },
+          {
+            "name": "入弯",
+            "duration": 2.0,
+            "steer": {
+              "kind": "ramp",
+              "amplitude": 1.508559,
+              "unit": "front_deg",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          },
+          {
+            "name": "稳态弯",
+            "duration": 4.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 1.508559,
+              "unit": "front_deg",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          },
+          {
+            "name": "出弯",
+            "duration": 2.0,
+            "steer": {
+              "kind": "ramp",
+              "amplitude": 0.0,
+              "unit": "front_deg",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 1.508559
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          },
+          {
+            "name": "直行",
+            "duration": 2.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 100.0,
+      "kpis": []
+    },
+    "experiment": {
+      "name": "sw_curve60",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {}
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "ideal_ackermann",
+      "mode_params": {},
+      "scene": null,
+      "path": null,
+      "faults": [
+        {
+          "fault_type": "free_caster",
+          "wheel": 0,
+          "value": 0.0,
+          "t_start": 10.5,
+          "t_end": null,
+          "active": true,
+          "id": null,
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        }
+      ],
+      "fault_seed": 0,
+      "maneuver": {
+        "name": "curve60",
+        "steps": [
+          {
+            "name": "加速",
+            "duration": 6.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 60.0,
+            "speed_ramp_s": 4.0,
+            "mode_params": {}
+          },
+          {
+            "name": "入弯",
+            "duration": 2.0,
+            "steer": {
+              "kind": "ramp",
+              "amplitude": 1.508559,
+              "unit": "front_deg",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          },
+          {
+            "name": "稳态弯",
+            "duration": 4.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 1.508559,
+              "unit": "front_deg",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          },
+          {
+            "name": "出弯",
+            "duration": 2.0,
+            "steer": {
+              "kind": "ramp",
+              "amplitude": 0.0,
+              "unit": "front_deg",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 1.508559
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          },
+          {
+            "name": "直行",
+            "duration": 2.0,
+            "steer": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": null,
+            "speed_ramp_s": 0.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 100.0,
+      "kpis": []
+    },
+    "t_fault": 10.5
+  }
+]

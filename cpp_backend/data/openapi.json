@@ -1,0 +1,6853 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "4WIS Simulator",
+    "description": "4-Wheel Independent Steering Simulator backend.",
+    "version": "0.107.0"
+  },
+  "paths": {
+    "/api/version": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Version",
+        "operationId": "version_api_version_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Version Api Version Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/strategies": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Strategies",
+        "operationId": "list_strategies_api_strategies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response List Strategies Api Strategies Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Status",
+        "operationId": "status_api_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Status Api Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/strategy": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Set Strategy",
+        "operationId": "set_strategy_api_strategy_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrategySelect"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Set Strategy Api Strategy Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reset": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Reset",
+        "operationId": "reset_api_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Reset Api Reset Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Model",
+        "operationId": "get_model_api_model_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Model Api Model Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Set Model",
+        "operationId": "set_model_api_model_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSelect"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Set Model Api Model Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user_python/status": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "User Python Status",
+        "description": "Current status of the hot-reload Python strategy plugin.",
+        "operationId": "user_python_status_api_user_python_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response User Python Status Api User Python Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user_python/reload": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "User Python Reload",
+        "description": "Force-reload the Python strategy plugin (e.g. after saving the file).",
+        "operationId": "user_python_reload_api_user_python_reload_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response User Python Reload Api User Python Reload Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plugins": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Plugins",
+        "operationId": "list_plugins_api_plugins_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Plugins Api Plugins Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plugins/reload": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Reload Plugins Endpoint",
+        "operationId": "reload_plugins_endpoint_api_plugins_reload_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Reload Plugins Endpoint Api Plugins Reload Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/capabilities": {
+      "get": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "Capabilities",
+        "operationId": "capabilities_api_agent_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/sessions": {
+      "get": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "List Sessions",
+        "operationId": "list_sessions_api_agent_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "Create",
+        "operationId": "create_api_agent_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/sessions/{session_id}": {
+      "get": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "Observe",
+        "operationId": "observe_api_agent_sessions__session_id__get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "Close",
+        "operationId": "close_api_agent_sessions__session_id__delete",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/sessions/{session_id}/step": {
+      "post": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "Step",
+        "operationId": "step_api_agent_sessions__session_id__step_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/sessions/{session_id}/faults": {
+      "post": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "Set Fault Schedule",
+        "operationId": "set_fault_schedule_api_agent_sessions__session_id__faults_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaultScheduleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/sessions/{session_id}/preview": {
+      "get": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "Preview",
+        "operationId": "preview_api_agent_sessions__session_id__preview_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "max_points",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 2,
+              "default": 300,
+              "title": "Max Points"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agent/sessions/{session_id}/export": {
+      "post": {
+        "tags": [
+          "api",
+          "agent-v1"
+        ],
+        "summary": "Export",
+        "operationId": "export_api_agent_sessions__session_id__export_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/interaction/status": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Status",
+        "operationId": "status_api_interaction_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/interaction/control": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Control",
+        "operationId": "control_api_interaction_control_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Action"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/faults": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Faults",
+        "operationId": "list_faults_api_faults_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Add Fault",
+        "operationId": "add_fault_api_faults_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaultSpec"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Clear Faults",
+        "operationId": "clear_faults_api_faults_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/faults/schedule": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Schedule",
+        "operationId": "get_schedule_api_faults_schedule_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Set Schedule",
+        "operationId": "set_schedule_api_faults_schedule_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaultSchedule"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/faults/{fault_id}": {
+      "patch": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Patch Fault",
+        "operationId": "patch_fault_api_faults__fault_id__patch",
+        "parameters": [
+          {
+            "name": "fault_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Fault Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Delete Fault",
+        "operationId": "delete_fault_api_faults__fault_id__delete",
+        "parameters": [
+          {
+            "name": "fault_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Fault Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/load-analysis/sweep": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Load Analysis Sweep",
+        "operationId": "load_analysis_sweep_api_load_analysis_sweep_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadSweepRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Load Analysis Sweep Api Load Analysis Sweep Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/load-analysis/sensitivity": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Load Analysis Sensitivity",
+        "operationId": "load_analysis_sensitivity_api_load_analysis_sensitivity_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensitivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Load Analysis Sensitivity Api Load Analysis Sensitivity Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/load-analysis/rack-solve": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Load Analysis Rack Solve",
+        "description": "Solve δ (and linkage angles) for a list of rack travels — shared with the\nfrontend mechanism diagram so the geometry can never disagree across the wall.",
+        "operationId": "load_analysis_rack_solve_api_load_analysis_rack_solve_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RackSolveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Load Analysis Rack Solve Api Load Analysis Rack Solve Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/demo/bicycle-gain": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Bicycle Gain",
+        "description": "Slip gain |α_wheel/δ| and implied saturation steer δ_sat vs speed.\n\nFor a single steered wheel the steady-state bicycle solve gives the body\n(β, r), hence α_wheel = β + r·x/V − δ. The gain grows ~(1 + mV²/(8CαL)),\nso the linear region (δ_sat = α_peak/gain) shrinks with speed — exactly the\nhigh-speed behaviour the load page exposes.",
+        "operationId": "bicycle_gain_api_model_demo_bicycle_gain_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BicycleGainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Bicycle Gain Api Model Demo Bicycle Gain Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/demo/tire-curve": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Tire Curve",
+        "description": "Pacejka Fy(α) at a chosen vertical load — the real ``pacejka_combined_forces``.\n\nCornering stiffness is the load-sensitive value at this Fz, so the small-slip\nslope and the μ·Fz peak both move with load just like the foundation model.",
+        "operationId": "tire_curve_api_model_demo_tire_curve_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TireCurveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Tire Curve Api Model Demo Tire Curve Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/demo/kingpin-breakdown": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Kingpin Breakdown",
+        "description": "τ_kingpin split into Fy / Fx / Mz / KPI terms vs δ for one wheel.\n\nReuses ``sweep_load_analysis`` to produce the *real* per-δ tyre forces\n(Fx, Fy, Mz, Fz) — exactly what the load page shows — then decomposes the\nkingpin moment with ``kingpin_torque_terms`` (the same helper ``kingpin_torque``\nsums). No physics is duplicated.",
+        "operationId": "kingpin_breakdown_api_model_demo_kingpin_breakdown_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KingpinBreakdownRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Kingpin Breakdown Api Model Demo Kingpin Breakdown Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/params": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Params",
+        "description": "Full vehicle + suspension parameter set (everything POST /params accepts).",
+        "operationId": "get_params_api_params_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Params Api Params Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Set Params",
+        "operationId": "set_params_api_params_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParamsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Params Api Params Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scene/mu": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Set Scene Mu",
+        "description": "Set the base road friction μ live (surface-preset / manual tune).",
+        "operationId": "set_scene_mu_api_scene_mu_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneMu"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "number"
+                  },
+                  "type": "object",
+                  "title": "Response Set Scene Mu Api Scene Mu Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scene": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Scene",
+        "operationId": "get_scene_api_scene_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Scene Api Scene Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scene/disturbances": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Create Disturbance",
+        "operationId": "create_disturbance_api_scene_disturbances_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisturbanceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Disturbance Api Scene Disturbances Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scene/disturbances/{dist_id}": {
+      "put": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Update Disturbance",
+        "operationId": "update_disturbance_api_scene_disturbances__dist_id__put",
+        "parameters": [
+          {
+            "name": "dist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dist Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisturbanceUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update Disturbance Api Scene Disturbances  Dist Id  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Delete Disturbance",
+        "operationId": "delete_disturbance_api_scene_disturbances__dist_id__delete",
+        "parameters": [
+          {
+            "name": "dist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dist Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Disturbance Api Scene Disturbances  Dist Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scene/clear": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Clear Disturbances",
+        "operationId": "clear_disturbances_api_scene_clear_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Clear Disturbances Api Scene Clear Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenarios": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Scenarios",
+        "operationId": "list_scenarios_api_scenarios_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response List Scenarios Api Scenarios Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenario": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Scenario",
+        "operationId": "get_scenario_api_scenario_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Scenario Api Scenario Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenarios/{name}/load": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Load Scenario",
+        "operationId": "load_scenario_api_scenarios__name__load_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "spawn",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Spawn"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Load Scenario Api Scenarios  Name  Load Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenario/clear": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Clear Scenario",
+        "operationId": "clear_scenario_api_scenario_clear_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Clear Scenario Api Scenario Clear Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Projects Endpoint",
+        "operationId": "list_projects_endpoint_api_projects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response List Projects Endpoint Api Projects Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{name}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Project",
+        "operationId": "get_project_api_projects__name__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Project Api Projects  Name  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Save Project Endpoint",
+        "description": "Snapshot the current sim state (params + strategy + scene) as `<name>.yaml`.",
+        "operationId": "save_project_endpoint_api_projects__name__post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ProjectSave"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Save Project Endpoint Api Projects  Name  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{name}/load": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Load Project Into Sim",
+        "description": "Read project YAML and apply it to the running simulator.",
+        "operationId": "load_project_into_sim_api_projects__name__load_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Load Project Into Sim Api Projects  Name  Load Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/path/templates": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Path Templates",
+        "description": "Template names (kept as a plain list for older clients) + the parameter\nspecs the trajectory panel renders its inputs from.",
+        "operationId": "path_templates_api_path_templates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Path Templates Api Path Templates Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/path": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Path",
+        "operationId": "get_path_api_path_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Path Api Path Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/path/waypoints": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Set Path Waypoints",
+        "operationId": "set_path_waypoints_api_path_waypoints_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaypointsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Path Waypoints Api Path Waypoints Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/path/template": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Set Path Template",
+        "operationId": "set_path_template_api_path_template_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Path Template Api Path Template Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/path/clear": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Clear Path",
+        "operationId": "clear_path_api_path_clear_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Clear Path Api Path Clear Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/script/status": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Script Status",
+        "operationId": "script_status_api_script_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Script Status Api Script Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/script/load": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Script Load",
+        "operationId": "script_load_api_script_load_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScriptLoad"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Script Load Api Script Load Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/script/start": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Script Start",
+        "operationId": "script_start_api_script_start_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Script Start Api Script Start Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/script/stop": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Script Stop",
+        "operationId": "script_stop_api_script_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Script Stop Api Script Stop Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/script/library": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Script Library",
+        "description": "List YAML scripts shipped under the data dir's scripts_lib/.",
+        "operationId": "script_library_api_script_library_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response Script Library Api Script Library Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/script/library/{name}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Script Library Get",
+        "operationId": "script_library_get_api_script_library__name__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Script Library Get Api Script Library  Name  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recording/start": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Recording Start",
+        "operationId": "recording_start_api_recording_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/RecordingStart"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Recording Start Api Recording Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recording/stop": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Recording Stop",
+        "operationId": "recording_stop_api_recording_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Recording Stop Api Recording Stop Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recording/clear": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Recording Clear",
+        "description": "Discard a stopped recording without changing the current simulation.",
+        "operationId": "recording_clear_api_recording_clear_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Recording Clear Api Recording Clear Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recording/status": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Recording Status",
+        "operationId": "recording_status_api_recording_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Recording Status Api Recording Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recording/save": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Recording Save",
+        "operationId": "recording_save_api_recording_save_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Recording Save Api Recording Save Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recording/export.csv": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Recording Export Csv",
+        "operationId": "recording_export_csv_api_recording_export_csv_get",
+        "parameters": [
+          {
+            "name": "channels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated channel names. If omitted, all recorded channels are exported.",
+              "title": "Channels"
+            },
+            "description": "Comma-separated channel names. If omitted, all recorded channels are exported."
+          },
+          {
+            "name": "from_t",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Lower bound on simulation time t [s].",
+              "title": "From T"
+            },
+            "description": "Lower bound on simulation time t [s]."
+          },
+          {
+            "name": "to_t",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Upper bound on simulation time t [s].",
+              "title": "To T"
+            },
+            "description": "Upper bound on simulation time t [s]."
+          },
+          {
+            "name": "include_strategy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Strategy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehicle-profiles": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Vehicle Profiles",
+        "operationId": "list_vehicle_profiles_api_vehicle_profiles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Vehicle Profiles Api Vehicle Profiles Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehicle-profiles/{name}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Vehicle Profile",
+        "operationId": "get_vehicle_profile_api_vehicle_profiles__name__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Vehicle Profile Api Vehicle Profiles  Name  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Save Vehicle Profile",
+        "operationId": "save_vehicle_profile_api_vehicle_profiles__name__post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ProfileSave"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Save Vehicle Profile Api Vehicle Profiles  Name  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Delete Vehicle Profile",
+        "operationId": "delete_vehicle_profile_api_vehicle_profiles__name__delete",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Vehicle Profile Api Vehicle Profiles  Name  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vehicle-profiles/{name}/apply": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Apply Vehicle Profile",
+        "operationId": "apply_vehicle_profile_api_vehicle_profiles__name__apply_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Apply Vehicle Profile Api Vehicle Profiles  Name  Apply Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Experiments Endpoint",
+        "operationId": "list_experiments_endpoint_api_experiments_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Experiments Endpoint Api Experiments Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{name}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Experiment",
+        "operationId": "get_experiment_api_experiments__name__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Experiment Api Experiments  Name  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Save Experiment Endpoint",
+        "operationId": "save_experiment_endpoint_api_experiments__name__post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Experiment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Save Experiment Endpoint Api Experiments  Name  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Delete Experiment Endpoint",
+        "operationId": "delete_experiment_endpoint_api_experiments__name__delete",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Experiment Endpoint Api Experiments  Name  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/maneuver-templates": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Maneuver Templates",
+        "operationId": "maneuver_templates_api_maneuver_templates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Maneuver Templates Api Maneuver Templates Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/batch": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Batch Jobs",
+        "operationId": "list_batch_jobs_api_batch_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Batch Jobs Api Batch Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Start Batch Endpoint",
+        "operationId": "start_batch_endpoint_api_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Batch Endpoint Api Batch Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/batch/{job_id}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Batch Status",
+        "operationId": "batch_status_api_batch__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Batch Status Api Batch  Job Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/batch/{job_id}/cancel": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Batch Cancel",
+        "operationId": "batch_cancel_api_batch__job_id__cancel_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Batch Cancel Api Batch  Job Id  Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Runs Endpoint",
+        "operationId": "list_runs_endpoint_api_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Runs Endpoint Api Runs Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Run Meta",
+        "operationId": "run_meta_api_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Run Meta Api Runs  Run Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Delete Run Endpoint",
+        "operationId": "delete_run_endpoint_api_runs__run_id__delete",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Run Endpoint Api Runs  Run Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/data": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Run Data",
+        "operationId": "run_data_api_runs__run_id__data_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "channels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "comma-separated channel names",
+              "title": "Channels"
+            },
+            "description": "comma-separated channel names"
+          },
+          {
+            "name": "decimate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Decimate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Run Data Api Runs  Run Id  Data Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/artifacts": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Run Artifacts",
+        "operationId": "run_artifacts_api_runs__run_id__artifacts_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/export.csv": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Run Csv",
+        "operationId": "run_csv_api_runs__run_id__export_csv_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/export.json": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Run Json",
+        "operationId": "run_json_api_runs__run_id__export_json_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/plot.svg": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Run Plot",
+        "operationId": "run_plot_api_runs__run_id__plot_svg_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(chart|trajectory)$",
+              "default": "chart",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "yaw_rate",
+              "title": "Channel"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}/bundle.zip": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Run Bundle",
+        "operationId": "run_bundle_api_runs__run_id__bundle_zip_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study/capabilities": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Capabilities",
+        "description": "What can be asked, of which model, with which metrics.\n\nThe intended first call for any agent: everything needed to write a valid\nspec, in one response, instead of discovering it endpoint by endpoint.",
+        "operationId": "capabilities_api_study_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Capabilities Api Study Capabilities Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study/dry-run": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Dry Run Endpoint",
+        "operationId": "dry_run_endpoint_api_study_dry_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudySpec"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Dry Run Endpoint Api Study Dry Run Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study/run": {
+      "post": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Run Endpoint",
+        "operationId": "run_endpoint_api_study_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudySpec"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Run Endpoint Api Study Run Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study/jobs": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Jobs",
+        "operationId": "list_jobs_api_study_jobs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Jobs Api Study Jobs Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Job",
+        "operationId": "get_job_api_study_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Job Api Study Jobs  Job Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "List Studies",
+        "operationId": "list_studies_api_study_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Studies Api Study Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study/trace/{run_id}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Trace",
+        "description": "Downsampled channels for one run.\n\n`channels` has no default on purpose. Returning everything is the failure\nmode this endpoint exists to prevent.",
+        "operationId": "trace_api_study_trace__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "channels",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "comma-separated channel names — required",
+              "title": "Channels"
+            },
+            "description": "comma-separated channel names — required"
+          },
+          {
+            "name": "max_points",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000,
+              "minimum": 2,
+              "default": 200,
+              "title": "Max Points"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Trace Api Study Trace  Run Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study/{study_id}": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Study",
+        "operationId": "get_study_api_study__study_id__get",
+        "parameters": [
+          {
+            "name": "study_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Study Api Study  Study Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/study/{study_id}/report": {
+      "get": {
+        "tags": [
+          "api"
+        ],
+        "summary": "Get Report",
+        "operationId": "get_report_api_study__study_id__report_get",
+        "parameters": [
+          {
+            "name": "study_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Study Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/targets": {
+      "get": {
+        "tags": [
+          "api",
+          "targets"
+        ],
+        "summary": "List Targets",
+        "operationId": "list_targets_api_targets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Targets Api Targets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/targets/{ref}": {
+      "get": {
+        "tags": [
+          "api",
+          "targets"
+        ],
+        "summary": "Get Target Set",
+        "operationId": "get_target_set_api_targets__ref__get",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ref"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Target Set Api Targets  Ref  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/targets/{ref}/check": {
+      "post": {
+        "tags": [
+          "api",
+          "targets"
+        ],
+        "summary": "Check",
+        "operationId": "check_api_targets__ref__check_post",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ref"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CheckRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Action": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "pause",
+              "resume",
+              "stop"
+            ],
+            "title": "Action"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "Action"
+      },
+      "ActivePatch": {
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "active"
+        ],
+        "title": "ActivePatch"
+      },
+      "BatchRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "default": null
+          },
+          "experiment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Experiment"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "variants": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Variants",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "BatchRequest",
+        "description": "Either a stored experiment name or an inline definition, plus variants."
+      },
+      "BicycleGainRequest": {
+        "properties": {
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params",
+            "default": null
+          },
+          "speeds_kmh": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Speeds Kmh",
+            "default": [
+              0,
+              10,
+              20,
+              30,
+              40,
+              50,
+              60,
+              70,
+              80,
+              90,
+              100,
+              110,
+              120,
+              130,
+              140,
+              150,
+              160,
+              170,
+              180,
+              190,
+              200
+            ]
+          },
+          "ref_delta_deg": {
+            "type": "number",
+            "maximum": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Ref Delta Deg",
+            "default": 1.0
+          },
+          "wheel_index": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Wheel Index",
+            "default": 0
+          },
+          "alpha_peak_deg": {
+            "type": "number",
+            "maximum": 20.0,
+            "exclusiveMinimum": 1.0,
+            "title": "Alpha Peak Deg",
+            "default": 7.0
+          }
+        },
+        "type": "object",
+        "title": "BicycleGainRequest"
+      },
+      "CheckRequest": {
+        "properties": {
+          "vehicle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle",
+            "default": null
+          },
+          "html": {
+            "type": "boolean",
+            "title": "Html",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "CheckRequest"
+      },
+      "CompareSpec": {
+        "properties": {
+          "group_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group By",
+            "default": null
+          },
+          "against": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Against",
+            "default": null
+          }
+        },
+        "type": "object",
+        "title": "CompareSpec",
+        "description": "Cross-run aggregation: how to group the grid and what to measure against."
+      },
+      "Control": {
+        "properties": {
+          "throttle": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Throttle",
+            "default": 0
+          },
+          "brake": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Brake",
+            "default": 0
+          },
+          "steering": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "title": "Steering",
+            "default": 0
+          },
+          "gear": {
+            "type": "integer",
+            "enum": [
+              -1,
+              0,
+              1
+            ],
+            "title": "Gear",
+            "default": 1
+          },
+          "handbrake": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "title": "Handbrake",
+            "default": 0
+          },
+          "speed_target_ms": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 60.0,
+                "minimum": -60.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Target Ms",
+            "default": null
+          },
+          "front_angle_rad": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.5,
+                "minimum": -1.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Angle Rad",
+            "default": null
+          },
+          "wheel_norm": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array",
+                "maxItems": 4,
+                "minItems": 4
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wheel Norm",
+            "default": null
+          },
+          "body_fraction": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array",
+                "maxItems": 3,
+                "minItems": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Fraction",
+            "default": null
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Control"
+      },
+      "Criterion": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Metric"
+          },
+          "must": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Must"
+          },
+          "at": {
+            "type": "string",
+            "title": "At",
+            "default": "all"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metric",
+          "must"
+        ],
+        "title": "Criterion",
+        "description": "A falsifiable claim about the result.\n\n`must` is a small comparison language rather than a Python expression on\npurpose: a criterion that can run arbitrary code is a criterion nobody can\nreview at a glance.\n\n`at` selects which cells must satisfy it — \"all\", or an equality filter on\nsweep coordinates such as \"speed_kmh == 140\"."
+      },
+      "DisturbanceCreate": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "ice_patch",
+              "split_mu",
+              "speed_bump",
+              "slope"
+            ],
+            "title": "Type"
+          },
+          "x": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "maximum": 10000.0,
+            "minimum": -10000.0,
+            "title": "Y"
+          },
+          "width": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Width",
+            "default": 6.0
+          },
+          "length": {
+            "type": "number",
+            "maximum": 200.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Length",
+            "default": 10.0
+          },
+          "heading": {
+            "type": "number",
+            "maximum": 3.1416,
+            "minimum": -3.1416,
+            "title": "Heading",
+            "default": 0.0
+          },
+          "mu": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.5,
+                "minimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mu",
+            "default": null
+          },
+          "mu_left": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.5,
+                "minimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mu Left",
+            "default": null
+          },
+          "mu_right": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.5,
+                "minimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mu Right",
+            "default": null
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.3,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height",
+            "default": null
+          },
+          "stiffness": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 500000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stiffness",
+            "default": null
+          },
+          "angle": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.35,
+                "minimum": -0.35
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Angle",
+            "default": null
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "x",
+          "y"
+        ],
+        "title": "DisturbanceCreate",
+        "description": "Type-tagged disturbance creation. Bounds keep the sim numerically safe\n(e.g. stiffness cap prevents the Fz-pulse blowup fixed in Phase 3)."
+      },
+      "DisturbanceUpdate": {
+        "properties": {
+          "x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000.0,
+                "minimum": -10000.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X",
+            "default": null
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000.0,
+                "minimum": -10000.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y",
+            "default": null
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width",
+            "default": null
+          },
+          "length": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 200.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Length",
+            "default": null
+          },
+          "heading": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 3.1416,
+                "minimum": -3.1416
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heading",
+            "default": null
+          },
+          "mu": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.5,
+                "minimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mu",
+            "default": null
+          },
+          "mu_left": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.5,
+                "minimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mu Left",
+            "default": null
+          },
+          "mu_right": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.5,
+                "minimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mu Right",
+            "default": null
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.3,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height",
+            "default": null
+          },
+          "stiffness": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 500000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stiffness",
+            "default": null
+          },
+          "angle": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.35,
+                "minimum": -0.35
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Angle",
+            "default": null
+          }
+        },
+        "type": "object",
+        "title": "DisturbanceUpdate",
+        "description": "Partial update — same bounds as create, everything optional."
+      },
+      "Experiment": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "vehicle": {
+            "$ref": "#/components/schemas/ExperimentVehicle",
+            "default": {
+              "profile": null,
+              "overrides": {}
+            }
+          },
+          "model_type": {
+            "type": "string",
+            "title": "Model Type",
+            "default": "simplified_dynamic"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy",
+            "default": "ideal_ackermann"
+          },
+          "mode_params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Mode Params",
+            "default": {}
+          },
+          "scene": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scene",
+            "default": null
+          },
+          "path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PathSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "faults": {
+            "items": {
+              "$ref": "#/components/schemas/FaultSpec"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Faults",
+            "default": []
+          },
+          "fault_seed": {
+            "type": "integer",
+            "maximum": 4294967295.0,
+            "minimum": 0.0,
+            "title": "Fault Seed",
+            "default": 0
+          },
+          "maneuver": {
+            "$ref": "#/components/schemas/Maneuver",
+            "default": {
+              "name": "untitled",
+              "steps": []
+            }
+          },
+          "dt": {
+            "type": "number",
+            "maximum": 0.05,
+            "exclusiveMinimum": 0.0005,
+            "title": "Dt",
+            "default": 0.005
+          },
+          "record_hz": {
+            "type": "number",
+            "maximum": 200.0,
+            "exclusiveMinimum": 1.0,
+            "title": "Record Hz",
+            "default": 50.0
+          },
+          "kpis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kpis",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Experiment"
+      },
+      "ExperimentVehicle": {
+        "properties": {
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile",
+            "default": null
+          },
+          "overrides": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Overrides",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExperimentVehicle"
+      },
+      "ExprMetric": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "expr": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Expr"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "expr"
+        ],
+        "title": "ExprMetric",
+        "description": "A derived metric written as an expression over a run's channels.\n\nThe safe tier: no statements, no imports, no attribute access — see\n`metrics.py`. Anything this cannot express (correlation-based phase\nestimation, injected-noise sensitivity) needs the plugin tier."
+      },
+      "FaultSchedule": {
+        "properties": {
+          "faults": {
+            "items": {
+              "$ref": "#/components/schemas/FaultSpec"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Faults",
+            "default": []
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 4294967295.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FaultSchedule"
+      },
+      "FaultScheduleRequest": {
+        "properties": {
+          "faults": {
+            "items": {
+              "$ref": "#/components/schemas/FaultSpec"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Faults",
+            "default": []
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 4294967295.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 0
+          },
+          "request_id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_.:-]+$",
+            "title": "Request Id"
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Expected Revision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "expected_revision"
+        ],
+        "title": "FaultScheduleRequest"
+      },
+      "FaultSpec": {
+        "properties": {
+          "fault_type": {
+            "type": "string",
+            "enum": [
+              "stuck_zero",
+              "stuck_hold",
+              "stuck_value",
+              "limited",
+              "free_caster",
+              "sensor_bias",
+              "sensor_noise",
+              "sensor_dropout"
+            ],
+            "title": "Fault Type"
+          },
+          "wheel": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Wheel"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value",
+            "default": 0.0
+          },
+          "t_start": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "T Start",
+            "default": 0.0
+          },
+          "t_end": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T End",
+            "default": null
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_.:-]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "default": null
+          },
+          "eta_rev": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Eta Rev",
+            "default": 0.6
+          },
+          "j_steer": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "J Steer",
+            "default": 3.0
+          },
+          "c_damp": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "C Damp",
+            "default": 80.0
+          },
+          "tau_coulomb": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Tau Coulomb",
+            "default": 5.0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fault_type",
+          "wheel"
+        ],
+        "title": "FaultSpec",
+        "description": "Target faults retain actuator dynamics; jam/free act on the mechanism.\n\nstuck_hold locks the actuator coordinate; alignment/K&C still apply.\nSensor faults affect observations only, not controller feedback."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "KingpinBreakdownRequest": {
+        "properties": {
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params",
+            "default": null
+          },
+          "speed_kmh": {
+            "type": "number",
+            "maximum": 250.0,
+            "minimum": 0.0,
+            "title": "Speed Kmh",
+            "default": 30.0
+          },
+          "angle_max_deg": {
+            "type": "number",
+            "maximum": 45.0,
+            "exclusiveMinimum": 1.0,
+            "title": "Angle Max Deg",
+            "default": 20.0
+          },
+          "points": {
+            "type": "integer",
+            "maximum": 161.0,
+            "minimum": 11.0,
+            "title": "Points",
+            "default": 61
+          },
+          "wheel_index": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Wheel Index",
+            "default": 0
+          },
+          "mu": {
+            "type": "number",
+            "maximum": 2.0,
+            "exclusiveMinimum": 0.05,
+            "title": "Mu",
+            "default": 0.85
+          },
+          "body_coupling": {
+            "type": "string",
+            "pattern": "^(vehicle|isolated)$",
+            "title": "Body Coupling",
+            "default": "vehicle"
+          }
+        },
+        "type": "object",
+        "title": "KingpinBreakdownRequest"
+      },
+      "LoadSweepRequest": {
+        "properties": {
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params",
+            "default": null
+          },
+          "speeds": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Speeds",
+            "default": [
+              0.0,
+              2.0,
+              5.0,
+              10.0,
+              20.0
+            ]
+          },
+          "angles": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Angles",
+            "default": []
+          },
+          "wheel_index": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Wheel Index",
+            "default": 0
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "default": "single_wheel"
+          },
+          "mu": {
+            "type": "number",
+            "maximum": 2.0,
+            "exclusiveMinimum": 0.05,
+            "title": "Mu",
+            "default": 0.85
+          },
+          "body_coupling": {
+            "type": "string",
+            "pattern": "^(vehicle|isolated)$",
+            "title": "Body Coupling",
+            "default": "vehicle"
+          }
+        },
+        "type": "object",
+        "title": "LoadSweepRequest"
+      },
+      "Maneuver": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "untitled"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ManeuverStep"
+            },
+            "type": "array",
+            "title": "Steps",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Maneuver"
+      },
+      "ManeuverStep": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "duration": {
+            "type": "number",
+            "maximum": 600.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration"
+          },
+          "steer": {
+            "$ref": "#/components/schemas/SteerProfile",
+            "default": {
+              "kind": "constant",
+              "amplitude": 0.0,
+              "unit": "normalized",
+              "freq_hz": 0.5,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            }
+          },
+          "speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Kmh",
+            "default": null
+          },
+          "speed_ramp_s": {
+            "type": "number",
+            "maximum": 60.0,
+            "minimum": 0.0,
+            "title": "Speed Ramp S",
+            "default": 0.0
+          },
+          "mode_params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Mode Params",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "duration"
+        ],
+        "title": "ManeuverStep",
+        "description": "One segment of a maneuver, ending after `duration` sim-seconds."
+      },
+      "ModelSelect": {
+        "properties": {
+          "model_type": {
+            "type": "string",
+            "title": "Model Type",
+            "description": "One of /api/model available ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_type"
+        ],
+        "title": "ModelSelect"
+      },
+      "ParamsUpdate": {
+        "properties": {
+          "wheelbase": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10.0,
+                "exclusiveMinimum": 0.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wheelbase",
+            "default": null
+          },
+          "track_front": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5.0,
+                "exclusiveMinimum": 0.3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track Front",
+            "default": null
+          },
+          "track_rear": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5.0,
+                "exclusiveMinimum": 0.3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track Rear",
+            "default": null
+          },
+          "mass": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 50000.0,
+                "exclusiveMinimum": 100.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mass",
+            "default": null
+          },
+          "inertia_z": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000000.0,
+                "exclusiveMinimum": 10.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inertia Z",
+            "default": null
+          },
+          "cg_to_front": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10.0,
+                "exclusiveMinimum": 0.1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cg To Front",
+            "default": null
+          },
+          "tire_radius": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "exclusiveMinimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Radius",
+            "default": null
+          },
+          "tire_width": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.8,
+                "exclusiveMinimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Width",
+            "default": null
+          },
+          "contact_patch_radius": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.5,
+                "exclusiveMinimum": 0.01
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Patch Radius",
+            "default": null
+          },
+          "steer_limit": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.5708,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steer Limit",
+            "default": null
+          },
+          "v_max": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 120.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "V Max",
+            "default": null
+          },
+          "cg_height": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cg Height",
+            "default": null
+          },
+          "wheel_inertia": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 50.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wheel Inertia",
+            "default": null
+          },
+          "motor_torque_max": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 20000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motor Torque Max",
+            "default": null
+          },
+          "bump_steer_coeff": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10.0,
+                "minimum": -10.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bump Steer Coeff",
+            "default": null
+          },
+          "unsprung_mass": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 500.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unsprung Mass",
+            "default": null
+          },
+          "tire_vertical_stiffness": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2000000.0,
+                "exclusiveMinimum": 10000.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Vertical Stiffness",
+            "default": null
+          },
+          "steer_tau": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "exclusiveMinimum": 0.005
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steer Tau",
+            "default": null
+          },
+          "steer_rate_max": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 50.0,
+                "exclusiveMinimum": 0.1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steer Rate Max",
+            "default": null
+          },
+          "tire_model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "linear",
+                  "pacejka"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Model",
+            "default": null
+          },
+          "tire_c_alpha": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000000.0,
+                "exclusiveMinimum": 1000.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire C Alpha",
+            "default": null
+          },
+          "tire_c_kappa": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000000.0,
+                "exclusiveMinimum": 1000.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire C Kappa",
+            "default": null
+          },
+          "tire_t_pneumatic": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.2,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire T Pneumatic",
+            "default": null
+          },
+          "tire_load_sensitivity_exp": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Load Sensitivity Exp",
+            "default": null
+          },
+          "parking_scrub_coeff": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 3.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Scrub Coeff",
+            "default": null
+          },
+          "parking_lateral_coeff": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 3.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Lateral Coeff",
+            "default": null
+          },
+          "parking_torque_coeff": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 3.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parking Torque Coeff",
+            "default": null
+          },
+          "low_speed_blend_ms": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 20.0,
+                "exclusiveMinimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Speed Blend Ms",
+            "default": null
+          },
+          "static_tire_deflection_deg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 45.0,
+                "exclusiveMinimum": 0.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Static Tire Deflection Deg",
+            "default": null
+          },
+          "rolling_resistance_coeff": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.1,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolling Resistance Coeff",
+            "default": null
+          },
+          "drag_coeff_cd": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Drag Coeff Cd",
+            "default": null
+          },
+          "frontal_area": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10.0,
+                "exclusiveMinimum": 0.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frontal Area",
+            "default": null
+          },
+          "air_density": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "exclusiveMinimum": 0.1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Air Density",
+            "default": null
+          },
+          "aero_lift_coeff_front": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": -1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aero Lift Coeff Front",
+            "default": null
+          },
+          "aero_lift_coeff_rear": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": -1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aero Lift Coeff Rear",
+            "default": null
+          },
+          "camber_thrust_coeff": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camber Thrust Coeff",
+            "default": null
+          },
+          "static_toe_front": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.05,
+                "minimum": -0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Static Toe Front",
+            "default": null
+          },
+          "static_toe_rear": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.05,
+                "minimum": -0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Static Toe Rear",
+            "default": null
+          },
+          "tire_cx": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.5,
+                "exclusiveMinimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Cx",
+            "default": null
+          },
+          "tire_cy": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.5,
+                "exclusiveMinimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Cy",
+            "default": null
+          },
+          "tire_ex": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": -5.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Ex",
+            "default": null
+          },
+          "tire_ey": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": -5.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tire Ey",
+            "default": null
+          },
+          "servo_kp": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Servo Kp",
+            "default": null
+          },
+          "servo_ki": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Servo Ki",
+            "default": null
+          },
+          "steering_arm_length": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.5,
+                "exclusiveMinimum": 0.05
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steering Arm Length",
+            "default": null
+          },
+          "pinion_radius": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.1,
+                "exclusiveMinimum": 0.005
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pinion Radius",
+            "default": null
+          },
+          "tie_rod_angle_deg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 30.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tie Rod Angle Deg",
+            "default": null
+          },
+          "rack_mech_efficiency": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "exclusiveMinimum": 0.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rack Mech Efficiency",
+            "default": null
+          },
+          "motor_gear_ratio": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "exclusiveMinimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motor Gear Ratio",
+            "default": null
+          },
+          "suspension": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Suspension"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "steering_geometry": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SteeringGeometry"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object",
+        "title": "ParamsUpdate",
+        "description": "Partial vehicle-parameter update. All fields optional; bounds reject\nphysically meaningless values (pydantic returns 422 with details)."
+      },
+      "PathSpec": {
+        "properties": {
+          "template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template",
+            "default": null
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params",
+            "default": {}
+          },
+          "waypoints": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waypoints",
+            "default": null
+          },
+          "closed": {
+            "type": "boolean",
+            "title": "Closed",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PathSpec",
+        "description": "Reference path for follow_trajectory: template or explicit waypoints."
+      },
+      "ProfileSave": {
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label",
+            "default": null
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "vehicle": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle",
+            "default": null
+          }
+        },
+        "type": "object",
+        "title": "ProfileSave"
+      },
+      "ProjectSave": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ProjectSave"
+      },
+      "RackSolveRequest": {
+        "properties": {
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params",
+            "default": null
+          },
+          "wheel_index": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Wheel Index",
+            "default": 0
+          },
+          "rack_travels": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Rack Travels",
+            "default": []
+          },
+          "hint_delta": {
+            "type": "number",
+            "title": "Hint Delta",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "RackSolveRequest"
+      },
+      "RecordingStart": {
+        "properties": {
+          "channels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channels",
+            "default": null
+          },
+          "full_rate": {
+            "type": "boolean",
+            "title": "Full Rate",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "RecordingStart",
+        "description": "Optional channel selection. If omitted, current channels are kept."
+      },
+      "ReportSpec": {
+        "properties": {
+          "template": {
+            "type": "string",
+            "const": "sweep",
+            "title": "Template",
+            "default": "sweep"
+          },
+          "out": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Out",
+            "default": null
+          }
+        },
+        "type": "object",
+        "title": "ReportSpec"
+      },
+      "SceneMu": {
+        "properties": {
+          "mu": {
+            "type": "number",
+            "maximum": 1.5,
+            "minimum": 0.0,
+            "title": "Mu",
+            "description": "Base tyre-ground friction coefficient"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mu"
+        ],
+        "title": "SceneMu"
+      },
+      "ScriptLoad": {
+        "properties": {
+          "yaml": {
+            "type": "string",
+            "title": "Yaml"
+          }
+        },
+        "type": "object",
+        "required": [
+          "yaml"
+        ],
+        "title": "ScriptLoad"
+      },
+      "SensitivityRequest": {
+        "properties": {
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params",
+            "default": null
+          },
+          "vary_param": {
+            "type": "string",
+            "title": "Vary Param"
+          },
+          "values": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Values"
+          },
+          "speed": {
+            "type": "number",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Speed",
+            "default": 8.0
+          },
+          "angles": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Angles",
+            "default": []
+          },
+          "wheel_index": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Wheel Index",
+            "default": 0
+          },
+          "mu": {
+            "type": "number",
+            "maximum": 2.0,
+            "exclusiveMinimum": 0.05,
+            "title": "Mu",
+            "default": 0.85
+          },
+          "body_coupling": {
+            "type": "string",
+            "pattern": "^(vehicle|isolated)$",
+            "title": "Body Coupling",
+            "default": "vehicle"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vary_param",
+          "values"
+        ],
+        "title": "SensitivityRequest"
+      },
+      "SessionConfig": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Label",
+            "default": "Agent session"
+          },
+          "experiment": {
+            "$ref": "#/components/schemas/Experiment"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "experiment"
+        ],
+        "title": "SessionConfig"
+      },
+      "SolveFor": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "target": {
+            "type": "number",
+            "title": "Target"
+          },
+          "tol": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Tol",
+            "default": 0.02
+          }
+        },
+        "type": "object",
+        "required": [
+          "metric",
+          "target"
+        ],
+        "title": "SolveFor",
+        "description": "A sweep axis whose values are solved for rather than listed.\n\nDeclared in the schema from day one so specs written now stay valid, but\nthe runner refuses it until the solver phase lands — see\ndocs/agent_interface_design.md §4 for why this is harder than a bisection\n(a_y is not monotone in steer angle past the friction peak)."
+      },
+      "SteerProfile": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "constant",
+              "step",
+              "ramp",
+              "sine",
+              "sweep",
+              "dlc"
+            ],
+            "title": "Kind",
+            "default": "constant"
+          },
+          "amplitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Amplitude",
+            "default": 0.0
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "normalized",
+              "front_deg"
+            ],
+            "title": "Unit",
+            "default": "normalized"
+          },
+          "freq_hz": {
+            "type": "number",
+            "maximum": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Freq Hz",
+            "default": 0.5
+          },
+          "f0_hz": {
+            "type": "number",
+            "maximum": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "F0 Hz",
+            "default": 0.1
+          },
+          "f1_hz": {
+            "type": "number",
+            "maximum": 10.0,
+            "exclusiveMinimum": 0.0,
+            "title": "F1 Hz",
+            "default": 2.0
+          },
+          "t_step": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "T Step",
+            "default": 0.5
+          },
+          "start": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Start",
+            "default": 0.0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SteerProfile",
+        "description": "Steering input as a function of time within one step.\n\n`unit` selects how `amplitude` is interpreted:\n  * \"normalized\" (default, legacy): [-1, 1], goes through the strategy's\n    steering-feel mapping (variable gear ratio, soft limit).\n  * \"front_deg\": front-wheel angle in degrees. The experiment applies this\n    directly to delta_cmd, bypassing the feel layer — so a regression\n    baseline survives future tuning of the driver-input mapping."
+      },
+      "SteeringGeometry": {
+        "properties": {
+          "front_outer_x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": -1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Outer X",
+            "default": null
+          },
+          "front_outer_y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": -1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Outer Y",
+            "default": null
+          },
+          "front_inner_x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": -1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Inner X",
+            "default": null
+          },
+          "front_inner_y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.0,
+                "minimum": -1.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Inner Y",
+            "default": null
+          },
+          "front_rack_axis_deg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Rack Axis Deg",
+            "default": null
+          },
+          "front_rack_travel_limit": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.5,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Rack Travel Limit",
+            "default": null
+          },
+          "rear_outer_x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": -1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Outer X",
+            "default": null
+          },
+          "rear_outer_y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": -1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Outer Y",
+            "default": null
+          },
+          "rear_inner_x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": -1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Inner X",
+            "default": null
+          },
+          "rear_inner_y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.0,
+                "minimum": -1.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Inner Y",
+            "default": null
+          },
+          "rear_rack_axis_deg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Rack Axis Deg",
+            "default": null
+          },
+          "rear_rack_travel_limit": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.5,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rear Rack Travel Limit",
+            "default": null
+          }
+        },
+        "type": "object",
+        "title": "SteeringGeometry"
+      },
+      "StepRequest": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_.:-]+$",
+            "title": "Request Id"
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Expected Revision"
+          },
+          "steps": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Steps"
+          },
+          "control": {
+            "$ref": "#/components/schemas/Control"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "expected_revision",
+          "steps",
+          "control"
+        ],
+        "title": "StepRequest"
+      },
+      "StrategySelect": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "One of /api/strategies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "StrategySelect"
+      },
+      "StudySpec": {
+        "properties": {
+          "study": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-]+$",
+            "title": "Study"
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Question"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "baseline": {
+            "$ref": "#/components/schemas/Experiment"
+          },
+          "sweep": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SweepAxis"
+            },
+            "type": "object",
+            "title": "Sweep",
+            "default": {}
+          },
+          "metrics": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/components/schemas/ExprMetric"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Metrics",
+            "default": []
+          },
+          "compare": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompareSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/Criterion"
+            },
+            "type": "array",
+            "title": "Criteria",
+            "default": []
+          },
+          "targets": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Targets",
+            "default": null
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object",
+        "required": [
+          "study",
+          "question",
+          "model",
+          "baseline"
+        ],
+        "title": "StudySpec",
+        "description": "The complete declaration of one study."
+      },
+      "Suspension": {
+        "properties": {
+          "caster_angle": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.5,
+                "minimum": -0.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caster Angle",
+            "default": null
+          },
+          "kingpin_inclination": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.5,
+                "minimum": -0.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kingpin Inclination",
+            "default": null
+          },
+          "camber": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.5,
+                "minimum": -0.5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camber",
+            "default": null
+          },
+          "scrub_radius": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 0.2,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scrub Radius",
+            "default": null
+          },
+          "spring_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spring Rate",
+            "default": null
+          },
+          "damper_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Damper Rate",
+            "default": null
+          },
+          "anti_roll_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anti Roll Rate",
+            "default": null
+          },
+          "kingpin_mu": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kingpin Mu",
+            "default": null
+          }
+        },
+        "type": "object",
+        "title": "Suspension"
+      },
+      "SweepAxis": {
+        "properties": {
+          "values": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Values",
+            "default": null
+          },
+          "bind": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Bind"
+          },
+          "solve_for": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SolveFor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "bracket": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bracket",
+            "default": null
+          },
+          "max_iter": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Max Iter",
+            "default": 12
+          },
+          "cache": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cache",
+            "default": null
+          }
+        },
+        "type": "object",
+        "required": [
+          "bind"
+        ],
+        "title": "SweepAxis",
+        "description": "One dimension of the grid.\n\n`bind` is the dotted path into the baseline Experiment's JSON form that\nthis axis writes, exactly as `experiment/batch.py` expects."
+      },
+      "TemplateBody": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "params": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Params",
+            "default": {}
+          },
+          "anchor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anchor",
+            "description": "Named scenario anchor to place the course on",
+            "default": null
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "TemplateBody"
+      },
+      "TireCurveRequest": {
+        "properties": {
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params",
+            "default": null
+          },
+          "fz": {
+            "type": "number",
+            "maximum": 40000.0,
+            "exclusiveMinimum": 100.0,
+            "title": "Fz",
+            "default": 7000.0
+          },
+          "mu": {
+            "type": "number",
+            "maximum": 2.0,
+            "exclusiveMinimum": 0.05,
+            "title": "Mu",
+            "default": 0.85
+          },
+          "alpha_max_deg": {
+            "type": "number",
+            "maximum": 40.0,
+            "exclusiveMinimum": 1.0,
+            "title": "Alpha Max Deg",
+            "default": 15.0
+          },
+          "points": {
+            "type": "integer",
+            "maximum": 241.0,
+            "minimum": 11.0,
+            "title": "Points",
+            "default": 81
+          }
+        },
+        "type": "object",
+        "title": "TireCurveRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WaypointsBody": {
+        "properties": {
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Points",
+            "description": "World-frame [[x,y],...]"
+          },
+          "closed": {
+            "type": "boolean",
+            "title": "Closed",
+            "default": false
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "custom"
+          }
+        },
+        "type": "object",
+        "required": [
+          "points"
+        ],
+        "title": "WaypointsBody"
+      }
+    }
+  }
+}

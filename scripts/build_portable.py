@@ -384,7 +384,7 @@ def install_native_wheel(pkg: Path, target: str, wheel: Path) -> None:
     with zipfile.ZipFile(wheel) as z:
         metadata = next(n for n in z.namelist() if n.endswith(".dist-info/METADATA"))
         tags = next(n for n in z.namelist() if n.endswith(".dist-info/WHEEL"))
-        if f"Version: {VERSION}\n" not in z.read(metadata).decode():
+        if f"Version: {VERSION}" not in z.read(metadata).decode().splitlines():
             raise ValueError("native wheel version does not match checkout")
         lines = z.read(tags).decode().splitlines()
         prefix = "Tag: cp312-cp312-"

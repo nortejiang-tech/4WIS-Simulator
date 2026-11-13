@@ -969,6 +969,9 @@ function worstBeatAutocorrelation(deltas: number[], minPeriodMs: number, maxPeri
 }
 
 test("the 3D roof view animates with no periodic stutter while the car moves", async ({ page, request }, testInfo) => {
+  // Fix raster work across hosts. This checks animation cadence; it is not a
+  // target-GPU throughput benchmark. GitHub Windows uses software rendering.
+  await page.setViewportSize({ width: 960, height: 540 });
   await request.post("/api/script/stop");
 
   // Capture rAF timestamps from before the app boots, so nothing escapes.
@@ -1024,6 +1027,9 @@ test("the 3D roof view animates with no periodic stutter while the car moves", a
   // No periodic component in the 40–300 ms band — the old 66.7 Hz state
   // stream vs 60 Hz display beat (period ~150 ms) lived exactly there.
   const worst = worstBeatAutocorrelation(deltas, 40, 300);
+  await testInfo.attach("render-cadence.json", { body: JSON.stringify({
+    viewport: { width: 960, height: 540 }, samples: deltas.length, medianMs: median, worstAutocorrelation: worst,
+  }, null, 2), contentType: "application/json" });
   expect(worst, `frame intervals carry a periodic beat (worst |ac| = ${worst.toFixed(3)})`).toBeLessThan(0.35);
 
   await request.post("/api/script/stop");

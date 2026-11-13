@@ -1,0 +1,444 @@
+[
+  {
+    "name": "describe_capabilities",
+    "description": "Models × capability notes, metric registry, strategies, steer kinds, target sets, channels — everything needed to write a valid spec. The agent's first stop.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "run_study",
+    "description": "Submit a StudySpec (JSON object). dry_run=true only validates and estimates. A real run blocks until done and returns the result summary plus report_path.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "spec": {
+          "type": "object",
+          "description": "StudySpec as JSON, same schema as POST /api/study/run"
+        },
+        "dry_run": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "spec"
+      ]
+    }
+  },
+  {
+    "name": "get_study",
+    "description": "Fetch a stored study by id (result summary, provenance, verdicts).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "study_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "study_id"
+      ]
+    }
+  },
+  {
+    "name": "list_studies",
+    "description": "List stored studies.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "list_runs",
+    "description": "List run metadata, newest first — includes runs made from the GUI.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "get_trace",
+    "description": "Downsampled channels for one run. channels is required (comma-separated); max_points caps the sample count.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "type": "string"
+        },
+        "channels": {
+          "type": "string",
+          "description": "comma-separated channel names"
+        },
+        "max_points": {
+          "type": "integer",
+          "default": 200
+        }
+      },
+      "required": [
+        "run_id",
+        "channels"
+      ]
+    }
+  },
+  {
+    "name": "read_report",
+    "description": "Return the local report path for a study (and whether the backend serves it). The agent reads the file itself.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "study_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "study_id"
+      ]
+    }
+  },
+  {
+    "name": "verify_golden",
+    "description": "Run the golden regression gate (scripts/check_golden_experiments.py) and report exit code + output tail.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "create_session",
+    "description": "Create an isolated fixed-step Agent session. Human GUI inputs cannot alter it. experiment requires name and explicit model_type/strategy; omit maneuver steps. Use describe_capabilities for the full schema.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "experiment": {
+          "type": "object"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120
+        }
+      },
+      "required": [
+        "experiment"
+      ]
+    }
+  },
+  {
+    "name": "set_fault_schedule",
+    "description": "Atomically replace an isolated session's multi-point fault timeline. Simulation seconds, [t_start,t_end); equal starts trigger simultaneously, unequal starts sequentially. New starts must be >= observed state.t. Use expected_revision and retry the SAME request_id/body. [] clears faults. Physical jam/free-caster require dynamics and independent corners. Sensor faults affect observation only. Full semantics/schema in describe_capabilities.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "faults": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "fault_type",
+              "wheel"
+            ],
+            "properties": {
+              "fault_type": {
+                "type": "string",
+                "enum": [
+                  "stuck_zero",
+                  "stuck_value",
+                  "limited",
+                  "stuck_hold",
+                  "free_caster",
+                  "sensor_bias",
+                  "sensor_noise",
+                  "sensor_dropout"
+                ]
+              },
+              "wheel": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3
+              },
+              "id": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": "number"
+              },
+              "t_start": {
+                "type": "number",
+                "minimum": 0
+              },
+              "t_end": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "eta_rev": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "j_steer": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "c_damp": {
+                "type": "number",
+                "minimum": 0
+              },
+              "tau_coulomb": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        }
+      },
+      "required": [
+        "session_id",
+        "request_id",
+        "expected_revision",
+        "faults"
+      ]
+    }
+  },
+  {
+    "name": "list_sessions",
+    "description": "List live Agent sessions, revisions, status and sample counts.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "observe_session",
+    "description": "Read current state without advancing simulation time.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "session_id"
+      ]
+    }
+  },
+  {
+    "name": "step_session",
+    "description": "Apply complete controls for 1..1000 fixed steps. Use the last revision. Retry uncertain responses with the SAME request_id and body; different bodies with the same id are refused. Physical units: rad, m/s, FL/FR/RL/RR.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_id": {
+          "type": "string",
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "control": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "throttle": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "brake": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "steering": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "gear": {
+              "type": "integer",
+              "enum": [
+                -1,
+                0,
+                1
+              ]
+            },
+            "handbrake": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            },
+            "speed_target_ms": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 60
+            },
+            "front_angle_rad": {
+              "type": "number",
+              "minimum": -1.5,
+              "maximum": 1.5
+            },
+            "wheel_norm": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              }
+            },
+            "body_fraction": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "session_id",
+        "request_id",
+        "expected_revision",
+        "steps",
+        "control"
+      ]
+    }
+  },
+  {
+    "name": "export_session",
+    "description": "Persist all accepted samples into a run; return full CSV/JSON/ZIP and SVG chart/trajectory URLs, schema and checksum. Repeated export of the same revision returns the same run.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "session_id"
+      ]
+    }
+  },
+  {
+    "name": "close_session",
+    "description": "Release in-memory session resources. Export first if the trace must be retained.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "session_id"
+      ]
+    }
+  },
+  {
+    "name": "get_run_artifacts",
+    "description": "Discover complete data and graphical artifacts for any run, including human recordings and batch/study runs. Data remain outside the model context unless explicitly fetched.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "run_id"
+      ]
+    }
+  },
+  {
+    "name": "start_study",
+    "description": "Submit a StudySpec and immediately return job_id. Use run_study with dry_run=true first; poll get_study_job until done/error. Does not block for completion.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "spec": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "spec"
+      ]
+    }
+  },
+  {
+    "name": "get_study_job",
+    "description": "Poll an asynchronous study job for progress, explicit failure and results.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "job_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "job_id"
+      ]
+    }
+  }
+]

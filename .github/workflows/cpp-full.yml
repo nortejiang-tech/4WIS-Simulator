@@ -1,0 +1,79 @@
+name: Full C++ backend verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/cpp-full-backend]
+permissions:
+  contents: read
+jobs:
+  windows-cpp:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      PYTHONUTF8: "1"
+      SIM4WIS_ENGINE: python
+      PW_E2E_PORT: "18072"
+      CPP_SERVER: "${{ github.workspace }}/cpp_backend/build/Release/sim4wis-cpp.exe"
+      CPP_PROBE: "${{ github.workspace }}/cpp_backend/build/Release/sim4wis-cpp-probe.exe"
+      PW_CPP_EXECUTABLE: "${{ github.workspace }}/cpp_backend/build/Release/sim4wis-cpp.exe"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build standalone C++ binaries
+        run: |
+          cmake -S cpp_backend -B cpp_backend/build -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build cpp_backend/build --config Release --parallel 4
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install -e "./backend[dev]"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "SIM4WIS_PLUGIN_PYTHON=$((Get-Command python).Source)" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Build production frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run type-check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run test -- --run
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Differential physics and API acceptance
+        run: |
+          python -m pytest cpp_backend/tests -n 4 -q --junitxml=cpp-windows-tests.xml
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $env:CPP_SERVER --root . --self-test | Out-File -Encoding utf8 cpp-windows-golden.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Full browser workflows against C++
+        working-directory: frontend
+        run: |
+          npx playwright install chromium
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npx playwright test --reporter=list
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Assemble and test extracted package
+        if: ${{ !cancelled() }}
+        run: |
+          python cpp_backend/tools/package.py --target windows-x64 --binary "$env:CPP_SERVER"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python cpp_backend/tools/check_package.py dist_cpp/4WIS_CPP_v0.107.0_windows-x64.zip --output docs/reports/cpp_v0.107.0/package-windows.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-full-cpp-preview
+          retention-days: 30
+          path: |
+            dist_cpp/*.zip
+            cpp-windows-tests.xml
+            cpp-windows-golden.json
+            docs/reports/cpp_v0.107.0/package-windows.json
+            frontend/test-results/

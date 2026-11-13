@@ -58,3 +58,16 @@ studies/
 
 # Manual intermediate screenshots (regenerable; embedded base64 in user_manual.html)
 docs/manual_figs/
+
+# Independent C++ backend build products
+cpp_backend/build*/
+
+dist_cpp/
+
+# Expanded source dependencies are represented by the verified source bundle.
+cpp_backend/third_party/json/
+cpp_backend/third_party/eigen/
+cpp_backend/third_party/yaml-cpp/
+cpp_backend/third_party/civetweb/
+cpp_backend/third_party/numpy-random/
+frontend/node_modules

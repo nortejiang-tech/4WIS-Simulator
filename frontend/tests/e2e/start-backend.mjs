@@ -8,8 +8,11 @@ mkdirSync(`${root}/experiments`, { recursive: true });
 mkdirSync(`${root}/runs`, { recursive: true });
 const python = process.env.PW_PYTHON_EXECUTABLE ??
   (process.platform === "win32" ? "../backend/.venv/Scripts/python.exe" : "../backend/.venv/bin/python");
-const child = spawn(python, ["-m", "uvicorn", "sim4wis.main:app", "--host", "127.0.0.1",
-  "--port", process.env.PW_E2E_PORT ?? "8010"], {
+const executable = process.env.PW_CPP_EXECUTABLE ?? python;
+const args = process.env.PW_CPP_EXECUTABLE
+  ? ["--serve", "--root", "..", "--port", process.env.PW_E2E_PORT ?? "8010"]
+  : ["-m", "uvicorn", "sim4wis.main:app", "--host", "127.0.0.1", "--port", process.env.PW_E2E_PORT ?? "8010"];
+const child = spawn(executable, args, {
   stdio: "inherit",
   env: { ...process.env, SIM4WIS_EXPERIMENTS_DIR: `${root}/experiments`, SIM4WIS_RUNS_DIR: `${root}/runs` },
 });

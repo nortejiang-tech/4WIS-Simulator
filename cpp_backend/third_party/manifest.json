@@ -1,0 +1,26 @@
+[
+  {
+    "name": "json",
+    "repository": "https://github.com/nlohmann/json",
+    "tag": "v3.12.0",
+    "archive_sha256": "4b92eb0c06d10683f7447ce9406cb97cd4b453be18d7279320f7b2f025c10187"
+  },
+  {
+    "name": "civetweb",
+    "repository": "https://github.com/civetweb/civetweb",
+    "tag": "v1.16",
+    "archive_sha256": "f0e471c1bf4e7804a6cfb41ea9d13e7d623b2bcc7bc1e2a4dd54951a24d60285"
+  },
+  {
+    "name": "yaml-cpp",
+    "repository": "https://github.com/jbeder/yaml-cpp",
+    "tag": "0.8.0",
+    "archive_sha256": "fbe74bbdcee21d656715688706da3c8becfd946d92cd44705cc6098bb23b3a16"
+  },
+  {
+    "name": "eigen",
+    "repository": "https://gitlab.com/libeigen/eigen",
+    "tag": "3.4.0",
+    "archive_sha256": "8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72"
+  }
+]

@@ -1,0 +1,3017 @@
+{
+  "agent_capabilities": {
+    "contract": "4wis.agent.v1",
+    "execution": "isolated fixed-step; GUI input never changes an Agent session",
+    "engine": {
+      "requested": "auto",
+      "native_available": false,
+      "numerical_core": "python",
+      "abi": null,
+      "native_source_sha256": null,
+      "integration": "RK4 body + nonlinear backward-Euler wheel spin; partitioned"
+    },
+    "models": [
+      "kinematic",
+      "simplified_dynamic",
+      "multibody"
+    ],
+    "strategies": [
+      "ackermann",
+      "crab",
+      "fault_reconfig",
+      "follow_trajectory",
+      "ideal_ackermann",
+      "manual_body",
+      "manual_wheel",
+      "rear_wheel_steer",
+      "zero_radius"
+    ],
+    "limits": {
+      "max_steps_per_request": 1000,
+      "max_steps_per_session": 20000,
+      "max_internal_dynamics_dt_s": 0.00125,
+      "max_sessions": 4,
+      "idle_ttl_s": 3600,
+      "max_preview_points": 1000
+    },
+    "units": {
+      "time": "s",
+      "length": "m",
+      "angle": "rad",
+      "speed": "m/s",
+      "wheel_order": [
+        "FL",
+        "FR",
+        "RL",
+        "RR"
+      ]
+    },
+    "schemas": {
+      "create": {
+        "$defs": {
+          "Experiment": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "maxLength": 64,
+                "minLength": 1,
+                "title": "Name",
+                "type": "string"
+              },
+              "description": {
+                "default": "",
+                "title": "Description",
+                "type": "string"
+              },
+              "vehicle": {
+                "$ref": "#/$defs/ExperimentVehicle"
+              },
+              "model_type": {
+                "default": "simplified_dynamic",
+                "title": "Model Type",
+                "type": "string"
+              },
+              "strategy": {
+                "default": "ideal_ackermann",
+                "title": "Strategy",
+                "type": "string"
+              },
+              "mode_params": {
+                "additionalProperties": true,
+                "title": "Mode Params",
+                "type": "object"
+              },
+              "scene": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scene"
+              },
+              "path": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PathSpec"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "faults": {
+                "items": {
+                  "$ref": "#/$defs/FaultSpec"
+                },
+                "maxItems": 64,
+                "title": "Faults",
+                "type": "array"
+              },
+              "fault_seed": {
+                "default": 0,
+                "maximum": 4294967295,
+                "minimum": 0,
+                "title": "Fault Seed",
+                "type": "integer"
+              },
+              "maneuver": {
+                "$ref": "#/$defs/Maneuver"
+              },
+              "dt": {
+                "default": 0.005,
+                "exclusiveMinimum": 0.0005,
+                "maximum": 0.05,
+                "title": "Dt",
+                "type": "number"
+              },
+              "record_hz": {
+                "default": 50.0,
+                "exclusiveMinimum": 1.0,
+                "maximum": 200.0,
+                "title": "Record Hz",
+                "type": "number"
+              },
+              "kpis": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Kpis",
+                "type": "array"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "title": "Experiment",
+            "type": "object"
+          },
+          "ExperimentVehicle": {
+            "additionalProperties": false,
+            "properties": {
+              "profile": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Profile"
+              },
+              "overrides": {
+                "additionalProperties": true,
+                "title": "Overrides",
+                "type": "object"
+              }
+            },
+            "title": "ExperimentVehicle",
+            "type": "object"
+          },
+          "FaultSpec": {
+            "additionalProperties": false,
+            "description": "Target faults retain actuator dynamics; jam/free act on the mechanism.\n\nstuck_hold locks the actuator coordinate; alignment/K&C still apply.\nSensor faults affect observations only, not controller feedback.",
+            "properties": {
+              "fault_type": {
+                "enum": [
+                  "stuck_zero",
+                  "stuck_hold",
+                  "stuck_value",
+                  "limited",
+                  "free_caster",
+                  "sensor_bias",
+                  "sensor_noise",
+                  "sensor_dropout"
+                ],
+                "title": "Fault Type",
+                "type": "string"
+              },
+              "wheel": {
+                "maximum": 3,
+                "minimum": 0,
+                "title": "Wheel",
+                "type": "integer"
+              },
+              "value": {
+                "default": 0.0,
+                "title": "Value",
+                "type": "number"
+              },
+              "t_start": {
+                "default": 0.0,
+                "minimum": 0.0,
+                "title": "T Start",
+                "type": "number"
+              },
+              "t_end": {
+                "anyOf": [
+                  {
+                    "minimum": 0.0,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "T End"
+              },
+              "active": {
+                "default": true,
+                "title": "Active",
+                "type": "boolean"
+              },
+              "id": {
+                "anyOf": [
+                  {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9_.:-]+$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Id"
+              },
+              "eta_rev": {
+                "default": 0.6,
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Eta Rev",
+                "type": "number"
+              },
+              "j_steer": {
+                "default": 3.0,
+                "exclusiveMinimum": 0.0,
+                "title": "J Steer",
+                "type": "number"
+              },
+              "c_damp": {
+                "default": 80.0,
+                "minimum": 0.0,
+                "title": "C Damp",
+                "type": "number"
+              },
+              "tau_coulomb": {
+                "default": 5.0,
+                "minimum": 0.0,
+                "title": "Tau Coulomb",
+                "type": "number"
+              }
+            },
+            "required": [
+              "fault_type",
+              "wheel"
+            ],
+            "title": "FaultSpec",
+            "type": "object"
+          },
+          "Maneuver": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "default": "untitled",
+                "title": "Name",
+                "type": "string"
+              },
+              "steps": {
+                "items": {
+                  "$ref": "#/$defs/ManeuverStep"
+                },
+                "title": "Steps",
+                "type": "array"
+              }
+            },
+            "title": "Maneuver",
+            "type": "object"
+          },
+          "ManeuverStep": {
+            "additionalProperties": false,
+            "description": "One segment of a maneuver, ending after `duration` sim-seconds.",
+            "properties": {
+              "name": {
+                "default": "",
+                "title": "Name",
+                "type": "string"
+              },
+              "duration": {
+                "exclusiveMinimum": 0.0,
+                "maximum": 600.0,
+                "title": "Duration",
+                "type": "number"
+              },
+              "steer": {
+                "$ref": "#/$defs/SteerProfile"
+              },
+              "speed_kmh": {
+                "anyOf": [
+                  {
+                    "minimum": 0.0,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Speed Kmh"
+              },
+              "speed_ramp_s": {
+                "default": 0.0,
+                "maximum": 60.0,
+                "minimum": 0.0,
+                "title": "Speed Ramp S",
+                "type": "number"
+              },
+              "mode_params": {
+                "additionalProperties": true,
+                "title": "Mode Params",
+                "type": "object"
+              }
+            },
+            "required": [
+              "duration"
+            ],
+            "title": "ManeuverStep",
+            "type": "object"
+          },
+          "PathSpec": {
+            "additionalProperties": false,
+            "description": "Reference path for follow_trajectory: template or explicit waypoints.",
+            "properties": {
+              "template": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Template"
+              },
+              "params": {
+                "additionalProperties": true,
+                "title": "Params",
+                "type": "object"
+              },
+              "waypoints": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "items": {
+                        "type": "number"
+                      },
+                      "type": "array"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Waypoints"
+              },
+              "closed": {
+                "default": false,
+                "title": "Closed",
+                "type": "boolean"
+              }
+            },
+            "title": "PathSpec",
+            "type": "object"
+          },
+          "SteerProfile": {
+            "additionalProperties": false,
+            "description": "Steering input as a function of time within one step.\n\n`unit` selects how `amplitude` is interpreted:\n  * \"normalized\" (default, legacy): [-1, 1], goes through the strategy's\n    steering-feel mapping (variable gear ratio, soft limit).\n  * \"front_deg\": front-wheel angle in degrees. The experiment applies this\n    directly to delta_cmd, bypassing the feel layer — so a regression\n    baseline survives future tuning of the driver-input mapping.",
+            "properties": {
+              "kind": {
+                "default": "constant",
+                "enum": [
+                  "constant",
+                  "step",
+                  "ramp",
+                  "sine",
+                  "sweep",
+                  "dlc"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "amplitude": {
+                "default": 0.0,
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "title": "Amplitude",
+                "type": "number"
+              },
+              "unit": {
+                "default": "normalized",
+                "enum": [
+                  "normalized",
+                  "front_deg"
+                ],
+                "title": "Unit",
+                "type": "string"
+              },
+              "freq_hz": {
+                "default": 0.5,
+                "exclusiveMinimum": 0.0,
+                "maximum": 10.0,
+                "title": "Freq Hz",
+                "type": "number"
+              },
+              "f0_hz": {
+                "default": 0.1,
+                "exclusiveMinimum": 0.0,
+                "maximum": 10.0,
+                "title": "F0 Hz",
+                "type": "number"
+              },
+              "f1_hz": {
+                "default": 2.0,
+                "exclusiveMinimum": 0.0,
+                "maximum": 10.0,
+                "title": "F1 Hz",
+                "type": "number"
+              },
+              "t_step": {
+                "default": 0.5,
+                "minimum": 0.0,
+                "title": "T Step",
+                "type": "number"
+              },
+              "start": {
+                "default": 0.0,
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "title": "Start",
+                "type": "number"
+              }
+            },
+            "title": "SteerProfile",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "default": "Agent session",
+            "maxLength": 120,
+            "title": "Label",
+            "type": "string"
+          },
+          "experiment": {
+            "$ref": "#/$defs/Experiment"
+          }
+        },
+        "required": [
+          "experiment"
+        ],
+        "title": "SessionConfig",
+        "type": "object"
+      },
+      "step": {
+        "$defs": {
+          "Control": {
+            "additionalProperties": false,
+            "properties": {
+              "throttle": {
+                "default": 0,
+                "maximum": 1,
+                "minimum": 0,
+                "title": "Throttle",
+                "type": "number"
+              },
+              "brake": {
+                "default": 0,
+                "maximum": 1,
+                "minimum": 0,
+                "title": "Brake",
+                "type": "number"
+              },
+              "steering": {
+                "default": 0,
+                "maximum": 1,
+                "minimum": -1,
+                "title": "Steering",
+                "type": "number"
+              },
+              "gear": {
+                "default": 1,
+                "enum": [
+                  -1,
+                  0,
+                  1
+                ],
+                "title": "Gear",
+                "type": "integer"
+              },
+              "handbrake": {
+                "default": 0,
+                "enum": [
+                  0,
+                  1
+                ],
+                "title": "Handbrake",
+                "type": "integer"
+              },
+              "speed_target_ms": {
+                "anyOf": [
+                  {
+                    "maximum": 60,
+                    "minimum": -60,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Speed Target Ms"
+              },
+              "front_angle_rad": {
+                "anyOf": [
+                  {
+                    "maximum": 1.5,
+                    "minimum": -1.5,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Front Angle Rad"
+              },
+              "wheel_norm": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Wheel Norm"
+              },
+              "body_fraction": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "maxItems": 3,
+                    "minItems": 3,
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Body Fraction"
+              }
+            },
+            "title": "Control",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_.:-]+$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "steps": {
+            "maximum": 1000,
+            "minimum": 1,
+            "title": "Steps",
+            "type": "integer"
+          },
+          "control": {
+            "$ref": "#/$defs/Control"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_revision",
+          "steps",
+          "control"
+        ],
+        "title": "StepRequest",
+        "type": "object"
+      },
+      "fault_schedule": {
+        "$defs": {
+          "FaultSpec": {
+            "additionalProperties": false,
+            "description": "Target faults retain actuator dynamics; jam/free act on the mechanism.\n\nstuck_hold locks the actuator coordinate; alignment/K&C still apply.\nSensor faults affect observations only, not controller feedback.",
+            "properties": {
+              "fault_type": {
+                "enum": [
+                  "stuck_zero",
+                  "stuck_hold",
+                  "stuck_value",
+                  "limited",
+                  "free_caster",
+                  "sensor_bias",
+                  "sensor_noise",
+                  "sensor_dropout"
+                ],
+                "title": "Fault Type",
+                "type": "string"
+              },
+              "wheel": {
+                "maximum": 3,
+                "minimum": 0,
+                "title": "Wheel",
+                "type": "integer"
+              },
+              "value": {
+                "default": 0.0,
+                "title": "Value",
+                "type": "number"
+              },
+              "t_start": {
+                "default": 0.0,
+                "minimum": 0.0,
+                "title": "T Start",
+                "type": "number"
+              },
+              "t_end": {
+                "anyOf": [
+                  {
+                    "minimum": 0.0,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "T End"
+              },
+              "active": {
+                "default": true,
+                "title": "Active",
+                "type": "boolean"
+              },
+              "id": {
+                "anyOf": [
+                  {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9_.:-]+$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Id"
+              },
+              "eta_rev": {
+                "default": 0.6,
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Eta Rev",
+                "type": "number"
+              },
+              "j_steer": {
+                "default": 3.0,
+                "exclusiveMinimum": 0.0,
+                "title": "J Steer",
+                "type": "number"
+              },
+              "c_damp": {
+                "default": 80.0,
+                "minimum": 0.0,
+                "title": "C Damp",
+                "type": "number"
+              },
+              "tau_coulomb": {
+                "default": 5.0,
+                "minimum": 0.0,
+                "title": "Tau Coulomb",
+                "type": "number"
+              }
+            },
+            "required": [
+              "fault_type",
+              "wheel"
+            ],
+            "title": "FaultSpec",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "faults": {
+            "items": {
+              "$ref": "#/$defs/FaultSpec"
+            },
+            "maxItems": 64,
+            "title": "Faults",
+            "type": "array"
+          },
+          "seed": {
+            "default": 0,
+            "maximum": 4294967295,
+            "minimum": 0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "request_id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_.:-]+$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0,
+            "title": "Expected Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_revision"
+        ],
+        "title": "FaultScheduleRequest",
+        "type": "object"
+      }
+    },
+    "faults": {
+      "timing": "simulation seconds; [t_start,t_end); integration splits at event boundaries",
+      "composition": "multiple wheels; one actuator fault per wheel/time; bias+noise, dropout holds",
+      "physical_models": [
+        "simplified_dynamic",
+        "multibody"
+      ],
+      "sensor_scope": "observation only; controller feedback is unchanged",
+      "steering_scope": "independent corners; coupled-rack actuator faults are refused"
+    },
+    "telemetry_channels": [
+      {
+        "name": "pose_x",
+        "unit": "m"
+      },
+      {
+        "name": "pose_y",
+        "unit": "m"
+      },
+      {
+        "name": "pose_psi",
+        "unit": "rad"
+      },
+      {
+        "name": "vx",
+        "unit": "m/s"
+      },
+      {
+        "name": "vy",
+        "unit": "m/s"
+      },
+      {
+        "name": "yaw_rate",
+        "unit": "rad/s"
+      },
+      {
+        "name": "ax",
+        "unit": "m/s^2"
+      },
+      {
+        "name": "ay",
+        "unit": "m/s^2"
+      },
+      {
+        "name": "pose_z",
+        "unit": "m"
+      },
+      {
+        "name": "roll",
+        "unit": "rad"
+      },
+      {
+        "name": "pitch",
+        "unit": "rad"
+      },
+      {
+        "name": "grip_valid",
+        "unit": "1"
+      },
+      {
+        "name": "driver_throttle",
+        "unit": "1"
+      },
+      {
+        "name": "driver_brake",
+        "unit": "1"
+      },
+      {
+        "name": "driver_steering",
+        "unit": "1"
+      },
+      {
+        "name": "driver_gear",
+        "unit": "1"
+      },
+      {
+        "name": "driver_handbrake",
+        "unit": "1"
+      },
+      {
+        "name": "delta_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "deltacmd_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "delta_cmd_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "omega_fl",
+        "unit": "rad/s"
+      },
+      {
+        "name": "fz_fl",
+        "unit": "N"
+      },
+      {
+        "name": "torque_steer_fl",
+        "unit": "N*m"
+      },
+      {
+        "name": "icr_dev_fl",
+        "unit": "m"
+      },
+      {
+        "name": "delta_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "deltacmd_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "delta_cmd_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "omega_fr",
+        "unit": "rad/s"
+      },
+      {
+        "name": "fz_fr",
+        "unit": "N"
+      },
+      {
+        "name": "torque_steer_fr",
+        "unit": "N*m"
+      },
+      {
+        "name": "icr_dev_fr",
+        "unit": "m"
+      },
+      {
+        "name": "delta_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "deltacmd_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "delta_cmd_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "omega_rl",
+        "unit": "rad/s"
+      },
+      {
+        "name": "fz_rl",
+        "unit": "N"
+      },
+      {
+        "name": "torque_steer_rl",
+        "unit": "N*m"
+      },
+      {
+        "name": "icr_dev_rl",
+        "unit": "m"
+      },
+      {
+        "name": "delta_rr",
+        "unit": "rad"
+      },
+      {
+        "name": "deltacmd_rr",
+        "unit": "rad"
+      },
+      {
+        "name": "delta_cmd_rr",
+        "unit": "rad"
+      },
+      {
+        "name": "omega_rr",
+        "unit": "rad/s"
+      },
+      {
+        "name": "fz_rr",
+        "unit": "N"
+      },
+      {
+        "name": "torque_steer_rr",
+        "unit": "N*m"
+      },
+      {
+        "name": "icr_dev_rr",
+        "unit": "m"
+      },
+      {
+        "name": "icr_x_fl",
+        "unit": "m"
+      },
+      {
+        "name": "icr_y_fl",
+        "unit": "m"
+      },
+      {
+        "name": "icr_x_fr",
+        "unit": "m"
+      },
+      {
+        "name": "icr_y_fr",
+        "unit": "m"
+      },
+      {
+        "name": "icr_x_rl",
+        "unit": "m"
+      },
+      {
+        "name": "icr_y_rl",
+        "unit": "m"
+      },
+      {
+        "name": "icr_x_rr",
+        "unit": "m"
+      },
+      {
+        "name": "icr_y_rr",
+        "unit": "m"
+      },
+      {
+        "name": "icr_vehicle_body_x",
+        "unit": "m"
+      },
+      {
+        "name": "icr_vehicle_body_y",
+        "unit": "m"
+      },
+      {
+        "name": "icr_target_body_x",
+        "unit": "m"
+      },
+      {
+        "name": "icr_target_body_y",
+        "unit": "m"
+      },
+      {
+        "name": "rack_force_fl",
+        "unit": "N"
+      },
+      {
+        "name": "motor_torque_fl",
+        "unit": "N*m"
+      },
+      {
+        "name": "rack_force_fr",
+        "unit": "N"
+      },
+      {
+        "name": "motor_torque_fr",
+        "unit": "N*m"
+      },
+      {
+        "name": "rack_force_rl",
+        "unit": "N"
+      },
+      {
+        "name": "motor_torque_rl",
+        "unit": "N*m"
+      },
+      {
+        "name": "rack_force_rr",
+        "unit": "N"
+      },
+      {
+        "name": "motor_torque_rr",
+        "unit": "N*m"
+      },
+      {
+        "name": "mu_avg",
+        "unit": "1"
+      },
+      {
+        "name": "delta_reported_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "fault_mode_fl",
+        "unit": "1"
+      },
+      {
+        "name": "sensor_fault_active_fl",
+        "unit": "1"
+      },
+      {
+        "name": "steer_rate_fl",
+        "unit": "rad/s"
+      },
+      {
+        "name": "susp_defl_fl",
+        "unit": "m"
+      },
+      {
+        "name": "wheel_locked_fl",
+        "unit": "1"
+      },
+      {
+        "name": "grip_capacity_fl",
+        "unit": "N"
+      },
+      {
+        "name": "grip_util_fl",
+        "unit": "1"
+      },
+      {
+        "name": "grip_margin_lat_fl",
+        "unit": "N"
+      },
+      {
+        "name": "grip_margin_long_fl",
+        "unit": "N"
+      },
+      {
+        "name": "grip_alpha_peak_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "grip_kappa_peak_fl",
+        "unit": "1"
+      },
+      {
+        "name": "grip_beyond_peak_lat_fl",
+        "unit": "1"
+      },
+      {
+        "name": "grip_beyond_peak_long_fl",
+        "unit": "1"
+      },
+      {
+        "name": "linkage_arm_tie_angle_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "linkage_tie_rack_angle_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "linkage_efficiency_fl",
+        "unit": "1"
+      },
+      {
+        "name": "drive_torque_cmd_fl",
+        "unit": "N*m"
+      },
+      {
+        "name": "brake_cmd_fl",
+        "unit": "1"
+      },
+      {
+        "name": "wheel_speed_cmd_fl",
+        "unit": "rad/s"
+      },
+      {
+        "name": "delta_reported_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "fault_mode_fr",
+        "unit": "1"
+      },
+      {
+        "name": "sensor_fault_active_fr",
+        "unit": "1"
+      },
+      {
+        "name": "steer_rate_fr",
+        "unit": "rad/s"
+      },
+      {
+        "name": "susp_defl_fr",
+        "unit": "m"
+      },
+      {
+        "name": "wheel_locked_fr",
+        "unit": "1"
+      },
+      {
+        "name": "grip_capacity_fr",
+        "unit": "N"
+      },
+      {
+        "name": "grip_util_fr",
+        "unit": "1"
+      },
+      {
+        "name": "grip_margin_lat_fr",
+        "unit": "N"
+      },
+      {
+        "name": "grip_margin_long_fr",
+        "unit": "N"
+      },
+      {
+        "name": "grip_alpha_peak_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "grip_kappa_peak_fr",
+        "unit": "1"
+      },
+      {
+        "name": "grip_beyond_peak_lat_fr",
+        "unit": "1"
+      },
+      {
+        "name": "grip_beyond_peak_long_fr",
+        "unit": "1"
+      },
+      {
+        "name": "linkage_arm_tie_angle_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "linkage_tie_rack_angle_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "linkage_efficiency_fr",
+        "unit": "1"
+      },
+      {
+        "name": "drive_torque_cmd_fr",
+        "unit": "N*m"
+      },
+      {
+        "name": "brake_cmd_fr",
+        "unit": "1"
+      },
+      {
+        "name": "wheel_speed_cmd_fr",
+        "unit": "rad/s"
+      },
+      {
+        "name": "delta_reported_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "fault_mode_rl",
+        "unit": "1"
+      },
+      {
+        "name": "sensor_fault_active_rl",
+        "unit": "1"
+      },
+      {
+        "name": "steer_rate_rl",
+        "unit": "rad/s"
+      },
+      {
+        "name": "susp_defl_rl",
+        "unit": "m"
+      },
+      {
+        "name": "wheel_locked_rl",
+        "unit": "1"
+      },
+      {
+        "name": "grip_capacity_rl",
+        "unit": "N"
+      },
+      {
+        "name": "grip_util_rl",
+        "unit": "1"
+      },
+      {
+        "name": "grip_margin_lat_rl",
+        "unit": "N"
+      },
+      {
+        "name": "grip_margin_long_rl",
+        "unit": "N"
+      },
+      {
+        "name": "grip_alpha_peak_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "grip_kappa_peak_rl",
+        "unit": "1"
+      },
+      {
+        "name": "grip_beyond_peak_lat_rl",
+        "unit": "1"
+      },
+      {
+        "name": "grip_beyond_peak_long_rl",
+        "unit": "1"
+      },
+      {
+        "name": "linkage_arm_tie_angle_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "linkage_tie_rack_angle_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "linkage_efficiency_rl",
+        "unit": "1"
+      },
+      {
+        "name": "drive_torque_cmd_rl",
+        "unit": "N*m"
+      },
+      {
+        "name": "brake_cmd_rl",
+        "unit": "1"
+      },
+      {
+        "name": "wheel_speed_cmd_rl",
+        "unit": "rad/s"
+      },
+      {
+        "name": "delta_reported_rr",
+        "unit": "rad"
+      },
+      {
+        "name": "fault_mode_rr",
+        "unit": "1"
+      },
+      {
+        "name": "sensor_fault_active_rr",
+        "unit": "1"
+      },
+      {
+        "name": "steer_rate_rr",
+        "unit": "rad/s"
+      },
+      {
+        "name": "susp_defl_rr",
+        "unit": "m"
+      },
+      {
+        "name": "wheel_locked_rr",
+        "unit": "1"
+      },
+      {
+        "name": "grip_capacity_rr",
+        "unit": "N"
+      },
+      {
+        "name": "grip_util_rr",
+        "unit": "1"
+      },
+      {
+        "name": "grip_margin_lat_rr",
+        "unit": "N"
+      },
+      {
+        "name": "grip_margin_long_rr",
+        "unit": "N"
+      },
+      {
+        "name": "grip_alpha_peak_rr",
+        "unit": "rad"
+      },
+      {
+        "name": "grip_kappa_peak_rr",
+        "unit": "1"
+      },
+      {
+        "name": "grip_beyond_peak_lat_rr",
+        "unit": "1"
+      },
+      {
+        "name": "grip_beyond_peak_long_rr",
+        "unit": "1"
+      },
+      {
+        "name": "linkage_arm_tie_angle_rr",
+        "unit": "rad"
+      },
+      {
+        "name": "linkage_tie_rack_angle_rr",
+        "unit": "rad"
+      },
+      {
+        "name": "linkage_efficiency_rr",
+        "unit": "1"
+      },
+      {
+        "name": "drive_torque_cmd_rr",
+        "unit": "N*m"
+      },
+      {
+        "name": "brake_cmd_rr",
+        "unit": "1"
+      },
+      {
+        "name": "wheel_speed_cmd_rr",
+        "unit": "rad/s"
+      },
+      {
+        "name": "slip_alpha_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "slip_alpha_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "slip_alpha_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "slip_alpha_rr",
+        "unit": "rad"
+      },
+      {
+        "name": "slip_kappa_fl",
+        "unit": "1"
+      },
+      {
+        "name": "slip_kappa_fr",
+        "unit": "1"
+      },
+      {
+        "name": "slip_kappa_rl",
+        "unit": "1"
+      },
+      {
+        "name": "slip_kappa_rr",
+        "unit": "1"
+      },
+      {
+        "name": "tire_fx_fl",
+        "unit": "N"
+      },
+      {
+        "name": "tire_fx_fr",
+        "unit": "N"
+      },
+      {
+        "name": "tire_fx_rl",
+        "unit": "N"
+      },
+      {
+        "name": "tire_fx_rr",
+        "unit": "N"
+      },
+      {
+        "name": "tire_fy_fl",
+        "unit": "N"
+      },
+      {
+        "name": "tire_fy_fr",
+        "unit": "N"
+      },
+      {
+        "name": "tire_fy_rl",
+        "unit": "N"
+      },
+      {
+        "name": "tire_fy_rr",
+        "unit": "N"
+      },
+      {
+        "name": "steer_hand_torque",
+        "unit": "N*m"
+      },
+      {
+        "name": "steer_hand_angle",
+        "unit": "rad"
+      },
+      {
+        "name": "steer_torque_sensor",
+        "unit": "N*m"
+      },
+      {
+        "name": "steer_assist_torque",
+        "unit": "N*m"
+      },
+      {
+        "name": "steer_motor_torque",
+        "unit": "N*m"
+      },
+      {
+        "name": "steer_motor_speed",
+        "unit": "rad/s"
+      },
+      {
+        "name": "steer_angle_deviation",
+        "unit": "rad"
+      },
+      {
+        "name": "steer_plant_active",
+        "unit": "1"
+      },
+      {
+        "name": "steer_corner_deviation_fl",
+        "unit": "rad"
+      },
+      {
+        "name": "steer_corner_deviation_fr",
+        "unit": "rad"
+      },
+      {
+        "name": "steer_corner_deviation_rl",
+        "unit": "rad"
+      },
+      {
+        "name": "steer_corner_deviation_rr",
+        "unit": "rad"
+      }
+    ],
+    "outputs": [
+      "state",
+      "preview",
+      "run_id",
+      "full_csv",
+      "full_json",
+      "bundle_zip",
+      "trajectory_svg",
+      "chart_svg"
+    ],
+    "workflow": [
+      "create_session",
+      "set_fault_schedule",
+      "observe_session",
+      "step_session",
+      "export_session",
+      "close_session"
+    ],
+    "notes": [
+      "Every step request supplies complete controls; omitted controls return to defaults.",
+      "Retry with the SAME request_id and identical body after an uncertain response.",
+      "expected_revision must match the last observed revision.",
+      "speed_target_ms and front_angle_rad bypass driver aids; pedal controls retain them.",
+      "Export records every accepted outer control step; preview is explicitly sampled.",
+      "Kinematic force/acceleration outputs are unsupported placeholders; inspect state.accel.valid.",
+      "Sessions are in memory; export before closing or server restart. Long jobs use study/batch."
+    ]
+  },
+  "study_capabilities": {
+    "engine": {
+      "requested": "auto",
+      "native_available": false,
+      "numerical_core": "python",
+      "abi": null,
+      "native_source_sha256": null,
+      "integration": "RK4 body + nonlinear backward-Euler wheel spin; partitioned"
+    },
+    "models": [
+      {
+        "id": "kinematic",
+        "label": "运动学",
+        "layer": "primary",
+        "description": "纯滚动几何模型，适合策略和 ICR 验证。"
+      },
+      {
+        "id": "simplified_dynamic",
+        "label": "动力学",
+        "layer": "primary",
+        "description": "3-DOF 整车 + 轮胎力 + 载荷转移，是工程分析主线模型。"
+      },
+      {
+        "id": "multibody",
+        "label": "多体 14DOF",
+        "layer": "research",
+        "description": "研究/回归用高阶模型，保留但不作为新功能默认适配目标。"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "icr_dev_peak_m",
+        "unit": "m",
+        "description": "峰值瞬心偏差（各轮取最大）",
+        "requires": "pose_kinematics",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "icr_dev_rms_m",
+        "unit": "m",
+        "description": "瞬心偏差 RMS",
+        "requires": "pose_kinematics",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "yaw_rate_peak_dps",
+        "unit": "°/s",
+        "description": "峰值横摆角速度",
+        "requires": "pose_kinematics",
+        "solvable": true,
+        "source": "builtin"
+      },
+      {
+        "name": "vy_peak_kmh",
+        "unit": "km/h",
+        "description": "峰值侧向速度",
+        "requires": "pose_kinematics",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "speed_error_rms_kmh",
+        "unit": "km/h",
+        "description": "车速跟踪 RMS 误差",
+        "requires": "pose_kinematics",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "yaw_gain_dps",
+        "unit": "°/s",
+        "description": "阶跃稳态横摆增益",
+        "requires": "pose_kinematics",
+        "solvable": true,
+        "source": "builtin"
+      },
+      {
+        "name": "yaw_rise_time_s",
+        "unit": "s",
+        "description": "横摆 10→90% 上升时间",
+        "requires": "pose_kinematics",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "yaw_overshoot_pct",
+        "unit": "%",
+        "description": "横摆超调",
+        "requires": "pose_kinematics",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "yaw_settling_time_s",
+        "unit": "s",
+        "description": "横摆 5% 稳定时间",
+        "requires": "pose_kinematics",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "slip_alpha_peak_deg",
+        "unit": "°",
+        "description": "峰值轮胎侧偏角",
+        "requires": "tyre_slip",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "rack_force_peak_n",
+        "unit": "N",
+        "description": "峰值齿条力",
+        "requires": "steering_effort",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "steer_energy_nms",
+        "unit": "N·m·s",
+        "description": "转向作动能量",
+        "requires": "steering_effort",
+        "solvable": false,
+        "source": "builtin"
+      },
+      {
+        "name": "onc_torque_gradient_nm_per_deg",
+        "unit": "N·m/°",
+        "description": "中心区力矩梯度（零转角处，随试验幅值变化 —— 必须连同工况一起引用）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_torque_gradient_nm_per_g",
+        "unit": "N·m/g",
+        "description": "中心区力矩梯度（对侧向加速度）—— 与传动比无关，且对幅值稳健",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_torque_at_0_1g_nm",
+        "unit": "N·m",
+        "description": "0.1 g 处的手力矩",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_torque_hysteresis_nm",
+        "unit": "N·m",
+        "description": "力矩迟滞：零转角处上下行两支的间距（摩擦感）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_torque_deadband_deg",
+        "unit": "°",
+        "description": "角度死区：零力矩处上下行两支的间距 —— 车开始回应之前能走过的角度",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_angle_gradient_deg_per_g",
+        "unit": "°/g",
+        "description": "转向灵敏度（方向盘转角/侧向加速度）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_yaw_phase_lag_deg",
+        "unit": "°",
+        "description": "横摆角速度相对方向盘转角的相位滞后",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_ay_amplitude_g",
+        "unit": "g",
+        "description": "实际达到的侧向加速度幅值（试验工况）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_sw_amplitude_deg",
+        "unit": "°",
+        "description": "实际达到的方向盘转角幅值（试验工况）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "onc_frequency_hz",
+        "unit": "Hz",
+        "description": "实测扫掠频率（由过零点估计，不取自 spec）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_rise_s_fl",
+        "unit": "s",
+        "description": "FL 轮阶跃上升时间（10→90%）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_overshoot_pct_fl",
+        "unit": "%",
+        "description": "FL 轮阶跃超调",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_settle_s_fl",
+        "unit": "s",
+        "description": "FL 轮阶跃调节时间（±2% 带）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_ss_err_rad_fl",
+        "unit": "rad",
+        "description": "FL 轮稳态误差",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_peak_dev_rad_fl",
+        "unit": "rad",
+        "description": "FL 轮峰值跟踪偏差",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_rise_s_rl",
+        "unit": "s",
+        "description": "RL 轮阶跃上升时间（10→90%）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_overshoot_pct_rl",
+        "unit": "%",
+        "description": "RL 轮阶跃超调",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_settle_s_rl",
+        "unit": "s",
+        "description": "RL 轮阶跃调节时间（±2% 带）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_ss_err_rad_rl",
+        "unit": "rad",
+        "description": "RL 轮稳态误差",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_peak_dev_rad_rl",
+        "unit": "rad",
+        "description": "RL 轮峰值跟踪偏差",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_amp_ratio_0_5hz",
+        "unit": "—",
+        "description": "0.5 Hz 幅值比（实际转角/指令）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_amp_ratio_1hz",
+        "unit": "—",
+        "description": "1 Hz 幅值比",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_amp_ratio_2hz",
+        "unit": "—",
+        "description": "2 Hz 幅值比",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_amp_ratio_5hz",
+        "unit": "—",
+        "description": "5 Hz 幅值比",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_amp_ratio_10hz",
+        "unit": "—",
+        "description": "10 Hz 幅值比",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_phase_lag_2hz",
+        "unit": "°",
+        "description": "2 Hz 相位滞后",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_bw_hz",
+        "unit": "Hz",
+        "description": "−3 dB 跟踪带宽（对数插值；None=超出扫掠上界）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_dist_onset_s",
+        "unit": "s",
+        "description": "负载扰动检测到的时刻（齿条力最大阶跃）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_dist_peak_dev_rad",
+        "unit": "rad",
+        "description": "扰动后峰值跟踪偏差（fl）",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_dist_recover_s",
+        "unit": "s",
+        "description": "扰动后回到 ±0.01 rad 带内的时间；未恢复为拒绝给出",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      },
+      {
+        "name": "trk_dist_rack_step_n",
+        "unit": "N",
+        "description": "引发本次恢复过程的齿条力阶跃幅值",
+        "requires": "steering_plant",
+        "solvable": false,
+        "source": "procedure"
+      }
+    ],
+    "steering_architectures": [
+      {
+        "id": "c_eps",
+        "label": "管柱助力 C-EPS",
+        "label_en": "column-assist EPS",
+        "description": "助力电机作用在转向管柱上。成本低、布置易，助力点在扭杆之后、齿条之前，所以柱与万向节的摩擦与柔度都在路感通路上。",
+        "front_path": "mechanical",
+        "assist_at": "column",
+        "rear_axle": "none",
+        "front_independent": false,
+        "sensors": [
+          "hand_angle",
+          "motor_angle",
+          "motor_current",
+          "torque_sensor"
+        ],
+        "actuators": [
+          "assist_motor"
+        ],
+        "provides": [
+          "assist_calibration",
+          "hand_torque",
+          "torque_sensor"
+        ],
+        "failure_modes": [
+          "assist_loss",
+          "assist_oscillation",
+          "over_assist",
+          "self_steer",
+          "torque_sensor_fault"
+        ],
+        "motor_gear_ratio": 20.0
+      },
+      {
+        "id": "p_eps",
+        "label": "小齿轮助力 P-EPS",
+        "label_en": "pinion-assist EPS",
+        "description": "助力作用在小齿轮上，绕过管柱摩擦，路感优于 C-EPS。",
+        "front_path": "mechanical",
+        "assist_at": "pinion",
+        "rear_axle": "none",
+        "front_independent": false,
+        "sensors": [
+          "hand_angle",
+          "motor_angle",
+          "motor_current",
+          "torque_sensor"
+        ],
+        "actuators": [
+          "assist_motor"
+        ],
+        "provides": [
+          "assist_calibration",
+          "hand_torque",
+          "torque_sensor"
+        ],
+        "failure_modes": [
+          "assist_loss",
+          "assist_oscillation",
+          "over_assist",
+          "self_steer",
+          "torque_sensor_fault"
+        ],
+        "motor_gear_ratio": 30.0
+      },
+      {
+        "id": "dp_eps",
+        "label": "双小齿轮 DP-EPS",
+        "label_en": "dual-pinion EPS",
+        "description": "驾驶员与助力各用一个小齿轮，助力不经过驾驶员通路，可用更大助力而不牺牲手感。",
+        "front_path": "mechanical",
+        "assist_at": "dual_pinion",
+        "rear_axle": "none",
+        "front_independent": false,
+        "sensors": [
+          "hand_angle",
+          "motor_angle",
+          "motor_current",
+          "torque_sensor"
+        ],
+        "actuators": [
+          "assist_motor"
+        ],
+        "provides": [
+          "assist_calibration",
+          "hand_torque",
+          "torque_sensor"
+        ],
+        "failure_modes": [
+          "assist_loss",
+          "assist_oscillation",
+          "over_assist",
+          "self_steer",
+          "torque_sensor_fault"
+        ],
+        "motor_gear_ratio": 45.0
+      },
+      {
+        "id": "r_eps",
+        "label": "齿条助力 R-EPS",
+        "label_en": "rack-assist EPS",
+        "description": "助力经滚珠丝杠直接作用在齿条上，力容量最大，重车与高负载首选。这是本工具的默认架构。",
+        "front_path": "mechanical",
+        "assist_at": "rack",
+        "rear_axle": "none",
+        "front_independent": false,
+        "sensors": [
+          "hand_angle",
+          "motor_angle",
+          "motor_current",
+          "torque_sensor"
+        ],
+        "actuators": [
+          "assist_motor"
+        ],
+        "provides": [
+          "assist_calibration",
+          "hand_torque",
+          "torque_sensor"
+        ],
+        "failure_modes": [
+          "assist_loss",
+          "assist_oscillation",
+          "over_assist",
+          "self_steer",
+          "torque_sensor_fault"
+        ],
+        "motor_gear_ratio": 63.0
+      },
+      {
+        "id": "sbw",
+        "label": "线控转向 SBW",
+        "label_en": "steer-by-wire",
+        "description": "前轴无机械连接。路感由反馈作动器合成，转向由前轮作动器执行；传动比可任意调度，但手感必须被设计出来而不是被传递过来。",
+        "front_path": "by_wire",
+        "assist_at": "none",
+        "rear_axle": "none",
+        "front_independent": false,
+        "sensors": [
+          "hand_angle",
+          "hand_torque_sensor",
+          "motor_current",
+          "road_wheel_angle"
+        ],
+        "actuators": [
+          "feedback_actuator",
+          "road_wheel_actuator"
+        ],
+        "provides": [
+          "angle_tracking",
+          "hand_torque",
+          "redundancy",
+          "road_feel_synthesis"
+        ],
+        "failure_modes": [
+          "angle_deviation",
+          "comms_loss",
+          "feedback_actuator_loss",
+          "redundancy_switch"
+        ],
+        "motor_gear_ratio": 63.0
+      },
+      {
+        "id": "eps_rws",
+        "label": "EPS + 后轮转向",
+        "label_en": "EPS front + RWS rear",
+        "description": "前轴机械 EPS，后轴独立作动器。前后协同的主流量产形态。",
+        "front_path": "mechanical",
+        "assist_at": "rack",
+        "rear_axle": "coupled",
+        "front_independent": false,
+        "sensors": [
+          "hand_angle",
+          "motor_angle",
+          "motor_current",
+          "rear_actuator_angle",
+          "torque_sensor"
+        ],
+        "actuators": [
+          "assist_motor",
+          "rear_actuator"
+        ],
+        "provides": [
+          "assist_calibration",
+          "hand_torque",
+          "rear_steer",
+          "torque_sensor"
+        ],
+        "failure_modes": [
+          "assist_loss",
+          "assist_oscillation",
+          "over_assist",
+          "rear_authority_loss",
+          "rear_centring_failure",
+          "rear_stuck",
+          "self_steer",
+          "torque_sensor_fault"
+        ],
+        "motor_gear_ratio": 63.0
+      },
+      {
+        "id": "sbw_rws",
+        "label": "SBW + 后轮转向",
+        "label_en": "by-wire front + RWS rear",
+        "description": "前后全线控。传动比与前后相位都可自由调度，代价是手感完全靠合成、且冗余要求最高。",
+        "front_path": "by_wire",
+        "assist_at": "none",
+        "rear_axle": "coupled",
+        "front_independent": false,
+        "sensors": [
+          "hand_angle",
+          "hand_torque_sensor",
+          "motor_current",
+          "rear_actuator_angle",
+          "road_wheel_angle"
+        ],
+        "actuators": [
+          "feedback_actuator",
+          "rear_actuator",
+          "road_wheel_actuator"
+        ],
+        "provides": [
+          "angle_tracking",
+          "hand_torque",
+          "rear_steer",
+          "redundancy",
+          "road_feel_synthesis"
+        ],
+        "failure_modes": [
+          "angle_deviation",
+          "comms_loss",
+          "feedback_actuator_loss",
+          "rear_authority_loss",
+          "rear_centring_failure",
+          "rear_stuck",
+          "redundancy_switch"
+        ],
+        "motor_gear_ratio": 63.0
+      },
+      {
+        "id": "4wis",
+        "label": "四轮独立转向 4WIS",
+        "label_en": "four-wheel independent steering",
+        "description": "四角各自独立作动。本工具原有能力最强的形态——蟹行、零半径、单轮失效重构都在这里；手感同样必须合成。",
+        "front_path": "by_wire",
+        "assist_at": "none",
+        "rear_axle": "independent",
+        "front_independent": true,
+        "sensors": [
+          "corner_actuator_angle",
+          "hand_angle",
+          "hand_torque_sensor",
+          "motor_current",
+          "road_wheel_angle"
+        ],
+        "actuators": [
+          "corner_actuator",
+          "feedback_actuator"
+        ],
+        "provides": [
+          "angle_tracking",
+          "hand_torque",
+          "per_wheel_steer",
+          "rear_steer",
+          "redundancy",
+          "road_feel_synthesis"
+        ],
+        "failure_modes": [
+          "angle_deviation",
+          "comms_loss",
+          "feedback_actuator_loss",
+          "rear_authority_loss",
+          "rear_centring_failure",
+          "rear_stuck",
+          "redundancy_switch",
+          "single_wheel_failure"
+        ],
+        "motor_gear_ratio": 63.0
+      }
+    ],
+    "target_sets": [
+      {
+        "name": "eps_actuator",
+        "version": 1,
+        "ref": "eps_actuator@1",
+        "title": "EPS 作动器选型要求",
+        "applies_to": "LS9 级 2.9 t SUV，R-EPS，默认助力标定",
+        "owner": "系统工程",
+        "entries": 6,
+        "must": 6,
+        "metrics": [
+          "required_peak_torque_nm",
+          "required_rms_torque_nm",
+          "required_peak_speed_rpm",
+          "required_peak_power_w",
+          "peak_thermal_state",
+          "peak_hand_torque_nm"
+        ],
+        "builtin": true,
+        "digest": "ad03228de1d04f70",
+        "notes": "对着一次 sizing 走查判定。限值来自所选电机铭牌与整车电气预算，属于硬约束；手力矩目标来自同级别产品的普遍预期，属于工程判断。"
+      },
+      {
+        "name": "steering_feel",
+        "version": 3,
+        "ref": "steering_feel@3",
+        "title": "转向手感要求（中心区 / 回正 / 摩擦）",
+        "applies_to": "LS9 级 2.9 t SUV，任意前轴架构；100 km/h、0.2 Hz、约 0.2 g 的 weave 工况 + 50 km/h、0.02 Hz 慢斜坡摩擦工况",
+        "owner": "系统工程",
+        "entries": 8,
+        "must": 8,
+        "metrics": [
+          "onc_ay_amplitude_g",
+          "onc_torque_gradient_nm_per_g",
+          "onc_torque_at_0_1g_nm",
+          "onc_torque_hysteresis_nm",
+          "onc_torque_deadband_deg",
+          "onc_angle_gradient_deg_per_g",
+          "onc_yaw_phase_lag_deg",
+          "return_residual_angle_deg"
+        ],
+        "builtin": true,
+        "digest": "7bc726ea83a12749",
+        "notes": "配 procedures/iso13674_oncentre.yaml（中心区）与 procedures/friction_slow_ramp.yaml（摩擦）使用。判定用的是**对侧向加速度**的量（N·m/g、°/g）：角度域的力矩梯度随扫掠幅值变化，也随传动比变化，不适合写成跨车型的要求。回正性一条仍需线控释放工况（v2 V3 后半），在此之前会如实报「未评估」。\n\n**v3 把摩擦条目升为判定项。** v2 时迟滞环宽/死区只记录不判定，因为 0.2 Hz weave 下环宽对齿条摩擦不单调（车辆侧向动力学滞后与摩擦项正交抵消，D2）。v3 把判定搬到 0.02 Hz、50 km/h 的慢斜坡上：动力学分量消失后环宽对摩擦单调，环宽才配得上写摩擦要求。\n\n**这套带子不是对模型的验证。** 带宽取自同级别乘用车的普遍范围，但定带时模型的数已经在手边，所以默认车全部达标只说明这套机制跑通了，不说明模型准。真正的验证要么来自台架/实车数据，要么来自商用工具对拉 —— 两者都还没有，产品的适用边界声明依旧成立。"
+      }
+    ],
+    "strategies": [
+      "ackermann",
+      "ideal_ackermann",
+      "rear_wheel_steer",
+      "crab",
+      "zero_radius",
+      "follow_trajectory",
+      "fault_reconfig",
+      "manual_wheel",
+      "manual_body",
+      "user_python",
+      "user_js"
+    ],
+    "steer_kinds": [
+      "constant",
+      "step",
+      "ramp",
+      "sine",
+      "sweep",
+      "dlc"
+    ],
+    "steer_units": [
+      "normalized",
+      "front_deg"
+    ],
+    "channels": [
+      "pose_x",
+      "pose_y",
+      "pose_psi",
+      "vx",
+      "vy",
+      "yaw_rate",
+      "driver_steering",
+      "driver_throttle",
+      "ax",
+      "ay",
+      "steer_hand_torque",
+      "steer_hand_angle",
+      "steer_torque_sensor",
+      "steer_assist_torque",
+      "steer_motor_torque",
+      "steer_motor_speed",
+      "steer_angle_deviation",
+      "steer_plant_active",
+      "steer_corner_deviation_fl",
+      "steer_corner_deviation_fr",
+      "steer_corner_deviation_rl",
+      "steer_corner_deviation_rr",
+      "delta_fl",
+      "delta_fr",
+      "delta_rl",
+      "delta_rr",
+      "delta_cmd_fl",
+      "delta_cmd_fr",
+      "delta_cmd_rl",
+      "delta_cmd_rr",
+      "delta_reported_fl",
+      "delta_reported_fr",
+      "delta_reported_rl",
+      "delta_reported_rr",
+      "fault_mode_fl",
+      "fault_mode_fr",
+      "fault_mode_rl",
+      "fault_mode_rr",
+      "sensor_fault_active_fl",
+      "sensor_fault_active_fr",
+      "sensor_fault_active_rl",
+      "sensor_fault_active_rr",
+      "steer_rate_fl",
+      "steer_rate_fr",
+      "steer_rate_rl",
+      "steer_rate_rr",
+      "omega_fl",
+      "omega_fr",
+      "omega_rl",
+      "omega_rr",
+      "fz_fl",
+      "fz_fr",
+      "fz_rl",
+      "fz_rr",
+      "torque_steer_fl",
+      "torque_steer_fr",
+      "torque_steer_rl",
+      "torque_steer_rr",
+      "rack_force_fl",
+      "rack_force_fr",
+      "rack_force_rl",
+      "rack_force_rr",
+      "motor_torque_fl",
+      "motor_torque_fr",
+      "motor_torque_rl",
+      "motor_torque_rr",
+      "slip_alpha_fl",
+      "slip_alpha_fr",
+      "slip_alpha_rl",
+      "slip_alpha_rr",
+      "slip_kappa_fl",
+      "slip_kappa_fr",
+      "slip_kappa_rl",
+      "slip_kappa_rr",
+      "icr_dev_fl",
+      "icr_dev_fr",
+      "icr_dev_rl",
+      "icr_dev_rr",
+      "grip_util_fl",
+      "grip_util_fr",
+      "grip_util_rl",
+      "grip_util_rr",
+      "grip_margin_lat_fl",
+      "grip_margin_lat_fr",
+      "grip_margin_lat_rl",
+      "grip_margin_lat_rr",
+      "grip_margin_long_fl",
+      "grip_margin_long_fr",
+      "grip_margin_long_rl",
+      "grip_margin_long_rr"
+    ],
+    "limits": {
+      "max_trace_points": 2000
+    },
+    "notes": [
+      "metrics[].requires names the model capability a metric needs; the envelope guard that enforces it is not in place yet, so a metric asked of a model that cannot produce it will come back missing rather than refused.",
+      "solver axes (sweep[*].solve_for) are declared in the schema but not implemented yet.",
+      "steering_architectures describes what each configuration has and how it can fail. The plant runs inside the dynamic and multibody models when vehicle.steering_system.enabled is set; off by default, and off means bit-identical to before it existed.",
+      "target_sets are versioned requirement documents. A spec may name one as `targets: name@version`, and the result then carries a compliance table. They are not the same thing as `criteria`: criteria belong to the question, targets belong to the product."
+    ]
+  },
+  "path_templates": {
+    "templates": [
+      "straight",
+      "arc",
+      "slalom",
+      "lane_change",
+      "double_lane_change",
+      "iso3888_1",
+      "skidpad",
+      "figure_eight",
+      "parking"
+    ],
+    "specs": [
+      {
+        "name": "straight",
+        "label": "直线",
+        "desc": "加速 / 制动 / 直线稳定性，按门计距",
+        "params": [
+          {
+            "key": "length",
+            "label": "长度",
+            "default": 120,
+            "min": 20,
+            "max": 400,
+            "step": 10,
+            "unit": "m"
+          },
+          {
+            "key": "lane_width",
+            "label": "车道宽",
+            "default": 3.5,
+            "min": 2.5,
+            "max": 8,
+            "step": 0.1,
+            "unit": "m"
+          },
+          {
+            "key": "gate_spacing",
+            "label": "门间距",
+            "default": 20,
+            "min": 5,
+            "max": 50,
+            "step": 5,
+            "unit": "m"
+          }
+        ]
+      },
+      {
+        "name": "arc",
+        "label": "圆弧",
+        "desc": "定半径转弯，两侧锥桶夹道",
+        "params": [
+          {
+            "key": "radius",
+            "label": "半径",
+            "default": 25,
+            "min": 5,
+            "max": 200,
+            "step": 1,
+            "unit": "m"
+          },
+          {
+            "key": "sweep_deg",
+            "label": "转角",
+            "default": 180,
+            "min": 30,
+            "max": 360,
+            "step": 15,
+            "unit": "°"
+          },
+          {
+            "key": "lane_width",
+            "label": "车道宽",
+            "default": 4,
+            "min": 2.5,
+            "max": 10,
+            "step": 0.1,
+            "unit": "m"
+          }
+        ]
+      },
+      {
+        "name": "slalom",
+        "label": "绕桩 (Slalom)",
+        "desc": "标杆阵列，左右交替绕行",
+        "params": [
+          {
+            "key": "n_gates",
+            "label": "桩数",
+            "default": 6,
+            "min": 2,
+            "max": 20,
+            "step": 1,
+            "unit": "根"
+          },
+          {
+            "key": "spacing",
+            "label": "桩距",
+            "default": 18,
+            "min": 8,
+            "max": 40,
+            "step": 1,
+            "unit": "m"
+          },
+          {
+            "key": "entry",
+            "label": "引入段",
+            "default": 20,
+            "min": 5,
+            "max": 60,
+            "step": 5,
+            "unit": "m"
+          },
+          {
+            "key": "offset",
+            "label": "侧向幅值",
+            "default": 0,
+            "min": 0,
+            "max": 6,
+            "step": 0.1,
+            "unit": "m"
+          }
+        ]
+      },
+      {
+        "name": "lane_change",
+        "label": "单移线",
+        "desc": "换到相邻车道并保持",
+        "params": [
+          {
+            "key": "offset",
+            "label": "横向偏移",
+            "default": 3.5,
+            "min": 1,
+            "max": 8,
+            "step": 0.1,
+            "unit": "m"
+          },
+          {
+            "key": "transition",
+            "label": "换道段",
+            "default": 25,
+            "min": 8,
+            "max": 60,
+            "step": 1,
+            "unit": "m"
+          },
+          {
+            "key": "entry",
+            "label": "引入段",
+            "default": 25,
+            "min": 5,
+            "max": 60,
+            "step": 5,
+            "unit": "m"
+          }
+        ]
+      },
+      {
+        "name": "double_lane_change",
+        "label": "双移线 · ISO 3888-2 (麋鹿)",
+        "desc": "标准麋鹿测试，车道宽随车宽自适应",
+        "params": [
+          {
+            "key": "entry",
+            "label": "引入段",
+            "default": 15,
+            "min": 5,
+            "max": 60,
+            "step": 5,
+            "unit": "m"
+          }
+        ]
+      },
+      {
+        "name": "iso3888_1",
+        "label": "双移线 · ISO 3888-1",
+        "desc": "较缓的标准双移线（15/25/15 m 段）",
+        "params": [
+          {
+            "key": "entry",
+            "label": "引入段",
+            "default": 20,
+            "min": 5,
+            "max": 60,
+            "step": 5,
+            "unit": "m"
+          }
+        ]
+      },
+      {
+        "name": "skidpad",
+        "label": "定圆 (ISO 4138)",
+        "desc": "稳态回转，测不足/过多转向",
+        "params": [
+          {
+            "key": "radius",
+            "label": "半径",
+            "default": 30,
+            "min": 8,
+            "max": 200,
+            "step": 1,
+            "unit": "m"
+          },
+          {
+            "key": "lane_width",
+            "label": "车道宽",
+            "default": 4,
+            "min": 2.5,
+            "max": 10,
+            "step": 0.1,
+            "unit": "m"
+          }
+        ]
+      },
+      {
+        "name": "figure_eight",
+        "label": "八字",
+        "desc": "左右交替满转，考察对称性",
+        "params": [
+          {
+            "key": "radius",
+            "label": "半径",
+            "default": 15,
+            "min": 5,
+            "max": 60,
+            "step": 1,
+            "unit": "m"
+          }
+        ]
+      },
+      {
+        "name": "parking",
+        "label": "侧方停车",
+        "desc": "车位尺寸随车长/车宽自适应",
+        "params": [
+          {
+            "key": "approach",
+            "label": "接近段",
+            "default": 14,
+            "min": 5,
+            "max": 40,
+            "step": 1,
+            "unit": "m"
+          },
+          {
+            "key": "margin",
+            "label": "车位余量",
+            "default": 1.5,
+            "min": 0.3,
+            "max": 4,
+            "step": 0.1,
+            "unit": "m"
+          }
+        ]
+      }
+    ]
+  },
+  "strategies": [
+    "ackermann",
+    "ideal_ackermann",
+    "rear_wheel_steer",
+    "crab",
+    "zero_radius",
+    "follow_trajectory",
+    "fault_reconfig",
+    "manual_wheel",
+    "manual_body",
+    "user_python",
+    "user_js"
+  ],
+  "models": [
+    {
+      "id": "kinematic",
+      "label": "运动学",
+      "layer": "primary",
+      "description": "纯滚动几何模型，适合策略和 ICR 验证。"
+    },
+    {
+      "id": "simplified_dynamic",
+      "label": "动力学",
+      "layer": "primary",
+      "description": "3-DOF 整车 + 轮胎力 + 载荷转移，是工程分析主线模型。"
+    },
+    {
+      "id": "multibody",
+      "label": "多体 14DOF",
+      "layer": "research",
+      "description": "研究/回归用高阶模型，保留但不作为新功能默认适配目标。"
+    }
+  ],
+  "primary_models": [
+    "kinematic",
+    "simplified_dynamic"
+  ],
+  "builtin_profile": {
+    "profile": {
+      "name": "LS9",
+      "label": "LS9",
+      "description": "智己 LS9 公开规格 + 用户提供的转向几何表。主销、接地印迹等未公开项目仍为工程估算，可在负载特性页继续标定。",
+      "builtin": true,
+      "sources": [
+        "https://www.immotors.com/website/vehicle_config/ls9",
+        "https://www.saicmotor.com/chinese/xwzx/mtbd/2025/63146.shtml",
+        "用户提供 LS9 转向几何截图：b=1565.172mm, l=3160mm, a=840mm, r=146.451mm, c=352.052mm, h=176.324mm, θ=85.361°"
+      ]
+    },
+    "vehicle": {
+      "wheelbase": 3.16,
+      "track_front": 1.565172,
+      "track_rear": 1.565172,
+      "mass": 2900.0,
+      "inertia_z": 7500.0,
+      "cg_to_front": 1.55,
+      "tire_radius": 0.395,
+      "tire_width": 0.265,
+      "contact_patch_radius": 0.11,
+      "steer_limit": 0.6109,
+      "v_max": 55.6,
+      "cg_height": 0.62,
+      "wheel_inertia": 2.5,
+      "motor_torque_max": 3000.0,
+      "unsprung_mass": 55.0,
+      "tire_vertical_stiffness": 280000.0,
+      "steer_tau": 0.06,
+      "steer_rate_max": 8.0,
+      "bump_steer_coeff": 0.0,
+      "kc": null,
+      "tire_model": "linear",
+      "tire_c_alpha": 120000.0,
+      "tire_relax_length": 0.0,
+      "tire_relax_length_long": 0.0,
+      "tire_mu_load_sensitivity": 0.0,
+      "tire_c_alpha_front_scale": 0.8,
+      "tire_c_alpha_rear_scale": 1.2,
+      "tire_c_kappa": 100000.0,
+      "tire_t_pneumatic": 0.03,
+      "tire_load_sensitivity_exp": 0.8,
+      "tire_load_sensitivity_time_domain": true,
+      "parking_scrub_coeff": 0.8,
+      "parking_lateral_coeff": 0.8,
+      "parking_torque_coeff": 0.8,
+      "low_speed_blend_ms": 1.5,
+      "static_tire_deflection_deg": 8.0,
+      "rolling_resistance_coeff": 0.012,
+      "drag_coeff_cd": 0.3,
+      "frontal_area": 2.8,
+      "air_density": 1.225,
+      "aero_lift_coeff_front": 0.3,
+      "aero_lift_coeff_rear": 0.15,
+      "camber_thrust_coeff": 1.0,
+      "static_toe_front": 0.001745,
+      "static_toe_rear": 0.0,
+      "tire_cx": 1.65,
+      "tire_cy": 1.3,
+      "tire_ex": -0.5,
+      "tire_ey": -1.0,
+      "servo_kp": 200.0,
+      "servo_ki": 50.0,
+      "longitudinal_mode": "speed_servo",
+      "drive_front_ratio": 0.5,
+      "motor_power_max": 400000.0,
+      "diff_type": "independent",
+      "driver_speed_limit": 0.0,
+      "brake_torque_max": 12000.0,
+      "brake_bias_front": 0.65,
+      "brake_tau": 0.08,
+      "v_max_reverse": 5.0,
+      "steer_wheel_range": 540.0,
+      "steer_ratio_low": 0.0,
+      "steer_ratio_high": 0.0,
+      "steer_ratio_v_ref": 22.0,
+      "steer_ay_ref_frac": 0.9,
+      "suspension": {
+        "caster_angle": 0.1047,
+        "kingpin_inclination": 0.2094,
+        "camber": -0.0131,
+        "scrub_radius": 0.015,
+        "spring_rate": 70000.0,
+        "damper_rate": 4000.0,
+        "anti_roll_rate": 30000.0,
+        "roll_stiffness_front_frac": 0.6,
+        "kingpin_mu": 0.6
+      },
+      "steering_arm_length": 0.146451,
+      "pinion_radius": 0.02,
+      "tie_rod_angle_deg": 6.67,
+      "rack_mech_efficiency": 0.92,
+      "motor_gear_ratio": 10.0,
+      "steering_geometry": {
+        "front_outer_x": -0.145971235,
+        "front_outer_y": -0.011844575,
+        "front_inner_x": -0.176324,
+        "front_inner_y": -0.362586,
+        "front_rack_axis_deg": 90.0,
+        "front_rack_travel_limit": 0.085,
+        "rear_outer_x": 0.145971235,
+        "rear_outer_y": -0.011844575,
+        "rear_inner_x": 0.176324,
+        "rear_inner_y": -0.362586,
+        "rear_rack_axis_deg": 90.0,
+        "rear_rack_travel_limit": 0.085
+      },
+      "steering_system": {
+        "enabled": false,
+        "column": {
+          "inertia": 0.05,
+          "damping": 0.3,
+          "coulomb_friction": 0.15,
+          "torsion_stiffness_nm_per_deg": 2.0,
+          "torsion_damping": 0.05,
+          "sensor_range_nm": 10.0,
+          "hand_torque_limit_nm": 25.0,
+          "grip_stiffness": 200.0,
+          "grip_damping": 4.4
+        },
+        "motor": {
+          "torque_constant": 0.055,
+          "inertia": 0.00012,
+          "bandwidth_hz": 40.0,
+          "peak_torque": 8.0,
+          "continuous_torque": 4.5,
+          "no_load_speed_rpm": 8000.0,
+          "thermal_tau_s": 120.0,
+          "thermal_derate": 0.65
+        },
+        "rack": {
+          "mass": 3.2,
+          "coulomb_friction_n": 260.0,
+          "viscous_n_per_mps": 900.0,
+          "reverse_efficiency": 0.75
+        },
+        "angle_control": {
+          "enabled": false,
+          "controller": "open_loop",
+          "controller_kwargs": {},
+          "plant_inertia_kgm2": 0.6,
+          "plant_damping_nms_per_rad": 4.0,
+          "plant_friction_nm": 0.5,
+          "plant_peak_torque_nm": 260.0,
+          "plant_rate_limit_rad_s": null,
+          "plant_transmission_stiffness_nms_per_rad": null,
+          "plant_backlash_rad": 0.0,
+          "plant_motor_inertia_fraction": 0.2,
+          "sensor_quant_rad": 0.0005,
+          "sensor_delay_steps": 1,
+          "sensor_noise_std_rad": 0.0,
+          "sensor_seed": 1234
+        },
+        "architecture": "r_eps",
+        "assist_map": "default",
+        "assist_damping_ratio": 0.6,
+        "motor_gear_ratio": 63.0
+      }
+    }
+  },
+  "recording_default_channels": [
+    "pose_x",
+    "pose_y",
+    "pose_psi",
+    "vx",
+    "vy",
+    "yaw_rate",
+    "delta_fl",
+    "delta_fr",
+    "delta_rl",
+    "delta_rr",
+    "delta_reported_fl",
+    "delta_reported_fr",
+    "delta_reported_rl",
+    "delta_reported_rr",
+    "fault_mode_fl",
+    "fault_mode_fr",
+    "fault_mode_rl",
+    "fault_mode_rr",
+    "sensor_fault_active_fl",
+    "sensor_fault_active_fr",
+    "sensor_fault_active_rl",
+    "sensor_fault_active_rr",
+    "steer_rate_fl",
+    "steer_rate_fr",
+    "steer_rate_rl",
+    "steer_rate_rr",
+    "torque_steer_fl",
+    "torque_steer_fr",
+    "torque_steer_rl",
+    "torque_steer_rr",
+    "icr_dev_fl",
+    "icr_dev_fr",
+    "icr_dev_rl",
+    "icr_dev_rr",
+    "icr_vehicle_body_x",
+    "icr_vehicle_body_y",
+    "icr_target_body_x",
+    "icr_target_body_y",
+    "rack_force_fl",
+    "rack_force_fr",
+    "rack_force_rl",
+    "rack_force_rr",
+    "motor_torque_fl",
+    "motor_torque_fr",
+    "motor_torque_rl",
+    "motor_torque_rr"
+  ],
+  "available_channels": [
+    "pose_x",
+    "pose_y",
+    "pose_psi",
+    "vx",
+    "vy",
+    "yaw_rate",
+    "ax",
+    "ay",
+    "pose_z",
+    "roll",
+    "pitch",
+    "grip_valid",
+    "driver_throttle",
+    "driver_brake",
+    "driver_steering",
+    "driver_gear",
+    "driver_handbrake",
+    "delta_fl",
+    "deltacmd_fl",
+    "delta_cmd_fl",
+    "omega_fl",
+    "fz_fl",
+    "torque_steer_fl",
+    "icr_dev_fl",
+    "delta_fr",
+    "deltacmd_fr",
+    "delta_cmd_fr",
+    "omega_fr",
+    "fz_fr",
+    "torque_steer_fr",
+    "icr_dev_fr",
+    "delta_rl",
+    "deltacmd_rl",
+    "delta_cmd_rl",
+    "omega_rl",
+    "fz_rl",
+    "torque_steer_rl",
+    "icr_dev_rl",
+    "delta_rr",
+    "deltacmd_rr",
+    "delta_cmd_rr",
+    "omega_rr",
+    "fz_rr",
+    "torque_steer_rr",
+    "icr_dev_rr",
+    "icr_x_fl",
+    "icr_y_fl",
+    "icr_x_fr",
+    "icr_y_fr",
+    "icr_x_rl",
+    "icr_y_rl",
+    "icr_x_rr",
+    "icr_y_rr",
+    "icr_vehicle_body_x",
+    "icr_vehicle_body_y",
+    "icr_target_body_x",
+    "icr_target_body_y",
+    "rack_force_fl",
+    "motor_torque_fl",
+    "rack_force_fr",
+    "motor_torque_fr",
+    "rack_force_rl",
+    "motor_torque_rl",
+    "rack_force_rr",
+    "motor_torque_rr",
+    "mu_avg",
+    "delta_reported_fl",
+    "fault_mode_fl",
+    "sensor_fault_active_fl",
+    "steer_rate_fl",
+    "susp_defl_fl",
+    "wheel_locked_fl",
+    "grip_capacity_fl",
+    "grip_util_fl",
+    "grip_margin_lat_fl",
+    "grip_margin_long_fl",
+    "grip_alpha_peak_fl",
+    "grip_kappa_peak_fl",
+    "grip_beyond_peak_lat_fl",
+    "grip_beyond_peak_long_fl",
+    "linkage_arm_tie_angle_fl",
+    "linkage_tie_rack_angle_fl",
+    "linkage_efficiency_fl",
+    "drive_torque_cmd_fl",
+    "brake_cmd_fl",
+    "wheel_speed_cmd_fl",
+    "delta_reported_fr",
+    "fault_mode_fr",
+    "sensor_fault_active_fr",
+    "steer_rate_fr",
+    "susp_defl_fr",
+    "wheel_locked_fr",
+    "grip_capacity_fr",
+    "grip_util_fr",
+    "grip_margin_lat_fr",
+    "grip_margin_long_fr",
+    "grip_alpha_peak_fr",
+    "grip_kappa_peak_fr",
+    "grip_beyond_peak_lat_fr",
+    "grip_beyond_peak_long_fr",
+    "linkage_arm_tie_angle_fr",
+    "linkage_tie_rack_angle_fr",
+    "linkage_efficiency_fr",
+    "drive_torque_cmd_fr",
+    "brake_cmd_fr",
+    "wheel_speed_cmd_fr",
+    "delta_reported_rl",
+    "fault_mode_rl",
+    "sensor_fault_active_rl",
+    "steer_rate_rl",
+    "susp_defl_rl",
+    "wheel_locked_rl",
+    "grip_capacity_rl",
+    "grip_util_rl",
+    "grip_margin_lat_rl",
+    "grip_margin_long_rl",
+    "grip_alpha_peak_rl",
+    "grip_kappa_peak_rl",
+    "grip_beyond_peak_lat_rl",
+    "grip_beyond_peak_long_rl",
+    "linkage_arm_tie_angle_rl",
+    "linkage_tie_rack_angle_rl",
+    "linkage_efficiency_rl",
+    "drive_torque_cmd_rl",
+    "brake_cmd_rl",
+    "wheel_speed_cmd_rl",
+    "delta_reported_rr",
+    "fault_mode_rr",
+    "sensor_fault_active_rr",
+    "steer_rate_rr",
+    "susp_defl_rr",
+    "wheel_locked_rr",
+    "grip_capacity_rr",
+    "grip_util_rr",
+    "grip_margin_lat_rr",
+    "grip_margin_long_rr",
+    "grip_alpha_peak_rr",
+    "grip_kappa_peak_rr",
+    "grip_beyond_peak_lat_rr",
+    "grip_beyond_peak_long_rr",
+    "linkage_arm_tie_angle_rr",
+    "linkage_tie_rack_angle_rr",
+    "linkage_efficiency_rr",
+    "drive_torque_cmd_rr",
+    "brake_cmd_rr",
+    "wheel_speed_cmd_rr",
+    "slip_alpha_fl",
+    "slip_alpha_fr",
+    "slip_alpha_rl",
+    "slip_alpha_rr",
+    "slip_kappa_fl",
+    "slip_kappa_fr",
+    "slip_kappa_rl",
+    "slip_kappa_rr",
+    "tire_fx_fl",
+    "tire_fx_fr",
+    "tire_fx_rl",
+    "tire_fx_rr",
+    "tire_fy_fl",
+    "tire_fy_fr",
+    "tire_fy_rl",
+    "tire_fy_rr",
+    "steer_hand_torque",
+    "steer_hand_angle",
+    "steer_torque_sensor",
+    "steer_assist_torque",
+    "steer_motor_torque",
+    "steer_motor_speed",
+    "steer_angle_deviation",
+    "steer_plant_active",
+    "steer_corner_deviation_fl",
+    "steer_corner_deviation_fr",
+    "steer_corner_deviation_rl",
+    "steer_corner_deviation_rr"
+  ]
+}

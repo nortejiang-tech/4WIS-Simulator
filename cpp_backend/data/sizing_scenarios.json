@@ -1,0 +1,50 @@
+[
+  {
+    "id": "parking_full_lock",
+    "label": "原地全锁",
+    "exposes": "峰值转矩",
+    "speed_kmh": 0.0,
+    "mu": 0.9,
+    "amplitude_deg": 35.0,
+    "rate_deg_s": 25.0,
+    "cycles": 1,
+    "duty_weight": 0.05,
+    "accel_deg_s2": 150.0
+  },
+  {
+    "id": "parking_repeat",
+    "label": "连续挪车 ×3",
+    "exposes": "热降额",
+    "speed_kmh": 0.0,
+    "mu": 0.9,
+    "amplitude_deg": 35.0,
+    "rate_deg_s": 25.0,
+    "cycles": 3,
+    "duty_weight": 0.05,
+    "accel_deg_s2": 150.0
+  },
+  {
+    "id": "low_speed_manoeuvre",
+    "label": "低速大转角",
+    "exposes": "综合负载",
+    "speed_kmh": 20.0,
+    "mu": 0.9,
+    "amplitude_deg": 25.0,
+    "rate_deg_s": 20.0,
+    "cycles": 1,
+    "duty_weight": 0.2,
+    "accel_deg_s2": 200.0
+  },
+  {
+    "id": "evasive_at_speed",
+    "label": "高速紧急避让",
+    "exposes": "峰值转速 / 反电动势包络",
+    "speed_kmh": 100.0,
+    "mu": 0.9,
+    "amplitude_deg": 4.0,
+    "rate_deg_s": 90.0,
+    "cycles": 1,
+    "duty_weight": 0.7,
+    "accel_deg_s2": 700.0
+  }
+]
