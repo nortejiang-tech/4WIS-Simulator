@@ -2,6 +2,9 @@ name: Native core Windows verification
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex/native-simulation-core
 
 permissions:
   contents: read
