@@ -1,0 +1,50 @@
+{
+  "old_tag": "v0.104.0",
+  "new_version": "0.105.0",
+  "tolerances_unchanged": true,
+  "classifications_unchanged": true,
+  "changed_over_old_tolerance": [
+    {
+      "case": "step_steer_60kmh",
+      "metric": "speed_error_rms_kmh",
+      "v104": 0.13443561142493438,
+      "v105": 0.2429261716826959,
+      "old_tolerance": 0.05
+    },
+    {
+      "case": "step_steer_60kmh",
+      "metric": "yaw_overshoot_pct",
+      "v104": 1.9596917706161237,
+      "v105": 1.5560506217142296,
+      "old_tolerance": 0.2
+    },
+    {
+      "case": "iso3888_dlc_60kmh",
+      "metric": "speed_error_rms_kmh",
+      "v104": 0.08227285184523528,
+      "v105": 0.15197108701816495,
+      "old_tolerance": 0.05
+    },
+    {
+      "case": "oncentre_weave_100kmh",
+      "metric": "onc_yaw_phase_lag_deg",
+      "v104": 1.6892078233087646,
+      "v105": 1.8606569957966144,
+      "old_tolerance": 0.02
+    },
+    {
+      "case": "sw_curve60_fl_free_caster_baseline",
+      "metric": "dyaw_peak_dps",
+      "v104": 3.1669511107472594,
+      "v105": 2.9647322722218155,
+      "old_tolerance": 0.2
+    },
+    {
+      "case": "sw_curve60_fl_free_caster_baseline",
+      "metric": "dyaw_resid_dps",
+      "v104": 0.4315185022121401,
+      "v105": 0.2546558222953337,
+      "old_tolerance": 0.05
+    }
+  ]
+}

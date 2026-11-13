@@ -236,3 +236,49 @@ def test_portable_mcp_config_discovers_the_archive_launcher(monkeypatch, tmp_pat
     monkeypatch.setattr(sys, "platform", "win32")
     windows = mcp_server._mcp_host_config()["mcpServers"]["sim4wis"]
     assert windows == {"command": "cmd.exe", "args": ["/d", "/c", str(win_launcher)]}
+
+
+def test_stdio_multipoint_schedule_timing_retry_and_export(backend):
+    """An actual MCP client authors, executes and inspects a multipoint timeline."""
+    import urllib.request
+    async def run():
+        params = StdioServerParameters(command=sys.executable,
+            args=["-m", "sim4wis_mcp.server", "--base", mcp_server.BASE])
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                assert "set_fault_schedule" in {t.name for t in (await session.list_tools()).tools}
+                async def call(name,args):
+                    out=await session.call_tool(name,args)
+                    assert not out.is_error,out.content
+                    return json.loads(out.content[0].text)
+                created=await call("create_session",{"experiment":{"name":"multi_mcp","model_type":"simplified_dynamic"}})
+                sid=created["session_id"]
+                request={"session_id":sid,"request_id":"faults","expected_revision":0,"seed":41,"faults":[
+                    {"fault_type":"stuck_hold","wheel":0,"t_start":.023,"t_end":.083},
+                    {"fault_type":"stuck_hold","wheel":1,"t_start":.023,"t_end":.083},
+                    {"fault_type":"free_caster","wheel":3,"t_start":.047,"t_end":.091},
+                    {"fault_type":"sensor_bias","wheel":2,"value":.1,"t_start":.037}]}
+                configured=await call("set_fault_schedule",request)
+                assert configured["revision"]==1
+                assert (await call("set_fault_schedule",request))["replayed"]
+                stale=await session.call_tool("set_fault_schedule",{**request,"request_id":"stale"})
+                assert stale.is_error and "revision_conflict" in stale.content[0].text
+                moved=await call("step_session",{"session_id":sid,"request_id":"go","expected_revision":1,
+                    "steps":24,"control":{"front_angle_rad":.1,"speed_target_ms":5}})
+                assert moved["status"]=="ready"
+                events=moved["fault_timeline"]["events"]
+                starts=[e["time"] for e in events if e["event"]=="activated"]
+                assert starts==pytest.approx([.023,.023,.037,.047])
+                again=await call("observe_session",{"session_id":sid})
+                assert again["state"]==moved["state"]
+                artifact=await call("export_session",{"session_id":sid})
+                with urllib.request.urlopen(artifact["outputs"]["json"]) as r:
+                    data=json.load(r)
+                row=data["rows"][-1]
+                assert row["delta_reported_rl"]-row["delta_rl"]==pytest.approx(.1)
+                with urllib.request.urlopen(artifact["outputs"]["metadata"]) as r:
+                    meta=json.load(r)
+                assert meta["fault_timeline"]["events"]==events
+                await call("close_session",{"session_id":sid})
+    asyncio.run(run())

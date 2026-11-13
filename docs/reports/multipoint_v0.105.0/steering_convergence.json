@@ -1,0 +1,50 @@
+{
+  "0.005": {
+    "onc_torque_gradient_nm_per_g": 9.577921846492186,
+    "onc_torque_at_0_1g_nm": 0.9533813939626349,
+    "onc_torque_hysteresis_nm": 0.30128025298938765,
+    "onc_torque_deadband_deg": 0.3955314363589868,
+    "onc_angle_gradient_deg_per_g": 14.553388584627726,
+    "onc_yaw_phase_lag_deg": 1.8606569957966144,
+    "onc_torque_gradient_nm_per_deg": 0.903099155030454,
+    "onc_ay_amplitude_g": 0.1847136065269474,
+    "onc_sw_amplitude_deg": 2.7239063061554245,
+    "onc_frequency_hz": 0.19998850761465745
+  },
+  "0.0025": {
+    "onc_torque_gradient_nm_per_g": 9.579769518443143,
+    "onc_torque_at_0_1g_nm": 0.953586187869601,
+    "onc_torque_hysteresis_nm": 0.3033473153709899,
+    "onc_torque_deadband_deg": 0.39992128164939217,
+    "onc_angle_gradient_deg_per_g": 14.552772390662081,
+    "onc_yaw_phase_lag_deg": 1.9144482232042344,
+    "onc_torque_gradient_nm_per_deg": 0.9011240430200819,
+    "onc_ay_amplitude_g": 0.1847129891279769,
+    "onc_sw_amplitude_deg": 2.723933466893847,
+    "onc_frequency_hz": 0.19998846722452948
+  },
+  "0.00125": {
+    "onc_torque_gradient_nm_per_g": 9.580664513810977,
+    "onc_torque_at_0_1g_nm": 0.9536856475086228,
+    "onc_torque_hysteresis_nm": 0.3043791561833856,
+    "onc_torque_deadband_deg": 0.4021315070643089,
+    "onc_angle_gradient_deg_per_g": 14.552483483483092,
+    "onc_yaw_phase_lag_deg": 1.9413268099676135,
+    "onc_torque_gradient_nm_per_deg": 0.9001290750661447,
+    "onc_ay_amplitude_g": 0.18471227346033883,
+    "onc_sw_amplitude_deg": 2.7239653439014586,
+    "onc_frequency_hz": 0.19998844702229646
+  },
+  "0.000625": {
+    "onc_torque_gradient_nm_per_g": 9.58045948490614,
+    "onc_torque_at_0_1g_nm": 0.9536792869344828,
+    "onc_torque_hysteresis_nm": 0.30326333590311816,
+    "onc_torque_deadband_deg": 0.40245803871401087,
+    "onc_angle_gradient_deg_per_g": 14.54982547066836,
+    "onc_yaw_phase_lag_deg": 1.9821071934886123,
+    "onc_torque_gradient_nm_per_deg": 0.8993398918814318,
+    "onc_ay_amplitude_g": 0.18475266118779385,
+    "onc_sw_amplitude_deg": 2.724126112862986,
+    "onc_frequency_hz": 0.1999884290474575
+  }
+}

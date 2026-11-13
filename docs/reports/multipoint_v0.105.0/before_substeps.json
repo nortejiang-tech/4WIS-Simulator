@@ -1,0 +1,113 @@
+{
+  "phase": "before internal 1.25 ms integration cap",
+  "convergence": [
+    {
+      "model": "simplified_dynamic",
+      "case": "simultaneous",
+      "dt_s": 0.005,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.6000367613212241,
+      "yaw_rms_difference_deg_s": 0.032323527191795064,
+      "status": "FAIL"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "simultaneous",
+      "dt_s": 0.0025,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.23504055003588498,
+      "yaw_rms_difference_deg_s": 0.013018871270720487,
+      "status": "FAIL"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "simultaneous",
+      "dt_s": 0.00125,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.07585013748551717,
+      "yaw_rms_difference_deg_s": 0.0042463705403320805,
+      "status": "PASS"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "four_corner",
+      "dt_s": 0.005,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.6000367613212241,
+      "yaw_rms_difference_deg_s": 0.04436620090595956,
+      "status": "FAIL"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "four_corner",
+      "dt_s": 0.0025,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.23504055003588498,
+      "yaw_rms_difference_deg_s": 0.018313350930550292,
+      "status": "FAIL"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "four_corner",
+      "dt_s": 0.00125,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.07585013748551717,
+      "yaw_rms_difference_deg_s": 0.00603506140201531,
+      "status": "PASS"
+    },
+    {
+      "model": "multibody",
+      "case": "simultaneous",
+      "dt_s": 0.005,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.598692061205,
+      "yaw_rms_difference_deg_s": 0.03231144123778278,
+      "status": "FAIL"
+    },
+    {
+      "model": "multibody",
+      "case": "simultaneous",
+      "dt_s": 0.0025,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.23475993826964192,
+      "yaw_rms_difference_deg_s": 0.013010637349836963,
+      "status": "FAIL"
+    },
+    {
+      "model": "multibody",
+      "case": "simultaneous",
+      "dt_s": 0.00125,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.07579486451099449,
+      "yaw_rms_difference_deg_s": 0.0042430371019341545,
+      "status": "PASS"
+    },
+    {
+      "model": "multibody",
+      "case": "four_corner",
+      "dt_s": 0.005,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.598692061205,
+      "yaw_rms_difference_deg_s": 0.0456342172034136,
+      "status": "FAIL"
+    },
+    {
+      "model": "multibody",
+      "case": "four_corner",
+      "dt_s": 0.0025,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.23475993826964192,
+      "yaw_rms_difference_deg_s": 0.018854860882264048,
+      "status": "FAIL"
+    },
+    {
+      "model": "multibody",
+      "case": "four_corner",
+      "dt_s": 0.00125,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.07579486451099449,
+      "yaw_rms_difference_deg_s": 0.006216645265881068,
+      "status": "PASS"
+    }
+  ]
+}

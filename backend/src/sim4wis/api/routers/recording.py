@@ -36,6 +36,7 @@ async def recording_start(body: RecordingStart | None = None) -> dict[str, Any]:
     sim.recording_meta = {"experiment": {"name": "realtime_recording", "strategy": sim.strategy_name,
                                         "model_type": sim.model_type},
                           "vehicle_at_start": params_to_dict(sim.params),
+                          "fault_timeline_at_start": sim.fault_injector.status(),
                           "sampling": "every integration step" if sim.record_full_rate else "state-stream cadence"}
     sim._saved_recording = None
     sim.recorder.start()
@@ -46,6 +47,9 @@ async def recording_start(body: RecordingStart | None = None) -> dict[str, Any]:
 async def recording_stop() -> dict[str, Any]:
     sim = get_simulator()
     sim.recorder.stop()
+    sim.recording_meta["fault_timeline"] = sim.fault_injector.status()
+    sim.recording_meta["execution_status"] = "failed" if sim.simulation_error else "recorded"
+    sim.recording_meta["error"] = sim.simulation_error
     return sim.recorder.status()
 
 

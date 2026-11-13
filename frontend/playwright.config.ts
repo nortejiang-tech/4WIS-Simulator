@@ -11,11 +11,16 @@ export default defineConfig({
     timeout: 10_000,
   },
   fullyParallel: false,
+  // Every test file drives the same live simulator singleton.
+  workers: 1,
   retries: 0,
   reporter: "list",
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     trace: "retain-on-failure",
+    // Allow an already installed browser for offline/controlled QA hosts.
+    launchOptions: process.env.PW_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.PW_CHROMIUM_EXECUTABLE_PATH } : {},
   },
   webServer: {
     command: [

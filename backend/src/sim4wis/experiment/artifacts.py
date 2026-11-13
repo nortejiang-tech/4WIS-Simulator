@@ -26,11 +26,11 @@ def channel_unit(name: str) -> str:
     if name in {"pose_x", "pose_y", "pose_z"} or name.startswith(("icr_", "susp_defl_")): return "m"
     if name in {"vx", "vy"}: return "m/s"
     if name in {"ax", "ay"}: return "m/s^2"
-    if name in {"yaw_rate", "steer_motor_speed"} or name.startswith(("omega_", "wheel_speed_cmd_")): return "rad/s"
+    if name in {"yaw_rate", "steer_motor_speed"} or name.startswith(("omega_", "wheel_speed_cmd_", "steer_rate_")): return "rad/s"
     if name in {"pose_psi", "roll", "pitch", "steer_hand_angle", "steer_angle_deviation"} or name.startswith(("delta_", "deltacmd_", "slip_alpha_", "grip_alpha_peak_", "steer_corner_deviation_", "linkage_arm_tie_angle_", "linkage_tie_rack_angle_")): return "rad"
     if name.startswith(("fz_", "rack_force_", "tire_fx_", "tire_fy_", "grip_capacity_", "grip_margin_")): return "N"
     if name in {"steer_hand_torque", "steer_torque_sensor", "steer_assist_torque", "steer_motor_torque"} or name.startswith(("torque_steer_", "motor_torque_", "drive_torque_cmd_")): return "N*m"
-    if name in {"steer_plant_active", "mu_avg", "strategy_index"} or name.startswith(("driver_", "slip_kappa_", "grip_", "wheel_locked_", "brake_cmd_", "linkage_efficiency_")): return "1"
+    if name in {"steer_plant_active", "mu_avg", "strategy_index"} or name.startswith(("fault_mode_", "sensor_fault_active_", "driver_", "slip_kappa_", "grip_", "wheel_locked_", "brake_cmd_", "linkage_efficiency_")): return "1"
     return "unspecified"  # do not guess units for plugin/legacy channels
 
 

@@ -1405,10 +1405,13 @@ test("scenario fault injection panel adds, toggles, and clears faults", async ({
   await expect(faultPanel).toBeVisible();
   await expect(faultPanel).toContainText("暂无故障配置");
 
-  await faultPanel.locator("select").nth(0).selectOption("sensor_bias");
-  await faultPanel.locator("select").nth(1).selectOption("rl");
-  await faultPanel.locator('input[type="number"]').fill("0.07");
-  await faultPanel.getByRole("button", { name: "+ 添加" }).click();
+  await faultPanel.getByLabel("草稿故障类型").selectOption("sensor_bias");
+  await faultPanel.getByLabel("草稿车轮 FL").uncheck();
+  await faultPanel.getByLabel("草稿车轮 FR").uncheck();
+  await faultPanel.getByLabel("草稿车轮 RL").check();
+  await faultPanel.getByLabel(/故障数值 rad/).fill("0.07");
+  await faultPanel.getByRole("button", { name: "+ 加入时间线" }).click();
+  await faultPanel.getByRole("button", { name: "应用时间线", exact: true }).click();
 
   await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
   await expect(faultPanel.getByRole("button", { name: "停用" })).toBeVisible();
@@ -1427,7 +1430,7 @@ test("scenario fault injection panel adds, toggles, and clears faults", async ({
 
 test("fault list failure does not masquerade as an empty fault configuration", async ({ page, request }, testInfo) => {
   await request.delete("/api/faults");
-  failApi(page, "**/api/faults", "synthetic fault list failure", { method: "GET" });
+  failApi(page, "**/api/faults/schedule", "synthetic fault list failure", { method: "GET" });
 
   await page.goto("/");
   const rail = page.getByRole("navigation", { name: "工作流" });
@@ -1435,10 +1438,10 @@ test("fault list failure does not masquerade as an empty fault configuration", a
 
   const faultPanel = page.locator(".panel").filter({ hasText: "故障注入" });
   await expectFailureHonesty(page, {
-    error: "读取故障失败：synthetic fault list failure",
+    error: "读取时间线失败：synthetic fault list failure",
     notMasqueradingAs: ["暂无故障配置"],
     staysEnabled: [
-      faultPanel.getByRole("button", { name: "+ 添加" }),
+      faultPanel.getByRole("button", { name: "+ 加入时间线" }),
       faultPanel.getByRole("button", { name: "刷新故障" }),
     ],
     staysVisible: [faultPanel],
@@ -1480,6 +1483,7 @@ test("fault action failures keep configured faults visible", async ({ page, requ
     }
     await route.fallback();
   });
+  failApi(page, "**/api/faults/schedule", "synthetic fault add failure", { method: "POST" });
   await page.route(`**/api/faults/${seedFault.id}`, async (route) => {
     const method = route.request().method();
     if (method === "PATCH") {
@@ -1509,22 +1513,23 @@ test("fault action failures keep configured faults visible", async ({ page, requ
   await expect(faultPanel).toBeVisible();
   await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
 
-  await faultPanel.getByRole("button", { name: "+ 添加" }).click();
-  await expect(page.getByText("添加故障失败：synthetic fault add failure").first()).toBeVisible();
+  await faultPanel.getByRole("button", { name: "+ 加入时间线" }).click();
+  await faultPanel.getByRole("button", { name: "应用时间线", exact: true }).click();
+  await expect(page.getByText("应用时间线失败：synthetic fault add failure").first()).toBeVisible();
   await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
 
   await faultPanel.getByRole("button", { name: "停用" }).click();
   await expect(page.getByText("切换状态失败：synthetic fault toggle failure").first()).toBeVisible();
   await expect(faultPanel.getByRole("button", { name: "停用" })).toBeVisible();
 
-  await faultPanel.getByRole("button", { name: "×" }).click();
+  await faultPanel.getByRole("button", { name: "删除故障 RL" }).click();
   await expect(page.getByText("删除故障失败：synthetic fault delete failure").first()).toBeVisible();
   await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
 
   await faultPanel.getByRole("button", { name: "清空全部故障" }).click();
   await expect(page.getByText("清除失败：synthetic fault clear failure").first()).toBeVisible();
   await expect(faultPanel).toContainText("RL · 传感器偏差 (0.070)");
-  await expect(faultPanel.getByRole("button", { name: "+ 添加" })).toBeEnabled();
+  await expect(faultPanel.getByRole("button", { name: "+ 加入时间线" })).toBeEnabled();
   await expect(faultPanel.getByRole("button", { name: "刷新故障" })).toBeEnabled();
 
   await attachPageScreenshot(page, testInfo, "workflow-fault-action-errors");

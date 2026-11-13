@@ -39,11 +39,11 @@ from sim4wis.core.state import (
     VehicleState,
 )
 from sim4wis.steering.tracking.coupling import (
-    corner_tracking_step,
     make_corner_trackers,
 )
 from sim4wis.vehicle.base import VehicleModel
-from sim4wis.vehicle.geometry import steer_actuator, vehicle_icr_from_velocity
+from sim4wis.vehicle.steering_actuation import advance_steering
+from sim4wis.vehicle.geometry import vehicle_icr_from_velocity
 from sim4wis.vehicle.kingpin import kingpin_torque
 from sim4wis.vehicle.model_core import (
     axle_cornering_scale,
@@ -65,7 +65,6 @@ from sim4wis.vehicle.model_core import (
 )
 from sim4wis.vehicle.rigid_body import cg_acceleration, planar_derivatives
 from sim4wis.vehicle.steering_link import (
-    front_axle_step,
     idle_channels,
     make_steering_plant,
 )
@@ -113,7 +112,8 @@ class MultiBodyModel(VehicleModel):
         self._pitch_rate = 0.0
         self._zu = np.zeros(N_WHEELS)
         self._zu_dot = np.zeros(N_WHEELS)
-        self._delta_act = np.zeros(N_WHEELS)  # steering actuator state
+        self._delta_act = np.zeros(N_WHEELS)
+        self._steer_rate = np.zeros(N_WHEELS)  # steering actuator state
         # See vehicle/steering_link.py — None unless enabled and the
         # architecture has a mechanical front axle.
         self._steering, self._mech_ratio = make_steering_plant(params)
@@ -216,6 +216,7 @@ class MultiBodyModel(VehicleModel):
         self._zu = np.zeros(N_WHEELS)
         self._zu_dot = np.zeros(N_WHEELS)
         self._delta_act = np.zeros(N_WHEELS)
+        self._steer_rate = np.zeros(N_WHEELS)
         if self._steering is not None:
             self._steering.reset()
         if self._tracking is not None:
@@ -246,33 +247,7 @@ class MultiBodyModel(VehicleModel):
         # Steering actuator: actual δ tracks δ_cmd with lag + rate limit.
         # With a mechanical front axle and the plant enabled the front pair goes
         # through the real steering system instead — see vehicle/steering_link.py.
-        if self._steering is None:
-            self._delta_act = steer_actuator(
-                self._delta_act, cmd.delta_cmd, dt,
-                getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
-            )
-        else:
-            self._delta_act[2:] = steer_actuator(
-                self._delta_act[2:], cmd.delta_cmd[2:], dt,
-                getattr(p, "steer_tau", 0.06), getattr(p, "steer_rate_max", 8.0),
-            )
-            delta_f, self._prev_hand, self.steering_channels = front_axle_step(
-                self._steering, self._mech_ratio, cmd.delta_cmd, dt,
-                prev_hand=self._prev_hand, rack_force=float(np.sum(s.rack_force[:2])),
-                speed_ms=float(s.vx),
-            )
-            self._delta_act[0] = self._delta_act[1] = delta_f
-            if self._tracking is not None:
-                trackers, per_wheel = self._tracking
-                tracked, track_channels = corner_tracking_step(
-                    trackers, per_wheel, cmd.delta_cmd, dt,
-                    rack_forces=s.rack_force, speed_ms=float(s.vx),
-                    pinion_radius=float(p.pinion_radius),
-                )
-                for corner in trackers:
-                    self._delta_act[corner] = tracked[corner]
-                self.steering_channels.update(track_channels)
-                self._prev_delta_cmd = cmd.delta_cmd.copy()
+        advance_steering(self, cmd, dt)
         delta_cmd = self._delta_act.astype(float)
 
         if float(getattr(p, "tire_relax_length", 0.0)) > 0.0:

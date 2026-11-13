@@ -29,6 +29,7 @@ actuator-spec work (M2), not the control layer's.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 
 import numpy as np
 
@@ -191,7 +192,7 @@ def corner_tracking_step(
             # frame's final value. This is what keeps open_loop bit-exact.
             _one_step(tr, load, float(speed_ms), dt, target, 0.0)
         else:
-            n = max(1, int(round(dt * float(rate))))
+            n = max(1, math.ceil(dt * float(rate) - 1e-12))
             h = dt / n
             t_rate = (target - tr.prev_target) / dt
             for k in range(n):

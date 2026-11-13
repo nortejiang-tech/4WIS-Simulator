@@ -108,6 +108,7 @@ export default function App() {
   const setPage = useSimStore((s) => s.setPage);
   const pushToast = useSimStore((s) => s.pushToast);
   const source = useSimStore(s => s.state?.interaction?.source ?? "idle");
+  const simulationError = useSimStore(s => s.state?.simulation_error);
   const gamepadId = useSimStore(s => s.gamepadId);
   const [tab, setTab] = useState<TabId>("drive");
   const [visitedTabs, setVisitedTabs] = useState<TabId[]>(["drive"]);
@@ -239,6 +240,7 @@ export default function App() {
       </header>
 
       <InteractionModeBar
+        simulationError={simulationError}
         mode={page === "run" ? "manual" : page === "script" || page === "experiment" ? "script" : page === "agent" ? "agent" : null}
         onChange={mode => { setPage(mode === "manual" ? "run" : mode === "script" ? "script" : "agent"); }}
         sourceLabel={page === "agent" ? "独立 Agent 会话" : source === "script" ? "实时脚本" : source === "manual" ? (gamepadId ? "键盘 / 手柄·方向盘" : "键盘") : "输入已释放"}

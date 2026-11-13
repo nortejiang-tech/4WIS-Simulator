@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 from sim4wis.agent.session import (CONTRACT, MAX_SESSIONS, MAX_STEPS, STRATEGIES, TTL_S,
-    REGISTRY_LOCK, SESSIONS, SessionConfig, SessionError, StepRequest, create_session, get_session)
+    REGISTRY_LOCK, SESSIONS, FaultScheduleRequest, SessionConfig, SessionError, StepRequest, create_session, get_session)
 from sim4wis.experiment.artifacts import manifest
 
 router = APIRouter(prefix="/agent", tags=["agent-v1"])
@@ -26,17 +26,23 @@ def capabilities():
     return {"contract": CONTRACT, "execution": "isolated fixed-step; GUI input never changes an Agent session",
             "models": ["kinematic", "simplified_dynamic", "multibody"], "strategies": sorted(STRATEGIES),
             "limits": {"max_steps_per_request": 1000, "max_steps_per_session": MAX_STEPS,
-                       "max_sessions": MAX_SESSIONS, "idle_ttl_s": TTL_S, "max_preview_points": 1000},
+                       "max_internal_dynamics_dt_s": 0.00125, "max_sessions": MAX_SESSIONS, "idle_ttl_s": TTL_S, "max_preview_points": 1000},
             "units": {"time": "s", "length": "m", "angle": "rad", "speed": "m/s", "wheel_order": ["FL","FR","RL","RR"]},
-            "schemas": {"create": SessionConfig.model_json_schema(), "step": StepRequest.model_json_schema()},
+            "schemas": {"create": SessionConfig.model_json_schema(), "step": StepRequest.model_json_schema(),
+                        "fault_schedule": FaultScheduleRequest.model_json_schema()},
+            "faults": {"timing": "simulation seconds; [t_start,t_end); integration splits at event boundaries",
+                       "composition": "multiple wheels; one actuator fault per wheel/time; bias+noise, dropout holds",
+                       "physical_models": ["simplified_dynamic", "multibody"],
+                       "sensor_scope": "observation only; controller feedback is unchanged",
+                       "steering_scope": "independent corners; coupled-rack actuator faults are refused"},
             "telemetry_channels": [{"name": name, "unit": channel_unit(name)} for name in AVAILABLE_CHANNELS],
             "outputs": ["state", "preview", "run_id", "full_csv", "full_json", "bundle_zip", "trajectory_svg", "chart_svg"],
-            "workflow": ["create_session", "observe_session", "step_session", "export_session", "close_session"],
+            "workflow": ["create_session", "set_fault_schedule", "observe_session", "step_session", "export_session", "close_session"],
             "notes": ["Every step request supplies complete controls; omitted controls return to defaults.",
                       "Retry with the SAME request_id and identical body after an uncertain response.",
                       "expected_revision must match the last observed revision.",
                       "speed_target_ms and front_angle_rad bypass driver aids; pedal controls retain them.",
-                      "Export records every accepted integration step; preview is explicitly sampled.",
+                      "Export records every accepted outer control step; preview is explicitly sampled.",
                       "Kinematic force/acceleration outputs are unsupported placeholders; inspect state.accel.valid.",
                       "Sessions are in memory; export before closing or server restart. Long jobs use study/batch."]}
 
@@ -65,6 +71,11 @@ def observe(session_id: str):
 def step(session_id: str, body: StepRequest):
     result = _call(_call(get_session, session_id).step, body)
     return JSONResponse(result, status_code=422 if result["status"] == "failed" else 200)
+
+
+@router.post("/sessions/{session_id}/faults")
+def set_fault_schedule(session_id: str, body: FaultScheduleRequest):
+    return _call(_call(get_session, session_id).set_fault_schedule, body)
 
 
 @router.get("/sessions/{session_id}/preview")

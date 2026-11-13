@@ -1,82 +1,61 @@
-"""Fault injection REST endpoints.
-
-GET  /api/faults         — list all configured faults
-POST /api/faults         — add a new fault
-PATCH /api/faults/{id}   — toggle active state
-DELETE /api/faults/{id}  — remove a fault
-DELETE /api/faults       — clear all faults
-"""
-
-from __future__ import annotations
-
-from typing import Any, Literal
-
+"""Live fault API, with atomic schedule replacement and legacy single-fault CRUD."""
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, ConfigDict
 from sim4wis.core.simulator import get_simulator
-from sim4wis.fault import FaultConfig, FaultType
+from sim4wis.fault import FaultConfig
+from sim4wis.fault.schema import FaultSchedule, FaultSpec
 
 router = APIRouter()
 
-WheelName = Literal["fl", "fr", "rl", "rr"]
-
-
-class FaultRequest(BaseModel):
-    fault_type: FaultType
-    wheel: WheelName
-    value: float = Field(0.0, description=(
-        "stuck_angle [rad] | range_limit [rad] | bias [rad] | noise_std [rad]; "
-        "ignored for motor_stuck_zero and sensor_dropout"
-    ))
-    active: bool = True
-
-
 class ActivePatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     active: bool
 
-
 @router.get("/faults")
-async def list_faults() -> dict[str, Any]:
-    sim = get_simulator()
-    return {"faults": [f.to_dict() for f in sim.fault_injector.list_faults()]}
+async def list_faults():
+    return {"faults": get_simulator().fault_injector.status()["faults"]}
 
+@router.get("/faults/schedule")
+async def get_schedule():
+    return get_simulator().fault_injector.status()
+
+@router.post("/faults/schedule")
+async def set_schedule(body: FaultSchedule):
+    sim = get_simulator()
+    try:
+        sim.fault_injector.replace_schedule(body.faults, seed=body.seed, model=sim.model, now=sim.model.state.t)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return sim.fault_injector.status()
 
 @router.post("/faults", status_code=201)
-async def add_fault(body: FaultRequest) -> dict[str, Any]:
+async def add_fault(body: FaultSpec):
     sim = get_simulator()
-    cfg = FaultConfig(
-        fault_type=body.fault_type,
-        wheel=body.wheel,
-        value=body.value,
-        active=body.active,
-    )
-    sim.fault_injector.add(cfg)
+    cfg = FaultConfig.from_spec(body, len(sim.fault_injector.list_faults()))
+    if body.id is None:
+        import uuid
+        cfg.id = uuid.uuid4().hex[:12]
+    try:
+        sim.fault_injector.validate_model([body], sim.model)
+        sim.fault_injector.add(cfg)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     return cfg.to_dict()
 
-
 @router.patch("/faults/{fault_id}")
-async def patch_fault(fault_id: str, body: ActivePatch) -> dict[str, Any]:
-    sim = get_simulator()
-    if not sim.fault_injector.set_active(fault_id, body.active):
-        raise HTTPException(status_code=404, detail=f"fault {fault_id!r} not found")
-    faults = sim.fault_injector.list_faults()
-    f = next((x for x in faults if x.id == fault_id), None)
-    if f is None:
-        raise HTTPException(status_code=404, detail=f"fault {fault_id!r} not found")
-    return f.to_dict()
+async def patch_fault(fault_id: str, body: ActivePatch):
+    fi = get_simulator().fault_injector
+    if not fi.set_active(fault_id, body.active):
+        raise HTTPException(404, f"fault {fault_id!r} not found")
+    return next(f.to_dict() for f in fi.list_faults() if f.id == fault_id)
 
-
-@router.delete("/faults/{fault_id}", status_code=200)
-async def delete_fault(fault_id: str) -> dict[str, Any]:
-    sim = get_simulator()
-    if not sim.fault_injector.remove(fault_id):
-        raise HTTPException(status_code=404, detail=f"fault {fault_id!r} not found")
+@router.delete("/faults/{fault_id}")
+async def delete_fault(fault_id: str):
+    if not get_simulator().fault_injector.remove(fault_id):
+        raise HTTPException(404, f"fault {fault_id!r} not found")
     return {"deleted": fault_id}
 
-
-@router.delete("/faults", status_code=200)
-async def clear_faults() -> dict[str, Any]:
-    sim = get_simulator()
-    sim.fault_injector.clear()
+@router.delete("/faults")
+async def clear_faults():
+    get_simulator().fault_injector.clear()
     return {"cleared": True}

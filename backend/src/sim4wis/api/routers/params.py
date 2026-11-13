@@ -132,5 +132,8 @@ async def set_params(body: ParamsUpdate) -> dict[str, Any]:
             status_code=422,
             detail=f"cg_to_front ({new_params.cg_to_front}) must be < wheelbase ({new_params.wheelbase})",
         )
-    sim.set_params(new_params)
+    try:
+        sim.set_params(new_params)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     return await get_params()

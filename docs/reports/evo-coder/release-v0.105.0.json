@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "version": "0.105.0",
+  "date": "2026-11-13",
+  "calls": [
+    {
+      "task": "multi-point fault UI",
+      "run_id": "0d41e632-0373-424c-a1ae-3a2b5a09750a",
+      "model": "halogen-qwen3.8-flash-next",
+      "provider": "EVO-X2",
+      "entrypoint": "evo-coder",
+      "baseline": "d810968e0e3f0ce407b37e5fc8b92b09f6e661c3",
+      "branch": "codex/multipoint-faults-v0.105.0",
+      "isolation": "same worktree; allowed file scope; concurrent Planner writes contaminated supervisor scope check",
+      "allowed_paths": [
+        "frontend/src/components/FaultPanel.tsx"
+      ],
+      "model_observed_paths": [
+        "frontend/src/components/FaultPanel.tsx"
+      ],
+      "supervisor_extra_paths": [
+        "backend/src/sim4wis/experiment/artifacts.py",
+        "backend/tests/test_multipoint_faults.py"
+      ],
+      "extra_paths_attribution": "Planner wrote these concurrently; not evidence of model writes",
+      "duration_s": 132.691,
+      "turns": 12,
+      "tool_calls": 14,
+      "verification_attempts": 2,
+      "declared_verification_passes": 1,
+      "supervisor_status": "FAIL",
+      "classification": "LOCAL_POSTWRITE_FAILURE",
+      "reason": "WRITE_SCOPE_VIOLATION",
+      "stop_reason": "toolUse",
+      "structured_output": true,
+      "parameters": {
+        "temperature": 0,
+        "top_p": 1,
+        "max_output_tokens": 4096,
+        "max_context_tokens": 17957,
+        "thinking": false,
+        "thinking_source": "wrapper instruction; not ledger observation"
+      },
+      "hashes": {
+        "prompt_sha256": "50c5c5d2816453ea850b217a0544ec0f27261118e409280601f59868ee66cfe7",
+        "extension_sha256": "ad7a157359f4535271475f392cc98c106d1dbfc96d331df8452801ac836f8787",
+        "models_sha256": "80cc6842f2e3d8db8233559bcdd4cb0a73ca5f9b4a1c974191b4f5b9b3fc6ebe",
+        "policy_sha256": "87096fc22ab6b9b9a90c73464bf1c2559d30d5f01fa0536e088d2352072568ea",
+        "supervisor_sha256": "173293ac91b216185cf8ac701b50013aca78319e01b70fb4f9dfdf3524aa8721"
+      },
+      "planner_acceptance": "partial_accepted_with_fixes",
+      "rework": [
+        "preserve draft values/passive parameters",
+        "validate finite/range inputs and seed",
+        "initial read failure must remain visible",
+        "remove nested labels",
+        "legible parameter/error display",
+        "real browser workflow validation"
+      ],
+      "planner_scope": "all physics, timeline contract, API/MCP, tests, numerical audit and release",
+      "independent_evidence": "release acceptance report; frontend type-check, build and actual browser E2E",
+      "tokens": {
+        "input": null,
+        "output": null,
+        "total": null,
+        "cloud_saved": null,
+        "status": "unavailable",
+        "reason": "secret-free ledger contains no token usage; max_context_tokens is not consumption"
+      }
+    }
+  ],
+  "rates": {
+    "supervisor_pass": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "first_independent_acceptance": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "useful_output_adoption": {
+      "numerator": 1,
+      "denominator": 1
+    }
+  },
+  "assessment": "Useful UI scaffold but not independently releasable. Planner fixes were required. Supervisor failure reflects inadequate stage isolation; no inference that local Coder edited out-of-scope files. One sample does not establish long-term quality.",
+  "next_hypothesis": "Avoid any parallel writes to a scoped Coder worktree; add explicit value round-trip acceptance to UI prompt; keep physics and credentials with Planner."
+}

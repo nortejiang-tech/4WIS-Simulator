@@ -56,6 +56,7 @@ MCP_SUPPORT_FILES = (
     "scripts/check_golden_experiments.py",
     "scripts/study_single_wheel_failure.py",
     "scripts/reporting.py",
+    "scripts/portable_fault_smoke.py",
     "docs/golden_experiments.json",
 )
 OUT_ROOT = REPO / "dist_portable"
@@ -242,14 +243,20 @@ def copy_app_and_data(pkg: Path) -> None:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
 
+    report_src = REPO / "docs" / "reports" / f"multipoint_v{VERSION}"
+    if report_src.is_dir():
+        shutil.copytree(report_src, pkg / "docs" / "reports" / f"multipoint_v{VERSION}", dirs_exist_ok=True)
+
     # User-facing release material belongs in the archive too.  The detailed
     # changelog is versioned with the package rather than inferred from HEAD.
     for rel in (
         "docs/user_manual.html",
         "docs/interaction_guide.md",
+        "docs/multipoint_faults.md",
         "docs/agent_interface_design.md",
         f"docs/v{VERSION}_changelog.md",
-        f"docs/reports/evo-coder/2026-09-09-release-v{VERSION}.md",
+        f"docs/reports/evo-coder/release-v{VERSION}.md",
+        f"docs/reports/evo-coder/release-v{VERSION}.json",
     ):
         src = REPO / rel
         if not src.is_file():

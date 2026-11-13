@@ -85,6 +85,7 @@ for _i, _w in enumerate(_WHEEL_NAMES):
 # Additional published body/wheel state, including validity flags.
 AVAILABLE_CHANNELS["mu_avg"] = lambda s, c: float(s.mu_avg)
 _STATE_WHEEL_FIELDS = (
+    "delta_reported", "fault_mode", "sensor_fault_active", "steer_rate",
     "susp_defl", "wheel_locked", "grip_capacity", "grip_util", "grip_margin_lat",
     "grip_margin_long", "grip_alpha_peak", "grip_kappa_peak", "grip_beyond_peak_lat",
     "grip_beyond_peak_long", "linkage_arm_tie_angle", "linkage_tie_rack_angle", "linkage_efficiency",

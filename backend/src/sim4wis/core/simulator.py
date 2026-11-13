@@ -86,6 +86,7 @@ class Simulator:
         self._task: asyncio.Task | None = None
         self._running = False
         self.paused = False
+        self.simulation_error: str | None = None
         self.input_owner: str | None = None
         self.input_seen: float | None = None
         self.record_full_rate = False
@@ -182,14 +183,20 @@ class Simulator:
 
     def set_params(self, params: VehicleParams) -> None:
         """Replace vehicle parameters and reset the model in place."""
+        candidate = self._make_model(params, self.model_type)
+        self.fault_injector.validate_model(self.fault_injector.specs(), candidate, self.model_type)
         self.params = params
-        self.model = self._make_model(self.params, self.model_type)
+        self.model = candidate
+        self.fault_injector.reset_runtime(self.model.state.delta)
         self.strategy = make_strategy(self.strategy_name, self.params)
 
     def set_model_type(self, model_type: str) -> None:
         """Switch the integration model."""
+        candidate = self._make_model(self.params, model_type)
+        self.fault_injector.validate_model(self.fault_injector.specs(), candidate, model_type)
         self.model_type = model_type
-        self.model = self._make_model(self.params, self.model_type)
+        self.model = candidate
+        self.fault_injector.reset_runtime(self.model.state.delta)
 
     @staticmethod
     def _make_model(params: VehicleParams, model_type: str) -> VehicleModel:
@@ -202,6 +209,8 @@ class Simulator:
 
     def reset(self) -> None:
         self.model.reset()
+        self.fault_injector.reset_runtime(self.model.state.delta)
+        self.simulation_error = None
 
     def release_input(self) -> None:
         transient = {"wheel_norm", "vx_frac", "vy_frac", "yaw_frac", "speed_target_ms", "steer_raw_rad"}
@@ -240,23 +249,17 @@ class Simulator:
                     next_time = loop.time()
                     continue
                 cmd = self.strategy.compute(self.driver, self.model.state, self.dt_sim)
-                if self.fault_injector.has_active:
-                    from sim4wis.core.state import ControlCommand
-                    cmd = ControlCommand(
-                        delta_cmd=self.fault_injector.apply_to_cmd(cmd.delta_cmd),
-                        wheel_speed_cmd=cmd.wheel_speed_cmd,
-                        icr_target_body=cmd.icr_target_body,
-                    )
                 # Fill the friction-brake actuator command from the driver
                 # (strategies don't touch braking — it's a vehicle concern).
                 self.last_cmd = cmd
-                advance_model(self.model, self.params, self.driver, cmd, self.dt_sim, self.env)
+                advance_model(self.model, self.params, self.driver, cmd, self.dt_sim, self.env, self.fault_injector)
+                self.last_cmd = self.model.last_effective_cmd
                 if self.record_full_rate:
                     self.recorder.write(self.model.state, self.last_cmd, self.strategy_name, self.driver, self.model)
-            except Exception:
+            except Exception as exc:
                 logger.exception("Simulator loop step failed")
-                # Recover by resetting the model so we don't get NaN-locked.
-                self.model.reset()
+                self.paused = True
+                self.simulation_error = f"{type(exc).__name__}: {exc}"
 
             step_count += 1
 
@@ -320,7 +323,7 @@ class Simulator:
                 return None
             return x
 
-        reported_delta = self.fault_injector.apply_to_reported(s.delta)
+        reported_delta = s.delta_reported
 
         side_forces, force_source = _side_force_body_y(self.model, s.delta)
         side_left = float(side_forces[0] + side_forces[2])
@@ -334,6 +337,8 @@ class Simulator:
             "interaction": {"paused": self.paused,
                             "source": "script" if self.script_runner.is_running else "manual" if self.input_owner else "idle"},
             "fault_active": self.fault_injector.has_active,
+            "fault_timeline": self.fault_injector.status(),
+            "simulation_error": self.simulation_error,
             "driver": {
                 "throttle": self.driver.throttle,
                 "brake": self.driver.brake,

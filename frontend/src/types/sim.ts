@@ -146,6 +146,7 @@ export interface SimStateMessage {
   path_version?: number; // bumps when the reference path changes
   scenario_version?: number; // bumps when the active scenario changes
   fault_active?: boolean; // true when at least one fault is active
+  simulation_error?: string | null;
 }
 
 // Reference path (fetched from REST when path_version changes)

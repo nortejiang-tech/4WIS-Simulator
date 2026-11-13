@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from sim4wis.core.step import advance_model
+from sim4wis.fault import FaultInjector
 from sim4wis.controller.registry import make_strategy
 from sim4wis.core.state import DriverInput, EnvironmentState, VehicleParams
 from sim4wis.environment.disturbance import Scene
@@ -52,7 +53,8 @@ SCALAR_CHANNELS = (
 )
 _IDLE_STEERING = idle_channels()
 WHEEL_CHANNELS = (
-    "delta", "delta_cmd", "omega", "fz", "torque_steer",
+    "delta", "delta_cmd", "delta_reported", "fault_mode", "sensor_fault_active", "steer_rate",
+    "omega", "fz", "torque_steer",
     "rack_force", "motor_torque", "slip_alpha", "slip_kappa", "icr_dev",
     # Friction budget, so a run can be reviewed for where grip ran out and
     # whether the tyre was still on the rising side when it did.
@@ -110,10 +112,8 @@ class SimSession:
             plan = build_plan(exp.path)
             if plan is not None and hasattr(self.strategy, "plan_override"):
                 self.strategy.plan_override = plan
-        # Latched hold angles for stuck_hold faults (captured at activation).
-        self._fault_hold: dict[int, float] = {}
-        # Free-caster integrator states: key → [delta, delta_dot].
-        self._free_state: dict[int, list[float]] = {}
+        self.fault_injector = FaultInjector(exp.faults, seed=exp.fault_seed)
+        self.fault_injector.validate_model(exp.faults, self.model, exp.model_type)
 
     # ---- execution -----------------------------------------------------------
 
@@ -136,6 +136,7 @@ class SimSession:
         speed_target = 0.0  # current speed target [m/s]
 
         self.model.reset()
+        self.fault_injector.reset_runtime(self.model.state.delta)
 
         for step_def in exp.maneuver.steps:
             if step_def.mode_params:
@@ -198,12 +199,11 @@ class SimSession:
                     driver.mode_params.pop("steer_raw_rad", None)
                     driver.steering = max(-1.0, min(1.0, steer_raw))
                 cmd = self.strategy.compute(driver, self.model.state, dt)
-                self._apply_faults(cmd)
                 # Fill the friction-brake actuator command (same helper the
                 # live loop uses, so the two cannot drift apart).
-                advance_model(self.model, self.params, driver, cmd, dt, self.env)
+                advance_model(self.model, self.params, driver, cmd, dt, self.env, self.fault_injector)
                 if n_steps % record_every == 0:
-                    self._sample(t_out, chans, cmd, driver)
+                    self._sample(t_out, chans, self.model.last_effective_cmd, driver)
                 n_steps += 1
             elapsed += step_def.duration
             if progress is not None:
@@ -218,54 +218,9 @@ class SimSession:
                 "experiment": exp.model_dump(mode="json"),
                 "record_hz": exp.record_hz,
                 "n_samples": len(t_out),
+                "fault_timeline": self.fault_injector.status(),
             },
         )
-
-    # ---- fault injection ---------------------------------------------------------
-
-    def _apply_faults(self, cmd) -> None:
-        """Overwrite steer commands for active faults (see schema.FaultSpec)."""
-        t = float(self.model.state.t)
-        dt = float(self.exp.dt)
-        for i, f in enumerate(self.exp.faults):
-            if t < f.t_start:
-                continue
-            w = int(f.wheel)
-            key = i * 4 + w
-            if f.fault_type == "stuck_zero":
-                cmd.delta_cmd[w] = 0.0
-            elif f.fault_type == "stuck_hold":
-                if key not in self._fault_hold:
-                    # Latch the *actual* wheel angle at activation — a jam
-                    # freezes the mechanism where it physically is.
-                    self._fault_hold[key] = float(self.model.state.delta[w])
-                cmd.delta_cmd[w] = self._fault_hold[key]
-            elif f.fault_type == "stuck_value":
-                cmd.delta_cmd[w] = float(f.value)
-            elif f.fault_type == "limited":
-                lim = abs(float(f.value))
-                cmd.delta_cmd[w] = max(-lim, min(lim, float(cmd.delta_cmd[w])))
-            elif f.fault_type == "free_caster":
-                # De-energised, non-self-locking mechanism: the wheel is a
-                # castering DOF driven back by the tyre kingpin moment.
-                # τ_steer > 0 is the holding torque the (absent) actuator
-                # would have to supply, so the free wheel feels −τ_steer.
-                if key not in self._free_state:
-                    self._free_state[key] = [float(self.model.state.delta[w]), 0.0]
-                delta, ddot = self._free_state[key]
-                tau_kp = float(self.model.state.torque_steer[w])
-                drive = -f.eta_rev * tau_kp
-                fric = f.c_damp * ddot + f.tau_coulomb * math.tanh(ddot / 0.05)
-                acc = (drive - fric) / f.j_steer
-                ddot += acc * dt                      # semi-implicit Euler
-                delta += ddot * dt
-                lim = float(self.params.steer_limit)
-                if delta > lim:
-                    delta, ddot = lim, min(ddot, 0.0)
-                elif delta < -lim:
-                    delta, ddot = -lim, max(ddot, 0.0)
-                self._free_state[key] = [delta, ddot]
-                cmd.delta_cmd[w] = delta
 
     # ---- sampling --------------------------------------------------------------
 
@@ -288,6 +243,8 @@ class SimSession:
         slip_a = getattr(self.model, "slip_alpha", None)
         slip_k = getattr(self.model, "slip_kappa", None)
         for i, w in enumerate(WHEELS):
+            for field in ("delta_reported", "fault_mode", "sensor_fault_active", "steer_rate"):
+                chans[f"{field}_{w}"].append(float(getattr(s, field)[i]))
             chans[f"delta_{w}"].append(float(s.delta[i]))
             chans[f"delta_cmd_{w}"].append(float(cmd.delta_cmd[i]))
             chans[f"omega_{w}"].append(float(s.wheel_omega[i]))

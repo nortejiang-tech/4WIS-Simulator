@@ -37,8 +37,27 @@ jobs:
           npm ci
           npm run build
 
+      - name: Verify dynamics and fault contracts on Windows
+        run: |
+          python -m pip install -e "./backend[dev]"
+          python -m pytest backend/tests/test_multipoint_faults.py backend/tests/test_physics_audit_v105.py backend/tests/test_physics_review.py backend/tests/test_agent_interaction.py backend/tests/test_fault_injection.py backend/tests/test_fault_reconfig.py -q --junitxml=windows-fault-tests.xml
+
       - name: Build Windows portable archive
         run: python scripts/build_portable.py --targets windows-x64
 
       - name: Verify archive and start embedded application
-        run: python scripts/check_portable_package.py --targets windows-x64 --native-smoke
+        run: |
+          python scripts/check_portable_package.py --targets windows-x64 --native-smoke --json | Tee-Object -FilePath windows-portable-smoke.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git rev-parse HEAD | Out-File -FilePath windows-source-commit.txt
+
+      - name: Retain verified native archive and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-native-release
+          path: |
+            dist_portable/4WIS_Simulator_v*_windows-x64.zip
+            windows-fault-tests.xml
+            windows-portable-smoke.log
+            windows-source-commit.txt
+          retention-days: 30

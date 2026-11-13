@@ -338,9 +338,26 @@ def _tool(name, description, properties, required=()):
                 inputSchema={"type": "object", "additionalProperties": False,
                              "properties": properties, "required": list(required)})
 
+_FAULT_SCHEMA = {"type": "object", "additionalProperties": False,
+    "required": ["fault_type", "wheel"], "properties": {
+        "fault_type": {"type": "string", "enum": ["stuck_zero", "stuck_value", "limited", "stuck_hold", "free_caster", "sensor_bias", "sensor_noise", "sensor_dropout"]},
+        "wheel": {"type": "integer", "minimum": 0, "maximum": 3},
+        "id": {"type": "string", "maxLength": 64}, "active": {"type": "boolean"},
+        "value": {"type": "number"}, "t_start": {"type": "number", "minimum": 0},
+        "t_end": {"type": ["number", "null"], "minimum": 0},
+        "eta_rev": {"type": "number", "minimum": 0, "maximum": 1},
+        "j_steer": {"type": "number", "exclusiveMinimum": 0},
+        "c_damp": {"type": "number", "minimum": 0}, "tau_coulomb": {"type": "number", "minimum": 0}}}
+
 TOOL_DESCRIPTIONS.extend([
     _tool("create_session", "Create an isolated fixed-step Agent session. Human GUI inputs cannot alter it. experiment requires name and explicit model_type/strategy; omit maneuver steps. Use describe_capabilities for the full schema.",
           {"experiment": {"type": "object"}, "label": {"type": "string", "maxLength": 120}}, ["experiment"]),
+    _tool("set_fault_schedule", "Atomically replace an isolated session's multi-point fault timeline. Simulation seconds, [t_start,t_end); equal starts trigger simultaneously, unequal starts sequentially. New starts must be >= observed state.t. Use expected_revision and retry the SAME request_id/body. [] clears faults. Physical jam/free-caster require dynamics and independent corners. Sensor faults affect observation only. Full semantics/schema in describe_capabilities.",
+          {"session_id": _ID_SCHEMA, "request_id": {"type": "string", "minLength": 1, "maxLength": 80},
+           "expected_revision": {"type": "integer", "minimum": 0},
+           "faults": {"type": "array", "maxItems": 64, "items": _FAULT_SCHEMA},
+           "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295}},
+          ["session_id", "request_id", "expected_revision", "faults"]),
     _tool("list_sessions", "List live Agent sessions, revisions, status and sample counts.", {}),
     _tool("observe_session", "Read current state without advancing simulation time.", {"session_id": _ID_SCHEMA}, ["session_id"]),
     _tool("step_session", "Apply complete controls for 1..1000 fixed steps. Use the last revision. Retry uncertain responses with the SAME request_id and body; different bodies with the same id are refused. Physical units: rad, m/s, FL/FR/RL/RR.",
@@ -386,11 +403,11 @@ async def _call_tool(ctx: Any, params: CallToolRequestParams) -> CallToolResult:
             result = await asyncio.to_thread(_checked_request, "POST", "/api/agent/sessions", args)
         elif name == "list_sessions":
             result = await asyncio.to_thread(_checked_request, "GET", "/api/agent/sessions")
-        elif name in {"observe_session", "step_session", "export_session", "close_session"}:
+        elif name in {"observe_session", "step_session", "set_fault_schedule", "export_session", "close_session"}:
             sid = urllib.parse.quote(str(args.pop("session_id")), safe="")
             method, suffix = {"observe_session": ("GET", ""), "step_session": ("POST", "/step"),
-                              "export_session": ("POST", "/export"), "close_session": ("DELETE", "")}[name]
-            result = await asyncio.to_thread(_checked_request, method, f"/api/agent/sessions/{sid}{suffix}", args if name == "step_session" else None)
+                              "set_fault_schedule": ("POST", "/faults"), "export_session": ("POST", "/export"), "close_session": ("DELETE", "")}[name]
+            result = await asyncio.to_thread(_checked_request, method, f"/api/agent/sessions/{sid}{suffix}", args if name in {"step_session", "set_fault_schedule"} else None)
         elif name == "get_run_artifacts":
             rid = urllib.parse.quote(str(args["run_id"]), safe="")
             result = await asyncio.to_thread(_checked_request, "GET", f"/api/runs/{rid}/artifacts")

@@ -35,7 +35,7 @@ DEFAULT_TARGETS = ("macos-arm64", "windows-x64")
 class Check:
     target: str
     name: str
-    ok: bool
+    ok: bool | None
     detail: str
 
 
@@ -104,9 +104,13 @@ def _static_checks(target: str, version: str) -> list[Check]:
                 "docs/golden_experiments.json",
                 "docs/user_manual.html",
                 "docs/interaction_guide.md",
+                "docs/multipoint_faults.md",
+                "scripts/portable_fault_smoke.py",
+                "app/src/sim4wis/fault/schema.py",
+                "app/src/sim4wis/vehicle/steering_actuation.py",
                 "docs/agent_interface_design.md",
                 f"docs/v{version}_changelog.md",
-                f"docs/reports/evo-coder/2026-09-09-release-v{version}.md",
+                f"docs/reports/evo-coder/release-v{version}.md",
                 "projects/default.yaml",
                 "scripts_lib/slalom.yaml",
                 "procedures/step_steer_golden.yaml",
@@ -144,6 +148,12 @@ def _static_checks(target: str, version: str) -> list[Check]:
                 same = packaged in names and _sha256(archive.read(packaged)) == _sha256(source.read_bytes())
                 checks.append(Check(target, f"current source {rel}", same,
                                     "SHA-256 matches source" if same else "missing or stale source"))
+
+            sources = list((ROOT / "backend/src/sim4wis").rglob("*.py")) + list((ROOT / "backend/src/sim4wis_mcp").rglob("*.py"))
+            stale = [str(p.relative_to(ROOT / "backend/src")) for p in sources
+                     if _entry(prefix, "app/src/" + p.relative_to(ROOT / "backend/src").as_posix()) not in names
+                     or _sha256(archive.read(_entry(prefix, "app/src/" + p.relative_to(ROOT / "backend/src").as_posix()))) != _sha256(p.read_bytes())]
+            checks.append(Check(target, "all backend source hashes", not stale, str(stale) if stale else f"{len(sources)} Python files match"))
 
             version_entry = _entry(prefix, "app/src/sim4wis/__init__.py")
             has_version = version_entry in names and f'__version__ = "{version}"'.encode() in archive.read(version_entry)
@@ -227,7 +237,7 @@ def _extract_with_archive_modes(archive: zipfile.ZipFile, dest: Path) -> None:
 def _native_smoke(target: str, version: str) -> list[Check]:
     native = _native_target()
     if native != target:
-        return [Check(target, "native smoke", True,
+        return [Check(target, "native smoke", None,
                       f"not run on {platform.system()} {platform.machine()}; static archive checks completed")]
 
     path = archive_path(version, target)
@@ -319,6 +329,11 @@ def _native_smoke(target: str, version: str) -> list[Check]:
             agent_ok = status == 200 and json.loads(body).get("contract") == "4wis.agent.v1"
             checks.append(Check(target, "embedded Agent API", agent_ok,
                                 "4wis.agent.v1" if agent_ok else body.decode("utf-8", "replace")[:500]))
+            fault_smoke = subprocess.run(
+                [str(python), str(pkg / "scripts/portable_fault_smoke.py"), "--base", f"http://127.0.0.1:{port}"],
+                cwd=pkg, env=env, text=True, capture_output=True, timeout=90)
+            checks.append(Check(target, "packaged MCP multipoint E2E", fault_smoke.returncode == 0,
+                (fault_smoke.stdout + fault_smoke.stderr)[-2000:]))
             status, body = _http_json(f"http://127.0.0.1:{port}/")
             ui_ok = status == 200 and b"<div" in body.lower()
             checks.append(Check(target, "embedded Web UI", ui_ok,
@@ -353,11 +368,11 @@ def main() -> int:
             checks.extend(_native_smoke(target, version))
 
     for check in checks:
-        state = "ok" if check.ok else "failed"
+        state = "PENDING" if check.ok is None else "PASS" if check.ok else "FAIL"
         print(f"{check.target}: {check.name}: {state} ({check.detail})")
     if args.json:
         print(json.dumps([asdict(check) for check in checks], ensure_ascii=False, indent=2))
-    return 0 if all(check.ok for check in checks) else 1
+    return 0 if all(check.ok is not False for check in checks) else 1
 
 
 if __name__ == "__main__":

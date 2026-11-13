@@ -443,6 +443,10 @@ class ControlCommand:
     # mode this stays zero and `wheel_speed_cmd` drives the wheel servos.
     drive_torque_cmd: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
 
+    # Finite entries are physical mechanism constraints, applied before tyre forces.
+    steer_override: np.ndarray = field(default_factory=lambda: np.full(N_WHEELS, np.nan))
+    steer_override_rate: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
+
     @staticmethod
     def zero() -> ControlCommand:
         return ControlCommand(
@@ -491,6 +495,10 @@ class VehicleState:
     """
 
     t: float = 0.0
+    delta_reported: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
+    fault_mode: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
+    sensor_fault_active: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
+    steer_rate: np.ndarray = field(default_factory=lambda: np.zeros(N_WHEELS))
 
     # Pose
     x: float = 0.0

@@ -1,0 +1,1650 @@
+{
+  "version": "0.105.0",
+  "date": "2026-11-13",
+  "kind": "synthetic internal verification",
+  "scope": "reduced independent-corner mechanics; no vehicle/bench correlation",
+  "scenario_metrics": [
+    {
+      "model": "simplified_dynamic",
+      "case": "baseline",
+      "metrics": {
+        "peak_yaw_deg_s": 12.49763972838382,
+        "peak_ay_m_s2": 2.415198815300259,
+        "max_position_difference_m": 0.0,
+        "end_position_difference_m": 0.0,
+        "peak_grip_util": 0.5870742208648724,
+        "minimum_fz_n": 5544.287655437803,
+        "max_observation_error_deg": 0.0
+      },
+      "events": [],
+      "experiment": {
+        "name": "multi_baseline",
+        "description": "",
+        "vehicle": {
+          "profile": null,
+          "overrides": {}
+        },
+        "model_type": "simplified_dynamic",
+        "strategy": "ideal_ackermann",
+        "mode_params": {},
+        "scene": null,
+        "path": null,
+        "faults": [],
+        "fault_seed": 20261113,
+        "maneuver": {
+          "name": "untitled",
+          "steps": [
+            {
+              "name": "ramp",
+              "duration": 4.0,
+              "steer": {
+                "kind": "constant",
+                "amplitude": 0.0,
+                "unit": "normalized",
+                "freq_hz": 0.5,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 3.0,
+              "mode_params": {}
+            },
+            {
+              "name": "sine",
+              "duration": 10.0,
+              "steer": {
+                "kind": "sine",
+                "amplitude": 2.0,
+                "unit": "front_deg",
+                "freq_hz": 0.2,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 0.0,
+              "mode_params": {}
+            }
+          ]
+        },
+        "dt": 0.005,
+        "record_hz": 200.0,
+        "kpis": []
+      },
+      "samples": 2800,
+      "steps": 2800
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "simultaneous",
+      "metrics": {
+        "peak_yaw_deg_s": 12.568736254581603,
+        "peak_ay_m_s2": 2.4290400654735316,
+        "max_position_difference_m": 21.500039503907303,
+        "end_position_difference_m": 21.500039503907303,
+        "peak_grip_util": 0.5870742208648724,
+        "minimum_fz_n": 5534.587865947299,
+        "max_observation_error_deg": 0.0
+      },
+      "events": [
+        {
+          "id": "fl-jam",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 0,
+          "fault_type": "stuck_hold",
+          "config": {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fr-jam",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 1,
+          "fault_type": "stuck_hold",
+          "config": {
+            "fault_type": "stuck_hold",
+            "wheel": 1,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fr-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fl-jam",
+          "event": "deactivated",
+          "time": 10.123
+        },
+        {
+          "id": "fr-jam",
+          "event": "deactivated",
+          "time": 10.123
+        }
+      ],
+      "experiment": {
+        "name": "multi_simultaneous",
+        "description": "",
+        "vehicle": {
+          "profile": null,
+          "overrides": {}
+        },
+        "model_type": "simplified_dynamic",
+        "strategy": "ideal_ackermann",
+        "mode_params": {},
+        "scene": null,
+        "path": null,
+        "faults": [
+          {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "stuck_hold",
+            "wheel": 1,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fr-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        ],
+        "fault_seed": 20261113,
+        "maneuver": {
+          "name": "untitled",
+          "steps": [
+            {
+              "name": "ramp",
+              "duration": 4.0,
+              "steer": {
+                "kind": "constant",
+                "amplitude": 0.0,
+                "unit": "normalized",
+                "freq_hz": 0.5,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 3.0,
+              "mode_params": {}
+            },
+            {
+              "name": "sine",
+              "duration": 10.0,
+              "steer": {
+                "kind": "sine",
+                "amplitude": 2.0,
+                "unit": "front_deg",
+                "freq_hz": 0.2,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 0.0,
+              "mode_params": {}
+            }
+          ]
+        },
+        "dt": 0.005,
+        "record_hz": 200.0,
+        "kpis": []
+      },
+      "samples": 2800,
+      "steps": 2800
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "staggered",
+      "metrics": {
+        "peak_yaw_deg_s": 15.1866481673892,
+        "peak_ay_m_s2": 2.8779128598685397,
+        "max_position_difference_m": 12.283726541842196,
+        "end_position_difference_m": 12.283726541842196,
+        "peak_grip_util": 0.8462616063576708,
+        "minimum_fz_n": 5218.652776428725,
+        "max_observation_error_deg": 1.1459155902616467
+      },
+      "events": [
+        {
+          "id": "fl-jam",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 0,
+          "fault_type": "stuck_hold",
+          "config": {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "rr-free",
+          "event": "activated",
+          "time": 7.321,
+          "scheduled_time": 7.321,
+          "wheel": 3,
+          "fault_type": "free_caster",
+          "config": {
+            "fault_type": "free_caster",
+            "wheel": 3,
+            "value": 0.0,
+            "t_start": 7.321,
+            "t_end": 11.321,
+            "active": true,
+            "id": "rr-free",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fr-bias",
+          "event": "activated",
+          "time": 8.543,
+          "scheduled_time": 8.543,
+          "wheel": 1,
+          "fault_type": "sensor_bias",
+          "config": {
+            "fault_type": "sensor_bias",
+            "wheel": 1,
+            "value": 0.02,
+            "t_start": 8.543,
+            "t_end": 12.123,
+            "active": true,
+            "id": "fr-bias",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fl-jam",
+          "event": "deactivated",
+          "time": 10.123
+        },
+        {
+          "id": "rr-free",
+          "event": "deactivated",
+          "time": 11.321
+        },
+        {
+          "id": "fr-bias",
+          "event": "deactivated",
+          "time": 12.123
+        }
+      ],
+      "experiment": {
+        "name": "multi_staggered",
+        "description": "",
+        "vehicle": {
+          "profile": null,
+          "overrides": {}
+        },
+        "model_type": "simplified_dynamic",
+        "strategy": "ideal_ackermann",
+        "mode_params": {},
+        "scene": null,
+        "path": null,
+        "faults": [
+          {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "free_caster",
+            "wheel": 3,
+            "value": 0.0,
+            "t_start": 7.321,
+            "t_end": 11.321,
+            "active": true,
+            "id": "rr-free",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "sensor_bias",
+            "wheel": 1,
+            "value": 0.02,
+            "t_start": 8.543,
+            "t_end": 12.123,
+            "active": true,
+            "id": "fr-bias",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        ],
+        "fault_seed": 20261113,
+        "maneuver": {
+          "name": "untitled",
+          "steps": [
+            {
+              "name": "ramp",
+              "duration": 4.0,
+              "steer": {
+                "kind": "constant",
+                "amplitude": 0.0,
+                "unit": "normalized",
+                "freq_hz": 0.5,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 3.0,
+              "mode_params": {}
+            },
+            {
+              "name": "sine",
+              "duration": 10.0,
+              "steer": {
+                "kind": "sine",
+                "amplitude": 2.0,
+                "unit": "front_deg",
+                "freq_hz": 0.2,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 0.0,
+              "mode_params": {}
+            }
+          ]
+        },
+        "dt": 0.005,
+        "record_hz": 200.0,
+        "kpis": []
+      },
+      "samples": 2800,
+      "steps": 2800
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "four_corner",
+      "metrics": {
+        "peak_yaw_deg_s": 13.975229205274427,
+        "peak_ay_m_s2": 2.6146410712748307,
+        "max_position_difference_m": 28.218110139800427,
+        "end_position_difference_m": 28.218110139800427,
+        "peak_grip_util": 0.8454072994220531,
+        "minimum_fz_n": 5401.608028705589,
+        "max_observation_error_deg": 1.1459155902616467
+      },
+      "events": [
+        {
+          "id": "fl-jam",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 0,
+          "fault_type": "stuck_hold",
+          "config": {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fr-limit",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 1,
+          "fault_type": "limited",
+          "config": {
+            "fault_type": "limited",
+            "wheel": 1,
+            "value": 0.015,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fr-limit",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "rl-target",
+          "event": "activated",
+          "time": 7.321,
+          "scheduled_time": 7.321,
+          "wheel": 2,
+          "fault_type": "stuck_value",
+          "config": {
+            "fault_type": "stuck_value",
+            "wheel": 2,
+            "value": -0.03,
+            "t_start": 7.321,
+            "t_end": 11.321,
+            "active": true,
+            "id": "rl-target",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fr-bias",
+          "event": "activated",
+          "time": 8.543,
+          "scheduled_time": 8.543,
+          "wheel": 1,
+          "fault_type": "sensor_bias",
+          "config": {
+            "fault_type": "sensor_bias",
+            "wheel": 1,
+            "value": 0.02,
+            "t_start": 8.543,
+            "t_end": null,
+            "active": true,
+            "id": "fr-bias",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "rl-noise",
+          "event": "activated",
+          "time": 8.543,
+          "scheduled_time": 8.543,
+          "wheel": 2,
+          "fault_type": "sensor_noise",
+          "config": {
+            "fault_type": "sensor_noise",
+            "wheel": 2,
+            "value": 0.003,
+            "t_start": 8.543,
+            "t_end": null,
+            "active": true,
+            "id": "rl-noise",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "rr-free",
+          "event": "activated",
+          "time": 8.543,
+          "scheduled_time": 8.543,
+          "wheel": 3,
+          "fault_type": "free_caster",
+          "config": {
+            "fault_type": "free_caster",
+            "wheel": 3,
+            "value": 0.0,
+            "t_start": 8.543,
+            "t_end": 12.123,
+            "active": true,
+            "id": "rr-free",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fl-dropout",
+          "event": "activated",
+          "time": 9.123,
+          "scheduled_time": 9.123,
+          "wheel": 0,
+          "fault_type": "sensor_dropout",
+          "config": {
+            "fault_type": "sensor_dropout",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 9.123,
+            "t_end": 11.123,
+            "active": true,
+            "id": "fl-dropout",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fl-jam",
+          "event": "deactivated",
+          "time": 10.123
+        },
+        {
+          "id": "fr-limit",
+          "event": "deactivated",
+          "time": 10.123
+        },
+        {
+          "id": "fl-dropout",
+          "event": "deactivated",
+          "time": 11.123
+        },
+        {
+          "id": "rl-target",
+          "event": "deactivated",
+          "time": 11.321
+        },
+        {
+          "id": "rr-free",
+          "event": "deactivated",
+          "time": 12.123
+        }
+      ],
+      "experiment": {
+        "name": "multi_four_corner",
+        "description": "",
+        "vehicle": {
+          "profile": null,
+          "overrides": {}
+        },
+        "model_type": "simplified_dynamic",
+        "strategy": "ideal_ackermann",
+        "mode_params": {},
+        "scene": null,
+        "path": null,
+        "faults": [
+          {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "limited",
+            "wheel": 1,
+            "value": 0.015,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fr-limit",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "stuck_value",
+            "wheel": 2,
+            "value": -0.03,
+            "t_start": 7.321,
+            "t_end": 11.321,
+            "active": true,
+            "id": "rl-target",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "free_caster",
+            "wheel": 3,
+            "value": 0.0,
+            "t_start": 8.543,
+            "t_end": 12.123,
+            "active": true,
+            "id": "rr-free",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "sensor_bias",
+            "wheel": 1,
+            "value": 0.02,
+            "t_start": 8.543,
+            "t_end": null,
+            "active": true,
+            "id": "fr-bias",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "sensor_noise",
+            "wheel": 2,
+            "value": 0.003,
+            "t_start": 8.543,
+            "t_end": null,
+            "active": true,
+            "id": "rl-noise",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "sensor_dropout",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 9.123,
+            "t_end": 11.123,
+            "active": true,
+            "id": "fl-dropout",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        ],
+        "fault_seed": 20261113,
+        "maneuver": {
+          "name": "untitled",
+          "steps": [
+            {
+              "name": "ramp",
+              "duration": 4.0,
+              "steer": {
+                "kind": "constant",
+                "amplitude": 0.0,
+                "unit": "normalized",
+                "freq_hz": 0.5,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 3.0,
+              "mode_params": {}
+            },
+            {
+              "name": "sine",
+              "duration": 10.0,
+              "steer": {
+                "kind": "sine",
+                "amplitude": 2.0,
+                "unit": "front_deg",
+                "freq_hz": 0.2,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 0.0,
+              "mode_params": {}
+            }
+          ]
+        },
+        "dt": 0.005,
+        "record_hz": 200.0,
+        "kpis": []
+      },
+      "samples": 2800,
+      "steps": 2800
+    },
+    {
+      "model": "multibody",
+      "case": "baseline",
+      "metrics": {
+        "peak_yaw_deg_s": 12.48731053906911,
+        "peak_ay_m_s2": 2.41311781966275,
+        "max_position_difference_m": 0.0,
+        "end_position_difference_m": 0.0,
+        "peak_grip_util": 0.606121186756784,
+        "minimum_fz_n": 5712.541922225217,
+        "max_observation_error_deg": 0.0
+      },
+      "events": [],
+      "experiment": {
+        "name": "multi_baseline",
+        "description": "",
+        "vehicle": {
+          "profile": null,
+          "overrides": {}
+        },
+        "model_type": "multibody",
+        "strategy": "ideal_ackermann",
+        "mode_params": {},
+        "scene": null,
+        "path": null,
+        "faults": [],
+        "fault_seed": 20261113,
+        "maneuver": {
+          "name": "untitled",
+          "steps": [
+            {
+              "name": "ramp",
+              "duration": 4.0,
+              "steer": {
+                "kind": "constant",
+                "amplitude": 0.0,
+                "unit": "normalized",
+                "freq_hz": 0.5,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 3.0,
+              "mode_params": {}
+            },
+            {
+              "name": "sine",
+              "duration": 10.0,
+              "steer": {
+                "kind": "sine",
+                "amplitude": 2.0,
+                "unit": "front_deg",
+                "freq_hz": 0.2,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 0.0,
+              "mode_params": {}
+            }
+          ]
+        },
+        "dt": 0.005,
+        "record_hz": 200.0,
+        "kpis": []
+      },
+      "samples": 2800,
+      "steps": 2800
+    },
+    {
+      "model": "multibody",
+      "case": "simultaneous",
+      "metrics": {
+        "peak_yaw_deg_s": 12.558182159247792,
+        "peak_ay_m_s2": 2.4269389120521616,
+        "max_position_difference_m": 21.475848951524405,
+        "end_position_difference_m": 21.475848951524405,
+        "peak_grip_util": 0.606121186756784,
+        "minimum_fz_n": 5579.388897673249,
+        "max_observation_error_deg": 0.0
+      },
+      "events": [
+        {
+          "id": "fl-jam",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 0,
+          "fault_type": "stuck_hold",
+          "config": {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fr-jam",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 1,
+          "fault_type": "stuck_hold",
+          "config": {
+            "fault_type": "stuck_hold",
+            "wheel": 1,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fr-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fl-jam",
+          "event": "deactivated",
+          "time": 10.123
+        },
+        {
+          "id": "fr-jam",
+          "event": "deactivated",
+          "time": 10.123
+        }
+      ],
+      "experiment": {
+        "name": "multi_simultaneous",
+        "description": "",
+        "vehicle": {
+          "profile": null,
+          "overrides": {}
+        },
+        "model_type": "multibody",
+        "strategy": "ideal_ackermann",
+        "mode_params": {},
+        "scene": null,
+        "path": null,
+        "faults": [
+          {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "stuck_hold",
+            "wheel": 1,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fr-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        ],
+        "fault_seed": 20261113,
+        "maneuver": {
+          "name": "untitled",
+          "steps": [
+            {
+              "name": "ramp",
+              "duration": 4.0,
+              "steer": {
+                "kind": "constant",
+                "amplitude": 0.0,
+                "unit": "normalized",
+                "freq_hz": 0.5,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 3.0,
+              "mode_params": {}
+            },
+            {
+              "name": "sine",
+              "duration": 10.0,
+              "steer": {
+                "kind": "sine",
+                "amplitude": 2.0,
+                "unit": "front_deg",
+                "freq_hz": 0.2,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 0.0,
+              "mode_params": {}
+            }
+          ]
+        },
+        "dt": 0.005,
+        "record_hz": 200.0,
+        "kpis": []
+      },
+      "samples": 2800,
+      "steps": 2800
+    },
+    {
+      "model": "multibody",
+      "case": "staggered",
+      "metrics": {
+        "peak_yaw_deg_s": 15.322376378116058,
+        "peak_ay_m_s2": 2.900994357113974,
+        "max_position_difference_m": 12.239427893934039,
+        "end_position_difference_m": 12.239427893934039,
+        "peak_grip_util": 0.8804528850255173,
+        "minimum_fz_n": 5473.9373455992645,
+        "max_observation_error_deg": 1.1459155902616467
+      },
+      "events": [
+        {
+          "id": "fl-jam",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 0,
+          "fault_type": "stuck_hold",
+          "config": {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "rr-free",
+          "event": "activated",
+          "time": 7.321,
+          "scheduled_time": 7.321,
+          "wheel": 3,
+          "fault_type": "free_caster",
+          "config": {
+            "fault_type": "free_caster",
+            "wheel": 3,
+            "value": 0.0,
+            "t_start": 7.321,
+            "t_end": 11.321,
+            "active": true,
+            "id": "rr-free",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fr-bias",
+          "event": "activated",
+          "time": 8.543,
+          "scheduled_time": 8.543,
+          "wheel": 1,
+          "fault_type": "sensor_bias",
+          "config": {
+            "fault_type": "sensor_bias",
+            "wheel": 1,
+            "value": 0.02,
+            "t_start": 8.543,
+            "t_end": 12.123,
+            "active": true,
+            "id": "fr-bias",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fl-jam",
+          "event": "deactivated",
+          "time": 10.123
+        },
+        {
+          "id": "rr-free",
+          "event": "deactivated",
+          "time": 11.321
+        },
+        {
+          "id": "fr-bias",
+          "event": "deactivated",
+          "time": 12.123
+        }
+      ],
+      "experiment": {
+        "name": "multi_staggered",
+        "description": "",
+        "vehicle": {
+          "profile": null,
+          "overrides": {}
+        },
+        "model_type": "multibody",
+        "strategy": "ideal_ackermann",
+        "mode_params": {},
+        "scene": null,
+        "path": null,
+        "faults": [
+          {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "free_caster",
+            "wheel": 3,
+            "value": 0.0,
+            "t_start": 7.321,
+            "t_end": 11.321,
+            "active": true,
+            "id": "rr-free",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "sensor_bias",
+            "wheel": 1,
+            "value": 0.02,
+            "t_start": 8.543,
+            "t_end": 12.123,
+            "active": true,
+            "id": "fr-bias",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        ],
+        "fault_seed": 20261113,
+        "maneuver": {
+          "name": "untitled",
+          "steps": [
+            {
+              "name": "ramp",
+              "duration": 4.0,
+              "steer": {
+                "kind": "constant",
+                "amplitude": 0.0,
+                "unit": "normalized",
+                "freq_hz": 0.5,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 3.0,
+              "mode_params": {}
+            },
+            {
+              "name": "sine",
+              "duration": 10.0,
+              "steer": {
+                "kind": "sine",
+                "amplitude": 2.0,
+                "unit": "front_deg",
+                "freq_hz": 0.2,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 0.0,
+              "mode_params": {}
+            }
+          ]
+        },
+        "dt": 0.005,
+        "record_hz": 200.0,
+        "kpis": []
+      },
+      "samples": 2800,
+      "steps": 2800
+    },
+    {
+      "model": "multibody",
+      "case": "four_corner",
+      "metrics": {
+        "peak_yaw_deg_s": 14.097145758328706,
+        "peak_ay_m_s2": 2.644572659448681,
+        "max_position_difference_m": 28.352276470555044,
+        "end_position_difference_m": 28.352276470555044,
+        "peak_grip_util": 0.8677318397090934,
+        "minimum_fz_n": 5475.694985243068,
+        "max_observation_error_deg": 1.1459155902616467
+      },
+      "events": [
+        {
+          "id": "fl-jam",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 0,
+          "fault_type": "stuck_hold",
+          "config": {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fr-limit",
+          "event": "activated",
+          "time": 6.123,
+          "scheduled_time": 6.123,
+          "wheel": 1,
+          "fault_type": "limited",
+          "config": {
+            "fault_type": "limited",
+            "wheel": 1,
+            "value": 0.015,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fr-limit",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "rl-target",
+          "event": "activated",
+          "time": 7.321,
+          "scheduled_time": 7.321,
+          "wheel": 2,
+          "fault_type": "stuck_value",
+          "config": {
+            "fault_type": "stuck_value",
+            "wheel": 2,
+            "value": -0.03,
+            "t_start": 7.321,
+            "t_end": 11.321,
+            "active": true,
+            "id": "rl-target",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fr-bias",
+          "event": "activated",
+          "time": 8.543,
+          "scheduled_time": 8.543,
+          "wheel": 1,
+          "fault_type": "sensor_bias",
+          "config": {
+            "fault_type": "sensor_bias",
+            "wheel": 1,
+            "value": 0.02,
+            "t_start": 8.543,
+            "t_end": null,
+            "active": true,
+            "id": "fr-bias",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "rl-noise",
+          "event": "activated",
+          "time": 8.543,
+          "scheduled_time": 8.543,
+          "wheel": 2,
+          "fault_type": "sensor_noise",
+          "config": {
+            "fault_type": "sensor_noise",
+            "wheel": 2,
+            "value": 0.003,
+            "t_start": 8.543,
+            "t_end": null,
+            "active": true,
+            "id": "rl-noise",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "rr-free",
+          "event": "activated",
+          "time": 8.543,
+          "scheduled_time": 8.543,
+          "wheel": 3,
+          "fault_type": "free_caster",
+          "config": {
+            "fault_type": "free_caster",
+            "wheel": 3,
+            "value": 0.0,
+            "t_start": 8.543,
+            "t_end": 12.123,
+            "active": true,
+            "id": "rr-free",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fl-dropout",
+          "event": "activated",
+          "time": 9.123,
+          "scheduled_time": 9.123,
+          "wheel": 0,
+          "fault_type": "sensor_dropout",
+          "config": {
+            "fault_type": "sensor_dropout",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 9.123,
+            "t_end": 11.123,
+            "active": true,
+            "id": "fl-dropout",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        },
+        {
+          "id": "fl-jam",
+          "event": "deactivated",
+          "time": 10.123
+        },
+        {
+          "id": "fr-limit",
+          "event": "deactivated",
+          "time": 10.123
+        },
+        {
+          "id": "fl-dropout",
+          "event": "deactivated",
+          "time": 11.123
+        },
+        {
+          "id": "rl-target",
+          "event": "deactivated",
+          "time": 11.321
+        },
+        {
+          "id": "rr-free",
+          "event": "deactivated",
+          "time": 12.123
+        }
+      ],
+      "experiment": {
+        "name": "multi_four_corner",
+        "description": "",
+        "vehicle": {
+          "profile": null,
+          "overrides": {}
+        },
+        "model_type": "multibody",
+        "strategy": "ideal_ackermann",
+        "mode_params": {},
+        "scene": null,
+        "path": null,
+        "faults": [
+          {
+            "fault_type": "stuck_hold",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fl-jam",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "limited",
+            "wheel": 1,
+            "value": 0.015,
+            "t_start": 6.123,
+            "t_end": 10.123,
+            "active": true,
+            "id": "fr-limit",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "stuck_value",
+            "wheel": 2,
+            "value": -0.03,
+            "t_start": 7.321,
+            "t_end": 11.321,
+            "active": true,
+            "id": "rl-target",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "free_caster",
+            "wheel": 3,
+            "value": 0.0,
+            "t_start": 8.543,
+            "t_end": 12.123,
+            "active": true,
+            "id": "rr-free",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "sensor_bias",
+            "wheel": 1,
+            "value": 0.02,
+            "t_start": 8.543,
+            "t_end": null,
+            "active": true,
+            "id": "fr-bias",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "sensor_noise",
+            "wheel": 2,
+            "value": 0.003,
+            "t_start": 8.543,
+            "t_end": null,
+            "active": true,
+            "id": "rl-noise",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          },
+          {
+            "fault_type": "sensor_dropout",
+            "wheel": 0,
+            "value": 0.0,
+            "t_start": 9.123,
+            "t_end": 11.123,
+            "active": true,
+            "id": "fl-dropout",
+            "eta_rev": 0.6,
+            "j_steer": 3.0,
+            "c_damp": 80.0,
+            "tau_coulomb": 5.0
+          }
+        ],
+        "fault_seed": 20261113,
+        "maneuver": {
+          "name": "untitled",
+          "steps": [
+            {
+              "name": "ramp",
+              "duration": 4.0,
+              "steer": {
+                "kind": "constant",
+                "amplitude": 0.0,
+                "unit": "normalized",
+                "freq_hz": 0.5,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 3.0,
+              "mode_params": {}
+            },
+            {
+              "name": "sine",
+              "duration": 10.0,
+              "steer": {
+                "kind": "sine",
+                "amplitude": 2.0,
+                "unit": "front_deg",
+                "freq_hz": 0.2,
+                "f0_hz": 0.1,
+                "f1_hz": 2.0,
+                "t_step": 0.5,
+                "start": 0.0
+              },
+              "speed_kmh": 40.0,
+              "speed_ramp_s": 0.0,
+              "mode_params": {}
+            }
+          ]
+        },
+        "dt": 0.005,
+        "record_hz": 200.0,
+        "kpis": []
+      },
+      "samples": 2800,
+      "steps": 2800
+    }
+  ],
+  "convergence": [
+    {
+      "model": "simplified_dynamic",
+      "case": "simultaneous",
+      "dt_s": 0.005,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.11281551531114518,
+      "yaw_rms_difference_deg_s": 0.0143047116009587,
+      "status": "PASS"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "simultaneous",
+      "dt_s": 0.0025,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.08202004195562118,
+      "yaw_rms_difference_deg_s": 0.005444620551399167,
+      "status": "PASS"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "simultaneous",
+      "dt_s": 0.00125,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.07585013748551717,
+      "yaw_rms_difference_deg_s": 0.0042463705403320805,
+      "status": "PASS"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "four_corner",
+      "dt_s": 0.005,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.11134085444245342,
+      "yaw_rms_difference_deg_s": 0.013603122740818024,
+      "status": "PASS"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "four_corner",
+      "dt_s": 0.0025,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.08202004195562118,
+      "yaw_rms_difference_deg_s": 0.006288499433850399,
+      "status": "PASS"
+    },
+    {
+      "model": "simplified_dynamic",
+      "case": "four_corner",
+      "dt_s": 0.00125,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.07585013748551717,
+      "yaw_rms_difference_deg_s": 0.00603506140201531,
+      "status": "PASS"
+    },
+    {
+      "model": "multibody",
+      "case": "simultaneous",
+      "dt_s": 0.005,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.11260869059039366,
+      "yaw_rms_difference_deg_s": 0.01428271328103049,
+      "status": "PASS"
+    },
+    {
+      "model": "multibody",
+      "case": "simultaneous",
+      "dt_s": 0.0025,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.08196363084625524,
+      "yaw_rms_difference_deg_s": 0.005433254960498874,
+      "status": "PASS"
+    },
+    {
+      "model": "multibody",
+      "case": "simultaneous",
+      "dt_s": 0.00125,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.07579486451099449,
+      "yaw_rms_difference_deg_s": 0.0042430371019341545,
+      "status": "PASS"
+    },
+    {
+      "model": "multibody",
+      "case": "four_corner",
+      "dt_s": 0.005,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.11289746397995955,
+      "yaw_rms_difference_deg_s": 0.013744282631388388,
+      "status": "PASS"
+    },
+    {
+      "model": "multibody",
+      "case": "four_corner",
+      "dt_s": 0.0025,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.08196363084625524,
+      "yaw_rms_difference_deg_s": 0.006491621775304063,
+      "status": "PASS"
+    },
+    {
+      "model": "multibody",
+      "case": "four_corner",
+      "dt_s": 0.00125,
+      "reference_dt_s": 0.000625,
+      "max_position_difference_m": 0.07579486451099449,
+      "yaw_rms_difference_deg_s": 0.006216645265881068,
+      "status": "PASS"
+    }
+  ],
+  "data_sha256": {
+    "simplified_dynamic_baseline.csv.gz": "9cb0cdf4461f498c27fdaeee7a8608d5566de71deb3479080d62dd819ce3feb8",
+    "simplified_dynamic_simultaneous.csv.gz": "1832e6b7d3c18c9b2b8085634e84d4e3a22d676341aa6bff39f2104a36de7713",
+    "simplified_dynamic_staggered.csv.gz": "024936a348b2f44c24efd22a285d90ff569800270f3ee3816c5a21f2ea2e358c",
+    "simplified_dynamic_four_corner.csv.gz": "a0a09127729c0f6d61fdda61d39e9dd264884415dd47899ccc1c107b9a23217c",
+    "multibody_baseline.csv.gz": "f0305414c65ef1b66d99116f9e8d1e75d7dfbd40da01cb164264ae5317b9c1ce",
+    "multibody_simultaneous.csv.gz": "a783ab85a13821f757a8c3770b81d2bd3e28769aa90b299074671e8fe95de652",
+    "multibody_staggered.csv.gz": "9945fe27c01dfbdb696eca27637d912cd3e63ae2f5e1cb6a2f5432c668a54d1d",
+    "multibody_four_corner.csv.gz": "89cf9eccea898ebd209d53ecefee5dfd89bb51c0ddd016cdea508483e2b47ae5"
+  },
+  "numerical_criteria": {
+    "max_position_difference_m": 0.15,
+    "yaw_rms_difference_deg_s": 0.1
+  },
+  "limitations": [
+    "first-order partitioned integration; event/control grids differ",
+    "passive steering ignores steering-inertia reaction on chassis and 3D kingpin projection",
+    "sensor faults affect observation only",
+    "no shared-rack faults or high-frequency shimmy validation"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "step_steer_golden": {
+    "0.005": {
+      "yaw_rate_peak_dps": 12.983668968530507,
+      "speed_error_rms_kmh": 0.2429261716826959,
+      "yaw_gain_dps": 8.474797515865873,
+      "yaw_rise_time_s": 0.18422493267544393,
+      "yaw_overshoot_pct": 1.5560506217142296,
+      "slip_alpha_peak_deg": 1.6873779204696573
+    },
+    "0.0025": {
+      "yaw_rate_peak_dps": 12.983954014972715,
+      "speed_error_rms_kmh": 0.24290357987891079,
+      "yaw_gain_dps": 8.474768044629375,
+      "yaw_rise_time_s": 0.18451725800555252,
+      "yaw_overshoot_pct": 1.5586333781922532,
+      "slip_alpha_peak_deg": 1.6873760044284138
+    },
+    "0.00125": {
+      "yaw_rate_peak_dps": 12.984037893168518,
+      "speed_error_rms_kmh": 0.2428926050495583,
+      "yaw_gain_dps": 8.474753290231062,
+      "yaw_rise_time_s": 0.18462640346363202,
+      "yaw_overshoot_pct": 1.559466274416094,
+      "slip_alpha_peak_deg": 1.6873750386008206
+    },
+    "0.000625": {
+      "yaw_rate_peak_dps": 12.975020467754875,
+      "speed_error_rms_kmh": 0.2627413880819725,
+      "yaw_gain_dps": 8.473978100373165,
+      "yaw_rise_time_s": 0.18564841852836622,
+      "yaw_overshoot_pct": 1.4982172302158836,
+      "slip_alpha_peak_deg": 1.687033090995008
+    }
+  },
+  "iso3888_dlc_golden": {
+    "0.005": {
+      "yaw_rate_peak_dps": 15.200818710806704,
+      "vy_peak_kmh": 1.6348124450108859,
+      "speed_error_rms_kmh": 0.15197108701816495,
+      "steer_energy_nms": 46.221101645319294,
+      "rack_force_peak_n": 2178.822657382806,
+      "slip_alpha_peak_deg": 1.947929639740807
+    },
+    "0.0025": {
+      "yaw_rate_peak_dps": 15.200876672962194,
+      "vy_peak_kmh": 1.634765678234794,
+      "speed_error_rms_kmh": 0.1519802874095929,
+      "steer_energy_nms": 46.30915671007871,
+      "rack_force_peak_n": 2178.916168108902,
+      "slip_alpha_peak_deg": 1.9479603175396916
+    },
+    "0.00125": {
+      "yaw_rate_peak_dps": 15.200865885939605,
+      "vy_peak_kmh": 1.6347379922572554,
+      "speed_error_rms_kmh": 0.1519851628732838,
+      "steer_energy_nms": 46.33707440682298,
+      "rack_force_peak_n": 2178.94994015037,
+      "slip_alpha_peak_deg": 1.947976343928417
+    },
+    "0.000625": {
+      "yaw_rate_peak_dps": 15.194749954421459,
+      "vy_peak_kmh": 1.6338233646834677,
+      "speed_error_rms_kmh": 0.16731701115364891,
+      "steer_energy_nms": 46.17668630228078,
+      "rack_force_peak_n": 2178.0073947387236,
+      "slip_alpha_peak_deg": 1.9473317215647812
+    }
+  }
+}

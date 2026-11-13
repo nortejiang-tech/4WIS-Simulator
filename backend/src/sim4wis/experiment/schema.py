@@ -26,6 +26,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from sim4wis.fault.schema import FaultSpec, validate_timeline
+
 SteerKind = Literal["constant", "step", "ramp", "sine", "sweep", "dlc"]
 # Unit of the steer `amplitude`:
 #   "normalized" — driver-style [-1, 1] passed through the strategy's feel layer
@@ -135,45 +137,6 @@ class ExperimentVehicle(BaseModel):
     overrides: dict[str, Any] = Field(default_factory=dict)
 
 
-class FaultSpec(BaseModel):
-    """Time-triggered actuator fault for headless runs (ISO 26262 studies).
-
-    Applied to the steer command of one wheel from ``t_start`` onward; the
-    steering-actuator model (first-order lag + rate limit) still governs how
-    fast the physical wheel reaches the faulted angle — i.e. this models the
-    *command/mechanism* failure, not a teleporting wheel.
-
-        stuck_zero   δ_cmd[i] ≡ 0            actuator returns to centre and jams
-        stuck_hold   δ_cmd[i] ≡ δ(t_start)   self-locking mechanism jams in place
-        stuck_value  δ_cmd[i] ≡ value        runaway-then-jam at a given angle
-        limited      |δ_cmd[i]| ≤ value      restricted authority (degraded)
-        free_caster  actuator de-energised on a NON-self-locking mechanism —
-                     the wheel becomes a dynamic castering DOF driven by the
-                     tyre kingpin torque through the back-drive path:
-
-                         J·δ̈ = −η_rev·τ_kingpin − c·δ̇ − τ_c·sign(δ̇)
-
-                     (τ_kingpin is the platform's per-wheel Reimpell moment;
-                     the session integrates this ODE and feeds δ through the
-                     actuator lag, which adds mechanism-lag damping.)
-
-    Mechanism parameters (free_caster only): ``eta_rev`` back-drive
-    efficiency, ``j_steer`` steering-system inertia about the kingpin
-    [kg·m²] (wheel assembly + reflected rack/motor), ``c_damp`` viscous
-    damping [N·m·s/rad], ``tau_coulomb`` breakaway friction [N·m].
-    """
-    model_config = ConfigDict(extra="forbid")
-
-    fault_type: Literal["stuck_zero", "stuck_hold", "stuck_value", "limited", "free_caster"]
-    wheel: int = Field(..., ge=0, le=3)              # 0=FL 1=FR 2=RL 3=RR
-    value: float = 0.0                               # [rad] meaning per type
-    t_start: float = Field(0.0, ge=0.0)              # sim time [s]
-    eta_rev: float = Field(0.6, ge=0.0, le=1.0)      # back-drive efficiency
-    j_steer: float = Field(3.0, gt=0.0)              # [kg·m²]
-    c_damp: float = Field(80.0, ge=0.0)              # [N·m·s/rad]
-    tau_coulomb: float = Field(5.0, ge=0.0)          # [N·m]
-
-
 class PathSpec(BaseModel):
     """Reference path for follow_trajectory: template or explicit waypoints."""
     model_config = ConfigDict(extra="forbid")
@@ -194,7 +157,13 @@ class Experiment(BaseModel):
     mode_params: dict[str, Any] = Field(default_factory=dict)
     scene: dict[str, Any] | None = None              # SceneSection payload
     path: PathSpec | None = None
-    faults: list[FaultSpec] = Field(default_factory=list)
+    faults: list[FaultSpec] = Field(default_factory=list, max_length=64)
+    fault_seed: int = Field(0, ge=0, le=2**32 - 1, strict=True)
+
+    @model_validator(mode="after")
+    def check_faults(self):
+        validate_timeline(self.faults)
+        return self
     maneuver: Maneuver = Field(default_factory=Maneuver)
     dt: float = Field(0.005, gt=0.0005, le=0.05)
     record_hz: float = Field(50.0, gt=1.0, le=200.0)

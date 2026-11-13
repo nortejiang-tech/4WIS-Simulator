@@ -210,7 +210,7 @@ def plant_front_angle(
     """
     delta_f_cmd = 0.5 * (float(delta_cmd[0]) + float(delta_cmd[1]))
     hand = delta_f_cmd * mech_ratio
-    n_inner = max(1, int(round(dt / max(float(inner_dt), 1e-9))))
+    n_inner = max(1, math.ceil(dt / max(float(inner_dt), 1e-9) - 1e-12))
     h = dt / n_inner
     hand_rate = (hand - prev_hand) / max(dt, 1e-9)
     state = plant.state

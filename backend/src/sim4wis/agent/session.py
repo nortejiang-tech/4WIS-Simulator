@@ -26,6 +26,7 @@ from sim4wis.experiment import store
 from sim4wis.experiment.kpi import compute_kpis
 from sim4wis.experiment.schema import Experiment
 from sim4wis.experiment.session import WHEELS, RunResult, SimSession
+from sim4wis.fault.schema import FaultSchedule
 
 CONTRACT = "4wis.agent.v1"
 MAX_STEPS = 20000
@@ -111,6 +112,11 @@ class StepRequest(StrictModel):
     control: Control
 
 
+class FaultScheduleRequest(FaultSchedule):
+    request_id: str = Field(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9_.:-]+$")
+    expected_revision: int = Field(ge=0, strict=True)
+
+
 class AgentSession:
     def __init__(self, config: SessionConfig):
         self.config = config
@@ -154,6 +160,7 @@ class AgentSession:
                           "wheels": [{"name": w.upper(), "delta": float(s.delta[i]), "fz": float(s.fz[i])}
                                      for i, w in enumerate(WHEELS)]},
                 "run_id": self.exported[1] if self.exported and self.exported[0] == self.revision else None,
+                "fault_timeline": self.sim.fault_injector.status(),
                 "validity": "internal verification only; no independent vehicle correlation"}
 
     def step(self, request: StepRequest):
@@ -193,12 +200,11 @@ class AgentSession:
             try:
                 for _ in range(request.steps):
                     cmd = self.sim.strategy.compute(self.driver, self.sim.model.state, self.config.experiment.dt)
-                    self.sim._apply_faults(cmd)
                     s = advance_model(self.sim.model, self.sim.params, self.driver, cmd,
-                                      self.config.experiment.dt, self.sim.env)
+                                      self.config.experiment.dt, self.sim.env, self.sim.fault_injector)
                     if not all(math.isfinite(float(x)) for x in (s.x, s.y, s.psi, s.vx, s.vy, s.yaw_rate)):
                         raise ArithmeticError("non-finite vehicle state")
-                    sample = sample_channels(s, cmd, self.driver, self.sim.model)
+                    sample = sample_channels(s, self.sim.model.last_effective_cmd, self.driver, self.sim.model)
                     self.t.append(float(s.t))
                     for name, value in sample.items():
                         self.channels[name].append(value)
@@ -212,6 +218,33 @@ class AgentSession:
             self.receipts[request.request_id] = (digest, response)
             return response
 
+    def set_fault_schedule(self, request: FaultScheduleRequest):
+        """Atomic replacement; transport retries share the session receipt namespace."""
+        digest = hashlib.sha256(("fault-schedule:" + request.model_dump_json()).encode()).hexdigest()
+        with self.lock:
+            self.touched = time.time()
+            if request.request_id in self.receipts:
+                old, response = self.receipts[request.request_id]
+                if old != digest:
+                    raise SessionError("request_conflict", "request_id already used with a different body")
+                return {**response, "replayed": True}
+            if self.status != "ready":
+                raise SessionError("session_failed", "create a new session after a numerical failure")
+            if request.expected_revision != self.revision:
+                raise SessionError("revision_conflict", f"expected current revision {self.revision}")
+            now = float(self.sim.model.state.t)
+            if any(f.active and f.t_start < now - 1e-10 for f in request.faults):
+                raise SessionError("past_fault", "new fault starts must be at or after current simulation time", 422)
+            self.sim.fault_injector.replace_schedule(request.faults, seed=request.seed, model=self.sim.model, now=now)
+            self.config.experiment.faults = request.faults
+            self.config.experiment.fault_seed = request.seed
+            self.revision += 1
+            self.command_log.append({"operation": "set_fault_schedule", "time": now,
+                                     **request.model_dump(mode="json")})
+            response = {**self.observe(), "replayed": False}
+            self.receipts[request.request_id] = (digest, response)
+            return response
+
     def result(self):
         return RunResult(self.t, self.channels, self.n_steps * self.config.experiment.dt, self.n_steps,
                          {"experiment": self.config.experiment.model_dump(mode="json"),
@@ -220,7 +253,8 @@ class AgentSession:
                           "config_sha256": hashlib.sha256(self.config.model_dump_json().encode()).hexdigest(),
                           "revision": self.revision, "execution_status": self.status,
                           "error": self.error, "record_hz": 1 / self.config.experiment.dt,
-                          "sampling": "every accepted integration step", "command_log": self.command_log})
+                          "sampling": "every outer integration step; events split internal integration",
+                          "fault_timeline": self.sim.fault_injector.status(), "command_log": self.command_log})
 
     def export(self):
         with self.lock:

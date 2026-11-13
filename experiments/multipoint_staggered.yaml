@@ -1,0 +1,17 @@
+name: multipoint_staggered
+model_type: simplified_dynamic
+strategy: ideal_ackermann
+fault_seed: 20261113
+dt: 0.005
+record_hz: 200
+faults:
+  - {id: fl-jam, fault_type: stuck_hold, wheel: 0, t_start: 6.123, t_end: 10.123}
+  - {id: rr-free, fault_type: free_caster, wheel: 3, t_start: 7.321, t_end: 11.321, j_steer: 3, c_damp: 80, tau_coulomb: 5, eta_rev: 0.6}
+  - {id: fr-bias, fault_type: sensor_bias, wheel: 1, value: 0.02, t_start: 8.543, t_end: 12.123}
+maneuver:
+  steps:
+    - {name: ramp, duration: 4, speed_kmh: 40, speed_ramp_s: 3}
+    - name: sine
+      duration: 10
+      speed_kmh: 40
+      steer: {kind: sine, amplitude: 2, unit: front_deg, freq_hz: 0.2}

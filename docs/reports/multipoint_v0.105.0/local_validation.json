@@ -1,0 +1,40 @@
+{
+  "version": "0.105.0",
+  "date": "2026-11-13",
+  "release_gate": "PASS",
+  "backend_full": {
+    "passed": 1086,
+    "warnings": 2,
+    "seconds": 289.12
+  },
+  "supplemental_final_fault_physics": {
+    "passed": 99,
+    "new_tests_after_full_collection": 1
+  },
+  "smoke": {
+    "passed": 32,
+    "total": 32
+  },
+  "golden": {
+    "passed": 6,
+    "total": 6,
+    "tolerances_unchanged": true
+  },
+  "analytic_reference": {
+    "benchmarks": 2,
+    "metrics": 15,
+    "independent_vehicle_data": false
+  },
+  "frontend": {
+    "typecheck": "PASS",
+    "unit_passed": 54,
+    "production_build": "PASS",
+    "browser_e2e_passed": 58,
+    "browser_e2e_seconds": 58.1,
+    "browser": "existing Chromium headless shell 1208"
+  },
+  "physics_focused_lint": "PASS",
+  "mac_native_checks": 41,
+  "raw_gate_log_sha256": "47d9f2113e66edadd62933fec5b74630ae9744b8b405e6a6722979c8911680a0",
+  "external_vehicle_correlation": "PENDING"
+}

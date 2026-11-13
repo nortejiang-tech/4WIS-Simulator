@@ -45,6 +45,8 @@ DEFAULT_CHANNELS: list[str] = [
     "pose_x", "pose_y", "pose_psi",
     "vx", "vy", "yaw_rate",
     "delta_fl", "delta_fr", "delta_rl", "delta_rr",
+    *[f"{name}_{w}" for name in ("delta_reported", "fault_mode", "sensor_fault_active", "steer_rate")
+      for w in ("fl", "fr", "rl", "rr")],
     "torque_steer_fl", "torque_steer_fr", "torque_steer_rl", "torque_steer_rr",
     "icr_dev_fl", "icr_dev_fr", "icr_dev_rl", "icr_dev_rr",
     "icr_vehicle_body_x", "icr_vehicle_body_y",

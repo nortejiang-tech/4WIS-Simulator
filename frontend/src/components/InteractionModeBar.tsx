@@ -7,6 +7,7 @@ interface InteractionModeBarProps {
   onChange: (mode: InteractionMode) => void;
   sourceLabel: string;
   connected: boolean;
+  simulationError?: string | null;
   onStop?: () => void;
 }
 
@@ -15,6 +16,7 @@ export default function InteractionModeBar({
   onChange,
   sourceLabel,
   connected,
+  simulationError,
   onStop,
 }: InteractionModeBarProps) {
   const modes: InteractionMode[] = ["manual", "script", "agent"];
@@ -46,6 +48,11 @@ export default function InteractionModeBar({
       </div>
 
       <div className="interaction-bar__group interaction-bar__group--status">
+        {simulationError && (
+          <span role="alert" style={{color: "var(--bad)"}} title={simulationError}>
+            数值计算失败，仿真已暂停；请保存记录并重置。
+          </span>
+        )}
         <span className="interaction-bar__label">控制来源</span>
         <span className="interaction-bar__source">{sourceLabel}</span>
         <span
