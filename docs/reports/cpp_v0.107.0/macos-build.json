@@ -1,0 +1,13 @@
+{
+  "source_commit": "e79ca99c4eb6fb9b78f5c4949506f4cd09436f18",
+  "architecture": "arm64",
+  "minimum_deployment_target": "13.3",
+  "sdk": "27.2",
+  "runtime_test_os": "macOS 27.2.1",
+  "older_macos_runtime_test": "PENDING",
+  "configure_arguments": [
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCMAKE_OSX_DEPLOYMENT_TARGET=13.3"
+  ],
+  "reason": "Floating-point std::to_chars availability begins at macOS 13.3."
+}

@@ -1,18 +1,12 @@
-# STAGE — native simulation core
+# Historical native-core stage — continued on its own branch
 
-Baseline and decision: [ADR](adr/ADR-2026-11-14-native-simulation-core.md).
-Preserve the pre-existing untracked `draft_03c081a7_folder/`. No merge/tag/release
-of main is part of this independent-branch task.
+This full C++ worktree forked from the already committed native-core candidate
+e609c4c. The native-core work remains on codex/native-simulation-core;
+its final acceptance is recorded there, not in this inherited document snapshot.
 
-1. DONE: baseline inspection, toolchains, initial profile, independent branch,
-   user-selected core-only scope.
-2. IN PROGRESS: C++ numerical blocks, checked Python bindings, explicit engine
-   selection and fallback, package build integration.
-3. PENDING: differential and independent physics verification, full backend and
-   MCP regression, repeated whole-experiment benchmark.
-4. PENDING: Mac/Windows native CI, branch publication, evidence and HANDOFF.
-
-Planner owns this high-risk numerical migration, ABI safety, precision flags,
-test oracles and final acceptance. No local Coder is assigned physics formulas
-or acceptance commands. Record any narrow local Coder use separately; zero use
-also requires a Markdown/JSON report.
+The full C++ implementation and platform verification are complete in this branch.
+See [its ADR](adr/ADR-cpp-full-backend.md),
+[final acceptance](reports/cpp_v0.107.0/acceptance.md) and
+[two-route handoff](HANDOFF_cpp_routes_2026-11-14.md).
+Main/v0.105.0 is unchanged. Physical and user target-machine acceptance remains
+PENDING as explicitly listed in the reports.

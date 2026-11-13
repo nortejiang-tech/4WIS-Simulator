@@ -1,0 +1,136 @@
+{
+  "status": "PASS",
+  "checks": [
+    "archive_crc_and_binary_hash",
+    "six_golden_cases_without_python",
+    "native_service_identity",
+    "production_frontend",
+    "simplified_dynamic_linear_fault_retry_artifacts",
+    "simplified_dynamic_pacejka_fault_retry_artifacts",
+    "multibody_linear_fault_retry_artifacts",
+    "multibody_pacejka_fault_retry_artifacts",
+    "official_mcp_initialize_18_tools_and_call",
+    "bundled_optional_plugin_runtime"
+  ],
+  "count": 10,
+  "archive_sha256": "f1442a3b26d33865b2134c62e08d5dbca19145d2765ccee2736e2f981aa4d935",
+  "manifest": {
+    "version": "0.107.0",
+    "route": "cpp-full-backend",
+    "target": "windows-x64",
+    "binary_sha256": "06b3cacc14e1e8562aad030c7228bcab8e052055c57f678d49612dbd2a7f4f6b",
+    "source_commit": "e79ca99c4eb6fb9b78f5c4949506f4cd09436f18",
+    "plugin_runtime_bundled": true,
+    "builtins_require_python": false
+  },
+  "engine": {
+    "abi": 1,
+    "body_core": "cpp17",
+    "body_fallback_reason": null,
+    "integration": "RK4 body + nonlinear backward-Euler wheel spin; partitioned",
+    "native_available": true,
+    "numerical_core": "cpp17",
+    "requested": "native",
+    "service_runtime": "cpp17",
+    "source_fingerprint": "bc560957e039b596c4d15ee75974724d48c1eba404e13825cc73d32788c74bc2",
+    "source_revision": "e79ca99c4eb6fb9b78f5c4949506f4cd09436f18"
+  },
+  "golden": {
+    "cases": {
+      "iso3888_dlc_60kmh": {
+        "c_class": "",
+        "kpis": {
+          "rack_force_peak_n": 2178.822657382808,
+          "slip_alpha_peak_deg": 1.947929639740807,
+          "speed_error_rms_kmh": 0.1519710870181653,
+          "steer_energy_nms": 46.221101645319244,
+          "vy_peak_kmh": 1.634812445010886,
+          "yaw_rate_peak_dps": 15.200818710806704
+        },
+        "n_samples": 800
+      },
+      "oncentre_weave_100kmh": {
+        "c_class": "",
+        "kpis": {
+          "onc_angle_gradient_deg_per_g": 14.553388584627726,
+          "onc_ay_amplitude_g": 0.18471360652694727,
+          "onc_frequency_hz": 0.19998850761465745,
+          "onc_sw_amplitude_deg": 2.723906306155425,
+          "onc_torque_at_0_1g_nm": 0.9533813939626424,
+          "onc_torque_deadband_deg": 0.39553143635898946,
+          "onc_torque_gradient_nm_per_deg": 0.9030991550304452,
+          "onc_torque_gradient_nm_per_g": 9.577921846492279,
+          "onc_torque_hysteresis_nm": 0.3012802529893844,
+          "onc_yaw_phase_lag_deg": 1.860656995796674
+        },
+        "n_samples": 1700
+      },
+      "step_steer_60kmh": {
+        "c_class": "",
+        "kpis": {
+          "slip_alpha_peak_deg": 1.6873779204696575,
+          "speed_error_rms_kmh": 0.24292617168269376,
+          "yaw_gain_dps": 8.474797515865873,
+          "yaw_overshoot_pct": 1.5560506217142158,
+          "yaw_rate_peak_dps": 12.983668968530504,
+          "yaw_rise_time_s": 0.18422493267544482
+        },
+        "n_samples": 600
+      },
+      "sw_curve60_fl_free_caster_baseline": {
+        "c_class": "C2",
+        "kpis": {
+          "beta_peak_deg": 1.440624741183187,
+          "dpsi_2s_deg": 5.418643356376837,
+          "dyaw_peak_dps": 2.9647322722218186,
+          "dyaw_resid_dps": 0.2546558222953346,
+          "ttld_s": 1.5849999999997628,
+          "xtrack_2_5s": 2.340861651391469,
+          "xtrack_react": 0.5030906412408981
+        },
+        "n_samples": 1600
+      },
+      "sw_straight100_rl_stuck_value_baseline": {
+        "c_class": "C3",
+        "kpis": {
+          "beta_peak_deg": 5.782180464917776,
+          "dpsi_2s_deg": 30.20015759597239,
+          "dyaw_peak_dps": 20.547496085544978,
+          "dyaw_resid_dps": 15.72024485301183,
+          "ttld_s": 0.9449999999994283,
+          "xtrack_2_5s": 15.72795024726947,
+          "xtrack_react": 2.1735386194212136
+        },
+        "n_samples": 1600
+      },
+      "sw_straight100_rl_stuck_value_mitigated": {
+        "c_class": "C2",
+        "kpis": {
+          "beta_peak_deg": 2.2880220167118224,
+          "dpsi_2s_deg": 3.9300153691770454,
+          "dyaw_peak_dps": 7.030215732296874,
+          "dyaw_resid_dps": 1.710342590083066,
+          "ttld_s": 2.6149999999996894,
+          "xtrack_2_5s": 0.8049032997614058,
+          "xtrack_react": 0.04850812854774138
+        },
+        "n_samples": 1600
+      }
+    },
+    "engine": {
+      "abi": 1,
+      "body_core": "cpp17",
+      "body_fallback_reason": null,
+      "integration": "RK4 body + nonlinear backward-Euler wheel spin; partitioned",
+      "native_available": true,
+      "numerical_core": "cpp17",
+      "requested": "native",
+      "service_runtime": "cpp17",
+      "source_fingerprint": "bc560957e039b596c4d15ee75974724d48c1eba404e13825cc73d32788c74bc2",
+      "source_revision": "e79ca99c4eb6fb9b78f5c4949506f4cd09436f18"
+    },
+    "exit_code": 0,
+    "failures": [],
+    "tail": "iso3888_dlc_60kmh: 800 samples\noncentre_weave_100kmh: 1700 samples\nstep_steer_60kmh: 600 samples\nsw_curve60_fl_free_caster_baseline: 1600 samples\nsw_straight100_rl_stuck_value_baseline: 1600 samples\nsw_straight100_rl_stuck_value_mitigated: 1600 samples\n"
+  }
+}

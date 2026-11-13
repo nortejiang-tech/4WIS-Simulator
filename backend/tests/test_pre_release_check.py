@@ -34,6 +34,7 @@ def test_strict_v1_runs_even_when_tests_are_skipped(monkeypatch) -> None:
         return 0
 
     monkeypatch.setattr(checker, "command", fake_command)
+    monkeypatch.setattr(checker, "command_capture", lambda cmd, cwd: (fake_command(cmd, cwd), ""))
 
     assert checker.main() == 1
     assert ["py", "scripts/check_v1_readiness.py", "--strict-v1"] in commands
@@ -65,6 +66,7 @@ def test_strict_v1_forwards_portable_zip_requirement(monkeypatch) -> None:
         return 0
 
     monkeypatch.setattr(checker, "command", fake_command)
+    monkeypatch.setattr(checker, "command_capture", lambda cmd, cwd: (fake_command(cmd, cwd), ""))
 
     assert checker.main() == 0
     assert ["py", "scripts/check_v1_readiness.py", "--strict-v1", "--require-portable-zips"] in commands

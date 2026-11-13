@@ -8,14 +8,14 @@
 
 |模型|轮胎|故障|Python s|内核迁移 s|全 C++ s|全 C++ / Python 提速|全 C++ / 内核版提速|
 |---|---|---|---:|---:|---:|---:|---:|
-|simplified_dynamic|linear|simultaneous|3.0351|1.3455|0.0721|42.11×|18.67×|
-|simplified_dynamic|linear|staggered|3.2785|1.5679|0.0769|42.62×|20.38×|
-|simplified_dynamic|pacejka|simultaneous|3.4394|1.3698|0.0859|40.04×|15.95×|
-|simplified_dynamic|pacejka|staggered|3.6799|1.5870|0.0903|40.76×|17.58×|
-|multibody|linear|simultaneous|3.6505|1.2565|0.0741|49.29×|16.96×|
-|multibody|linear|staggered|3.8937|1.4709|0.0781|49.89×|18.85×|
-|multibody|pacejka|simultaneous|4.0580|1.2809|0.0877|46.28×|14.61×|
-|multibody|pacejka|staggered|4.2767|1.4950|0.0926|46.19×|16.15×|
+|simplified_dynamic|linear|simultaneous|2.9567|1.3109|0.0702|42.15×|18.69×|
+|simplified_dynamic|linear|staggered|3.2083|1.5405|0.0744|43.10×|20.69×|
+|simplified_dynamic|pacejka|simultaneous|3.3809|1.3539|0.0828|40.82×|16.35×|
+|simplified_dynamic|pacejka|staggered|3.6333|1.5674|0.0884|41.11×|17.73×|
+|multibody|linear|simultaneous|3.6401|1.2579|0.0722|50.39×|17.41×|
+|multibody|linear|staggered|3.8749|1.4705|0.0764|50.75×|19.26×|
+|multibody|pacejka|simultaneous|4.0431|1.2756|0.0856|47.22×|14.90×|
+|multibody|pacejka|staggered|4.2705|1.4943|0.0907|47.11×|16.48×|
 
 逐通道数值对照通过，记录时间、步数及故障事件序列一致；全 C++ 相对 Python 的 x/y 最大分量差为 3.91e-13 m。这是程序一致性，不是实车精度。状态绝对容差 1e-9 SI，力与力矩/摩擦余量 1e-5 SI，相对容差 1e-9；原有物理和黄金工况标准未放宽。
 
@@ -62,4 +62,4 @@ Windows 使用 app\sim4wis-cpp.exe，其他参数相同。输出包含完整通�
 
 软件验收记录、安装包 SHA-256、平台结果见 acceptance.md。仿真模型仍是带有适用范围的工程模型：降阶平面动力学、分步积分、研究型多体与估算的转向参数均不等价于实车验证。Windows 用户机器的 GUI、硬件输入与长时间运行验收仍需实际目标机执行。
 
-测量源提交：c9443f89b62de870dc2599908b708744eda6c36b；测量 C++ 二进制 SHA-256：cc7df8c35aa81f43842c16c2e37a52f397c944cadb925b9e6b4b9f2227d3b665。完整原始耗时在 benchmark-macos.json，样例定义、KPI 和时间线在 sample-analysis.json。
+测量源提交：e79ca99c4eb6fb9b78f5c4949506f4cd09436f18；测量 C++ 二进制 SHA-256：a7997d667a0a196c7e3d28fb94aef2930e92efe3b1217ebe89c1422b857c9a07。完整原始耗时在 benchmark-macos.json，样例定义、KPI 和时间线在 sample-analysis.json。

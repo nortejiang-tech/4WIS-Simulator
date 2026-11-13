@@ -126,7 +126,7 @@ def test_experiment_speed_profile_is_followed_in_both_modes(mode):
     from sim4wis.experiment.session import SimSession
 
     root = Path(__file__).resolve().parents[2]
-    raw = yaml.safe_load((root / "experiments" / "step_steer_60kmh.yaml").read_text())
+    raw = yaml.safe_load((root / "experiments" / "step_steer_60kmh.yaml").read_text(encoding="utf-8"))
     raw["vehicle"] = {**raw.get("vehicle", {}),
                       "overrides": {"longitudinal_mode": mode}}
     res = SimSession(Experiment.model_validate(raw)).run()

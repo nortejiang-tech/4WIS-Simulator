@@ -9,6 +9,9 @@ remain separate.
 
 Build offline with `cmake -S cpp_backend -B cpp_backend/build -DCMAKE_BUILD_TYPE=Release`
 and `cmake --build cpp_backend/build --config Release --parallel 4`.
+Mac release builds add `-DCMAKE_OSX_DEPLOYMENT_TARGET=13.3` to the configure command.
+The floating-point `std::to_chars` API requires macOS 13.3 or newer. The
+deployment target is not a claim of runtime testing on every older macOS.
 Run `sim4wis-cpp --root REPOSITORY --serve --port 8020`; build the browser assets
 with `npm ci && npm run build` under `frontend` first. The kernel-only route
 normally uses 8010, so both can run side by side with separate data folders.
@@ -43,7 +46,8 @@ binary. `tools/package.py` creates archives; `tools/check_package.py` extracts
 them to a path containing Chinese characters and spaces and tests the shipped binary, production
 frontend, multifault cases, exact artifacts, MCP and plugin runtime.
 
-Reports will record actual platform results and measured performance. Software
+Final platform evidence and measured performance are in
+`docs/reports/cpp_v0.107.0/acceptance.md` and `comparison.html`. Software
 consistency is distinct from physical validation. The multibody model remains
 research-grade, the planar model is reduced order, sensor faults affect only
 observations in this version, and actuator sizing uses a symmetric duplicated

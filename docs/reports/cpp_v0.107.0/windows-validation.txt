@@ -1,0 +1,1069 @@
+windows-cpp	Build standalone C++ binaries	﻿2026-11-13T19:21:49.6574496Z ##[group]Run cmake -S cpp_backend -B cpp_backend/build -A x64
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.6574876Z cmake -S cpp_backend -B cpp_backend/build -A x64
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.6575327Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.6575573Z cmake --build cpp_backend/build --config Release --parallel 4
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.6575817Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.6576020Z python -m pip install -e "./backend[dev]"
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.6576222Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.6576529Z "SIM4WIS_PLUGIN_PYTHON=$((Get-Command python).Source)" | Out-File -FilePath $env:GITHUB_ENV -Append
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7178020Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7178282Z env:
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7178406Z   PYTHONUTF8: 1
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7178531Z   SIM4WIS_ENGINE: python
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7178668Z   PW_E2E_PORT: 18072
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7178975Z   CPP_SERVER: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7179328Z   CPP_PROBE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp-probe.exe
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7179685Z   PW_CPP_EXECUTABLE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7179978Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7180237Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7180494Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7180719Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7180944Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:21:49.7181125Z ##[endgroup]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:38.5286041Z -- Building for: Visual Studio 18 2026
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:38.5286493Z -- The C compiler identification is MSVC 19.51.36260.0
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:39.8504438Z -- The CXX compiler identification is MSVC 19.51.36260.0
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:40.4739939Z -- Detecting C compiler ABI info
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.0381969Z -- Detecting C compiler ABI info - done
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.1017413Z -- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.1026374Z -- Detecting C compile features
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.1035433Z -- Detecting C compile features - done
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.3250745Z -- Detecting CXX compiler ABI info
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.8386935Z -- Detecting CXX compiler ABI info - done
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.8530143Z -- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.8533455Z -- Detecting CXX compile features
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:43.8539259Z -- Detecting CXX compile features - done
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:44.7668101Z -- Configuring done (49.9s)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:44.8012807Z -- Generating done (0.0s)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:44.8018660Z -- Build files have been written to: D:/a/4WIS-Simulator/4WIS-Simulator/cpp_backend/build
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:45.0111315Z MSBuild version 18.11.1-1.26513.3+940033be3 for .NET Framework
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:45.0653547Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:45.3250152Z   Checking File Globs
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:45.4264160Z   1>Checking Build System
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:46.0004412Z   Building Custom Rule D:/a/4WIS-Simulator/4WIS-Simulator/cpp_backend/CMakeLists.txt
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:46.0977888Z   binary.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:50.9342431Z   convert.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:53.4835049Z   depthguard.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:53.7627781Z   directives.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:53.9558104Z   emit.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:54.3638897Z   emitfromevents.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:54.6756306Z   emitter.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:55.0458562Z   emitterstate.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:55.3623616Z   emitterutils.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:55.7425211Z   exceptions.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:56.0276336Z   exp.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:56.3356298Z   memory.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:56.6147021Z   node.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:56.8348255Z   node_data.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:57.2249754Z   nodebuilder.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:57.5944988Z   nodeevents.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:57.8831790Z   null.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:58.0605481Z   ostream_wrapper.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:58.3480161Z   parse.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:58.7218372Z   parser.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:22:59.1299652Z   Generating Code...
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:03.4782498Z   Compiling...
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:03.4782885Z   regex_yaml.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:03.7643062Z   scanner.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:04.1325128Z   scanscalar.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:04.4880740Z   scantag.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:04.7951379Z   scantoken.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:05.1444784Z   simplekey.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:05.4462950Z   singledocparser.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:05.8364368Z   stream.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:06.1098051Z   tag.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:06.3869206Z   Generating Code...
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:09.0580794Z   fourwis_yaml.vcxproj -> D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\Release\fourwis_yaml.lib
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:09.1096638Z   Building Custom Rule D:/a/4WIS-Simulator/4WIS-Simulator/cpp_backend/CMakeLists.txt
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:09.2020998Z   model.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:10.7969698Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:10.7983485Z   (compiling source file '../src/model.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:10.7983792Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:10.8338663Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:10.8347798Z   (compiling source file '../src/model.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:10.8348236Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:10.8348604Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:10.8348761Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:11.2077873Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:11.2078860Z   (compiling source file '../src/model.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:11.2079093Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:11.6120322Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\src\model.cpp(128,14): warning C4458: declaration of 'y' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:11.6121048Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\model.hpp(81,26):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:11.6121346Z       see declaration of 'fourwis::Model::y'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:11.6121533Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:12.3562013Z   plugin.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:12.7911929Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:12.7913516Z   (compiling source file '../src/plugin.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:12.7913790Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:13.0358459Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:13.1246658Z   (compiling source file '../src/plugin.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:13.1247117Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:13.1248771Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:13.1249017Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:13.1250022Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:13.1251605Z   (compiling source file '../src/plugin.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:13.1251855Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:16.8471760Z   controller.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.2968544Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.2969380Z   (compiling source file '../src/controller.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.2969553Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.5322991Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.5323609Z   (compiling source file '../src/controller.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.5323875Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.5324152Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.5324307Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.6076627Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.6077281Z   (compiling source file '../src/controller.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:17.6077454Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:18.5885419Z   random.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:19.0342866Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:19.0343772Z   (compiling source file '../src/random.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:19.0343943Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:19.1920770Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:19.1921476Z   (compiling source file '../src/random.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:19.1921647Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:19.6967557Z   fault.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.1440137Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.1440949Z   (compiling source file '../src/fault.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.1441114Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.3801126Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.3802052Z   (compiling source file '../src/fault.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.3802462Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.3802921Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.3803164Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.4573525Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.4574490Z   (compiling source file '../src/fault.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:20.4574794Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:21.7054507Z   simulation.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.1582645Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.1583440Z   (compiling source file '../src/simulation.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.1583622Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.4008974Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.4009587Z   (compiling source file '../src/simulation.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.4009898Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.4010184Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.4010359Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.4771530Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.4772188Z   (compiling source file '../src/simulation.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.4772372Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.9118464Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\src\simulation.cpp(190,20): warning C4456: declaration of 'v' hides previous local declaration [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.9119166Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\src\simulation.cpp(169,26):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.9119418Z       see declaration of 'v'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:22.9119588Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:23.6705590Z   tracking.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.1105447Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.1106313Z   (compiling source file '../src/tracking.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.1106490Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.2648013Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.2648706Z   (compiling source file '../src/tracking.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.2648886Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.3707532Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.3708443Z   (compiling source file '../src/tracking.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.3708830Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.3709251Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:24.3709488Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:32.7676738Z   steering.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.2124051Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.2124894Z   (compiling source file '../src/steering.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.2125078Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.3714016Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.3715223Z   (compiling source file '../src/steering.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.3715403Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.4791756Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.4792535Z   (compiling source file '../src/steering.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.4792937Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.4793370Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:33.4793733Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:34.5524308Z   path.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:35.0088132Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:35.0089186Z   (compiling source file '../src/path.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:35.0089357Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:35.8363561Z   storage.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.3099247Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.3100104Z   (compiling source file '../src/storage.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.3100282Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.5737636Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.5738656Z   (compiling source file '../src/storage.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.5739104Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.5739540Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.5739783Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.6704371Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.6705962Z   (compiling source file '../src/storage.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:36.6706215Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:38.9256937Z   kpi.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.3681870Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.3682729Z   (compiling source file '../src/kpi.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.3682892Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.6030545Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.6031116Z   (compiling source file '../src/kpi.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.6031373Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.6031665Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.6031825Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.6781833Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.6783457Z   (compiling source file '../src/kpi.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:39.6783612Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:40.8167474Z   agent.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.3094013Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.3094818Z   (compiling source file '../src/agent.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.3094990Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.5478900Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.5479483Z   (compiling source file '../src/agent.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.5479733Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.5480029Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.5480184Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.6292974Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.6293666Z   (compiling source file '../src/agent.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:41.6293860Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.0709354Z   live.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.5197525Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.5198411Z   (compiling source file '../src/live.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.5198655Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.7538161Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.7538788Z   (compiling source file '../src/live.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.7539044Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.7539389Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.7539583Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.8288703Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.8289531Z   (compiling source file '../src/live.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:43.8289795Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:45.9858025Z   service.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.4556611Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.4557545Z   (compiling source file '../src/service.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.4557760Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.7012860Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.7013503Z   (compiling source file '../src/service.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.7013816Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.7014173Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.7014379Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.7795661Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.7797993Z   (compiling source file '../src/service.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:46.7798281Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:47.3789926Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\src\service.cpp(509,10): warning C4457: declaration of 'path' hides function parameter [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:47.3790763Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\src\service.cpp(197,73):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:47.3791045Z       see declaration of 'path'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:47.3791254Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:48.4392031Z   analysis.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:48.8854545Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:48.8855415Z   (compiling source file '../src/analysis.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:48.8855652Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:49.1180932Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:49.1181870Z   (compiling source file '../src/analysis.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:49.1182327Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:49.1182796Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:49.1183066Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:49.1927219Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:49.1928377Z   (compiling source file '../src/analysis.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:49.1928686Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:50.6848301Z   expression.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.1328128Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.1329027Z   (compiling source file '../src/expression.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.1329248Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.3686873Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.3687514Z   (compiling source file '../src/expression.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.3687859Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.3688179Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.3688365Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.4481112Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.4481856Z   (compiling source file '../src/expression.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.4482072Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.9055855Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\src\expression.cpp(340,19): warning C4456: declaration of 'x' hides previous local declaration [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.9056573Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\src\expression.cpp(314,10):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.9056857Z       see declaration of 'x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:51.9057288Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:52.7059961Z   procedures.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.1555581Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.1556764Z   (compiling source file '../src/procedures.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.1556978Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.3996868Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.3997550Z   (compiling source file '../src/procedures.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.3997883Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.3998242Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.3998489Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.4799250Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.4800495Z   (compiling source file '../src/procedures.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:53.4800864Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:56.9452026Z   criteria.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.3971268Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.3972138Z   (compiling source file '../src/criteria.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.3972356Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.6354156Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.6355174Z   (compiling source file '../src/criteria.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.6355632Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.6356128Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.6356415Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.7117909Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.7119041Z   (compiling source file '../src/criteria.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:57.7119363Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.2289536Z   targets.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.6716003Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.6716917Z   (compiling source file '../src/targets.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.6717143Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.9171375Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.9171982Z   (compiling source file '../src/targets.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.9172308Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.9172629Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.9172830Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.9940124Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.9941231Z   (compiling source file '../src/targets.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:23:59.9941466Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:01.5850153Z   sizing.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.0426004Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.0426900Z   (compiling source file '../src/sizing.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.0427111Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.2731989Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.2732598Z   (compiling source file '../src/sizing.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.2732858Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.2733193Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.2733386Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.3476757Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.3477417Z   (compiling source file '../src/sizing.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:02.3477621Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:03.7588211Z   Generating Code...
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:55.4369072Z   Compiling...
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:55.4369401Z   study.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:55.9230191Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:55.9231687Z   (compiling source file '../src/study.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:55.9232002Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:56.1779908Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:56.1780872Z   (compiling source file '../src/study.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:56.1781314Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:56.1781929Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:56.1782260Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:56.2611742Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:56.2612524Z   (compiling source file '../src/study.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:56.2612698Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:57.9731957Z   golden.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.4650169Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.4651335Z   (compiling source file '../src/golden.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.4651563Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.7362969Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.7363727Z   (compiling source file '../src/golden.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.7364083Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.7365879Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.7366277Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.8276304Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_core.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.8277146Z   (compiling source file '../src/golden.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:24:58.8277377Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:00.3633445Z   Generating Code...
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:06.8675891Z   fourwis_core.vcxproj -> D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\Release\fourwis_core.lib
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:06.9069675Z   Building Custom Rule D:/a/4WIS-Simulator/4WIS-Simulator/cpp_backend/CMakeLists.txt
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:06.9517373Z   Building Custom Rule D:/a/4WIS-Simulator/4WIS-Simulator/cpp_backend/CMakeLists.txt
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:06.9626996Z   probe.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.0474448Z   civetweb.c
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.4791297Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp-probe.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.4792285Z   (compiling source file '../src/probe.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.4792493Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.8902274Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp-probe.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.8903604Z   (compiling source file '../src/probe.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.9183595Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.9240009Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:07.9559282Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:08.0531972Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp-probe.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:08.0575083Z   (compiling source file '../src/probe.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:08.0869080Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:08.7683845Z   http.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.3246797Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_http.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.3261120Z   (compiling source file '../src/http.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.3261546Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.5502535Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_http.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.5508726Z   (compiling source file '../src/http.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.5509171Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.5509590Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.5509760Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.6472238Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\fourwis_http.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.6473339Z   (compiling source file '../src/http.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:09.6473607Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:14.7620159Z   fourwis_http.vcxproj -> D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\Release\fourwis_http.lib
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:14.8670381Z   Building Custom Rule D:/a/4WIS-Simulator/4WIS-Simulator/cpp_backend/CMakeLists.txt
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:14.9627851Z   main.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.4465601Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.4477594Z   (compiling source file '../src/main.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.4477916Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.6738175Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.6743904Z   (compiling source file '../src/main.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.6744351Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.6744784Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.6745055Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.7510741Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.7511807Z   (compiling source file '../src/main.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:15.7512055Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:17.3739098Z   mcp.cpp
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:17.8316885Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\common.hpp(27,26): warning C4996: '_wgetenv': This function or variable may be unsafe. Consider using _wdupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:17.8318136Z   (compiling source file '../src/mcp.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:17.8318376Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:18.0760292Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(55,16): warning C4458: declaration of 'x' hides class member [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:18.0760913Z   (compiling source file '../src/mcp.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:18.0761169Z       D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\include\state.hpp(42,3):
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:18.0761468Z       see declaration of 'fourwis::State::x'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:18.0761637Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:18.1566408Z D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\third_party\numpy-random\pcg64.h(342,24): warning C4146: unary minus operator applied to unsigned type, result still unsigned [D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\sim4wis-cpp.vcxproj]
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:18.1567489Z   (compiling source file '../src/mcp.cpp')
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:18.1567741Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:19.5217928Z   Generating Code...
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:35.9646767Z   sim4wis-cpp-probe.vcxproj -> D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\Release\sim4wis-cpp-probe.exe
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:36.0307306Z   sim4wis-cpp.vcxproj -> D:\a\4WIS-Simulator\4WIS-Simulator\cpp_backend\build\Release\sim4wis-cpp.exe
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:25:36.0835131Z   Building Custom Rule D:/a/4WIS-Simulator/4WIS-Simulator/cpp_backend/CMakeLists.txt
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:00.2772717Z Obtaining file:///D:/a/4WIS-Simulator/4WIS-Simulator/backend
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:00.2800268Z   Installing build dependencies: started
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:03.9381657Z   Installing build dependencies: finished with status 'done'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:03.9395163Z   Checking if build backend supports build_editable: started
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:04.5261744Z   Checking if build backend supports build_editable: finished with status 'done'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:04.5283390Z   Getting requirements to build editable: started
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0021595Z   Getting requirements to build editable: finished with status 'done'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0035842Z   C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-krwcm0mk\overlay\Lib\site-packages\setuptools\config\_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0036735Z   !!
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0037077Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0037313Z           ********************************************************************************
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0037898Z           Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0038347Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0038635Z           By 2027-Feb-18, you need to update your project and remove deprecated calls
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0038980Z           or your builds will no longer be supported.
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0039213Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0039543Z           See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0039955Z           ********************************************************************************
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0040229Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0040388Z   !!
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0040561Z     corresp(dist, value, root_dir)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.0058398Z   Preparing editable metadata (pyproject.toml): started
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2564420Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2571184Z   C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-krwcm0mk\overlay\Lib\site-packages\setuptools\config\_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2572047Z   !!
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2572274Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2572568Z           ********************************************************************************
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2573401Z           Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2574166Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2574575Z           By 2027-Feb-18, you need to update your project and remove deprecated calls
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2575063Z           or your builds will no longer be supported.
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2575403Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2575789Z           See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2576195Z           ********************************************************************************
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2576462Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2576602Z   !!
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.2576771Z     corresp(dist, value, root_dir)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.5367005Z Collecting fastapi>=0.115 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.6984485Z   Downloading fastapi-0.162.7-py3-none-any.whl.metadata (27 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.7876434Z Collecting uvicorn>=0.30 (from uvicorn[standard]>=0.30->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.8022178Z   Downloading uvicorn-0.54.0-py3-none-any.whl.metadata (6.6 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:05.9879357Z Collecting websockets>=12 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.0026071Z   Downloading websockets-17.4-cp312-cp312-win_amd64.whl.metadata (6.5 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.1371495Z Collecting pydantic>=2.7 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.1521515Z   Downloading pydantic-2.14.3-py3-none-any.whl.metadata (141 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.4035018Z Collecting numpy>=1.26 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.4197221Z   Downloading numpy-2.5.4-cp312-cp312-win_amd64.whl.metadata (6.6 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.4884971Z Collecting pyyaml>=6.0 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.5029115Z   Downloading pyyaml-6.0.3-cp312-cp312-win_amd64.whl.metadata (2.4 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.5566451Z Collecting mcp>=2.0 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.5715119Z   Downloading mcp-2.3.0-py3-none-any.whl.metadata (6.6 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.6324899Z Collecting pytest>=8 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.6511295Z   Downloading pytest-9.2.0-py3-none-any.whl.metadata (7.9 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.7039579Z Collecting pytest-asyncio>=0.23 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.7184880Z   Downloading pytest_asyncio-1.5.0-py3-none-any.whl.metadata (4.4 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.7698856Z Collecting pytest-xdist>=3.5 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:06.7846234Z   Downloading pytest_xdist-3.8.0-py3-none-any.whl.metadata (3.0 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.1330167Z Collecting ruff>=0.5 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.1482015Z   Downloading ruff-0.17.5-py3-none-win_amd64.whl.metadata (21 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.2819918Z Collecting httpx>=0.27 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.3033977Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.5314249Z Collecting matplotlib>=3.8 (from sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.5612898Z   Downloading matplotlib-3.11.2-cp312-cp312-win_amd64.whl.metadata (80 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.6971205Z Collecting starlette>=0.46.0 (from fastapi>=0.115->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.7145911Z   Downloading starlette-1.10.0-py3-none-any.whl.metadata (6.6 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.8187516Z Collecting anyio>=4.1.0 (from fastapi>=0.115->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.8366877Z   Downloading anyio-4.16.0-py3-none-any.whl.metadata (4.7 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.9437384Z Collecting typing-extensions>=4.8.0 (from fastapi>=0.115->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:07.9654567Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.0982678Z Collecting typing-inspection>=0.4.2 (from fastapi>=0.115->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.1126637Z   Downloading typing_inspection-0.4.5-py3-none-any.whl.metadata (2.6 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.2201996Z Collecting annotated-doc>=0.0.2 (from fastapi>=0.115->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.2380572Z   Downloading annotated_doc-0.0.6-py3-none-any.whl.metadata (6.5 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.3347917Z Collecting opentelemetry-api>=1.44.0 (from fastapi>=0.115->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.3521844Z   Downloading opentelemetry_api-1.45.2-py3-none-any.whl.metadata (1.4 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.4594431Z Collecting idna>=2.8 (from anyio>=4.1.0->fastapi>=0.115->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.5049209Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.6214614Z Collecting certifi (from httpx>=0.27->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.6359943Z   Downloading certifi-2026.10.23-py3-none-any.whl.metadata (2.5 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.7517371Z Collecting httpcore==1.* (from httpx>=0.27->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.7660462Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.8935201Z Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:08.9079288Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.0527428Z Collecting contourpy>=1.0.1 (from matplotlib>=3.8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.0719621Z   Downloading contourpy-1.4.0-cp312-cp312-win_amd64.whl.metadata (3.8 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.1770042Z Collecting cycler>=0.10 (from matplotlib>=3.8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.1945159Z   Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.4254172Z Collecting fonttools>=4.28.2 (from matplotlib>=3.8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.4446717Z   Downloading fonttools-4.68.0-cp312-cp312-win_amd64.whl.metadata (142 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.6028171Z Collecting kiwisolver>=1.3.1 (from matplotlib>=3.8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.6213615Z   Downloading kiwisolver-1.5.1-cp312-cp312-win_amd64.whl.metadata (5.2 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.6805605Z Requirement already satisfied: packaging>=20.0 in C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages (from matplotlib>=3.8->sim4wis==0.107.0) (26.3)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.9116764Z Collecting pillow>=9 (from matplotlib>=3.8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:09.9297408Z   Downloading pillow-13.0.0-cp312-cp312-win_amd64.whl.metadata (9.3 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.0624247Z Collecting pyparsing>=3 (from matplotlib>=3.8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.0795630Z   Downloading pyparsing-3.3.3-py3-none-any.whl.metadata (5.9 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.2010617Z Collecting python-dateutil>=2.7 (from matplotlib>=3.8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.2155959Z   Downloading python_dateutil-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.3279173Z Collecting httpx2>=2.10.0 (from mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.3425371Z   Downloading httpx2-2.16.0-py3-none-any.whl.metadata (10 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.4704269Z Collecting jsonschema>=4.20.0 (from mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.4848939Z   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.6537027Z Collecting mcp-types==2.3.0 (from mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.6683610Z   Downloading mcp_types-2.3.0-py3-none-any.whl.metadata (1.9 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.7412644Z Collecting pyjwt>=2.10.1 (from pyjwt[crypto]>=2.10.1->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.7561620Z   Downloading pyjwt-2.15.1-py3-none-any.whl.metadata (3.5 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.8062635Z Collecting python-multipart>=0.0.9 (from mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.8208630Z   Downloading python_multipart-0.0.33-py3-none-any.whl.metadata (6.3 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.8763219Z Collecting pywin32>=311 (from mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.8912402Z   Downloading pywin32-312-cp312-cp312-win_amd64.whl.metadata (11 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.9476967Z Collecting sse-starlette>=3.0.0 (from mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:10.9624413Z   Downloading sse_starlette-3.7.0-py3-none-any.whl.metadata (15 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.0182407Z Collecting httpcore2==2.16.0 (from httpx2>=2.10.0->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.0329322Z   Downloading httpcore2-2.16.0-py3-none-any.whl.metadata (27 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.0864257Z Collecting truststore>=0.10 (from httpx2>=2.10.0->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.1007921Z   Downloading truststore-0.10.5-py3-none-any.whl.metadata (4.5 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.1529075Z Collecting attrs>=22.2.0 (from jsonschema>=4.20.0->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.1675185Z   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.2214752Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=4.20.0->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.2358837Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.3038081Z Collecting referencing>=0.28.4 (from jsonschema>=4.20.0->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.3186836Z   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.5551712Z Collecting rpds-py>=0.25.0 (from jsonschema>=4.20.0->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.5695642Z   Downloading rpds_py-2026.9.1-cp312-cp312-win_amd64.whl.metadata (4.2 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.6220171Z Collecting annotated-types>=0.6.0 (from pydantic>=2.7->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:11.6362454Z   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.2146764Z Collecting pydantic-core==2.50.4 (from pydantic>=2.7->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.2289200Z   Downloading pydantic_core-2.50.4-cp312-cp312-win_amd64.whl.metadata (6.7 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.4559638Z Collecting cryptography>=3.4.0 (from pyjwt[crypto]>=2.10.1->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.4707845Z   Downloading cryptography-50.0.2-cp311-abi3-win_amd64.whl.metadata (4.4 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.5852008Z Collecting cffi>=2.0.0 (from cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.5998630Z   Downloading cffi-2.1.1-cp312-cp312-win_amd64.whl.metadata (2.6 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.6769735Z Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=2.0->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.6923952Z   Downloading pycparser-3.12-py3-none-any.whl.metadata (9.7 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.7153205Z Requirement already satisfied: colorama>=0.4 in C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages (from pytest>=8->sim4wis==0.107.0) (0.4.6)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.7483609Z Collecting iniconfig>=2 (from pytest>=8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.7628290Z   Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.8136427Z Collecting pluggy<2,>=1.6 (from pytest>=8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.8278764Z   Downloading pluggy-1.7.0-py3-none-any.whl.metadata (5.0 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.8858768Z Collecting pygments>=2.15 (from pytest>=8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.9003580Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.9528698Z Collecting execnet>=2.1 (from pytest-xdist>=3.5->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:12.9670954Z   Downloading execnet-2.1.2-py3-none-any.whl.metadata (2.9 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.0201090Z Collecting tzdata (from python-dateutil>=2.7->matplotlib>=3.8->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.0343226Z   Downloading tzdata-2026.6-py2.py3-none-any.whl.metadata (1.4 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.0568757Z Requirement already satisfied: click>=7.0 in C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages (from uvicorn>=0.30->uvicorn[standard]>=0.30->sim4wis==0.107.0) (8.5.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.1110941Z Collecting httptools>=0.8.0 (from uvicorn[standard]>=0.30->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.1257459Z   Downloading httptools-0.9.0-cp312-cp312-win_amd64.whl.metadata (3.7 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.1825300Z Collecting python-dotenv>=0.13 (from uvicorn[standard]>=0.30->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.1971669Z   Downloading python_dotenv-1.2.4-py3-none-any.whl.metadata (29 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.2921389Z Collecting watchfiles>=0.20 (from uvicorn[standard]>=0.30->sim4wis==0.107.0)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.3068460Z   Downloading watchfiles-1.3.0-cp310-abi3-win_amd64.whl.metadata (5.0 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.3447980Z Downloading fastapi-0.162.7-py3-none-any.whl (152 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.3760556Z Downloading annotated_doc-0.0.6-py3-none-any.whl (5.3 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.4034398Z Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.4333308Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.4601282Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.4905869Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.5170854Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.5455606Z Downloading matplotlib-3.11.2-cp312-cp312-win_amd64.whl (9.3 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.6692108Z    ---------------------------------------- 9.3/9.3 MB 83.4 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.6833030Z Downloading contourpy-1.4.0-cp312-cp312-win_amd64.whl (234 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.7130351Z Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.7391253Z Downloading fonttools-4.68.0-cp312-cp312-win_amd64.whl (2.5 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.7750052Z    ---------------------------------------- 2.5/2.5 MB 73.3 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.7892025Z Downloading kiwisolver-1.5.1-cp312-cp312-win_amd64.whl (70 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.8202827Z Downloading mcp-2.3.0-py3-none-any.whl (368 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.8581572Z Downloading mcp_types-2.3.0-py3-none-any.whl (69 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.8848697Z Downloading httpx2-2.16.0-py3-none-any.whl (97 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.9196028Z Downloading httpcore2-2.16.0-py3-none-any.whl (85 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.9467288Z Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:13.9775544Z Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.0929954Z Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.1217362Z Downloading numpy-2.5.4-cp312-cp312-win_amd64.whl (12.6 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.2223706Z    ---------------------------------------- 12.6/12.6 MB 131.0 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.2366010Z Downloading opentelemetry_api-1.45.2-py3-none-any.whl (60 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.2629482Z Downloading pillow-13.0.0-cp312-cp312-win_amd64.whl (7.3 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.3354236Z    ---------------------------------------- 7.3/7.3 MB 113.1 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.3498563Z Downloading pydantic-2.14.3-py3-none-any.whl (494 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.3813661Z Downloading pydantic_core-2.50.4-cp312-cp312-win_amd64.whl (2.3 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.4114196Z    ---------------------------------------- 2.3/2.3 MB 64.6 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.4336666Z Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.4598326Z Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.4882413Z Downloading cryptography-50.0.2-cp311-abi3-win_amd64.whl (3.8 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.5303276Z    ---------------------------------------- 3.8/3.8 MB 77.4 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.5447536Z Downloading cffi-2.1.1-cp312-cp312-win_amd64.whl (185 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.5730730Z Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.6010468Z Downloading pytest-9.2.0-py3-none-any.whl (411 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.6309149Z Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.6576658Z Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.6851796Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.7086650Z    ---------------------------------------- 1.3/1.3 MB 65.9 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.7227161Z Downloading pytest_asyncio-1.5.0-py3-none-any.whl (17 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.7531678Z Downloading pytest_xdist-3.8.0-py3-none-any.whl (46 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.7789396Z Downloading execnet-2.1.2-py3-none-any.whl (40 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.8087157Z Downloading python_dateutil-4.0.0-py3-none-any.whl (92 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.8375370Z Downloading python_multipart-0.0.33-py3-none-any.whl (32 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.8649706Z Downloading pywin32-312-cp312-cp312-win_amd64.whl (6.9 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.9279953Z    ---------------------------------------- 6.9/6.9 MB 107.3 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.9422436Z Downloading pyyaml-6.0.3-cp312-cp312-win_amd64.whl (154 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.9717932Z Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:14.9986886Z Downloading rpds_py-2026.9.1-cp312-cp312-win_amd64.whl (222 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.0307935Z Downloading ruff-0.17.5-py3-none-win_amd64.whl (10.3 MB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.1210692Z    ---------------------------------------- 10.3/10.3 MB 126.8 MB/s  0:00:00
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.1352294Z Downloading sse_starlette-3.7.0-py3-none-any.whl (18 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.1679562Z Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.1968135Z Downloading truststore-0.10.5-py3-none-any.whl (19 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.2231453Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.2490551Z Downloading typing_inspection-0.4.5-py3-none-any.whl (14 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.2772494Z Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.3049383Z Downloading httptools-0.9.0-cp312-cp312-win_amd64.whl (92 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.3330789Z Downloading python_dotenv-1.2.4-py3-none-any.whl (23 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.6146201Z Downloading watchfiles-1.3.0-cp310-abi3-win_amd64.whl (290 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.6566071Z Downloading websockets-17.4-cp312-cp312-win_amd64.whl (219 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.6856927Z Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.7199238Z Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.7508196Z Downloading tzdata-2026.6-py2.py3-none-any.whl (348 kB)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.9911531Z Building wheels for collected packages: sim4wis
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:15.9938360Z   Building editable for sim4wis (pyproject.toml): started
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8886781Z   Building editable for sim4wis (pyproject.toml): finished with status 'done'
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8894191Z   C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-krwcm0mk\overlay\Lib\site-packages\setuptools\config\_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8895401Z   !!
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8895598Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8895873Z           ********************************************************************************
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8896859Z           Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8897378Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8897589Z           By 2027-Feb-18, you need to update your project and remove deprecated calls
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8897849Z           or your builds will no longer be supported.
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8898033Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8898305Z           See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8898642Z           ********************************************************************************
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8898834Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8898943Z   !!
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8899081Z     corresp(dist, value, root_dir)
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8927958Z   Created wheel for sim4wis: filename=sim4wis-0.107.0-0.editable-cp312-cp312-win_amd64.whl size=2344 sha256=587863814721cca4e6ebb14a4c37f6c6b83ca0afd9265f34b8a12bc60d8e61cf
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8929204Z   Stored in directory: C:\Users\runneradmin\AppData\Local\Temp\pip-ephem-wheel-cache-39brurll\wheels\ce\de\63\3994af6f82c52ddd9061e9a5fa9d7424dbb982ddb51598aab4
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.8949701Z Successfully built sim4wis
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:26:47.9891674Z Installing collected packages: websockets, tzdata, typing-extensions, truststore, ruff, rpds-py, pyyaml, pywin32, python-multipart, python-dotenv, pyparsing, pyjwt, pygments, pycparser, pluggy, pillow, numpy, kiwisolver, iniconfig, idna, httptools, h11, fonttools, execnet, cycler, certifi, attrs, annotated-types, annotated-doc, uvicorn, typing-inspection, referencing, python-dateutil, pytest, pydantic-core, opentelemetry-api, httpcore2, httpcore, contourpy, cffi, anyio, watchfiles, starlette, pytest-xdist, pytest-asyncio, pydantic, matplotlib, jsonschema-specifications, httpx2, httpx, cryptography, sse-starlette, mcp-types, jsonschema, fastapi, mcp, sim4wis
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:27:06.6494768Z
+windows-cpp	Build standalone C++ binaries	2026-11-13T19:27:06.6531910Z Successfully installed annotated-doc-0.0.6 annotated-types-0.8.0 anyio-4.16.0 attrs-26.1.0 certifi-2026.10.23 cffi-2.1.1 contourpy-1.4.0 cryptography-50.0.2 cycler-0.12.1 execnet-2.1.2 fastapi-0.162.7 fonttools-4.68.0 h11-0.16.0 httpcore-1.0.9 httpcore2-2.16.0 httptools-0.9.0 httpx-0.28.1 httpx2-2.16.0 idna-3.20 iniconfig-2.3.1 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 kiwisolver-1.5.1 matplotlib-3.11.2 mcp-2.3.0 mcp-types-2.3.0 numpy-2.5.4 opentelemetry-api-1.45.2 pillow-13.0.0 pluggy-1.7.0 pycparser-3.12 pydantic-2.14.3 pydantic-core-2.50.4 pygments-2.21.0 pyjwt-2.15.1 pyparsing-3.3.3 pytest-9.2.0 pytest-asyncio-1.5.0 pytest-xdist-3.8.0 python-dateutil-4.0.0 python-dotenv-1.2.4 python-multipart-0.0.33 pywin32-312 pyyaml-6.0.3 referencing-0.37.0 rpds-py-2026.9.1 ruff-0.17.5 sim4wis-0.107.0 sse-starlette-3.7.0 starlette-1.10.0 truststore-0.10.5 typing-extensions-4.16.0 typing-inspection-0.4.5 tzdata-2026.6 uvicorn-0.54.0 watchfiles-1.3.0 websockets-17.4
+windows-cpp	Build production frontend	﻿2026-11-13T19:27:07.0354809Z ##[group]Run npm ci
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0355046Z npm ci
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0355201Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0355396Z npm run type-check
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0355566Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0355757Z npm run test -- --run
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0355921Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0356088Z npm run build
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0356239Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0413349Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0413557Z env:
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0413670Z   PYTHONUTF8: 1
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0413790Z   SIM4WIS_ENGINE: python
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0413920Z   PW_E2E_PORT: 18072
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0414145Z   CPP_SERVER: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0414703Z   CPP_PROBE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp-probe.exe
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0415052Z   PW_CPP_EXECUTABLE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0415347Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0415603Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0415856Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0416092Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0416315Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0416569Z   SIM4WIS_PLUGIN_PYTHON: C:\hostedtoolcache\windows\Python\3.12.10\x64\python.exe
+windows-cpp	Build production frontend	2026-11-13T19:27:07.0416803Z ##[endgroup]
+windows-cpp	Build production frontend	2026-11-13T19:27:16.9507776Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+windows-cpp	Build production frontend	2026-11-13T19:27:17.0569468Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+windows-cpp	Build production frontend	2026-11-13T19:27:17.2927629Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+windows-cpp	Build production frontend	2026-11-13T19:27:17.8460090Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+windows-cpp	Build production frontend	2026-11-13T19:27:18.0418084Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+windows-cpp	Build production frontend	2026-11-13T19:27:19.7947771Z npm warn deprecated three-mesh-bvh@0.7.8: Deprecated due to three.js version incompatibility. Please use v0.8.0, instead.
+windows-cpp	Build production frontend	2026-11-13T19:27:49.1146857Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+windows-cpp	Build production frontend	2026-11-13T19:27:50.6322570Z
+windows-cpp	Build production frontend	2026-11-13T19:27:50.6323448Z added 305 packages, and audited 306 packages in 43s
+windows-cpp	Build production frontend	2026-11-13T19:27:50.6323758Z
+windows-cpp	Build production frontend	2026-11-13T19:27:50.6323887Z 58 packages are looking for funding
+windows-cpp	Build production frontend	2026-11-13T19:27:50.6324137Z   run `npm fund` for details
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7700832Z
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7701654Z 22 vulnerabilities (2 low, 11 moderate, 7 high, 2 critical)
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7701954Z
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7702152Z To address issues that do not require attention, run:
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7702601Z   npm audit fix
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7702729Z
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7702917Z To address all issues (including breaking changes), run:
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7703242Z   npm audit fix --force
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7703386Z
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7703497Z Run `npm audit` for details.
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7725179Z npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7728143Z npm warn install-scripts   esbuild@0.21.5 (postinstall: node install.js)
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7728529Z npm warn install-scripts
+windows-cpp	Build production frontend	2026-11-13T19:27:50.7729054Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+windows-cpp	Build production frontend	2026-11-13T19:27:51.9092504Z
+windows-cpp	Build production frontend	2026-11-13T19:27:51.9093122Z > sim4wis-frontend@0.107.0 type-check
+windows-cpp	Build production frontend	2026-11-13T19:27:51.9093368Z > tsc --noEmit
+windows-cpp	Build production frontend	2026-11-13T19:27:51.9093458Z
+windows-cpp	Build production frontend	2026-11-13T19:27:55.6356054Z
+windows-cpp	Build production frontend	2026-11-13T19:27:55.6356975Z > sim4wis-frontend@0.107.0 test
+windows-cpp	Build production frontend	2026-11-13T19:27:55.6357347Z > vitest run --run
+windows-cpp	Build production frontend	2026-11-13T19:27:55.6357476Z
+windows-cpp	Build production frontend	2026-11-13T19:27:56.1473655Z
+windows-cpp	Build production frontend	2026-11-13T19:27:56.1476094Z  RUN  v2.1.9 D:/a/4WIS-Simulator/4WIS-Simulator/frontend
+windows-cpp	Build production frontend	2026-11-13T19:27:56.1476372Z
+windows-cpp	Build production frontend	2026-11-13T19:27:56.4327043Z  ✓ src/input/steerRamp.test.ts (10 tests) 5ms
+windows-cpp	Build production frontend	2026-11-13T19:27:56.4360034Z  ✓ src/view/renderPose.test.ts (8 tests) 8ms
+windows-cpp	Build production frontend	2026-11-13T19:27:56.4371697Z  ✓ src/input/driveIntent.test.ts (19 tests) 11ms
+windows-cpp	Build production frontend	2026-11-13T19:27:56.6440412Z  ✓ src/input/focusPolicy.test.ts (14 tests) 3ms
+windows-cpp	Build production frontend	2026-11-13T19:27:56.6641107Z  ✓ src/vehicle/geometryModel.test.ts (2 tests) 3ms
+windows-cpp	Build production frontend	2026-11-13T19:27:56.7142312Z  ✓ src/components/model/diagrams.test.tsx (1 test) 5ms
+windows-cpp	Build production frontend	2026-11-13T19:27:56.7327680Z
+windows-cpp	Build production frontend	2026-11-13T19:27:56.7341254Z  Test Files  6 passed (6)
+windows-cpp	Build production frontend	2026-11-13T19:27:56.7342326Z       Tests  54 passed (54)
+windows-cpp	Build production frontend	2026-11-13T19:27:56.7344223Z    Start at  19:27:56
+windows-cpp	Build production frontend	2026-11-13T19:27:56.7348942Z    Duration  585ms (transform 235ms, setup 0ms, collect 366ms, tests 36ms, environment 1ms, prepare 395ms)
+windows-cpp	Build production frontend	2026-11-13T19:27:56.7353052Z
+windows-cpp	Build production frontend	2026-11-13T19:27:56.9518410Z
+windows-cpp	Build production frontend	2026-11-13T19:27:56.9519078Z > sim4wis-frontend@0.107.0 build
+windows-cpp	Build production frontend	2026-11-13T19:27:56.9519461Z > tsc -b && vite build
+windows-cpp	Build production frontend	2026-11-13T19:27:56.9519595Z
+windows-cpp	Build production frontend	2026-11-13T19:28:00.6662009Z vite v5.4.21 building for production...
+windows-cpp	Build production frontend	2026-11-13T19:28:00.7029811Z transforming...
+windows-cpp	Build production frontend	2026-11-13T19:28:04.7204699Z ✓ 925 modules transformed.
+windows-cpp	Build production frontend	2026-11-13T19:28:05.2217674Z rendering chunks...
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4296273Z computing gzip size...
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4478430Z dist/index.html                                         0.66 kB │ gzip:   0.37 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4479318Z dist/assets/KaTeX_Size3-Regular-CTq5MqoE.woff           4.42 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4480033Z dist/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2          4.93 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4480775Z dist/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2          5.21 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4481487Z dist/assets/KaTeX_Size1-Regular-mCD8mA8B.woff2          5.47 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4482170Z dist/assets/KaTeX_Size4-Regular-BF-4gkZK.woff           5.98 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4482846Z dist/assets/KaTeX_Size2-Regular-oD1tc_U0.woff           6.19 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4483518Z dist/assets/KaTeX_Size1-Regular-C195tn64.woff           6.50 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4484234Z dist/assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2    6.91 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4484968Z dist/assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2       6.91 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4485697Z dist/assets/KaTeX_Size3-Regular-DgpXs0kz.ttf            7.59 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4487939Z dist/assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff     7.66 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4488663Z dist/assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff        7.72 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4489430Z dist/assets/KaTeX_Script-Regular-D3wIWfF6.woff2         9.64 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4490131Z dist/assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2     10.34 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4490830Z dist/assets/KaTeX_Size4-Regular-DWFBv043.ttf           10.36 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4491527Z dist/assets/KaTeX_Script-Regular-D5yQViql.woff         10.59 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4492213Z dist/assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2       11.32 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4493237Z dist/assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2          11.35 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4493680Z dist/assets/KaTeX_Size2-Regular-B7gKUWhC.ttf           11.51 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4494125Z dist/assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2      12.03 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4494564Z dist/assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2        12.22 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4494999Z dist/assets/KaTeX_Size1-Regular-Dbsnue_I.ttf           12.23 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4495603Z dist/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff      12.32 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4496055Z dist/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf     12.34 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4496514Z dist/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf        12.37 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4497001Z dist/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff        13.21 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4497694Z dist/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff           13.30 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4498378Z dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2    13.57 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4499073Z dist/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff       14.11 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4499758Z dist/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff         14.41 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4500537Z dist/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff     16.03 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4501289Z dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2       16.40 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4501952Z dist/assets/KaTeX_Math-Italic-t53AETM-.woff2           16.44 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4502614Z dist/assets/KaTeX_Script-Regular-C5JkGWo-.ttf          16.65 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4503308Z dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2       16.78 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4503978Z dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2           16.99 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4504705Z dist/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff        18.67 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4505404Z dist/assets/KaTeX_Math-Italic-DA0__PXp.woff            18.75 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4505882Z dist/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff        19.41 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4506332Z dist/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf       19.44 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4506923Z dist/assets/KaTeX_Fraktur-Regular-CB_wures.ttf         19.57 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4507351Z dist/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf            19.58 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4507781Z dist/assets/KaTeX_Main-Italic-BMLOBm91.woff            19.68 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4508226Z dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf        22.36 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4508667Z dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf          24.50 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4509120Z dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2             25.32 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4509553Z dist/assets/KaTeX_Main-Regular-B22Nviop.woff2          26.27 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4510085Z dist/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf      27.56 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4510535Z dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2           28.08 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4510964Z dist/assets/KaTeX_Main-Bold-Jm3AIy58.woff              29.91 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4511392Z dist/assets/KaTeX_Main-Regular-Dr94JaBh.woff           30.77 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4511826Z dist/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf         31.20 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4512253Z dist/assets/KaTeX_Math-Italic-flOr_0UB.ttf             31.31 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4512689Z dist/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf         32.97 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4513343Z dist/assets/KaTeX_AMS-Regular-DMm9YOAa.woff            33.52 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4513806Z dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf             33.58 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4514229Z dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf               51.34 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4514660Z dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf            53.58 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4515085Z dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf             63.63 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4515581Z dist/assets/Canvas3D-DtarBliu.css                       1.27 kB │ gzip:   0.48 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4516071Z dist/assets/uPlot-D1GxaB_c.css                          1.65 kB │ gzip:   0.71 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4516578Z dist/assets/VehicleGeometryStudio-CE2xvvkf.css          3.89 kB │ gzip:   1.21 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4517104Z dist/assets/WorkflowPage-Bv11oqce.css                   5.47 kB │ gzip:   1.44 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4517609Z dist/assets/ModelTheoryPage-3KGJWLII.css                6.57 kB │ gzip:   1.79 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4518118Z dist/assets/LoadAnalysisPage-Fgd2b2-k.css              10.26 kB │ gzip:   2.24 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4518609Z dist/assets/index-D1w4XBKw.css                         23.44 kB │ gzip:   4.91 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4519117Z dist/assets/BodyCouplingControl-CgBsCa64.css           35.36 kB │ gzip:   9.66 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4519615Z dist/assets/styles-sV1eRN7N.js                          0.33 kB │ gzip:   0.24 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4520105Z dist/assets/ScriptWorkspace-BB5rA6kY.js                 0.86 kB │ gzip:   0.58 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4520693Z dist/assets/experiments-CiP6hpO0.js                     1.53 kB │ gzip:   0.70 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4521184Z dist/assets/ScenarioPanel-43fa0vIe.js                   2.16 kB │ gzip:   1.17 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4521681Z dist/assets/ResultArtifacts-Cm8UC7BK.js                 2.18 kB │ gzip:   1.29 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4522179Z dist/assets/MeasurePanel-C6KRxgoy.js                    2.40 kB │ gzip:   1.34 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4522666Z dist/assets/ChartPanel-nXQQWQRE.js                      2.42 kB │ gzip:   1.17 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4523162Z dist/assets/UserPythonPanel-BtIbpthn.js                 2.51 kB │ gzip:   1.38 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4523736Z dist/assets/ComparePanel-BBCF38Mw.js                    3.13 kB │ gzip:   1.58 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4524232Z dist/assets/JsStrategyPanel-C9emME92.js                 3.37 kB │ gzip:   1.77 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4524752Z dist/assets/DisturbancePanel-CZGjv-kS.js                3.57 kB │ gzip:   1.87 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4525251Z dist/assets/ScriptPanel-C3vib1i2.js                     3.76 kB │ gzip:   1.84 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4525748Z dist/assets/parameterGroups-F9cSbU9a.js                 3.79 kB │ gzip:   1.95 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4526247Z dist/assets/RecordingPanel-4xI6tyP2.js                  3.90 kB │ gzip:   1.82 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4526751Z dist/assets/ScorePanel-BAtkKPDx.js                      4.12 kB │ gzip:   1.95 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4527245Z dist/assets/ExcitationPanel-Bxk99Odi.js                 4.38 kB │ gzip:   2.14 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4527741Z dist/assets/geometryModel-CISSYnGw.js                   4.39 kB │ gzip:   2.40 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4528231Z dist/assets/GripPanel-DX9PZSbA.js                       4.55 kB │ gzip:   2.15 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4528726Z dist/assets/uplotFactory-41FGILWJ.js                    4.83 kB │ gzip:   2.11 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4529224Z dist/assets/TrajectoryPanel-CoP481Jb.js                 5.46 kB │ gzip:   2.31 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4529732Z dist/assets/AgentWorkspace-zqWM2HR8.js                  7.36 kB │ gzip:   3.57 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4530235Z dist/assets/ExperimentPage-BpXNgSnW.js                 11.00 kB │ gzip:   3.87 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4530743Z dist/assets/FaultPanel-xWdDgyGT.js                     12.89 kB │ gzip:   5.45 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4531237Z dist/assets/AnalysisPage-DK1u0xLD.js                   15.00 kB │ gzip:   6.58 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4531746Z dist/assets/StrategyDesignerPanel-D1xxFQgo.js          15.75 kB │ gzip:   6.10 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4532276Z dist/assets/VehicleGeometryStudio-Ch4Z1zzH.js          22.76 kB │ gzip:   8.64 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4532781Z dist/assets/Canvas3D-DUqWsC1v.js                       24.18 kB │ gzip:   8.79 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4533824Z dist/assets/ModelTheoryPage-BOrDTQol.js                26.24 kB │ gzip:  12.75 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4534322Z dist/assets/uPlot.min-Bx-lVsPA.js                      52.36 kB │ gzip:  23.33 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4534817Z dist/assets/LoadAnalysisPage-z_PKTJYi.js               56.41 kB │ gzip:  22.56 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4535333Z dist/assets/BodyCouplingControl-C_XGC8M2.js           269.60 kB │ gzip:  84.29 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4535852Z dist/assets/vendor-three-react-D1KKu8ij.js            297.04 kB │ gzip:  95.38 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4536350Z dist/assets/index-BvGEU35P.js                         376.05 kB │ gzip: 121.26 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4536910Z dist/assets/vendor-three-core-3Gc5QSh2.js             666.69 kB │ gzip: 172.44 kB
+windows-cpp	Build production frontend	2026-11-13T19:28:05.4537281Z ✓ built in 4.77s
+windows-cpp	Differential physics and API acceptance	﻿2026-11-13T19:28:05.5594078Z ##[group]Run python -m pytest cpp_backend/tests -n 4 -q --junitxml=cpp-windows-tests.xml
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5594543Z python -m pytest cpp_backend/tests -n 4 -q --junitxml=cpp-windows-tests.xml
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5594823Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5595124Z & $env:CPP_SERVER --root . --self-test | Out-File -Encoding utf8 cpp-windows-golden.json
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5595417Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5645347Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5645563Z env:
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5645681Z   PYTHONUTF8: 1
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5645823Z   SIM4WIS_ENGINE: python
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5645956Z   PW_E2E_PORT: 18072
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5646183Z   CPP_SERVER: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5646539Z   CPP_PROBE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp-probe.exe
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5646928Z   PW_CPP_EXECUTABLE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5647223Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5647480Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5647739Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5647969Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5648205Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5648454Z   SIM4WIS_PLUGIN_PYTHON: C:\hostedtoolcache\windows\Python\3.12.10\x64\python.exe
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:05.5648675Z ##[endgroup]
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:08.8132870Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:08.8134345Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:08.8135163Z
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:08.8135338Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.4253153Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.4294136Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.4296578Z
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.4297263Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.5142737Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.5205814Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.5213238Z
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.5216278Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.5567201Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.5569841Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.5571534Z
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.5571928Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.6257520Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.6294597Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.6311311Z
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:09.6320137Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:11.2931409Z bringing up nodes...
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:11.2945219Z bringing up nodes...
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:11.2954408Z
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:12.0592210Z ........................................................................ [ 30%]
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:19.6522617Z ........................................................................ [ 60%]
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:28.6820253Z ........................................................................ [ 90%]
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:37.1300970Z ......................                                                   [100%]
+windows-cpp	Differential physics and API acceptance	2026-11-13T19:28:37.1301299Z 238 passed in 28.03s
+windows-cpp	Full browser workflows against C++	﻿2026-11-13T19:28:38.4463912Z ##[group]Run npx playwright install chromium
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4464227Z npx playwright install chromium
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4464432Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4464650Z npx playwright test --reporter=list
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4464862Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4526180Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4526505Z env:
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4526672Z   PYTHONUTF8: 1
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4526852Z   SIM4WIS_ENGINE: python
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4527050Z   PW_E2E_PORT: 18072
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4527382Z   CPP_SERVER: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4527746Z   CPP_PROBE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp-probe.exe
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4528094Z   PW_CPP_EXECUTABLE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4528434Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4528685Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4528938Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4529339Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4529565Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4529826Z   SIM4WIS_PLUGIN_PYTHON: C:\hostedtoolcache\windows\Python\3.12.10\x64\python.exe
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:38.4530048Z ##[endgroup]
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:39.6408250Z Downloading Chrome for Testing 149.0.7827.55 (playwright chromium v1228) from https://cdn.playwright.dev/builds/cft/149.0.7827.55/win64/chrome-win64.zip
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:39.9478723Z |                                                                                |   0% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.1057376Z |■■■■■■■■                                                                        |  10% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.1986540Z |■■■■■■■■■■■■■■■■                                                                |  20% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.2796647Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.3820364Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.4558167Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.5943357Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.6990146Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.7865193Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:40.8881806Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:41.0151258Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 183.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.0579342Z Chrome for Testing 149.0.7827.55 (playwright chromium v1228) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\chromium-1228
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.0585476Z Downloading FFmpeg (playwright ffmpeg v1011) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-win64.zip
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.3658436Z |                                                                                |   1% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.3728839Z |■■■■■■■■                                                                        |  10% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.3778590Z |■■■■■■■■■■■■■■■■                                                                |  20% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.3809270Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.3834074Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.3850701Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  51% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.4159195Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.4171108Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.4183735Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.4199396Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.4208347Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 1.3 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.9403189Z FFmpeg (playwright ffmpeg v1011) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\ffmpeg-1011
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:45.9407853Z Downloading Chrome Headless Shell 149.0.7827.55 (playwright chromium-headless-shell v1228) from https://cdn.playwright.dev/builds/cft/149.0.7827.55/win64/chrome-headless-shell-win64.zip
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.2301894Z |                                                                                |   0% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.3347047Z |■■■■■■■■                                                                        |  10% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.3775439Z |■■■■■■■■■■■■■■■■                                                                |  20% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.4354378Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.4778884Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.5411267Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.6143469Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.6600780Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.7016625Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.7651270Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:46.8023853Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 113.6 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:49.9083888Z Chrome Headless Shell 149.0.7827.55 (playwright chromium-headless-shell v1228) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\chromium_headless_shell-1228
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:49.9089944Z Downloading Winldd (playwright winldd v1007) from https://cdn.playwright.dev/dbazure/download/playwright/builds/winldd/1007/winldd-win64.zip
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:50.2174430Z |■■■■■■■■                                                                        |  12% of 0.1 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:50.2175228Z |■■■■■■■■■■■■■■■■                                                                |  25% of 0.1 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:50.2183466Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  38% of 0.1 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:50.2212539Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  51% of 0.1 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:50.2214926Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 0.1 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:50.2231933Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  89% of 0.1 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:50.2243254Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 0.1 MiB
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:50.2467688Z Winldd (playwright winldd v1007) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\winldd-1007
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:51.2690189Z [WebServer] 4WIS C++ 0.107.0 ready: http://127.0.0.1:1807[WebServer] 2
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:51.5872725Z
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:51.5873544Z Running 58 tests using 1 worker
+windows-cpp	Full browser workflows against C++	2026-11-13T19:28:51.5884575Z
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:03.9775453Z   ok  1 [chromium] › tests\e2e\workflow-smoke.spec.ts:80:1 › workflow rail pages render from the production app shell (11.9s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:05.0327069Z   ok  2 [chromium] › tests\e2e\workflow-smoke.spec.ts:118:1 › model theory demo failure stays visible without blanking the page (1.0s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:07.1062632Z   ok  3 [chromium] › tests\e2e\workflow-smoke.spec.ts:145:1 › experiment run can be handed to analysis with chart controls and screenshot evidence (2.1s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:07.6917968Z   ok  4 [chromium] › tests\e2e\workflow-smoke.spec.ts:201:1 › analysis data load failure surfaces an error state with screenshot evidence (578ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:08.2213468Z   ok  5 [chromium] › tests\e2e\workflow-smoke.spec.ts:246:1 › analysis run list failure does not masquerade as an empty library (522ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:09.8039217Z   ok  6 [chromium] › tests\e2e\workflow-smoke.spec.ts:263:1 › analysis run delete failure keeps the selected run visible (1.6s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:10.3281737Z   ok  7 [chromium] › tests\e2e\workflow-smoke.spec.ts:309:1 › experiment library failure does not masquerade as an empty library (517ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:11.0504668Z   ok  8 [chromium] › tests\e2e\workflow-smoke.spec.ts:332:1 › experiment library write failures keep the editor and library state visible (715ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:11.5781954Z   ok  9 [chromium] › tests\e2e\workflow-smoke.spec.ts:379:1 › experiment maneuver template failure stays visible without blocking editing (520ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:12.1565051Z   ok 10 [chromium] › tests\e2e\workflow-smoke.spec.ts:402:1 › experiment batch start failure surfaces an error state with screenshot evidence (571ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:12.7391987Z   ok 11 [chromium] › tests\e2e\workflow-smoke.spec.ts:430:1 › run control backend failures stay visible in the control panels (576ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:13.2866835Z   ok 12 [chromium] › tests\e2e\workflow-smoke.spec.ts:471:1 › user python status failure stays visible in the design panel (540ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:14.1538783Z   ok 13 [chromium] › tests\e2e\workflow-smoke.spec.ts:494:1 › user python reload failure keeps the panel usable (860ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:14.8171428Z   ok 14 [chromium] › tests\e2e\workflow-smoke.spec.ts:529:1 › vehicle geometry drag updates the shared parameter edit buffer (656ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:15.4647289Z   ok 15 [chromium] › tests\e2e\workflow-smoke.spec.ts:547:1 › vehicle parameter rejection keeps edits visible with screenshot evidence (641ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:16.0137396Z   ok 16 [chromium] › tests\e2e\workflow-smoke.spec.ts:580:1 › vehicle project list failure is visible and disables loading (542ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:16.6124668Z   ok 17 [chromium] › tests\e2e\workflow-smoke.spec.ts:603:1 › vehicle project load failure stays local to the project panel (592ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:17.2315215Z   ok 18 [chromium] › tests\e2e\workflow-smoke.spec.ts:638:1 › vehicle project save failure keeps the save form recoverable (612ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:18.3608482Z   ok 19 [chromium] › tests\e2e\workflow-smoke.spec.ts:670:1 › load analysis charts expose deeper explanation state with screenshot evidence (1.1s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:19.0024682Z   ok 20 [chromium] › tests\e2e\workflow-smoke.spec.ts:689:1 › load analysis sweep failure surfaces an error and keeps controls usable (635ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:20.1730540Z   ok 21 [chromium] › tests\e2e\workflow-smoke.spec.ts:724:1 › load analysis profile list failure surfaces an error without blanking the page (1.2s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:20.7394870Z   ok 22 [chromium] › tests\e2e\workflow-smoke.spec.ts:750:1 › load analysis params failure leaves a visible empty state (560ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:22.1744869Z   ok 23 [chromium] › tests\e2e\workflow-smoke.spec.ts:777:1 › load analysis profile action failures stay visible without blocking the toolbar (1.4s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:23.3374057Z   ok 24 [chromium] › tests\e2e\workflow-smoke.spec.ts:836:1 › load analysis sensitivity failure surfaces a toast without blanking load charts (1.2s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:24.2136014Z   ok 25 [chromium] › tests\e2e\workflow-smoke.spec.ts:865:1 › scenario path workflow generates, follows, and clears a reference path (870ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:24.8962346Z   ok 26 [chromium] › tests\e2e\workflow-smoke.spec.ts:887:1 › maneuver parameters reach the backend and the laid-out geometry is echoed back (676ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:28.6551561Z   ok 27 [chromium] › tests\e2e\workflow-smoke.spec.ts:914:1 › 3D camera modes switch and the roof rig persists its settings (3.8s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:37.4730809Z   ok 28 [chromium] › tests\e2e\workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves (8.8s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:38.2164093Z   ok 29 [chromium] › tests\e2e\workflow-smoke.spec.ts:1040:1 › path version refresh failure surfaces a toast without blocking scenario tools (737ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:38.7990372Z   ok 30 [chromium] › tests\e2e\workflow-smoke.spec.ts:1074:1 › path template failure stays visible in the trajectory panel (575ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:39.3642286Z   ok 31 [chromium] › tests\e2e\workflow-smoke.spec.ts:1098:1 › scenario list failure stays visible in the scenario panel (558ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:40.1658482Z   ok 32 [chromium] › tests\e2e\workflow-smoke.spec.ts:1121:1 › scenario load and clear failures keep the scenario panel recoverable (795ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:40.8290202Z   ok 33 [chromium] › tests\e2e\workflow-smoke.spec.ts:1172:1 › scenario version refresh failure surfaces a toast without blocking scenario tools (656ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:41.7076070Z   ok 34 [chromium] › tests\e2e\workflow-smoke.spec.ts:1204:1 › scenario disturbance editor places, edits, and clears a road disturbance (871ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:42.6532491Z   ok 35 [chromium] › tests\e2e\workflow-smoke.spec.ts:1242:1 › disturbance action failures keep existing disturbance state visible (938ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:43.6859718Z   ok 36 [chromium] › tests\e2e\workflow-smoke.spec.ts:1318:1 › disturbance canvas placement and drag failures surface toasts (1.0s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:44.8572147Z   ok 37 [chromium] › tests\e2e\workflow-smoke.spec.ts:1403:1 › scenario fault injection panel adds, toggles, and clears faults (1.2s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:45.4453111Z   ok 38 [chromium] › tests\e2e\workflow-smoke.spec.ts:1437:1 › fault list failure does not masquerade as an empty fault configuration (581ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:46.4505184Z   ok 39 [chromium] › tests\e2e\workflow-smoke.spec.ts:1459:1 › fault action failures keep configured faults visible (998ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:47.6348770Z   ok 40 [chromium] › tests\e2e\workflow-smoke.spec.ts:1544:1 › script library workflow loads, starts, lays out markers, and stops a fixed script (1.2s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:48.3515680Z   ok 41 [chromium] › tests\e2e\workflow-smoke.spec.ts:1578:1 › script parse failure stays visible in the script panel (709ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:49.4323275Z   ok 42 [chromium] › tests\e2e\workflow-smoke.spec.ts:1597:1 › script start and stop failures keep script controls recoverable (1.1s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:50.0353779Z   ok 43 [chromium] › tests\e2e\workflow-smoke.spec.ts:1654:1 › script library failure does not masquerade as an empty script library (596ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:50.6204150Z   ok 44 [chromium] › tests\e2e\workflow-smoke.spec.ts:1676:1 › script status failure stays visible without blocking script editing (577ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:52.4410381Z   ok 45 [chromium] › tests\e2e\workflow-smoke.spec.ts:1700:1 › recording panel records samples and exports csv (1.8s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:54.1553404Z   ok 46 [chromium] › tests\e2e\workflow-smoke.spec.ts:1732:1 › recording export failure stays visible in the recording panel (1.7s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:54.7477923Z   ok 47 [chromium] › tests\e2e\workflow-smoke.spec.ts:1763:1 › recording status failure stays visible without disabling controls (586ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:56.5279007Z   ok 48 [chromium] › tests\e2e\workflow-smoke.spec.ts:1787:1 › recording start and stop failures keep recording controls recoverable (1.8s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:58.1778237Z   ok 49 [chromium] › tests\e2e\workflow-smoke.spec.ts:1837:1 › analysis replay controls scrub selected run data (1.6s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:29:59.7237820Z   ok 50 [chromium] › tests\e2e\workflow-smoke.spec.ts:1862:1 › analysis replay metadata failure keeps replay usable with a visible fallback (1.5s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:00.2138588Z   ok 51 [chromium] › tests\e2e\workflow-smoke.spec.ts:1901:1 › command palette filters and navigates workflow pages from the keyboard (484ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:00.6898637Z   ok 52 [chromium] › tests\e2e\workflow-smoke.spec.ts:1920:1 › command palette model switch failure surfaces a toast and closes cleanly (469ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:01.4125437Z   ok 53 [chromium] › tests\e2e\workflow-smoke.spec.ts:1948:1 › gamepad mapping panel edits persist without a physical controller (717ms)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:05.3080707Z   ok 54 [chromium] › tests\e2e\workflow-smoke.spec.ts:1981:1 › visual baselines pin the analysis chart, 3D roof view, and geometry studio (3.9s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:06.5975029Z   ok 55 [chromium] › tests\e2e\zz-interaction.spec.ts:13:1 › manual input releases on navigation, editing, blur and explicit stop (1.3s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:07.8324383Z   ok 56 [chromium] › tests\e2e\zz-interaction.spec.ts:43:1 › script follows simulation clock, pauses with it and saves a full recording (1.2s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:09.0808358Z   ok 57 [chromium] › tests\e2e\zz-interaction.spec.ts:79:1 › Agent uncertain response retries once and full artifacts reach analysis on desktop and narrow screens (1.2s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:11.1245529Z   ok 58 [chromium] › tests\e2e\zz-multipoint.spec.ts:3:1 › multipoint UI preserves parameters and executes simultaneous and staggered timelines (2.0s)
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:11.5134544Z
+windows-cpp	Full browser workflows against C++	2026-11-13T19:30:11.5140135Z   58 passed (1.3m)
+windows-cpp	Assemble and test extracted package	﻿2026-11-13T19:30:11.5735015Z ##[group]Run python cpp_backend/tools/package.py --target windows-x64 --binary "$env:CPP_SERVER"
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5735507Z python cpp_backend/tools/package.py --target windows-x64 --binary "$env:CPP_SERVER"
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5735802Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5736390Z python cpp_backend/tools/check_package.py dist_cpp/4WIS_CPP_v0.107.0_windows-x64.zip --output docs/reports/cpp_v0.107.0/package-windows.json
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5736783Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5791670Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5791893Z env:
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5792012Z   PYTHONUTF8: 1
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5792133Z   SIM4WIS_ENGINE: python
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5792263Z   PW_E2E_PORT: 18072
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5792492Z   CPP_SERVER: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5792848Z   CPP_PROBE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp-probe.exe
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5793243Z   PW_CPP_EXECUTABLE: D:\a\4WIS-Simulator\4WIS-Simulator/cpp_backend/build/Release/sim4wis-cpp.exe
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5793546Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5793820Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5794083Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5794314Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5794552Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5794805Z   SIM4WIS_PLUGIN_PYTHON: C:\hostedtoolcache\windows\Python\3.12.10\x64\python.exe
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:11.5795024Z ##[endgroup]
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:12.9415704Z [build] downloading cpython-3.12.16+20261110-x86_64-pc-windows-msvc-install_only.tar.gz …
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.3099002Z   % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.3099627Z                                  Dload  Upload  Total   Spent   Left   Speed
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.3100011Z
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.3867007Z   0      0   0      0   0      0      0      0                              0
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.3867952Z   0      0   0      0   0      0      0      0                              0
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.3868349Z   0      0   0      0   0      0      0      0                              0
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.4801793Z
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.8860860Z   0      0   0      0   0      0      0      0                              0
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.8861425Z 100 45.24M 100 45.24M   0      0 72.32M      0                              0
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.8861816Z 100 45.24M 100 45.24M   0      0 72.31M      0                              0
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:13.8862435Z 100 45.24M 100 45.24M   0      0 72.30M      0                              0
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:16.2644700Z [build] vendoring deps: numpy pydantic pyyaml
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:17.7507552Z Collecting numpy
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:17.7527953Z   Using cached numpy-2.5.4-cp312-cp312-win_amd64.whl.metadata (6.6 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:17.8053197Z Collecting pydantic
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:17.8071147Z   Using cached pydantic-2.14.3-py3-none-any.whl.metadata (141 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:17.8273976Z Collecting pyyaml
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:17.8289437Z   Using cached pyyaml-6.0.3-cp312-cp312-win_amd64.whl.metadata (2.4 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:17.8333522Z Collecting annotated-types>=0.6.0 (from pydantic)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:17.8347108Z   Using cached annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.2358744Z Collecting pydantic-core==2.50.4 (from pydantic)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.2380698Z   Using cached pydantic_core-2.50.4-cp312-cp312-win_amd64.whl.metadata (6.7 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.2447232Z Collecting typing-extensions>=4.16.0 (from pydantic)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.2461982Z   Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.2501624Z Collecting typing-inspection>=0.4.4 (from pydantic)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.2515915Z   Using cached typing_inspection-0.4.5-py3-none-any.whl.metadata (2.6 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.2559549Z Using cached numpy-2.5.4-cp312-cp312-win_amd64.whl (12.6 MB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.2631326Z Using cached pydantic-2.14.3-py3-none-any.whl (494 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.7707439Z Using cached pydantic_core-2.50.4-cp312-cp312-win_amd64.whl (2.3 MB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.7742384Z Using cached pyyaml-6.0.3-cp312-cp312-win_amd64.whl (154 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.7756993Z Using cached annotated_types-0.8.0-py3-none-any.whl (13 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.7768705Z Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.7780742Z Using cached typing_inspection-0.4.5-py3-none-any.whl (14 kB)
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:18.8915955Z Installing collected packages: typing-extensions, pyyaml, numpy, annotated-types, typing-inspection, pydantic-core, pydantic
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:39.2185580Z
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:39.2201245Z Successfully installed annotated-types-0.8.0 numpy-2.5.4 pydantic-2.14.3 pydantic-core-2.50.4 pyyaml-6.0.3 typing-extensions-4.16.0 typing-inspection-0.4.5
+windows-cpp	Assemble and test extracted package	2026-11-13T19:30:55.0096442Z {"archive": "D:\\a\\4WIS-Simulator\\4WIS-Simulator\\dist_cpp\\4WIS_CPP_v0.107.0_windows-x64.zip", "sha256": "f1442a3b26d33865b2134c62e08d5dbca19145d2765ccee2736e2f981aa4d935", "bytes": 105925085, "package": "D:\\a\\4WIS-Simulator\\4WIS-Simulator\\dist_cpp\\4WIS_CPP_windows-x64"}
+windows-cpp	Assemble and test extracted package	2026-11-13T19:31:05.7226453Z {"status": "PASS", "count": 10, "checks": ["archive_crc_and_binary_hash", "six_golden_cases_without_python", "native_service_identity", "production_frontend", "simplified_dynamic_linear_fault_retry_artifacts", "simplified_dynamic_pacejka_fault_retry_artifacts", "multibody_linear_fault_retry_artifacts", "multibody_pacejka_fault_retry_artifacts", "official_mcp_initialize_18_tools_and_call", "bundled_optional_plugin_runtime"]}
