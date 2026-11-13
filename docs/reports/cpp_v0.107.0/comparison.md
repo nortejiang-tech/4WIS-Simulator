@@ -8,14 +8,14 @@
 
 |模型|轮胎|故障|Python s|内核迁移 s|全 C++ s|全 C++ / Python 提速|全 C++ / 内核版提速|
 |---|---|---|---:|---:|---:|---:|---:|
-|simplified_dynamic|linear|simultaneous|2.9390|1.2980|0.0695|42.27×|18.67×|
-|simplified_dynamic|linear|staggered|3.1430|1.5076|0.0766|41.05×|19.69×|
-|simplified_dynamic|pacejka|simultaneous|3.3354|1.3241|0.0843|39.56×|15.70×|
-|simplified_dynamic|pacejka|staggered|3.5788|1.5428|0.0873|41.00×|17.68×|
-|multibody|linear|simultaneous|3.5899|1.2232|0.0718|49.97×|17.03×|
-|multibody|linear|staggered|3.8090|1.4412|0.0760|50.13×|18.97×|
-|multibody|pacejka|simultaneous|3.9669|1.2669|0.0849|46.73×|14.92×|
-|multibody|pacejka|staggered|4.2244|1.4680|0.0902|46.84×|16.28×|
+|simplified_dynamic|linear|simultaneous|3.0351|1.3455|0.0721|42.11×|18.67×|
+|simplified_dynamic|linear|staggered|3.2785|1.5679|0.0769|42.62×|20.38×|
+|simplified_dynamic|pacejka|simultaneous|3.4394|1.3698|0.0859|40.04×|15.95×|
+|simplified_dynamic|pacejka|staggered|3.6799|1.5870|0.0903|40.76×|17.58×|
+|multibody|linear|simultaneous|3.6505|1.2565|0.0741|49.29×|16.96×|
+|multibody|linear|staggered|3.8937|1.4709|0.0781|49.89×|18.85×|
+|multibody|pacejka|simultaneous|4.0580|1.2809|0.0877|46.28×|14.61×|
+|multibody|pacejka|staggered|4.2767|1.4950|0.0926|46.19×|16.15×|
 
 逐通道数值对照通过，记录时间、步数及故障事件序列一致；全 C++ 相对 Python 的 x/y 最大分量差为 3.91e-13 m。这是程序一致性，不是实车精度。状态绝对容差 1e-9 SI，力与力矩/摩擦余量 1e-5 SI，相对容差 1e-9；原有物理和黄金工况标准未放宽。
 
@@ -37,6 +37,14 @@
 
 横向差按健康参考在同一仿真时刻的车身法向投影计算，不是最近点路径误差，也不用于宣称越线或失稳阈值。当前模型里传感器故障仅改变观测通道，不进入控制反馈，所以它们不能被解释成闭环安全策略试验。机械卡滞锁住执行器坐标，轮胎总角仍可能受到前束/K&C 影响；自由转向由惯量、阻尼、摩擦和道路回正力矩驱动，不能按无受力约束的角度漂移处理。
 
+## 样例的工程解释与复现
+
+这是一组相同输入的开环对照。双前轮同时卡滞后，方向保持在故障发生时的执行器角度，后续正弦转向指令无法改变前轮，因此轨迹持续向一侧偏离。错时案例中，后右轮的自由转向改变了横摆响应；它的峰值横摆角速度更高，但本例相同时间横向差更小。这两个指标不能互相替代，也不能据此给所有故障组合排序。
+健康与故障案例的最大摩擦利用率都达到 1，主要涉及 1 s 起步速度斜坡下的轮胎力饱和；没有把这一数值单独判为故障失稳。样例最小轮荷保持正值。机械故障均在 13.679 s 解除，恢复段仍经过执行器动态，因此末段响应变化有明确的事件来源。FL 观测掉线在 13.877 s 恢复；FR 偏差为 0.02 rad，噪声标准差为 0.003 rad。
+样例的三份可直接运行定义保存在 experiments/healthy.json、experiments/simultaneous.json 和 experiments/staggered.json。在全 C++ 便携包根目录执行：
+`app/sim4wis-cpp --root . --run-experiment docs/reports/cpp_v0.107.0/experiments/staggered.json`
+Windows 使用 app\sim4wis-cpp.exe，其他参数相同。输出包含完整通道、KPI、真实事件时间线和引擎元数据。
+
 ## 发现并修复的物理基础问题
 
 选型曲线原本把分析返回的四轮载荷混入同一横轴，导致不相关的重复转角点和排序依赖。两个候选版共同修复为选定车轮、执行器坐标，并增加不同车速的独立受力来源回归。现有双侧对称镜像负载假设继续明确保留；非对称左右载荷的精确齿条求解、实测参数与台架关联不在这组内部验收里。详见 sizing-correction.md。
@@ -54,4 +62,4 @@
 
 软件验收记录、安装包 SHA-256、平台结果见 acceptance.md。仿真模型仍是带有适用范围的工程模型：降阶平面动力学、分步积分、研究型多体与估算的转向参数均不等价于实车验证。Windows 用户机器的 GUI、硬件输入与长时间运行验收仍需实际目标机执行。
 
-测量源提交：4e67afbcd2d0b2881b21421a5515aacccff3f36d；测量 C++ 二进制 SHA-256：0da7df94e84f214ddcc6c5c56ed637829f561536500ecd0bddd57d4cafb7a222。完整原始耗时在 benchmark-macos.json，样例定义、KPI 和时间线在 sample-analysis.json。
+测量源提交：c9443f89b62de870dc2599908b708744eda6c36b；测量 C++ 二进制 SHA-256：cc7df8c35aa81f43842c16c2e37a52f397c944cadb925b9e6b4b9f2227d3b665。完整原始耗时在 benchmark-macos.json，样例定义、KPI 和时间线在 sample-analysis.json。

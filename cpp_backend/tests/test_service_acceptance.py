@@ -71,6 +71,7 @@ def test_fault_atomicity_and_event_timing(client):
  assert client.get(f'/api/agent/sessions/{sid}').json()['revision']==2
 
 def test_origin_static_and_safety(client):
+ assert client.get('/health').headers['connection']=='close'
  assert client.get('/api/params',headers={'Origin':'https://evil.example'}).status_code==403
  assert client.options('/api/faults/x',headers={'Origin':'http://localhost:8000'}).status_code==204
  assert 'PATCH' in client.options('/api/faults/x',headers={'Origin':'http://localhost:8000'}).headers['access-control-allow-methods']

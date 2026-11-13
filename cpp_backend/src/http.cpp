@@ -11,6 +11,8 @@ bool allowed_origin(const mg_connection *c) {
       value, std::regex("^http://(127\\.0\\.0\\.1|localhost)(:[0-9]+)?$"));
 }
 void send(mg_connection *c, const Response &r) {
+  // CivetWeb keep-alive is disabled. HTTP/1.1 clients otherwise assume that
+  // this socket is reusable and can race the server's close on the next call.
   std::string cors;
   auto origin = mg_get_header(c, "Origin");
   if (origin && allowed_origin(c))
@@ -23,7 +25,7 @@ void send(mg_connection *c, const Response &r) {
   mg_printf(c,
             "HTTP/1.1 %d %s\r\nContent-Type: %s\r\nContent-Length: "
             "%zu\r\nCache-Control: no-store\r\nX-Content-Type-Options: "
-            "nosniff\r\n%s\r\n",
+            "nosniff\r\nConnection: close\r\n%s\r\n",
             r.status, reason, r.content_type.c_str(), r.body.size(),
             cors.c_str());
   mg_write(c, r.body.data(), r.body.size());
@@ -45,13 +47,14 @@ int HttpServer::request(mg_connection *c, void *user) {
     if (!allowed_origin(c))
       throw Error(403, "origin is not permitted for the local simulator");
     if (method == "OPTIONS") {
-      mg_printf(c,
-                "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: "
-                "%s\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, "
-                "DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: "
-                "Content-Type\r\nContent-Length: 0\r\n\r\n",
-                mg_get_header(c, "Origin") ? mg_get_header(c, "Origin")
-                                           : "http://127.0.0.1");
+      mg_printf(
+          c,
+          "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: "
+          "%s\r\nAccess-Control-Allow-Methods: GET, POST, PUT, PATCH, "
+          "DELETE, OPTIONS\r\nAccess-Control-Allow-Headers: "
+          "Content-Type\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+          mg_get_header(c, "Origin") ? mg_get_header(c, "Origin")
+                                     : "http://127.0.0.1");
       return 204;
     }
     if (path.rfind("/api/", 0) != 0 && path != "/health" &&

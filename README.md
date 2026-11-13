@@ -1,10 +1,12 @@
 # 4WIS Simulator
 
-四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前独立预览分支版本是 `v0.106.0`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到 macOS/Windows 便携版发布的闭环。
+四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前独立预览分支版本是 `v0.107.0`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到 macOS/Windows 便携版发布的闭环。
 
 项目仍定位为内部预研和工程分析工具，不是经过实车标定或认证的安全结论工具。模型可信度和边界见 [docs/validation_matrix.md](docs/validation_matrix.md)。
 
-> 本分支将数值计算迁入 C++17，保留界面与 MCP。正式版 main / v0.105.0 保留。见 [原生内核与回退说明](docs/native_core.md)。
+> 本分支是全 C++17 后端候选：仿真、控制器、故障编排、研究分析、HTTP/WebSocket 和 MCP 由独立原生程序执行，保留同一 React 浏览器界面。用户 Python/FMU/MATLAB 插件在独立兼容进程运行。默认端口 **8020**；内核迁移版使用 **8010**。正式版 main / v0.105.0 保留。
+>
+> [构建、启动和 MCP](cpp_backend/README.md) · [两条路线的实测对照与样例](docs/reports/cpp_v0.107.0/comparison.md) · [最终验收记录](docs/reports/cpp_v0.107.0/acceptance.md)。以下保留的 Python 开发命令用于参照服务和兼容层；启动本候选请按 C++ 指南操作。
 
 > v0.105.0 增加多点同时/错时/恢复故障，实时、批跑和 MCP 共用时间线；修正机械卡滞与自由转向的执行器旁路、摩擦与积分处理。动力学内部步长限制为 1.25 ms，外层控制节拍不变。见 [多点故障与 MCP 用法](docs/multipoint_faults.md)、[样例分析](docs/reports/multipoint_v0.105.0/analysis.md) 和 [数值修订证据](docs/reports/multipoint_v0.105.0/numerical_review.md)。旧版数值基线不可直接混用。
 
@@ -29,7 +31,8 @@
 
 ```text
 4WIS Simulator/
-├── backend/              Python 仿真后端（FastAPI + WebSocket）
+├── cpp_backend/          独立 C++17 后端、原生构建、接口/数值对照测试
+├── backend/              Python 参照后端与可选用户插件兼容层
 ├── frontend/             React + TypeScript + Vite 前端
 ├── docs/                 设计、手册、可信度矩阵、研究报告
 ├── experiments/          可复现实验定义

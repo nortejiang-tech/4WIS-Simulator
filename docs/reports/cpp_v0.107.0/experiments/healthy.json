@@ -1,0 +1,42 @@
+{
+  "name": "healthy_reference",
+  "description": "",
+  "vehicle": {
+    "profile": null,
+    "overrides": {
+      "tire_model": "pacejka"
+    }
+  },
+  "model_type": "simplified_dynamic",
+  "strategy": "ideal_ackermann",
+  "mode_params": {},
+  "scene": null,
+  "path": null,
+  "faults": [],
+  "fault_seed": 20261114,
+  "maneuver": {
+    "name": "untitled",
+    "steps": [
+      {
+        "name": "",
+        "duration": 14.0,
+        "steer": {
+          "kind": "sine",
+          "amplitude": 2.0,
+          "unit": "front_deg",
+          "freq_hz": 0.2,
+          "f0_hz": 0.1,
+          "f1_hz": 2.0,
+          "t_step": 0.5,
+          "start": 0.0
+        },
+        "speed_kmh": 40.0,
+        "speed_ramp_s": 1.0,
+        "mode_params": {}
+      }
+    ]
+  },
+  "dt": 0.005,
+  "record_hz": 200.0,
+  "kpis": []
+}
