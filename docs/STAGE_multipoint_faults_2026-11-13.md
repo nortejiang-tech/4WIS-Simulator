@@ -27,4 +27,4 @@
 
 ## 验证边界与回滚
 
-内部模型一致性不等于实车相关性。无本轮台架/实车、外部多体工具对标、轮胎/转向机构实测标定；这些保持 PENDING。不连接物理车辆或 CAN。保留旧标签/发行包；回滚为切回 v0.104.0，不覆盖用户数据。功能、内部物理断言、完整软件门禁与 Mac 原生包已通过；Windows 原生与 GitHub 发布 PENDING。完整结果见 `docs/reports/multipoint_v0.105.0/release_acceptance.md`。
+内部模型一致性不等于实车相关性。无本轮台架/实车、外部多体工具对标、轮胎/转向机构实测标定；这些保持 PENDING。不连接物理车辆或 CAN。保留旧标签/发行包；回滚为切回 v0.104.0，不覆盖用户数据。功能、内部物理断言、完整软件门禁、Mac 原生包及 Windows 原生 CI 已通过。正式标签构建与发行包回读记录在 Release 的 `release-verification.json`。完整结果见 `docs/reports/multipoint_v0.105.0/release_acceptance.md`。

@@ -13,7 +13,8 @@
 - 全量发布门禁：**PASS**。后端 1086 passed（2 个上游弃用警告，289.12 s）；32/32 smoke；6/6 黄金；2 个解析参考 / 15 指标；前端类型检查、54 单测、生产构建、58 浏览器 E2E 全通过。
 - 全量收集后补充数值失败暂停保护测试；最终故障/物理集 99 passed，新增 1 项。没有重复计数为额外 99 个新用例。
 - Mac 原生便携包：**PASS，41 项**，含解压后的嵌入式 Python/后端/前端、全部后端源文件哈希、真实 MCP 双模型同时/错时故障和导出。首次发现测试子进程未继承包内 PYTHONPATH，修复测试启动环境后通过。
-- Windows 原生 CI 包与 GitHub release：PENDING，待本提交推送后执行。
+- Windows 原生 CI：**PASS**，199 项故障/物理/Agent 测试（37.93 s）与 45 项便携包检查通过；嵌入式后端启动、Web UI、真实 MCP 双模型事件及导出均已执行。候选源码 `6ee61cea688c3c20271b2852462dbcba63cd34c1`，证据见 [Windows run 43453353932](https://github.com/nortejiang-tech/4WIS-Simulator/actions/runs/43453353932) 和 `windows_native_checks.json`。
+- 本记录加入源码后，正式标签再次触发 Windows 原生构建。最终标签提交、正式构建 run 与双平台资产 SHA-256 以 [v0.105.0 Release](https://github.com/nortejiang-tech/4WIS-Simulator/releases/tag/v0.105.0) 的 `release-verification.json` / `SHA256SUMS` 为准；上传和回读结果不提前写成通过。
 - 原始完整门禁输出经本地路径脱敏保存在 `local-validation.txt`；结构化汇总为 `local_validation.json`；Mac 包证据为 `mac_portable_checks.json`。
 
 ## 范围与回滚

@@ -36,5 +36,12 @@
   "physics_focused_lint": "PASS",
   "mac_native_checks": 41,
   "raw_gate_log_sha256": "47d9f2113e66edadd62933fec5b74630ae9744b8b405e6a6722979c8911680a0",
-  "external_vehicle_correlation": "PENDING"
+  "external_vehicle_correlation": "PENDING",
+  "windows_candidate": {
+    "status": "PASS",
+    "tests_passed": 199,
+    "portable_checks_passed": 45,
+    "workflow_run": 43453353932,
+    "source_commit": "6ee61cea688c3c20271b2852462dbcba63cd34c1"
+  }
 }
