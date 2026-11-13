@@ -1,195 +1,191 @@
-
-> sim4wis-frontend@0.106.0 e2e:prod
-> playwright test
-
-[WebServer] INFO:     Started server process [48798]
+[WebServer] INFO:     Started server process [46648]
 [WebServer] INFO:     Waiting for application startup.
 [WebServer] INFO:     Application startup complete.
-[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18053 (Press CTRL+C to quit)
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18081 (Press CTRL+C to quit)
 
 Running 58 tests using 1 worker
 
-(node:48990) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:46733) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
-[WebServer] INFO:     127.0.0.1:57231 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     127.0.0.1:49760 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓   1 [chromium] › tests/e2e/workflow-smoke.spec.ts:80:1 › workflow rail pages render from the production app shell (1.1s)
-[WebServer] INFO:     127.0.0.1:57247 - "WebSocket /ws/state" [accepted]
+  ✓   1 [chromium] › tests/e2e/workflow-smoke.spec.ts:80:1 › workflow rail pages render from the production app shell (943ms)
+[WebServer] INFO:     127.0.0.1:49770 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓   2 [chromium] › tests/e2e/workflow-smoke.spec.ts:118:1 › model theory demo failure stays visible without blanking the page (392ms)
-[WebServer] INFO:     127.0.0.1:57254 - "WebSocket /ws/state" [accepted]
+  ✓   2 [chromium] › tests/e2e/workflow-smoke.spec.ts:118:1 › model theory demo failure stays visible without blanking the page (380ms)
+[WebServer] INFO:     127.0.0.1:49777 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓   3 [chromium] › tests/e2e/workflow-smoke.spec.ts:145:1 › experiment run can be handed to analysis with chart controls and screenshot evidence (1.9s)
-[WebServer] INFO:     127.0.0.1:57271 - "WebSocket /ws/state" [accepted]
+  ✓   3 [chromium] › tests/e2e/workflow-smoke.spec.ts:145:1 › experiment run can be handed to analysis with chart controls and screenshot evidence (1.8s)
+[WebServer] INFO:     127.0.0.1:49803 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓   4 [chromium] › tests/e2e/workflow-smoke.spec.ts:201:1 › analysis data load failure surfaces an error state with screenshot evidence (245ms)
-[WebServer] INFO:     127.0.0.1:57281 - "WebSocket /ws/state" [accepted]
+  ✓   4 [chromium] › tests/e2e/workflow-smoke.spec.ts:201:1 › analysis data load failure surfaces an error state with screenshot evidence (226ms)
+[WebServer] INFO:     127.0.0.1:49810 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓   5 [chromium] › tests/e2e/workflow-smoke.spec.ts:246:1 › analysis run list failure does not masquerade as an empty library (221ms)
-[WebServer] INFO:     127.0.0.1:57290 - "WebSocket /ws/state" [accepted]
+  ✓   5 [chromium] › tests/e2e/workflow-smoke.spec.ts:246:1 › analysis run list failure does not masquerade as an empty library (211ms)
+[WebServer] INFO:     127.0.0.1:49818 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
   ✓   6 [chromium] › tests/e2e/workflow-smoke.spec.ts:263:1 › analysis run delete failure keeps the selected run visible (1.6s)
-[WebServer] INFO:     127.0.0.1:57307 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     127.0.0.1:49824 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓   7 [chromium] › tests/e2e/workflow-smoke.spec.ts:309:1 › experiment library failure does not masquerade as an empty library (243ms)
-[WebServer] INFO:     127.0.0.1:57312 - "WebSocket /ws/state" [accepted]
+  ✓   7 [chromium] › tests/e2e/workflow-smoke.spec.ts:309:1 › experiment library failure does not masquerade as an empty library (217ms)
+[WebServer] INFO:     127.0.0.1:49829 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓   8 [chromium] › tests/e2e/workflow-smoke.spec.ts:332:1 › experiment library write failures keep the editor and library state visible (359ms)
-[WebServer] INFO:     127.0.0.1:57317 - "WebSocket /ws/state" [accepted]
+  ✓   8 [chromium] › tests/e2e/workflow-smoke.spec.ts:332:1 › experiment library write failures keep the editor and library state visible (344ms)
+[WebServer] INFO:     127.0.0.1:49834 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓   9 [chromium] › tests/e2e/workflow-smoke.spec.ts:379:1 › experiment maneuver template failure stays visible without blocking editing (217ms)
-[WebServer] INFO:     127.0.0.1:57322 - "WebSocket /ws/state" [accepted]
+  ✓   9 [chromium] › tests/e2e/workflow-smoke.spec.ts:379:1 › experiment maneuver template failure stays visible without blocking editing (209ms)
+[WebServer] INFO:     127.0.0.1:49839 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  10 [chromium] › tests/e2e/workflow-smoke.spec.ts:402:1 › experiment batch start failure surfaces an error state with screenshot evidence (255ms)
-[WebServer] INFO:     127.0.0.1:57327 - "WebSocket /ws/state" [accepted]
+  ✓  10 [chromium] › tests/e2e/workflow-smoke.spec.ts:402:1 › experiment batch start failure surfaces an error state with screenshot evidence (258ms)
+[WebServer] INFO:     127.0.0.1:49849 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  11 [chromium] › tests/e2e/workflow-smoke.spec.ts:430:1 › run control backend failures stay visible in the control panels (219ms)
-[WebServer] INFO:     127.0.0.1:57332 - "WebSocket /ws/state" [accepted]
+  ✓  11 [chromium] › tests/e2e/workflow-smoke.spec.ts:430:1 › run control backend failures stay visible in the control panels (221ms)
+[WebServer] INFO:     127.0.0.1:49854 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  12 [chromium] › tests/e2e/workflow-smoke.spec.ts:471:1 › user python status failure stays visible in the design panel (212ms)
-[WebServer] INFO:     127.0.0.1:57338 - "WebSocket /ws/state" [accepted]
+  ✓  12 [chromium] › tests/e2e/workflow-smoke.spec.ts:471:1 › user python status failure stays visible in the design panel (237ms)
+[WebServer] INFO:     127.0.0.1:49859 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
   ✓  13 [chromium] › tests/e2e/workflow-smoke.spec.ts:494:1 › user python reload failure keeps the panel usable (299ms)
-[WebServer] INFO:     127.0.0.1:57344 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     127.0.0.1:49864 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
   ✓  14 [chromium] › tests/e2e/workflow-smoke.spec.ts:529:1 › vehicle geometry drag updates the shared parameter edit buffer (254ms)
-[WebServer] INFO:     127.0.0.1:57351 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     127.0.0.1:49871 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  15 [chromium] › tests/e2e/workflow-smoke.spec.ts:547:1 › vehicle parameter rejection keeps edits visible with screenshot evidence (286ms)
-[WebServer] INFO:     127.0.0.1:57358 - "WebSocket /ws/state" [accepted]
+  ✓  15 [chromium] › tests/e2e/workflow-smoke.spec.ts:547:1 › vehicle parameter rejection keeps edits visible with screenshot evidence (278ms)
+[WebServer] INFO:     127.0.0.1:49878 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  16 [chromium] › tests/e2e/workflow-smoke.spec.ts:580:1 › vehicle project list failure is visible and disables loading (213ms)
-[WebServer] INFO:     127.0.0.1:57365 - "WebSocket /ws/state" [accepted]
+  ✓  16 [chromium] › tests/e2e/workflow-smoke.spec.ts:580:1 › vehicle project list failure is visible and disables loading (229ms)
+[WebServer] INFO:     127.0.0.1:49885 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  17 [chromium] › tests/e2e/workflow-smoke.spec.ts:603:1 › vehicle project load failure stays local to the project panel (256ms)
-[WebServer] INFO:     127.0.0.1:57372 - "WebSocket /ws/state" [accepted]
+  ✓  17 [chromium] › tests/e2e/workflow-smoke.spec.ts:603:1 › vehicle project load failure stays local to the project panel (272ms)
+[WebServer] INFO:     127.0.0.1:49892 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  18 [chromium] › tests/e2e/workflow-smoke.spec.ts:638:1 › vehicle project save failure keeps the save form recoverable (274ms)
-[WebServer] INFO:     127.0.0.1:57379 - "WebSocket /ws/state" [accepted]
+  ✓  18 [chromium] › tests/e2e/workflow-smoke.spec.ts:638:1 › vehicle project save failure keeps the save form recoverable (272ms)
+[WebServer] INFO:     127.0.0.1:49899 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  19 [chromium] › tests/e2e/workflow-smoke.spec.ts:670:1 › load analysis charts expose deeper explanation state with screenshot evidence (534ms)
-[WebServer] INFO:     127.0.0.1:57387 - "WebSocket /ws/state" [accepted]
+  ✓  19 [chromium] › tests/e2e/workflow-smoke.spec.ts:670:1 › load analysis charts expose deeper explanation state with screenshot evidence (542ms)
+[WebServer] INFO:     127.0.0.1:49907 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  20 [chromium] › tests/e2e/workflow-smoke.spec.ts:689:1 › load analysis sweep failure surfaces an error and keeps controls usable (276ms)
-[WebServer] INFO:     127.0.0.1:57395 - "WebSocket /ws/state" [accepted]
+  ✓  20 [chromium] › tests/e2e/workflow-smoke.spec.ts:689:1 › load analysis sweep failure surfaces an error and keeps controls usable (242ms)
+[WebServer] INFO:     127.0.0.1:49914 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  21 [chromium] › tests/e2e/workflow-smoke.spec.ts:724:1 › load analysis profile list failure surfaces an error without blanking the page (502ms)
-[WebServer] INFO:     127.0.0.1:57420 - "WebSocket /ws/state" [accepted]
+  ✓  21 [chromium] › tests/e2e/workflow-smoke.spec.ts:724:1 › load analysis profile list failure surfaces an error without blanking the page (504ms)
+[WebServer] INFO:     127.0.0.1:49921 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  22 [chromium] › tests/e2e/workflow-smoke.spec.ts:750:1 › load analysis params failure leaves a visible empty state (223ms)
-[WebServer] INFO:     127.0.0.1:57427 - "WebSocket /ws/state" [accepted]
+  ✓  22 [chromium] › tests/e2e/workflow-smoke.spec.ts:750:1 › load analysis params failure leaves a visible empty state (232ms)
+[WebServer] INFO:     127.0.0.1:49928 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  23 [chromium] › tests/e2e/workflow-smoke.spec.ts:777:1 › load analysis profile action failures stay visible without blocking the toolbar (704ms)
-[WebServer] INFO:     127.0.0.1:57438 - "WebSocket /ws/state" [accepted]
+  ✓  23 [chromium] › tests/e2e/workflow-smoke.spec.ts:777:1 › load analysis profile action failures stay visible without blocking the toolbar (713ms)
+[WebServer] INFO:     127.0.0.1:49936 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  24 [chromium] › tests/e2e/workflow-smoke.spec.ts:836:1 › load analysis sensitivity failure surfaces a toast without blanking load charts (481ms)
-[WebServer] INFO:     127.0.0.1:57445 - "WebSocket /ws/state" [accepted]
+  ✓  24 [chromium] › tests/e2e/workflow-smoke.spec.ts:836:1 › load analysis sensitivity failure surfaces a toast without blanking load charts (487ms)
+[WebServer] INFO:     127.0.0.1:49943 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  25 [chromium] › tests/e2e/workflow-smoke.spec.ts:865:1 › scenario path workflow generates, follows, and clears a reference path (371ms)
-[WebServer] INFO:     127.0.0.1:57451 - "WebSocket /ws/state" [accepted]
+  ✓  25 [chromium] › tests/e2e/workflow-smoke.spec.ts:865:1 › scenario path workflow generates, follows, and clears a reference path (356ms)
+[WebServer] INFO:     127.0.0.1:49949 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  26 [chromium] › tests/e2e/workflow-smoke.spec.ts:887:1 › maneuver parameters reach the backend and the laid-out geometry is echoed back (315ms)
-[WebServer] INFO:     127.0.0.1:57457 - "WebSocket /ws/state" [accepted]
+  ✓  26 [chromium] › tests/e2e/workflow-smoke.spec.ts:887:1 › maneuver parameters reach the backend and the laid-out geometry is echoed back (298ms)
+[WebServer] INFO:     127.0.0.1:49957 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-[WebServer] INFO:     127.0.0.1:57461 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     127.0.0.1:49981 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
   ✓  27 [chromium] › tests/e2e/workflow-smoke.spec.ts:914:1 › 3D camera modes switch and the roof rig persists its settings (1.4s)
-[WebServer] INFO:     127.0.0.1:57467 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     127.0.0.1:49987 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  28 [chromium] › tests/e2e/workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves (6.8s)
-[WebServer] INFO:     127.0.0.1:57507 - "WebSocket /ws/state" [accepted]
+  ✓  28 [chromium] › tests/e2e/workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves (6.9s)
+[WebServer] INFO:     127.0.0.1:50013 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  29 [chromium] › tests/e2e/workflow-smoke.spec.ts:1034:1 › path version refresh failure surfaces a toast without blocking scenario tools (314ms)
-[WebServer] INFO:     127.0.0.1:57513 - "WebSocket /ws/state" [accepted]
+  ✓  29 [chromium] › tests/e2e/workflow-smoke.spec.ts:1040:1 › path version refresh failure surfaces a toast without blocking scenario tools (316ms)
+[WebServer] INFO:     127.0.0.1:50019 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  30 [chromium] › tests/e2e/workflow-smoke.spec.ts:1068:1 › path template failure stays visible in the trajectory panel (223ms)
-[WebServer] INFO:     127.0.0.1:57520 - "WebSocket /ws/state" [accepted]
+  ✓  30 [chromium] › tests/e2e/workflow-smoke.spec.ts:1074:1 › path template failure stays visible in the trajectory panel (230ms)
+[WebServer] INFO:     127.0.0.1:50025 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  31 [chromium] › tests/e2e/workflow-smoke.spec.ts:1092:1 › scenario list failure stays visible in the scenario panel (229ms)
-[WebServer] INFO:     127.0.0.1:57526 - "WebSocket /ws/state" [accepted]
+  ✓  31 [chromium] › tests/e2e/workflow-smoke.spec.ts:1098:1 › scenario list failure stays visible in the scenario panel (221ms)
+[WebServer] INFO:     127.0.0.1:50031 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  32 [chromium] › tests/e2e/workflow-smoke.spec.ts:1115:1 › scenario load and clear failures keep the scenario panel recoverable (404ms)
-[WebServer] INFO:     127.0.0.1:57532 - "WebSocket /ws/state" [accepted]
+  ✓  32 [chromium] › tests/e2e/workflow-smoke.spec.ts:1121:1 › scenario load and clear failures keep the scenario panel recoverable (401ms)
+[WebServer] INFO:     127.0.0.1:50037 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  33 [chromium] › tests/e2e/workflow-smoke.spec.ts:1166:1 › scenario version refresh failure surfaces a toast without blocking scenario tools (314ms)
-[WebServer] INFO:     127.0.0.1:57538 - "WebSocket /ws/state" [accepted]
+  ✓  33 [chromium] › tests/e2e/workflow-smoke.spec.ts:1172:1 › scenario version refresh failure surfaces a toast without blocking scenario tools (307ms)
+[WebServer] INFO:     127.0.0.1:50043 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  34 [chromium] › tests/e2e/workflow-smoke.spec.ts:1198:1 › scenario disturbance editor places, edits, and clears a road disturbance (374ms)
-[WebServer] INFO:     127.0.0.1:57544 - "WebSocket /ws/state" [accepted]
+  ✓  34 [chromium] › tests/e2e/workflow-smoke.spec.ts:1204:1 › scenario disturbance editor places, edits, and clears a road disturbance (367ms)
+[WebServer] INFO:     127.0.0.1:50049 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  35 [chromium] › tests/e2e/workflow-smoke.spec.ts:1236:1 › disturbance action failures keep existing disturbance state visible (388ms)
-[WebServer] INFO:     127.0.0.1:57550 - "WebSocket /ws/state" [accepted]
+  ✓  35 [chromium] › tests/e2e/workflow-smoke.spec.ts:1242:1 › disturbance action failures keep existing disturbance state visible (397ms)
+[WebServer] INFO:     127.0.0.1:50056 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  36 [chromium] › tests/e2e/workflow-smoke.spec.ts:1312:1 › disturbance canvas placement and drag failures surface toasts (424ms)
-[WebServer] INFO:     127.0.0.1:57558 - "WebSocket /ws/state" [accepted]
+  ✓  36 [chromium] › tests/e2e/workflow-smoke.spec.ts:1318:1 › disturbance canvas placement and drag failures surface toasts (463ms)
+[WebServer] INFO:     127.0.0.1:50063 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  37 [chromium] › tests/e2e/workflow-smoke.spec.ts:1397:1 › scenario fault injection panel adds, toggles, and clears faults (470ms)
-[WebServer] INFO:     127.0.0.1:57566 - "WebSocket /ws/state" [accepted]
+  ✓  37 [chromium] › tests/e2e/workflow-smoke.spec.ts:1403:1 › scenario fault injection panel adds, toggles, and clears faults (464ms)
+[WebServer] INFO:     127.0.0.1:50087 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  38 [chromium] › tests/e2e/workflow-smoke.spec.ts:1431:1 › fault list failure does not masquerade as an empty fault configuration (213ms)
-[WebServer] INFO:     127.0.0.1:57572 - "WebSocket /ws/state" [accepted]
+  ✓  38 [chromium] › tests/e2e/workflow-smoke.spec.ts:1437:1 › fault list failure does not masquerade as an empty fault configuration (237ms)
+[WebServer] INFO:     127.0.0.1:50093 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  39 [chromium] › tests/e2e/workflow-smoke.spec.ts:1453:1 › fault action failures keep configured faults visible (435ms)
-[WebServer] INFO:     127.0.0.1:57578 - "WebSocket /ws/state" [accepted]
+  ✓  39 [chromium] › tests/e2e/workflow-smoke.spec.ts:1459:1 › fault action failures keep configured faults visible (444ms)
+[WebServer] INFO:     127.0.0.1:50099 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  40 [chromium] › tests/e2e/workflow-smoke.spec.ts:1538:1 › script library workflow loads, starts, lays out markers, and stops a fixed script (1.1s)
-[WebServer] INFO:     127.0.0.1:57586 - "WebSocket /ws/state" [accepted]
+  ✓  40 [chromium] › tests/e2e/workflow-smoke.spec.ts:1544:1 › script library workflow loads, starts, lays out markers, and stops a fixed script (1.2s)
+[WebServer] INFO:     127.0.0.1:50106 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  41 [chromium] › tests/e2e/workflow-smoke.spec.ts:1572:1 › script parse failure stays visible in the script panel (277ms)
-[WebServer] INFO:     127.0.0.1:57593 - "WebSocket /ws/state" [accepted]
+  ✓  41 [chromium] › tests/e2e/workflow-smoke.spec.ts:1578:1 › script parse failure stays visible in the script panel (280ms)
+[WebServer] INFO:     127.0.0.1:50115 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  42 [chromium] › tests/e2e/workflow-smoke.spec.ts:1591:1 › script start and stop failures keep script controls recoverable (1.2s)
-[WebServer] INFO:     127.0.0.1:57600 - "WebSocket /ws/state" [accepted]
+  ✓  42 [chromium] › tests/e2e/workflow-smoke.spec.ts:1597:1 › script start and stop failures keep script controls recoverable (1.2s)
+[WebServer] INFO:     127.0.0.1:50125 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  43 [chromium] › tests/e2e/workflow-smoke.spec.ts:1648:1 › script library failure does not masquerade as an empty script library (248ms)
-[WebServer] INFO:     127.0.0.1:57607 - "WebSocket /ws/state" [accepted]
+  ✓  43 [chromium] › tests/e2e/workflow-smoke.spec.ts:1654:1 › script library failure does not masquerade as an empty script library (271ms)
+[WebServer] INFO:     127.0.0.1:50132 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  44 [chromium] › tests/e2e/workflow-smoke.spec.ts:1670:1 › script status failure stays visible without blocking script editing (240ms)
-[WebServer] INFO:     127.0.0.1:57614 - "WebSocket /ws/state" [accepted]
+  ✓  44 [chromium] › tests/e2e/workflow-smoke.spec.ts:1676:1 › script status failure stays visible without blocking script editing (236ms)
+[WebServer] INFO:     127.0.0.1:50139 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  45 [chromium] › tests/e2e/workflow-smoke.spec.ts:1694:1 › recording panel records samples and exports csv (2.3s)
-[WebServer] INFO:     127.0.0.1:57627 - "WebSocket /ws/state" [accepted]
+  ✓  45 [chromium] › tests/e2e/workflow-smoke.spec.ts:1700:1 › recording panel records samples and exports csv (2.3s)
+[WebServer] INFO:     127.0.0.1:50149 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  46 [chromium] › tests/e2e/workflow-smoke.spec.ts:1726:1 › recording export failure stays visible in the recording panel (2.2s)
-[WebServer] INFO:     127.0.0.1:57653 - "WebSocket /ws/state" [accepted]
+  ✓  46 [chromium] › tests/e2e/workflow-smoke.spec.ts:1732:1 › recording export failure stays visible in the recording panel (2.2s)
+[WebServer] INFO:     127.0.0.1:50163 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  47 [chromium] › tests/e2e/workflow-smoke.spec.ts:1757:1 › recording status failure stays visible without disabling controls (253ms)
-[WebServer] INFO:     127.0.0.1:57661 - "WebSocket /ws/state" [accepted]
+  ✓  47 [chromium] › tests/e2e/workflow-smoke.spec.ts:1763:1 › recording status failure stays visible without disabling controls (246ms)
+[WebServer] INFO:     127.0.0.1:50174 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  48 [chromium] › tests/e2e/workflow-smoke.spec.ts:1781:1 › recording start and stop failures keep recording controls recoverable (2.3s)
-[WebServer] INFO:     127.0.0.1:57671 - "WebSocket /ws/state" [accepted]
+  ✓  48 [chromium] › tests/e2e/workflow-smoke.spec.ts:1787:1 › recording start and stop failures keep recording controls recoverable (2.3s)
+[WebServer] INFO:     127.0.0.1:50200 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  49 [chromium] › tests/e2e/workflow-smoke.spec.ts:1831:1 › analysis replay controls scrub selected run data (1.6s)
-[WebServer] INFO:     127.0.0.1:57683 - "WebSocket /ws/state" [accepted]
+  ✓  49 [chromium] › tests/e2e/workflow-smoke.spec.ts:1837:1 › analysis replay controls scrub selected run data (1.6s)
+[WebServer] INFO:     127.0.0.1:50209 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  50 [chromium] › tests/e2e/workflow-smoke.spec.ts:1856:1 › analysis replay metadata failure keeps replay usable with a visible fallback (1.6s)
-[WebServer] INFO:     127.0.0.1:57693 - "WebSocket /ws/state" [accepted]
+  ✓  50 [chromium] › tests/e2e/workflow-smoke.spec.ts:1862:1 › analysis replay metadata failure keeps replay usable with a visible fallback (1.6s)
+[WebServer] INFO:     127.0.0.1:50215 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  51 [chromium] › tests/e2e/workflow-smoke.spec.ts:1895:1 › command palette filters and navigates workflow pages from the keyboard (156ms)
-[WebServer] INFO:     127.0.0.1:57702 - "WebSocket /ws/state" [accepted]
+  ✓  51 [chromium] › tests/e2e/workflow-smoke.spec.ts:1901:1 › command palette filters and navigates workflow pages from the keyboard (169ms)
+[WebServer] INFO:     127.0.0.1:50222 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  52 [chromium] › tests/e2e/workflow-smoke.spec.ts:1914:1 › command palette model switch failure surfaces a toast and closes cleanly (144ms)
-[WebServer] INFO:     127.0.0.1:57707 - "WebSocket /ws/state" [accepted]
+  ✓  52 [chromium] › tests/e2e/workflow-smoke.spec.ts:1920:1 › command palette model switch failure surfaces a toast and closes cleanly (145ms)
+[WebServer] INFO:     127.0.0.1:50227 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  53 [chromium] › tests/e2e/workflow-smoke.spec.ts:1942:1 › gamepad mapping panel edits persist without a physical controller (218ms)
-[WebServer] INFO:     127.0.0.1:57712 - "WebSocket /ws/state" [accepted]
+  ✓  53 [chromium] › tests/e2e/workflow-smoke.spec.ts:1948:1 › gamepad mapping panel edits persist without a physical controller (217ms)
+[WebServer] INFO:     127.0.0.1:50232 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-[WebServer] INFO:     127.0.0.1:57715 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     127.0.0.1:50245 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  54 [chromium] › tests/e2e/workflow-smoke.spec.ts:1975:1 › visual baselines pin the analysis chart, 3D roof view, and geometry studio (2.5s)
-[WebServer] INFO:     127.0.0.1:57739 - "WebSocket /ws/state" [accepted]
+  ✓  54 [chromium] › tests/e2e/workflow-smoke.spec.ts:1981:1 › visual baselines pin the analysis chart, 3D roof view, and geometry studio (2.5s)
+[WebServer] INFO:     127.0.0.1:50250 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  55 [chromium] › tests/e2e/zz-interaction.spec.ts:13:1 › manual input releases on navigation, editing, blur and explicit stop (1.0s)
-[WebServer] INFO:     127.0.0.1:57745 - "WebSocket /ws/state" [accepted]
+  ✓  55 [chromium] › tests/e2e/zz-interaction.spec.ts:13:1 › manual input releases on navigation, editing, blur and explicit stop (992ms)
+[WebServer] INFO:     127.0.0.1:50255 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  56 [chromium] › tests/e2e/zz-interaction.spec.ts:43:1 › script follows simulation clock, pauses with it and saves a full recording (850ms)
-[WebServer] INFO:     127.0.0.1:57757 - "WebSocket /ws/state" [accepted]
+  ✓  56 [chromium] › tests/e2e/zz-interaction.spec.ts:43:1 › script follows simulation clock, pauses with it and saves a full recording (856ms)
+[WebServer] INFO:     127.0.0.1:50260 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  57 [chromium] › tests/e2e/zz-interaction.spec.ts:79:1 › Agent uncertain response retries once and full artifacts reach analysis on desktop and narrow screens (980ms)
-[WebServer] INFO:     127.0.0.1:57766 - "WebSocket /ws/state" [accepted]
+  ✓  57 [chromium] › tests/e2e/zz-interaction.spec.ts:79:1 › Agent uncertain response retries once and full artifacts reach analysis on desktop and narrow screens (978ms)
+[WebServer] INFO:     127.0.0.1:50278 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-[WebServer] INFO:     127.0.0.1:57769 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     127.0.0.1:50289 - "WebSocket /ws/state" [accepted]
 [WebServer] INFO:     connection open
-  ✓  58 [chromium] › tests/e2e/zz-multipoint.spec.ts:3:1 › multipoint UI preserves parameters and executes simultaneous and staggered timelines (1.0s)
+  ✓  58 [chromium] › tests/e2e/zz-multipoint.spec.ts:3:1 › multipoint UI preserves parameters and executes simultaneous and staggered timelines (973ms)
 
-  58 passed (47.8s)
+  58 passed (47.6s)

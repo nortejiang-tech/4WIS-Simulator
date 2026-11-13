@@ -1,0 +1,381 @@
+windows-native	Verify and repackage app-local Windows runtime	﻿2026-11-13T19:55:04.9649059Z ##[group]Run python -m unittest discover -s scripts/tests -p test_windows_runtime.py -v
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9650265Z ^[[36;1mpython -m unittest discover -s scripts/tests -p test_windows_runtime.py -v^[[0m
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9650842Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9651193Z ^[[36;1mpython scripts/repack_native_artifact.py^[[0m
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9651517Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9652265Z ^[[36;1mpython scripts/check_portable_package.py --targets windows-x64 --native-smoke --require-native-core --json | Tee-Object -FilePath windows-native-package.log^[[0m
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9653010Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9653410Z ^[[36;1mgit rev-parse HEAD | Out-File -FilePath windows-native-commit.txt^[[0m
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0402297Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0402908Z env:
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0403189Z   SIM4WIS_ENGINE: native
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0403604Z   PYTHONUTF8: 1
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0403917Z   PW_PYTHON_EXECUTABLE: python
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0404286Z   PW_E2E_PORT: 18051
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0404741Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0405503Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0406254Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0406921Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0407599Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0408128Z ##[endgroup]
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4787660Z test_ambiguous_runtime_fails_closed (test_windows_runtime.WindowsRuntimeTests.test_ambiguous_runtime_fails_closed) ... ok
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4991222Z test_bundles_exact_vendor_bytes_and_provenance (test_windows_runtime.WindowsRuntimeTests.test_bundles_exact_vendor_bytes_and_provenance) ... ok
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4998456Z test_missing_runtime_fails_closed (test_windows_runtime.WindowsRuntimeTests.test_missing_runtime_fails_closed) ... ok
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999235Z 
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999404Z ----------------------------------------------------------------------
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999766Z Ran 3 tests in 0.035s
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999903Z 
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999978Z OK
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.4115645Z ^[[36m[build]^[[0m [update] keeping runtime + vendor for windows-x64
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.4116211Z ^[[36m[build]^[[0m copying app + data for windows-x64
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.5719721Z ^[[36m[build]^[[0m zipping 4WIS_Simulator_windows-x64 (v0.106.0)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:28.7384665Z ^[[36m[build]^[[0m done windows-x64: D:\a\4WIS-Simulator\4WIS-Simulator\dist_portable\4WIS_Simulator_v0.106.0_windows-x64.zip  (100 MB)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8056085Z windows-x64: safe archive paths: PASS (no absolute/traversal entries)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8060745Z windows-x64: zip CRC: PASS (all members readable)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8063457Z windows-x64: app/dist/index.html: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8066039Z windows-x64: app/src/sim4wis/__init__.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8068454Z windows-x64: app/src/sim4wis/main.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8071046Z windows-x64: app/src/sim4wis_mcp/__init__.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8073235Z windows-x64: app/src/sim4wis_mcp/server.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8075396Z windows-x64: vendor/mcp/__init__.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8078544Z windows-x64: scripts/check_golden_experiments.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8081382Z windows-x64: scripts/study_single_wheel_failure.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8083793Z windows-x64: scripts/reporting.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8088691Z windows-x64: docs/golden_experiments.json: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8091159Z windows-x64: docs/user_manual.html: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8093658Z windows-x64: docs/interaction_guide.md: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8097492Z windows-x64: docs/multipoint_faults.md: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8098163Z windows-x64: scripts/portable_fault_smoke.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8100874Z windows-x64: app/src/sim4wis/fault/schema.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8103213Z windows-x64: app/src/sim4wis/vehicle/steering_actuation.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8105410Z windows-x64: docs/agent_interface_design.md: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8107733Z windows-x64: docs/v0.106.0_changelog.md: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8110038Z windows-x64: docs/reports/evo-coder/release-v0.106.0.md: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8112442Z windows-x64: projects/default.yaml: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8114572Z windows-x64: scripts_lib/slalom.yaml: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8116550Z windows-x64: procedures/step_steer_golden.yaml: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8118340Z windows-x64: runtime/python.exe: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8120318Z windows-x64: start.bat: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8122954Z windows-x64: agent_mcp.bat: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8125750Z windows-x64: vendor/pywin32.pth: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8127843Z windows-x64: vendor/pywin32_system32/pywintypes312.dll: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8130127Z windows-x64: vendor/win32/lib/pywintypes.py: PASS (present)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8133004Z windows-x64: current source app/src/sim4wis/__init__.py: PASS (SHA-256 matches source)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8135028Z windows-x64: current source app/src/sim4wis/main.py: PASS (SHA-256 matches source)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8137657Z windows-x64: current source app/src/sim4wis_mcp/server.py: PASS (SHA-256 matches source)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8139361Z windows-x64: all backend source hashes: PASS (141 Python files match)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8142465Z windows-x64: native core source and binary provenance: PASS (matching version/platform/source and binary SHA-256)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8144447Z windows-x64: app-local MSVC runtime provenance: PASS (byte-identical vendor runtime, import name and SHA-256)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8146318Z windows-x64: package version: PASS (v0.106.0)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8149211Z windows-x64: MCP launcher: PASS (starts facade and forwards arguments)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8151533Z windows-x64: Windows launcher line endings: PASS (CRLF)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8154056Z windows-x64: Windows pywin32 import paths: PASS (launcher exposes pywin32 directories)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8156065Z windows-x64: loaded package-local MSVC runtime: PASS (PASS: native extension loaded package-local MSVCP140.dll
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8157736Z )
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8161412Z windows-x64: embedded C++ integration both models: PASS ({"requested": "native", "native_available": true, "numerical_core": "cpp17", "abi": 1, "native_source_sha256": "59c3cb2b411f4c5d1471fe43695b8cd281e663a1e96069788058ef732a712fc4", "integration": "RK4 body + nonlinear backward-Euler wheel spin; partitioned"}
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8163200Z )
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8163603Z windows-x64: embedded imports: PASS (0.106.0)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8165995Z windows-x64: MCP --print-config: PASS (valid MCP host JSON)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8170013Z windows-x64: embedded backend health: PASS (GET /health = ok)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8172070Z windows-x64: embedded backend version: PASS (v0.106.0)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8174472Z windows-x64: embedded Agent API: PASS (4wis.agent.v1)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8176962Z windows-x64: packaged MCP multipoint E2E: PASS ({"model": "simplified_dynamic", "status": "PASS", "samples": 24, "activation_times": [0.023, 0.023, 0.037, 0.047]}
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8178474Z {"model": "multibody", "status": "PASS", "samples": 24, "activation_times": [0.023, 0.023, 0.037, 0.047]}
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8180277Z )
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8182853Z windows-x64: embedded Web UI: PASS (served from app/dist)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8185014Z [
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8187277Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8189809Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8191674Z     "name": "safe archive paths",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8194214Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8196211Z     "detail": "no absolute/traversal entries"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8198483Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8200822Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8202881Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8204975Z     "name": "zip CRC",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8207671Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8210351Z     "detail": "all members readable"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8212189Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8214395Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8216570Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8218709Z     "name": "app/dist/index.html",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8220796Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8222804Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8224823Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8226922Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8229315Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8231534Z     "name": "app/src/sim4wis/__init__.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8233533Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8236250Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8238541Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8240930Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8242824Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8244680Z     "name": "app/src/sim4wis/main.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8246613Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8248915Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8251354Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8253165Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8255298Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8257211Z     "name": "app/src/sim4wis_mcp/__init__.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8259122Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8261307Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8263116Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8265067Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8266993Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8268826Z     "name": "app/src/sim4wis_mcp/server.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8271079Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8272884Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8274685Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8276290Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8277903Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8279584Z     "name": "vendor/mcp/__init__.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8281220Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8282759Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8284273Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8285827Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8287302Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8288862Z     "name": "scripts/check_golden_experiments.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8291030Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8292763Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8294385Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8295837Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8297781Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8301809Z     "name": "scripts/study_single_wheel_failure.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8304237Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8305691Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8307880Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8310320Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8312126Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8313868Z     "name": "scripts/reporting.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8316054Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8318614Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8320252Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8321766Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8323270Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8324944Z     "name": "docs/golden_experiments.json",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8326556Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8328383Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8329825Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8331504Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8333096Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8334580Z     "name": "docs/user_manual.html",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8336091Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8337555Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8338923Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8340407Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8342212Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8343894Z     "name": "docs/interaction_guide.md",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8345363Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8346826Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8348486Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8350338Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8351952Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8353914Z     "name": "docs/multipoint_faults.md",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8355551Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8357179Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8358730Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8360214Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8361682Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8363204Z     "name": "scripts/portable_fault_smoke.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8364841Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8366490Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8367934Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8369342Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8370884Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8372372Z     "name": "app/src/sim4wis/fault/schema.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8374388Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8376037Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8377651Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8379142Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8380644Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8382227Z     "name": "app/src/sim4wis/vehicle/steering_actuation.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8383779Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8385389Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8386860Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8388355Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8389884Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8391311Z     "name": "docs/agent_interface_design.md",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8392758Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8394681Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8396391Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8397943Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8399499Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8400998Z     "name": "docs/v0.106.0_changelog.md",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8402652Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8404287Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8405697Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8407252Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8408795Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8410330Z     "name": "docs/reports/evo-coder/release-v0.106.0.md",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8411980Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8413844Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8415314Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8417065Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8418605Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8420256Z     "name": "projects/default.yaml",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8421831Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8423415Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8424868Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8426374Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8427981Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8429574Z     "name": "scripts_lib/slalom.yaml",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8431164Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8432680Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8434344Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8435926Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8437443Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8438988Z     "name": "procedures/step_steer_golden.yaml",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8440684Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8442253Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8443733Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8445208Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8446889Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8448631Z     "name": "runtime/python.exe",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8450053Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8451563Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8453249Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8454749Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8456485Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8457942Z     "name": "start.bat",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8459440Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8460926Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8462370Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8464103Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8466102Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8467760Z     "name": "agent_mcp.bat",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8469505Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8471132Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8472782Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8474440Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8476010Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8477505Z     "name": "vendor/pywin32.pth",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8478992Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8480673Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8482278Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8483741Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8485269Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8487050Z     "name": "vendor/pywin32_system32/pywintypes312.dll",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8489013Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8490596Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8492199Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8493646Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8495109Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8496619Z     "name": "vendor/win32/lib/pywintypes.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8498060Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8499566Z     "detail": "present"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8500994Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8502423Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8504000Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8505591Z     "name": "current source app/src/sim4wis/__init__.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8507218Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8509037Z     "detail": "SHA-256 matches source"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8510550Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8512170Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8513771Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8515367Z     "name": "current source app/src/sim4wis/main.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8516971Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8518655Z     "detail": "SHA-256 matches source"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8520210Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8521724Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8523279Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8524990Z     "name": "current source app/src/sim4wis_mcp/server.py",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8526787Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8528458Z     "detail": "SHA-256 matches source"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8530105Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8531675Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8533205Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8534683Z     "name": "all backend source hashes",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8536203Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8537735Z     "detail": "141 Python files match"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8539376Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8541013Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8542737Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8544330Z     "name": "native core source and binary provenance",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8545962Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8548290Z     "detail": "matching version/platform/source and binary SHA-256"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8550275Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8551886Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8553442Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8555153Z     "name": "app-local MSVC runtime provenance",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8556739Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8558378Z     "detail": "byte-identical vendor runtime, import name and SHA-256"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8559946Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8561690Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8563174Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8564693Z     "name": "package version",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8566176Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8568285Z     "detail": "v0.106.0"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8569990Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8571729Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8573316Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8574844Z     "name": "MCP launcher",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8576276Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8577798Z     "detail": "starts facade and forwards arguments"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8579407Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8581093Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8582666Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8584165Z     "name": "Windows launcher line endings",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8585829Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8587995Z     "detail": "CRLF"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8589796Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8591199Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8592875Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8594379Z     "name": "Windows pywin32 import paths",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8596082Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8597911Z     "detail": "launcher exposes pywin32 directories"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8599457Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8600909Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8602455Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8604671Z     "name": "loaded package-local MSVC runtime",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8606336Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8608317Z     "detail": "PASS: native extension loaded package-local MSVCP140.dll\n"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8609910Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8611839Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8613396Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8614933Z     "name": "embedded C++ integration both models",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8616609Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8619001Z     "detail": "{\"requested\": \"native\", \"native_available\": true, \"numerical_core\": \"cpp17\", \"abi\": 1, \"native_source_sha256\": \"59c3cb2b411f4c5d1471fe43695b8cd281e663a1e96069788058ef732a712fc4\", \"integration\": \"RK4 body + nonlinear backward-Euler wheel spin; partitioned\"}\n"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8620765Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8621813Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8623628Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8625545Z     "name": "embedded imports",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8627084Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8628732Z     "detail": "0.106.0"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8630228Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8631713Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8633185Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8634720Z     "name": "MCP --print-config",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8636182Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8637755Z     "detail": "valid MCP host JSON"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8639239Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8640679Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8642229Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8643729Z     "name": "embedded backend health",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8645726Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8647233Z     "detail": "GET /health = ok"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8648997Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8650499Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8652213Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8653834Z     "name": "embedded backend version",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8655669Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8657365Z     "detail": "v0.106.0"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8658995Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8660499Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8662166Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8663780Z     "name": "embedded Agent API",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8665506Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8667402Z     "detail": "4wis.agent.v1"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8668849Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8670287Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8671844Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8673387Z     "name": "packaged MCP multipoint E2E",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8674849Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8676960Z     "detail": "{\"model\": \"simplified_dynamic\", \"status\": \"PASS\", \"samples\": 24, \"activation_times\": [0.023, 0.023, 0.037, 0.047]}\n{\"model\": \"multibody\", \"status\": \"PASS\", \"samples\": 24, \"activation_times\": [0.023, 0.023, 0.037, 0.047]}\n"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8678544Z   },
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8680084Z   {
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8681781Z     "target": "windows-x64",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8683327Z     "name": "embedded Web UI",
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8685414Z     "ok": true,
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8688640Z     "detail": "served from app/dist"
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8690204Z   }
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8691829Z ]

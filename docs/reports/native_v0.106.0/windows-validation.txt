@@ -1,0 +1,764 @@
+windows-native	Build and verify native backend	﻿2026-11-13T19:04:31.3820460Z ##[group]Run python -m pip install -e "./backend[dev]"
+windows-native	Build and verify native backend	2026-11-13T19:04:31.3821040Z ^[[36;1mpython -m pip install -e "./backend[dev]"^[[0m
+windows-native	Build and verify native backend	2026-11-13T19:04:31.3821472Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and verify native backend	2026-11-13T19:04:31.3822151Z ^[[36;1mpython scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md^[[0m
+windows-native	Build and verify native backend	2026-11-13T19:04:31.3822819Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and verify native backend	2026-11-13T19:04:31.3823356Z ^[[36;1mpython -m pytest backend/tests -n 4 -q --junitxml=windows-native-tests.xml^[[0m
+windows-native	Build and verify native backend	2026-11-13T19:04:31.3823910Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4496864Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4497513Z env:
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4497813Z   SIM4WIS_ENGINE: native
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4498184Z   PYTHONUTF8: 1
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4498521Z   PW_PYTHON_EXECUTABLE: python
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4498925Z   PW_E2E_PORT: 18051
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4499482Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4500593Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4501420Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4502157Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4502885Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Build and verify native backend	2026-11-13T19:04:31.4503581Z ##[endgroup]
+windows-native	Build and verify native backend	2026-11-13T19:04:36.8352419Z Obtaining file:///D:/a/4WIS-Simulator/4WIS-Simulator/backend
+windows-native	Build and verify native backend	2026-11-13T19:04:36.8382396Z   Installing build dependencies: started
+windows-native	Build and verify native backend	2026-11-13T19:04:42.6732811Z   Installing build dependencies: finished with status 'done'
+windows-native	Build and verify native backend	2026-11-13T19:04:42.6753126Z   Checking if build backend supports build_editable: started
+windows-native	Build and verify native backend	2026-11-13T19:04:43.6822516Z   Checking if build backend supports build_editable: finished with status 'done'
+windows-native	Build and verify native backend	2026-11-13T19:04:43.6849720Z   Getting requirements to build editable: started
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2344586Z   Getting requirements to build editable: finished with status 'done'
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2362792Z   C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-4mcn888p\overlay\Lib\site-packages\setuptools\config\_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2365369Z   !!
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2365755Z   
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2366320Z           ********************************************************************************
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2368238Z           Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2369594Z   
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2370268Z           By 2027-Feb-18, you need to update your project and remove deprecated calls
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2371161Z           or your builds will no longer be supported.
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2371669Z   
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2372526Z           See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2373616Z           ********************************************************************************
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2374215Z   
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2374530Z   !!
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2374912Z     corresp(dist, value, root_dir)
+windows-native	Build and verify native backend	2026-11-13T19:04:44.2395306Z   Preparing editable metadata (pyproject.toml): started
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9733434Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9744925Z   C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-4mcn888p\overlay\Lib\site-packages\setuptools\config\_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9746816Z   !!
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9747272Z   
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9747786Z           ********************************************************************************
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9758608Z           Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9759916Z   
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9760522Z           By 2027-Feb-18, you need to update your project and remove deprecated calls
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9761369Z           or your builds will no longer be supported.
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9761859Z   
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9762989Z           See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9764458Z           ********************************************************************************
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9765018Z   
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9765297Z   !!
+windows-native	Build and verify native backend	2026-11-13T19:04:44.9765639Z     corresp(dist, value, root_dir)
+windows-native	Build and verify native backend	2026-11-13T19:04:45.5605173Z Collecting fastapi>=0.115 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:45.8339166Z   Downloading fastapi-0.162.7-py3-none-any.whl.metadata (27 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:45.9491364Z Collecting uvicorn>=0.30 (from uvicorn[standard]>=0.30->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:45.9618264Z   Downloading uvicorn-0.54.0-py3-none-any.whl.metadata (6.6 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.1716980Z Collecting websockets>=12 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.1843861Z   Downloading websockets-17.4-cp312-cp312-win_amd64.whl.metadata (6.5 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.3395965Z Collecting pydantic>=2.7 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.3549587Z   Downloading pydantic-2.14.3-py3-none-any.whl.metadata (141 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.6717418Z Collecting numpy>=1.26 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.6856461Z   Downloading numpy-2.5.4-cp312-cp312-win_amd64.whl.metadata (6.6 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.8894180Z Collecting pyyaml>=6.0 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.9011270Z   Downloading pyyaml-6.0.3-cp312-cp312-win_amd64.whl.metadata (2.4 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.9507140Z Collecting mcp>=2.0 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:46.9618914Z   Downloading mcp-2.3.0-py3-none-any.whl.metadata (6.6 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.0246503Z Collecting pytest>=8 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.0362710Z   Downloading pytest-9.2.0-py3-none-any.whl.metadata (7.9 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.0961730Z Collecting pytest-asyncio>=0.23 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.1088999Z   Downloading pytest_asyncio-1.5.0-py3-none-any.whl.metadata (4.4 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.1550849Z Collecting pytest-xdist>=3.5 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.1668892Z   Downloading pytest_xdist-3.8.0-py3-none-any.whl.metadata (3.0 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.6056157Z Collecting ruff>=0.5 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.6219619Z   Downloading ruff-0.17.5-py3-none-win_amd64.whl.metadata (21 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.6773853Z Collecting httpx>=0.27 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.6887839Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.8790321Z Collecting matplotlib>=3.8 (from sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.8928324Z   Downloading matplotlib-3.11.2-cp312-cp312-win_amd64.whl.metadata (80 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.9878728Z Collecting starlette>=0.46.0 (from fastapi>=0.115->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:47.9992292Z   Downloading starlette-1.10.0-py3-none-any.whl.metadata (6.6 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.0547390Z Collecting anyio>=4.1.0 (from fastapi>=0.115->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.0663750Z   Downloading anyio-4.16.0-py3-none-any.whl.metadata (4.7 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.1214111Z Collecting typing-extensions>=4.8.0 (from fastapi>=0.115->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.1329222Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.1774014Z Collecting typing-inspection>=0.4.2 (from fastapi>=0.115->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.1892896Z   Downloading typing_inspection-0.4.5-py3-none-any.whl.metadata (2.6 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.2326141Z Collecting annotated-doc>=0.0.2 (from fastapi>=0.115->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.2531293Z   Downloading annotated_doc-0.0.6-py3-none-any.whl.metadata (6.5 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.3046763Z Collecting opentelemetry-api>=1.44.0 (from fastapi>=0.115->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.3159208Z   Downloading opentelemetry_api-1.45.2-py3-none-any.whl.metadata (1.4 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.3685980Z Collecting idna>=2.8 (from anyio>=4.1.0->fastapi>=0.115->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.3777493Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.4361063Z Collecting certifi (from httpx>=0.27->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.4479204Z   Downloading certifi-2026.10.23-py3-none-any.whl.metadata (2.5 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.4963551Z Collecting httpcore==1.* (from httpx>=0.27->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.5080251Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.5597081Z Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.5712569Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.6765647Z Collecting contourpy>=1.0.1 (from matplotlib>=3.8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.6925255Z   Downloading contourpy-1.4.0-cp312-cp312-win_amd64.whl.metadata (3.8 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.7459452Z Collecting cycler>=0.10 (from matplotlib>=3.8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.7571301Z   Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:48.9655693Z Collecting fonttools>=4.28.2 (from matplotlib>=3.8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.0255685Z   Downloading fonttools-4.68.0-cp312-cp312-win_amd64.whl.metadata (142 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.1695628Z Collecting kiwisolver>=1.3.1 (from matplotlib>=3.8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.1818815Z   Downloading kiwisolver-1.5.1-cp312-cp312-win_amd64.whl.metadata (5.2 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.2111823Z Requirement already satisfied: packaging>=20.0 in C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages (from matplotlib>=3.8->sim4wis==0.106.0) (26.3)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.4485782Z Collecting pillow>=9 (from matplotlib>=3.8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.4599383Z   Downloading pillow-13.0.0-cp312-cp312-win_amd64.whl.metadata (9.3 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.5250842Z Collecting pyparsing>=3 (from matplotlib>=3.8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.5372217Z   Downloading pyparsing-3.3.3-py3-none-any.whl.metadata (5.9 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.5943540Z Collecting python-dateutil>=2.7 (from matplotlib>=3.8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.6057697Z   Downloading python_dateutil-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.6602448Z Collecting httpx2>=2.10.0 (from mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.6738067Z   Downloading httpx2-2.16.0-py3-none-any.whl.metadata (10 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.7246618Z Collecting jsonschema>=4.20.0 (from mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.7362759Z   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.7911050Z Collecting mcp-types==2.3.0 (from mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.8028172Z   Downloading mcp_types-2.3.0-py3-none-any.whl.metadata (1.9 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.8726297Z Collecting pyjwt>=2.10.1 (from pyjwt[crypto]>=2.10.1->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.8843791Z   Downloading pyjwt-2.15.1-py3-none-any.whl.metadata (3.5 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.9335901Z Collecting python-multipart>=0.0.9 (from mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:49.9450560Z   Downloading python_multipart-0.0.33-py3-none-any.whl.metadata (6.3 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.0040476Z Collecting pywin32>=311 (from mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.0158499Z   Downloading pywin32-312-cp312-cp312-win_amd64.whl.metadata (11 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.0751071Z Collecting sse-starlette>=3.0.0 (from mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.0868861Z   Downloading sse_starlette-3.7.0-py3-none-any.whl.metadata (15 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.1463901Z Collecting httpcore2==2.16.0 (from httpx2>=2.10.0->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.1587724Z   Downloading httpcore2-2.16.0-py3-none-any.whl.metadata (27 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.2086761Z Collecting truststore>=0.10 (from httpx2>=2.10.0->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.2203693Z   Downloading truststore-0.10.5-py3-none-any.whl.metadata (4.5 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.2840474Z Collecting attrs>=22.2.0 (from jsonschema>=4.20.0->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.2955686Z   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.3887299Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=4.20.0->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.4003154Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.4521110Z Collecting referencing>=0.28.4 (from jsonschema>=4.20.0->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.4633264Z   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.7986473Z Collecting rpds-py>=0.25.0 (from jsonschema>=4.20.0->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.8101678Z   Downloading rpds_py-2026.9.1-cp312-cp312-win_amd64.whl.metadata (4.2 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.8572184Z Collecting annotated-types>=0.6.0 (from pydantic>=2.7->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:50.8685888Z   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:51.7134491Z Collecting pydantic-core==2.50.4 (from pydantic>=2.7->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:51.7483885Z   Downloading pydantic_core-2.50.4-cp312-cp312-win_amd64.whl.metadata (6.7 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.0446577Z Collecting cryptography>=3.4.0 (from pyjwt[crypto]>=2.10.1->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.0573005Z   Downloading cryptography-50.0.2-cp311-abi3-win_amd64.whl.metadata (4.4 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.2094299Z Collecting cffi>=2.0.0 (from cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.2216096Z   Downloading cffi-2.1.1-cp312-cp312-win_amd64.whl.metadata (2.6 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.2651922Z Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=2.0->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.2767469Z   Downloading pycparser-3.12-py3-none-any.whl.metadata (9.7 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.3020261Z Requirement already satisfied: colorama>=0.4 in C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages (from pytest>=8->sim4wis==0.106.0) (0.4.6)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.3237011Z Collecting iniconfig>=2 (from pytest>=8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.3346947Z   Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.3933124Z Collecting pluggy<2,>=1.6 (from pytest>=8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.4047468Z   Downloading pluggy-1.7.0-py3-none-any.whl.metadata (5.0 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.4616987Z Collecting pygments>=2.15 (from pytest>=8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.4729139Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.5231586Z Collecting execnet>=2.1 (from pytest-xdist>=3.5->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.5348014Z   Downloading execnet-2.1.2-py3-none-any.whl.metadata (2.9 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.5841133Z Collecting tzdata (from python-dateutil>=2.7->matplotlib>=3.8->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.5956546Z   Downloading tzdata-2026.6-py2.py3-none-any.whl.metadata (1.4 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.6310221Z Requirement already satisfied: click>=7.0 in C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages (from uvicorn>=0.30->uvicorn[standard]>=0.30->sim4wis==0.106.0) (8.5.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.6865819Z Collecting httptools>=0.8.0 (from uvicorn[standard]>=0.30->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.6984372Z   Downloading httptools-0.9.0-cp312-cp312-win_amd64.whl.metadata (3.7 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.7495707Z Collecting python-dotenv>=0.13 (from uvicorn[standard]>=0.30->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.7668311Z   Downloading python_dotenv-1.2.4-py3-none-any.whl.metadata (29 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.8943352Z Collecting watchfiles>=0.20 (from uvicorn[standard]>=0.30->sim4wis==0.106.0)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.9069105Z   Downloading watchfiles-1.3.0-cp310-abi3-win_amd64.whl.metadata (5.0 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.9471468Z Downloading fastapi-0.162.7-py3-none-any.whl (152 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:52.9940298Z Downloading annotated_doc-0.0.6-py3-none-any.whl (5.3 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.0280445Z Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.0688038Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.1047224Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.1674517Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.1983855Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.2316415Z Downloading matplotlib-3.11.2-cp312-cp312-win_amd64.whl (9.3 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.6500666Z    ---------------------------------------- 9.3/9.3 MB 22.4 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:53.6612420Z Downloading contourpy-1.4.0-cp312-cp312-win_amd64.whl (234 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.6907471Z Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.7194261Z Downloading fonttools-4.68.0-cp312-cp312-win_amd64.whl (2.5 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.7871929Z    ---------------------------------------- 2.5/2.5 MB 36.1 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:53.7987459Z Downloading kiwisolver-1.5.1-cp312-cp312-win_amd64.whl (70 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.8315096Z Downloading mcp-2.3.0-py3-none-any.whl (368 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.8656797Z Downloading mcp_types-2.3.0-py3-none-any.whl (69 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.9090502Z Downloading httpx2-2.16.0-py3-none-any.whl (97 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.9400587Z Downloading httpcore2-2.16.0-py3-none-any.whl (85 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:53.9742289Z Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.0626571Z Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.0925297Z Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.1198874Z Downloading numpy-2.5.4-cp312-cp312-win_amd64.whl (12.6 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.2975797Z    ---------------------------------------- 12.6/12.6 MB 71.6 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:54.3092066Z Downloading opentelemetry_api-1.45.2-py3-none-any.whl (60 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.3369791Z Downloading pillow-13.0.0-cp312-cp312-win_amd64.whl (7.3 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.4204667Z    ---------------------------------------- 7.3/7.3 MB 88.7 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:54.4317743Z Downloading pydantic-2.14.3-py3-none-any.whl (494 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.5838952Z Downloading pydantic_core-2.50.4-cp312-cp312-win_amd64.whl (2.3 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.6320968Z    ---------------------------------------- 2.3/2.3 MB 62.6 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:54.6432968Z Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.6759491Z Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.7073213Z Downloading cryptography-50.0.2-cp311-abi3-win_amd64.whl (3.8 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.7656432Z    ---------------------------------------- 3.8/3.8 MB 57.5 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:54.7772185Z Downloading cffi-2.1.1-cp312-cp312-win_amd64.whl (185 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.8101632Z Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.8453530Z Downloading pytest-9.2.0-py3-none-any.whl (411 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.8777219Z Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.9077750Z Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.9346739Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:54.9686325Z    ---------------------------------------- 1.3/1.3 MB 31.9 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:54.9799178Z Downloading pytest_asyncio-1.5.0-py3-none-any.whl (17 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.0108212Z Downloading pytest_xdist-3.8.0-py3-none-any.whl (46 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.0429356Z Downloading execnet-2.1.2-py3-none-any.whl (40 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.0756139Z Downloading python_dateutil-4.0.0-py3-none-any.whl (92 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.1054220Z Downloading python_multipart-0.0.33-py3-none-any.whl (32 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.1355334Z Downloading pywin32-312-cp312-cp312-win_amd64.whl (6.9 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.2018047Z    ---------------------------------------- 6.9/6.9 MB 105.6 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:55.2136878Z Downloading pyyaml-6.0.3-cp312-cp312-win_amd64.whl (154 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.2443667Z Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.2763753Z Downloading rpds_py-2026.9.1-cp312-cp312-win_amd64.whl (222 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.3128515Z Downloading ruff-0.17.5-py3-none-win_amd64.whl (10.3 MB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.4033865Z    ---------------------------------------- 10.3/10.3 MB 106.5 MB/s  0:00:00
+windows-native	Build and verify native backend	2026-11-13T19:04:55.4149804Z Downloading sse_starlette-3.7.0-py3-none-any.whl (18 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.4500632Z Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.4848582Z Downloading truststore-0.10.5-py3-none-any.whl (19 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.5148093Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.5524108Z Downloading typing_inspection-0.4.5-py3-none-any.whl (14 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.5845155Z Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.6132602Z Downloading httptools-0.9.0-cp312-cp312-win_amd64.whl (92 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.6415204Z Downloading python_dotenv-1.2.4-py3-none-any.whl (23 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.6712443Z Downloading watchfiles-1.3.0-cp310-abi3-win_amd64.whl (290 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.7040048Z Downloading websockets-17.4-cp312-cp312-win_amd64.whl (219 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.7422637Z Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.7743237Z Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:55.8248486Z Downloading tzdata-2026.6-py2.py3-none-any.whl (348 kB)
+windows-native	Build and verify native backend	2026-11-13T19:04:56.2856115Z Building wheels for collected packages: sim4wis
+windows-native	Build and verify native backend	2026-11-13T19:04:56.2893171Z   Building editable for sim4wis (pyproject.toml): started
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3570576Z   Building editable for sim4wis (pyproject.toml): finished with status 'done'
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3579592Z   C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-4mcn888p\overlay\Lib\site-packages\setuptools\config\_apply_pyprojecttoml.py:82: BuildBackendWarning: `project.license` as a TOML table is deprecated
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3580809Z   !!
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3581019Z   
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3581349Z           ********************************************************************************
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3582495Z           Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3583435Z   
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3583853Z           By 2027-Feb-18, you need to update your project and remove deprecated calls
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3584436Z           or your builds will no longer be supported.
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3584788Z   
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3585364Z           See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3586128Z           ********************************************************************************
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3586514Z   
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3586706Z   !!
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3586960Z     corresp(dist, value, root_dir)
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3650390Z   Created wheel for sim4wis: filename=sim4wis-0.106.0-0.editable-cp312-cp312-win_amd64.whl size=2344 sha256=bf742278a3eaf2a00dbc1953b45114c705c1c24e907232811204a6454e778ddd
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3652173Z   Stored in directory: C:\Users\runneradmin\AppData\Local\Temp\pip-ephem-wheel-cache-ojuajeon\wheels\ce\de\63\3994af6f82c52ddd9061e9a5fa9d7424dbb982ddb51598aab4
+windows-native	Build and verify native backend	2026-11-13T19:05:09.3679312Z Successfully built sim4wis
+windows-native	Build and verify native backend	2026-11-13T19:05:09.5322930Z Installing collected packages: websockets, tzdata, typing-extensions, truststore, ruff, rpds-py, pyyaml, pywin32, python-multipart, python-dotenv, pyparsing, pyjwt, pygments, pycparser, pluggy, pillow, numpy, kiwisolver, iniconfig, idna, httptools, h11, fonttools, execnet, cycler, certifi, attrs, annotated-types, annotated-doc, uvicorn, typing-inspection, referencing, python-dateutil, pytest, pydantic-core, opentelemetry-api, httpcore2, httpcore, contourpy, cffi, anyio, watchfiles, starlette, pytest-xdist, pytest-asyncio, pydantic, matplotlib, jsonschema-specifications, httpx2, httpx, cryptography, sse-starlette, mcp-types, jsonschema, fastapi, mcp, sim4wis
+windows-native	Build and verify native backend	2026-11-13T19:05:35.6978648Z 
+windows-native	Build and verify native backend	2026-11-13T19:05:35.7046396Z Successfully installed annotated-doc-0.0.6 annotated-types-0.8.0 anyio-4.16.0 attrs-26.1.0 certifi-2026.10.23 cffi-2.1.1 contourpy-1.4.0 cryptography-50.0.2 cycler-0.12.1 execnet-2.1.2 fastapi-0.162.7 fonttools-4.68.0 h11-0.16.0 httpcore-1.0.9 httpcore2-2.16.0 httptools-0.9.0 httpx-0.28.1 httpx2-2.16.0 idna-3.20 iniconfig-2.3.1 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 kiwisolver-1.5.1 matplotlib-3.11.2 mcp-2.3.0 mcp-types-2.3.0 numpy-2.5.4 opentelemetry-api-1.45.2 pillow-13.0.0 pluggy-1.7.0 pycparser-3.12 pydantic-2.14.3 pydantic-core-2.50.4 pygments-2.21.0 pyjwt-2.15.1 pyparsing-3.3.3 pytest-9.2.0 pytest-asyncio-1.5.0 pytest-xdist-3.8.0 python-dateutil-4.0.0 python-dotenv-1.2.4 python-multipart-0.0.33 pywin32-312 pyyaml-6.0.3 referencing-0.37.0 rpds-py-2026.9.1 ruff-0.17.5 sim4wis-0.106.0 sse-starlette-3.7.0 starlette-1.10.0 truststore-0.10.5 typing-extensions-4.16.0 typing-inspection-0.4.5 tzdata-2026.6 uvicorn-0.54.0 watchfiles-1.3.0 websockets-17.4
+windows-native	Build and verify native backend	2026-11-13T19:05:38.2927255Z analytic_steady_circle_30kmh: ok (6 metrics)
+windows-native	Build and verify native backend	2026-11-13T19:05:38.2928061Z analytic_step_steer_30kmh: ok (9 metrics)
+windows-native	Build and verify native backend	2026-11-13T19:05:39.2349009Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-native	Build and verify native backend	2026-11-13T19:05:39.2353987Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-native	Build and verify native backend	2026-11-13T19:05:39.2357019Z 
+windows-native	Build and verify native backend	2026-11-13T19:05:39.2357518Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-native	Build and verify native backend	2026-11-13T19:05:39.9190894Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-native	Build and verify native backend	2026-11-13T19:05:39.9212944Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-native	Build and verify native backend	2026-11-13T19:05:39.9216756Z 
+windows-native	Build and verify native backend	2026-11-13T19:05:39.9217801Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-native	Build and verify native backend	2026-11-13T19:05:39.9882536Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-native	Build and verify native backend	2026-11-13T19:05:39.9897703Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-native	Build and verify native backend	2026-11-13T19:05:39.9901321Z 
+windows-native	Build and verify native backend	2026-11-13T19:05:39.9902252Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-native	Build and verify native backend	2026-11-13T19:05:40.1361623Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-native	Build and verify native backend	2026-11-13T19:05:40.1367424Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-native	Build and verify native backend	2026-11-13T19:05:40.1370851Z 
+windows-native	Build and verify native backend	2026-11-13T19:05:40.1395057Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-native	Build and verify native backend	2026-11-13T19:05:40.2081166Z C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pytest_asyncio\plugin.py:306: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+windows-native	Build and verify native backend	2026-11-13T19:05:40.2101174Z The event loop scope for asynchronous fixtures will default to the fixture scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to "function" scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session". Set it to "fixture-scope" to keep the current behavior.
+windows-native	Build and verify native backend	2026-11-13T19:05:40.2155986Z 
+windows-native	Build and verify native backend	2026-11-13T19:05:40.2157310Z   warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+windows-native	Build and verify native backend	2026-11-13T19:05:45.4287664Z bringing up nodes...
+windows-native	Build and verify native backend	2026-11-13T19:05:45.4288970Z bringing up nodes...
+windows-native	Build and verify native backend	2026-11-13T19:05:45.4291355Z 
+windows-native	Build and verify native backend	2026-11-13T19:05:50.9479276Z ........................................................................ [  6%]
+windows-native	Build and verify native backend	2026-11-13T19:06:04.6730701Z ........................................................................ [ 12%]
+windows-native	Build and verify native backend	2026-11-13T19:06:44.9521144Z ........................................................................ [ 19%]
+windows-native	Build and verify native backend	2026-11-13T19:07:12.7217416Z ........................................................................ [ 25%]
+windows-native	Build and verify native backend	2026-11-13T19:07:34.4608553Z ........................................................................ [ 32%]
+windows-native	Build and verify native backend	2026-11-13T19:07:35.1946000Z ........................................................................ [ 38%]
+windows-native	Build and verify native backend	2026-11-13T19:09:19.4848611Z ........................................................................ [ 44%]
+windows-native	Build and verify native backend	2026-11-13T19:09:44.6164537Z ........................................................................ [ 51%]
+windows-native	Build and verify native backend	2026-11-13T19:12:05.0580846Z ........................................................................ [ 57%]
+windows-native	Build and verify native backend	2026-11-13T19:14:19.3000180Z ........................................................................ [ 64%]
+windows-native	Build and verify native backend	2026-11-13T19:15:19.7967960Z ........................................................................ [ 70%]
+windows-native	Build and verify native backend	2026-11-13T19:19:43.1617637Z ........................................................................ [ 77%]
+windows-native	Build and verify native backend	2026-11-13T19:19:57.8546386Z ........................................................................ [ 83%]
+windows-native	Build and verify native backend	2026-11-13T19:21:17.8370067Z ........................................................................ [ 89%]
+windows-native	Build and verify native backend	2026-11-13T19:22:16.7227771Z ........................................................................ [ 96%]
+windows-native	Build and verify native backend	2026-11-13T19:25:28.8809701Z ..........................................                               [100%]
+windows-native	Build and verify native backend	2026-11-13T19:25:28.8810925Z 1122 passed in 1189.44s (0:19:49)
+windows-native	Build and test frontend	﻿2026-11-13T19:25:29.0663927Z ##[group]Run npm ci
+windows-native	Build and test frontend	2026-11-13T19:25:29.0664423Z ^[[36;1mnpm ci^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0664770Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0665215Z ^[[36;1mnpm run type-check^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0665593Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0666013Z ^[[36;1mnpm run test -- --run^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0666459Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0666923Z ^[[36;1mnpm run build^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0667271Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0667799Z ^[[36;1mnpx playwright install chromium^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0668212Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0668698Z ^[[36;1mnpx playwright test --reporter=list^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0669295Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
+windows-native	Build and test frontend	2026-11-13T19:25:29.0769534Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-native	Build and test frontend	2026-11-13T19:25:29.0770181Z env:
+windows-native	Build and test frontend	2026-11-13T19:25:29.0770470Z   SIM4WIS_ENGINE: native
+windows-native	Build and test frontend	2026-11-13T19:25:29.0770783Z   PYTHONUTF8: 1
+windows-native	Build and test frontend	2026-11-13T19:25:29.0771077Z   PW_PYTHON_EXECUTABLE: python
+windows-native	Build and test frontend	2026-11-13T19:25:29.0771396Z   PW_E2E_PORT: 18051
+windows-native	Build and test frontend	2026-11-13T19:25:29.0771769Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Build and test frontend	2026-11-13T19:25:29.0772337Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-native	Build and test frontend	2026-11-13T19:25:29.0772899Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Build and test frontend	2026-11-13T19:25:29.0773635Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Build and test frontend	2026-11-13T19:25:29.0774190Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Build and test frontend	2026-11-13T19:25:29.0774619Z ##[endgroup]
+windows-native	Build and test frontend	2026-11-13T19:25:34.2539016Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+windows-native	Build and test frontend	2026-11-13T19:25:34.4583462Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+windows-native	Build and test frontend	2026-11-13T19:25:34.5356801Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+windows-native	Build and test frontend	2026-11-13T19:25:34.5607913Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+windows-native	Build and test frontend	2026-11-13T19:25:34.9077829Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+windows-native	Build and test frontend	2026-11-13T19:25:37.8543462Z npm warn deprecated three-mesh-bvh@0.7.8: Deprecated due to three.js version incompatibility. Please use v0.8.0, instead.
+windows-native	Build and test frontend	2026-11-13T19:26:22.2272801Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+windows-native	Build and test frontend	2026-11-13T19:26:25.1021717Z 
+windows-native	Build and test frontend	2026-11-13T19:26:25.1022516Z added 305 packages, and audited 306 packages in 55s
+windows-native	Build and test frontend	2026-11-13T19:26:25.1022995Z 
+windows-native	Build and test frontend	2026-11-13T19:26:25.1024126Z 58 packages are looking for funding
+windows-native	Build and test frontend	2026-11-13T19:26:25.1025026Z   run `npm fund` for details
+windows-native	Build and test frontend	2026-11-13T19:26:25.3011890Z 
+windows-native	Build and test frontend	2026-11-13T19:26:25.3012903Z 22 vulnerabilities (2 low, 11 moderate, 7 high, 2 critical)
+windows-native	Build and test frontend	2026-11-13T19:26:25.3013669Z 
+windows-native	Build and test frontend	2026-11-13T19:26:25.3014173Z To address issues that do not require attention, run:
+windows-native	Build and test frontend	2026-11-13T19:26:25.3015060Z   npm audit fix
+windows-native	Build and test frontend	2026-11-13T19:26:25.3015620Z 
+windows-native	Build and test frontend	2026-11-13T19:26:25.3016208Z To address all issues (including breaking changes), run:
+windows-native	Build and test frontend	2026-11-13T19:26:25.3017138Z   npm audit fix --force
+windows-native	Build and test frontend	2026-11-13T19:26:25.3017502Z 
+windows-native	Build and test frontend	2026-11-13T19:26:25.3017729Z Run `npm audit` for details.
+windows-native	Build and test frontend	2026-11-13T19:26:25.3024063Z npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+windows-native	Build and test frontend	2026-11-13T19:26:25.3025238Z npm warn install-scripts   esbuild@0.21.5 (postinstall: node install.js)
+windows-native	Build and test frontend	2026-11-13T19:26:25.3029031Z npm warn install-scripts
+windows-native	Build and test frontend	2026-11-13T19:26:25.3030121Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+windows-native	Build and test frontend	2026-11-13T19:26:27.0054710Z 
+windows-native	Build and test frontend	2026-11-13T19:26:27.0055408Z > sim4wis-frontend@0.106.0 type-check
+windows-native	Build and test frontend	2026-11-13T19:26:27.0056032Z > tsc --noEmit
+windows-native	Build and test frontend	2026-11-13T19:26:27.0056297Z 
+windows-native	Build and test frontend	2026-11-13T19:26:33.1102549Z 
+windows-native	Build and test frontend	2026-11-13T19:26:33.1103270Z > sim4wis-frontend@0.106.0 test
+windows-native	Build and test frontend	2026-11-13T19:26:33.1103811Z > vitest run --run
+windows-native	Build and test frontend	2026-11-13T19:26:33.1104099Z 
+windows-native	Build and test frontend	2026-11-13T19:26:33.7008578Z 
+windows-native	Build and test frontend	2026-11-13T19:26:33.7013304Z ^[[1m^[[7m^[[36m RUN ^[[39m^[[27m^[[22m ^[[36mv2.1.9 ^[[39m^[[90mD:/a/4WIS-Simulator/4WIS-Simulator/frontend^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:33.7014113Z 
+windows-native	Build and test frontend	2026-11-13T19:26:34.1411699Z  ^[[32m✓^[[39m src/input/steerRamp.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[90m 11^[[2mms^[[22m^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:34.1415886Z  ^[[32m✓^[[39m src/view/renderPose.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[90m 15^[[2mms^[[22m^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:34.1739889Z  ^[[32m✓^[[39m src/input/driveIntent.test.ts ^[[2m(^[[22m^[[2m19 tests^[[22m^[[2m)^[[22m^[[90m 24^[[2mms^[[22m^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:34.4946659Z  ^[[32m✓^[[39m src/input/focusPolicy.test.ts ^[[2m(^[[22m^[[2m14 tests^[[22m^[[2m)^[[22m^[[90m 6^[[2mms^[[22m^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:34.5780882Z  ^[[32m✓^[[39m src/vehicle/geometryModel.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[90m 5^[[2mms^[[22m^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:34.5983645Z  ^[[32m✓^[[39m src/components/model/diagrams.test.tsx ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[90m 12^[[2mms^[[22m^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:34.6161346Z 
+windows-native	Build and test frontend	2026-11-13T19:26:34.6191973Z ^[[2m Test Files ^[[22m ^[[1m^[[32m6 passed^[[39m^[[22m^[[90m (6)^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:34.6194030Z ^[[2m      Tests ^[[22m ^[[1m^[[32m54 passed^[[39m^[[22m^[[90m (54)^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:34.6201490Z ^[[2m   Start at ^[[22m 19:26:33
+windows-native	Build and test frontend	2026-11-13T19:26:34.6206875Z ^[[2m   Duration ^[[22m 914ms^[[2m (transform 336ms, setup 0ms, collect 523ms, tests 74ms, environment 1ms, prepare 706ms)^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:34.6214353Z 
+windows-native	Build and test frontend	2026-11-13T19:26:34.9498181Z 
+windows-native	Build and test frontend	2026-11-13T19:26:34.9498914Z > sim4wis-frontend@0.106.0 build
+windows-native	Build and test frontend	2026-11-13T19:26:34.9499578Z > tsc -b && vite build
+windows-native	Build and test frontend	2026-11-13T19:26:34.9499875Z 
+windows-native	Build and test frontend	2026-11-13T19:26:41.0369344Z ^[[36mvite v5.4.21 ^[[32mbuilding for production...^[[36m^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:41.0920178Z transforming...
+windows-native	Build and test frontend	2026-11-13T19:26:47.3314085Z ^[[32m✓^[[39m 925 modules transformed.
+windows-native	Build and test frontend	2026-11-13T19:26:47.7110148Z rendering chunks...
+windows-native	Build and test frontend	2026-11-13T19:26:48.0405616Z computing gzip size...
+windows-native	Build and test frontend	2026-11-13T19:26:48.0687021Z ^[[2mdist/^[[22m^[[32mindex.html                                       ^[[39m^[[1m^[[2m  0.66 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   0.37 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0689021Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size3-Regular-CTq5MqoE.woff         ^[[39m^[[1m^[[2m  4.42 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0690650Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size4-Regular-Dl5lxZxV.woff2        ^[[39m^[[1m^[[2m  4.93 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0692310Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size2-Regular-Dy4dx90m.woff2        ^[[39m^[[1m^[[2m  5.21 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0693311Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size1-Regular-mCD8mA8B.woff2        ^[[39m^[[1m^[[2m  5.47 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0694708Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size4-Regular-BF-4gkZK.woff         ^[[39m^[[1m^[[2m  5.98 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0696638Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size2-Regular-oD1tc_U0.woff         ^[[39m^[[1m^[[2m  6.19 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0698346Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size1-Regular-C195tn64.woff         ^[[39m^[[1m^[[2m  6.50 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0700042Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2  ^[[39m^[[1m^[[2m  6.91 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0701750Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2     ^[[39m^[[1m^[[2m  6.91 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0703390Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size3-Regular-DgpXs0kz.ttf          ^[[39m^[[1m^[[2m  7.59 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0705068Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff   ^[[39m^[[1m^[[2m  7.66 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0708545Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff      ^[[39m^[[1m^[[2m  7.72 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0710103Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Script-Regular-D3wIWfF6.woff2       ^[[39m^[[1m^[[2m  9.64 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0711417Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2    ^[[39m^[[1m^[[2m 10.34 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0712955Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size4-Regular-DWFBv043.ttf          ^[[39m^[[1m^[[2m 10.36 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0713943Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Script-Regular-D5yQViql.woff        ^[[39m^[[1m^[[2m 10.59 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0714829Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2      ^[[39m^[[1m^[[2m 11.32 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0716069Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2         ^[[39m^[[1m^[[2m 11.35 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0717266Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size2-Regular-B7gKUWhC.ttf          ^[[39m^[[1m^[[2m 11.51 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0718882Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2     ^[[39m^[[1m^[[2m 12.03 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0720738Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2       ^[[39m^[[1m^[[2m 12.22 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0722494Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Size1-Regular-Dbsnue_I.ttf          ^[[39m^[[1m^[[2m 12.23 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0724584Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff     ^[[39m^[[1m^[[2m 12.32 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0726373Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf    ^[[39m^[[1m^[[2m 12.34 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0728173Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf       ^[[39m^[[1m^[[2m 12.37 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0729949Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff       ^[[39m^[[1m^[[2m 13.21 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0731682Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Fraktur-Bold-BsDP51OF.woff          ^[[39m^[[1m^[[2m 13.30 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0733319Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2   ^[[39m^[[1m^[[2m 13.57 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0735439Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Italic-DN2j7dab.woff      ^[[39m^[[1m^[[2m 14.11 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0737186Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Bold-DbIhKOiC.woff        ^[[39m^[[1m^[[2m 14.41 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0738977Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Typewriter-Regular-C0xS9mPB.woff    ^[[39m^[[1m^[[2m 16.03 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0740731Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2      ^[[39m^[[1m^[[2m 16.40 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0742281Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Math-Italic-t53AETM-.woff2          ^[[39m^[[1m^[[2m 16.44 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0743838Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Script-Regular-C5JkGWo-.ttf         ^[[39m^[[1m^[[2m 16.65 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0745245Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2      ^[[39m^[[1m^[[2m 16.78 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0746635Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Italic-NWA7e6Wa.woff2          ^[[39m^[[1m^[[2m 16.99 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0748103Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff       ^[[39m^[[1m^[[2m 18.67 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0749513Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Math-Italic-DA0__PXp.woff           ^[[39m^[[1m^[[2m 18.75 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0750926Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-BoldItalic-SpSLRI95.woff       ^[[39m^[[1m^[[2m 19.41 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0752327Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf      ^[[39m^[[1m^[[2m 19.44 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0754098Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Fraktur-Regular-CB_wures.ttf        ^[[39m^[[1m^[[2m 19.57 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0755860Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Fraktur-Bold-BdnERNNW.ttf           ^[[39m^[[1m^[[2m 19.58 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0757283Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Italic-BMLOBm91.woff           ^[[39m^[[1m^[[2m 19.68 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0758696Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf       ^[[39m^[[1m^[[2m 22.36 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0760170Z ^[[2mdist/^[[22m^[[32massets/KaTeX_SansSerif-Bold-CFMepnvq.ttf         ^[[39m^[[1m^[[2m 24.50 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0761660Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Bold-Cx986IdX.woff2            ^[[39m^[[1m^[[2m 25.32 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0763068Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Regular-B22Nviop.woff2         ^[[39m^[[1m^[[2m 26.27 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0764473Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf     ^[[39m^[[1m^[[2m 27.56 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0765912Z ^[[2mdist/^[[22m^[[32massets/KaTeX_AMS-Regular-BQhdFMY1.woff2          ^[[39m^[[1m^[[2m 28.08 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0767427Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Bold-Jm3AIy58.woff             ^[[39m^[[1m^[[2m 29.91 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0768867Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Regular-Dr94JaBh.woff          ^[[39m^[[1m^[[2m 30.77 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0770272Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf        ^[[39m^[[1m^[[2m 31.20 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0771659Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Math-Italic-flOr_0UB.ttf            ^[[39m^[[1m^[[2m 31.31 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0773355Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf        ^[[39m^[[1m^[[2m 32.97 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0775164Z ^[[2mdist/^[[22m^[[32massets/KaTeX_AMS-Regular-DMm9YOAa.woff           ^[[39m^[[1m^[[2m 33.52 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0776619Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Italic-3WenGoN9.ttf            ^[[39m^[[1m^[[2m 33.58 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0778054Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Bold-waoOVXN0.ttf              ^[[39m^[[1m^[[2m 51.34 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0779483Z ^[[2mdist/^[[22m^[[32massets/KaTeX_Main-Regular-ypZvNtVU.ttf           ^[[39m^[[1m^[[2m 53.58 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0780935Z ^[[2mdist/^[[22m^[[32massets/KaTeX_AMS-Regular-DRggAlZN.ttf            ^[[39m^[[1m^[[2m 63.63 kB^[[22m^[[1m^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0782559Z ^[[2mdist/^[[22m^[[35massets/Canvas3D-DtarBliu.css                     ^[[39m^[[1m^[[2m  1.27 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   0.48 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0784173Z ^[[2mdist/^[[22m^[[35massets/uPlot-D1GxaB_c.css                        ^[[39m^[[1m^[[2m  1.65 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   0.71 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0785860Z ^[[2mdist/^[[22m^[[35massets/VehicleGeometryStudio-CE2xvvkf.css        ^[[39m^[[1m^[[2m  3.89 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.21 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0787596Z ^[[2mdist/^[[22m^[[35massets/WorkflowPage-Bv11oqce.css                 ^[[39m^[[1m^[[2m  5.47 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.44 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0789274Z ^[[2mdist/^[[22m^[[35massets/ModelTheoryPage-3KGJWLII.css              ^[[39m^[[1m^[[2m  6.57 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.79 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0790961Z ^[[2mdist/^[[22m^[[35massets/LoadAnalysisPage-Fgd2b2-k.css             ^[[39m^[[1m^[[2m 10.26 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   2.24 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0792451Z ^[[2mdist/^[[22m^[[35massets/index-D1w4XBKw.css                        ^[[39m^[[1m^[[2m 23.44 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   4.91 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0793940Z ^[[2mdist/^[[22m^[[35massets/BodyCouplingControl-CgBsCa64.css          ^[[39m^[[1m^[[2m 35.36 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   9.66 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0795892Z ^[[2mdist/^[[22m^[[36massets/styles-sV1eRN7N.js                        ^[[39m^[[1m^[[2m  0.33 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   0.24 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0797536Z ^[[2mdist/^[[22m^[[36massets/ScriptWorkspace-BB5rA6kY.js               ^[[39m^[[1m^[[2m  0.86 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   0.58 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0799167Z ^[[2mdist/^[[22m^[[36massets/experiments-CiP6hpO0.js                   ^[[39m^[[1m^[[2m  1.53 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   0.70 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0801013Z ^[[2mdist/^[[22m^[[36massets/ScenarioPanel-43fa0vIe.js                 ^[[39m^[[1m^[[2m  2.16 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.17 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0802657Z ^[[2mdist/^[[22m^[[36massets/ResultArtifacts-Cm8UC7BK.js               ^[[39m^[[1m^[[2m  2.18 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.29 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0804340Z ^[[2mdist/^[[22m^[[36massets/MeasurePanel-C6KRxgoy.js                  ^[[39m^[[1m^[[2m  2.40 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.34 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0805956Z ^[[2mdist/^[[22m^[[36massets/ChartPanel-nXQQWQRE.js                    ^[[39m^[[1m^[[2m  2.42 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.17 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0807582Z ^[[2mdist/^[[22m^[[36massets/UserPythonPanel-BtIbpthn.js               ^[[39m^[[1m^[[2m  2.51 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.38 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0809212Z ^[[2mdist/^[[22m^[[36massets/ComparePanel-BBCF38Mw.js                  ^[[39m^[[1m^[[2m  3.13 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.58 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0810908Z ^[[2mdist/^[[22m^[[36massets/JsStrategyPanel-C9emME92.js               ^[[39m^[[1m^[[2m  3.37 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.77 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0812559Z ^[[2mdist/^[[22m^[[36massets/DisturbancePanel-CZGjv-kS.js              ^[[39m^[[1m^[[2m  3.57 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.87 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0814199Z ^[[2mdist/^[[22m^[[36massets/ScriptPanel-C3vib1i2.js                   ^[[39m^[[1m^[[2m  3.76 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.84 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0816406Z ^[[2mdist/^[[22m^[[36massets/parameterGroups-F9cSbU9a.js               ^[[39m^[[1m^[[2m  3.79 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.95 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0818057Z ^[[2mdist/^[[22m^[[36massets/RecordingPanel-4xI6tyP2.js                ^[[39m^[[1m^[[2m  3.90 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.82 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0819715Z ^[[2mdist/^[[22m^[[36massets/ScorePanel-BAtkKPDx.js                    ^[[39m^[[1m^[[2m  4.12 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   1.95 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0821369Z ^[[2mdist/^[[22m^[[36massets/ExcitationPanel-Bxk99Odi.js               ^[[39m^[[1m^[[2m  4.38 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   2.14 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0823021Z ^[[2mdist/^[[22m^[[36massets/geometryModel-CISSYnGw.js                 ^[[39m^[[1m^[[2m  4.39 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   2.40 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0824613Z ^[[2mdist/^[[22m^[[36massets/GripPanel-DX9PZSbA.js                     ^[[39m^[[1m^[[2m  4.55 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   2.15 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0826252Z ^[[2mdist/^[[22m^[[36massets/uplotFactory-41FGILWJ.js                  ^[[39m^[[1m^[[2m  4.83 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   2.11 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0827884Z ^[[2mdist/^[[22m^[[36massets/TrajectoryPanel-CoP481Jb.js               ^[[39m^[[1m^[[2m  5.46 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   2.31 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0829531Z ^[[2mdist/^[[22m^[[36massets/AgentWorkspace-zqWM2HR8.js                ^[[39m^[[1m^[[2m  7.36 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   3.57 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0831211Z ^[[2mdist/^[[22m^[[36massets/ExperimentPage-BpXNgSnW.js                ^[[39m^[[1m^[[2m 11.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   3.87 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0832886Z ^[[2mdist/^[[22m^[[36massets/FaultPanel-xWdDgyGT.js                    ^[[39m^[[1m^[[2m 12.89 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   5.45 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0834480Z ^[[2mdist/^[[22m^[[36massets/AnalysisPage-DK1u0xLD.js                  ^[[39m^[[1m^[[2m 15.00 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   6.58 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0836471Z ^[[2mdist/^[[22m^[[36massets/StrategyDesignerPanel-D1xxFQgo.js         ^[[39m^[[1m^[[2m 15.75 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   6.10 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0838215Z ^[[2mdist/^[[22m^[[36massets/VehicleGeometryStudio-Ch4Z1zzH.js         ^[[39m^[[1m^[[2m 22.76 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   8.64 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0839901Z ^[[2mdist/^[[22m^[[36massets/Canvas3D-DUqWsC1v.js                      ^[[39m^[[1m^[[2m 24.18 kB^[[22m^[[1m^[[22m^[[2m │ gzip:   8.79 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0841517Z ^[[2mdist/^[[22m^[[36massets/ModelTheoryPage-BOrDTQol.js               ^[[39m^[[1m^[[2m 26.24 kB^[[22m^[[1m^[[22m^[[2m │ gzip:  12.75 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0844438Z ^[[2mdist/^[[22m^[[36massets/uPlot.min-Bx-lVsPA.js                     ^[[39m^[[1m^[[2m 52.36 kB^[[22m^[[1m^[[22m^[[2m │ gzip:  23.33 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0846145Z ^[[2mdist/^[[22m^[[36massets/LoadAnalysisPage-z_PKTJYi.js              ^[[39m^[[1m^[[2m 56.41 kB^[[22m^[[1m^[[22m^[[2m │ gzip:  22.56 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0847805Z ^[[2mdist/^[[22m^[[36massets/BodyCouplingControl-C_XGC8M2.js           ^[[39m^[[1m^[[2m269.60 kB^[[22m^[[1m^[[22m^[[2m │ gzip:  84.29 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0849504Z ^[[2mdist/^[[22m^[[36massets/vendor-three-react-D1KKu8ij.js            ^[[39m^[[1m^[[2m297.04 kB^[[22m^[[1m^[[22m^[[2m │ gzip:  95.38 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0851144Z ^[[2mdist/^[[22m^[[36massets/index-BvGEU35P.js                         ^[[39m^[[1m^[[2m376.05 kB^[[22m^[[1m^[[22m^[[2m │ gzip: 121.26 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0852795Z ^[[2mdist/^[[22m^[[36massets/vendor-three-core-3Gc5QSh2.js             ^[[39m^[[1m^[[2m666.69 kB^[[22m^[[1m^[[22m^[[2m │ gzip: 172.44 kB^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:48.0853899Z ^[[32m✓ built in 7.01s^[[39m
+windows-native	Build and test frontend	2026-11-13T19:26:49.4070004Z Downloading Chrome for Testing 149.0.7827.55 (playwright chromium v1228)^[[2m from https://cdn.playwright.dev/builds/cft/149.0.7827.55/win64/chrome-win64.zip^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:49.9048722Z |                                                                                |   0% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:50.2545040Z |■■■■■■■■                                                                        |  10% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:50.4570433Z |■■■■■■■■■■■■■■■■                                                                |  20% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:50.6258405Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:50.8320065Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:51.0534338Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:51.2928324Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:51.5358632Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:51.7869505Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:52.0184381Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:52.2166967Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 183.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.5487877Z Chrome for Testing 149.0.7827.55 (playwright chromium v1228) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\chromium-1228
+windows-native	Build and test frontend	2026-11-13T19:26:58.5495804Z Downloading FFmpeg (playwright ffmpeg v1011)^[[2m from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-win64.zip^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:58.9600212Z |                                                                                |   1% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9643084Z |■■■■■■■■                                                                        |  10% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9663168Z |■■■■■■■■■■■■■■■■                                                                |  20% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9684592Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9703664Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9723039Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9740937Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  61% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9765239Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9782736Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9802934Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:58.9818887Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 1.3 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:59.0541273Z FFmpeg (playwright ffmpeg v1011) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\ffmpeg-1011
+windows-native	Build and test frontend	2026-11-13T19:26:59.0549096Z Downloading Chrome Headless Shell 149.0.7827.55 (playwright chromium-headless-shell v1228)^[[2m from https://cdn.playwright.dev/builds/cft/149.0.7827.55/win64/chrome-headless-shell-win64.zip^[[22m
+windows-native	Build and test frontend	2026-11-13T19:26:59.5621247Z |                                                                                |   0% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:59.8279078Z |■■■■■■■■                                                                        |  10% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:26:59.9297809Z |■■■■■■■■■■■■■■■■                                                                |  20% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:00.0570259Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:00.1499441Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:00.2500893Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:00.3715871Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:00.4931111Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:00.6371936Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:00.7679953Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:00.9103711Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 113.6 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:05.6555119Z Chrome Headless Shell 149.0.7827.55 (playwright chromium-headless-shell v1228) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\chromium_headless_shell-1228
+windows-native	Build and test frontend	2026-11-13T19:27:05.6562062Z Downloading Winldd (playwright winldd v1007)^[[2m from https://cdn.playwright.dev/dbazure/download/playwright/builds/winldd/1007/winldd-win64.zip^[[22m
+windows-native	Build and test frontend	2026-11-13T19:27:06.0452262Z |                                                                                |   1% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0466579Z |■■■■■■■■                                                                        |  10% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0471286Z |■■■■■■■■■■■■■■■■                                                                |  24% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0487185Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  37% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0491185Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0495528Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  63% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0497114Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  75% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0500231Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  88% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0502024Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 0.1 MiB
+windows-native	Build and test frontend	2026-11-13T19:27:06.0798325Z Winldd (playwright winldd v1007) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\winldd-1007
+windows-native	Build and test frontend	2026-11-13T19:27:08.3984479Z [WebServer] INFO:     Started server process [1436]
+windows-native	Build and test frontend	2026-11-13T19:27:08.3989301Z [WebServer] INFO:     Waiting for application startup.
+windows-native	Build and test frontend	2026-11-13T19:27:08.4065789Z [WebServer] INFO:     Application startup complete.
+windows-native	Build and test frontend	2026-11-13T19:27:08.4077303Z [WebServer] INFO:     Uvicorn running on http://127.0.0.1:18051 (Press CTRL+C to quit)
+windows-native	Build and test frontend	2026-11-13T19:27:09.8350440Z 
+windows-native	Build and test frontend	2026-11-13T19:27:09.8351484Z Running 58 tests using 1 worker
+windows-native	Build and test frontend	2026-11-13T19:27:09.8368885Z 
+windows-native	Build and test frontend	2026-11-13T19:27:12.0949164Z [WebServer] INFO:     127.0.0.1:63966 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:12.0952474Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:15.8010049Z   ok  1 [chromium] › tests\e2e\workflow-smoke.spec.ts:80:1 › workflow rail pages render from the production app shell (5.3s)
+windows-native	Build and test frontend	2026-11-13T19:27:16.1802640Z [WebServer] INFO:     127.0.0.1:64447 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:16.1804371Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:17.5023329Z   ok  2 [chromium] › tests\e2e\workflow-smoke.spec.ts:118:1 › model theory demo failure stays visible without blanking the page (1.7s)
+windows-native	Build and test frontend	2026-11-13T19:27:17.8537583Z [WebServer] INFO:     127.0.0.1:55275 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:17.8540184Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:25.7158433Z   ok  3 [chromium] › tests\e2e\workflow-smoke.spec.ts:145:1 › experiment run can be handed to analysis with chart controls and screenshot evidence (8.2s)
+windows-native	Build and test frontend	2026-11-13T19:27:26.0856058Z [WebServer] INFO:     127.0.0.1:63120 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:26.0858552Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:26.5885434Z   ok  4 [chromium] › tests\e2e\workflow-smoke.spec.ts:201:1 › analysis data load failure surfaces an error state with screenshot evidence (860ms)
+windows-native	Build and test frontend	2026-11-13T19:27:26.9584569Z [WebServer] INFO:     127.0.0.1:63947 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:26.9621544Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:27.4384487Z   ok  5 [chromium] › tests\e2e\workflow-smoke.spec.ts:246:1 › analysis run list failure does not masquerade as an empty library (831ms)
+windows-native	Build and test frontend	2026-11-13T19:27:27.8207316Z [WebServer] INFO:     127.0.0.1:51160 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:27.8208709Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:35.0200817Z   ok  6 [chromium] › tests\e2e\workflow-smoke.spec.ts:263:1 › analysis run delete failure keeps the selected run visible (7.6s)
+windows-native	Build and test frontend	2026-11-13T19:27:35.3810637Z [WebServer] INFO:     127.0.0.1:63144 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:35.3814685Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:35.9115939Z   ok  7 [chromium] › tests\e2e\workflow-smoke.spec.ts:309:1 › experiment library failure does not masquerade as an empty library (875ms)
+windows-native	Build and test frontend	2026-11-13T19:27:36.3015023Z [WebServer] INFO:     127.0.0.1:58346 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:36.3016459Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:36.9442682Z   ok  8 [chromium] › tests\e2e\workflow-smoke.spec.ts:332:1 › experiment library write failures keep the editor and library state visible (1.0s)
+windows-native	Build and test frontend	2026-11-13T19:27:37.3138675Z [WebServer] INFO:     127.0.0.1:58950 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:37.3140130Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:37.7293117Z   ok  9 [chromium] › tests\e2e\workflow-smoke.spec.ts:379:1 › experiment maneuver template failure stays visible without blocking editing (771ms)
+windows-native	Build and test frontend	2026-11-13T19:27:38.1025347Z [WebServer] INFO:     127.0.0.1:50514 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:38.1027764Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:38.5663853Z   ok 10 [chromium] › tests\e2e\workflow-smoke.spec.ts:402:1 › experiment batch start failure surfaces an error state with screenshot evidence (824ms)
+windows-native	Build and test frontend	2026-11-13T19:27:38.9429317Z [WebServer] INFO:     127.0.0.1:53281 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:38.9430653Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:39.4219998Z   ok 11 [chromium] › tests\e2e\workflow-smoke.spec.ts:430:1 › run control backend failures stay visible in the control panels (841ms)
+windows-native	Build and test frontend	2026-11-13T19:27:39.7872389Z [WebServer] INFO:     127.0.0.1:56172 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:39.7873469Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:40.2732482Z   ok 12 [chromium] › tests\e2e\workflow-smoke.spec.ts:471:1 › user python status failure stays visible in the design panel (839ms)
+windows-native	Build and test frontend	2026-11-13T19:27:40.6709882Z [WebServer] INFO:     127.0.0.1:62568 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:40.6742256Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:41.3604203Z   ok 13 [chromium] › tests\e2e\workflow-smoke.spec.ts:494:1 › user python reload failure keeps the panel usable (1.1s)
+windows-native	Build and test frontend	2026-11-13T19:27:41.7554567Z [WebServer] INFO:     127.0.0.1:63120 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:41.7592010Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:42.3845859Z   ok 14 [chromium] › tests\e2e\workflow-smoke.spec.ts:529:1 › vehicle geometry drag updates the shared parameter edit buffer (1.0s)
+windows-native	Build and test frontend	2026-11-13T19:27:42.7922916Z [WebServer] INFO:     127.0.0.1:64648 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:42.7931402Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:43.4540809Z   ok 15 [chromium] › tests\e2e\workflow-smoke.spec.ts:547:1 › vehicle parameter rejection keeps edits visible with screenshot evidence (1.1s)
+windows-native	Build and test frontend	2026-11-13T19:27:43.8808761Z [WebServer] INFO:     127.0.0.1:51666 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:43.8850456Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:44.3771330Z [WebServer] Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)
+windows-native	Build and test frontend	2026-11-13T19:27:44.3773552Z [WebServer] handle: <Handle _ProactorBasePipeTransport._call_connection_lost(None)>
+windows-native	Build and test frontend	2026-11-13T19:27:44.3775043Z [WebServer] Traceback (most recent call last):
+windows-native	Build and test frontend	2026-11-13T19:27:44.3776462Z [WebServer]   File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\events.py", line 88, in _run
+windows-native	Build and test frontend	2026-11-13T19:27:44.3777859Z [WebServer]     self._context.run(self._callback, *self._args)
+windows-native	Build and test frontend	2026-11-13T19:27:44.3779515Z [WebServer]   File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+windows-native	Build and test frontend	2026-11-13T19:27:44.3781019Z [WebServer]     self._sock.shutdown(socket.SHUT_RDWR)
+windows-native	Build and test frontend	2026-11-13T19:27:44.3782630Z [WebServer] ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+windows-native	Build and test frontend	2026-11-13T19:27:44.3823053Z   ok 16 [chromium] › tests\e2e\workflow-smoke.spec.ts:580:1 › vehicle project list failure is visible and disables loading (913ms)
+windows-native	Build and test frontend	2026-11-13T19:27:44.8059128Z [WebServer] INFO:     127.0.0.1:55766 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:44.8094071Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:45.3949309Z   ok 17 [chromium] › tests\e2e\workflow-smoke.spec.ts:603:1 › vehicle project load failure stays local to the project panel (998ms)
+windows-native	Build and test frontend	2026-11-13T19:27:45.7996495Z [WebServer] INFO:     127.0.0.1:60880 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:45.7997505Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:46.4128819Z   ok 18 [chromium] › tests\e2e\workflow-smoke.spec.ts:638:1 › vehicle project save failure keeps the save form recoverable (1.0s)
+windows-native	Build and test frontend	2026-11-13T19:27:46.8076107Z [WebServer] INFO:     127.0.0.1:61064 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:46.8156362Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:49.0018290Z   ok 19 [chromium] › tests\e2e\workflow-smoke.spec.ts:670:1 › load analysis charts expose deeper explanation state with screenshot evidence (2.6s)
+windows-native	Build and test frontend	2026-11-13T19:27:49.4340532Z [WebServer] INFO:     127.0.0.1:49391 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:49.4341882Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:50.0955509Z   ok 20 [chromium] › tests\e2e\workflow-smoke.spec.ts:689:1 › load analysis sweep failure surfaces an error and keeps controls usable (1.1s)
+windows-native	Build and test frontend	2026-11-13T19:27:50.5158145Z [WebServer] INFO:     127.0.0.1:59707 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:50.5170273Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:52.4054996Z   ok 21 [chromium] › tests\e2e\workflow-smoke.spec.ts:724:1 › load analysis profile list failure surfaces an error without blanking the page (2.3s)
+windows-native	Build and test frontend	2026-11-13T19:27:52.7802048Z [WebServer] INFO:     127.0.0.1:55620 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:52.7805749Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:53.3187622Z   ok 22 [chromium] › tests\e2e\workflow-smoke.spec.ts:750:1 › load analysis params failure leaves a visible empty state (900ms)
+windows-native	Build and test frontend	2026-11-13T19:27:53.6848284Z [WebServer] INFO:     127.0.0.1:55556 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:53.6849721Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:55.8234079Z   ok 23 [chromium] › tests\e2e\workflow-smoke.spec.ts:777:1 › load analysis profile action failures stay visible without blocking the toolbar (2.5s)
+windows-native	Build and test frontend	2026-11-13T19:27:56.1943446Z [WebServer] INFO:     127.0.0.1:52988 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:56.1945686Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:57.9100494Z   ok 24 [chromium] › tests\e2e\workflow-smoke.spec.ts:836:1 › load analysis sensitivity failure surfaces a toast without blanking load charts (2.1s)
+windows-native	Build and test frontend	2026-11-13T19:27:58.2423725Z [WebServer] INFO:     127.0.0.1:50044 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:58.2427366Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:27:59.0801583Z   ok 25 [chromium] › tests\e2e\workflow-smoke.spec.ts:865:1 › scenario path workflow generates, follows, and clears a reference path (1.2s)
+windows-native	Build and test frontend	2026-11-13T19:27:59.4563087Z [WebServer] INFO:     127.0.0.1:63238 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:27:59.4564612Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:00.2963712Z   ok 26 [chromium] › tests\e2e\workflow-smoke.spec.ts:887:1 › maneuver parameters reach the backend and the laid-out geometry is echoed back (1.2s)
+windows-native	Build and test frontend	2026-11-13T19:28:00.6497629Z [WebServer] INFO:     127.0.0.1:52759 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:00.6498489Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:06.7497403Z [WebServer] INFO:     127.0.0.1:65417 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:06.7501236Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:07.5555566Z   ok 27 [chromium] › tests\e2e\workflow-smoke.spec.ts:914:1 › 3D camera modes switch and the roof rig persists its settings (7.2s)
+windows-native	Build and test frontend	2026-11-13T19:28:07.9382912Z [WebServer] INFO:     127.0.0.1:51376 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:07.9384455Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:18.2190991Z   ok 28 [chromium] › tests\e2e\workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves (10.6s)
+windows-native	Build and test frontend	2026-11-13T19:28:18.6224276Z [WebServer] INFO:     127.0.0.1:54184 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:18.6294607Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:19.4810688Z   ok 29 [chromium] › tests\e2e\workflow-smoke.spec.ts:1040:1 › path version refresh failure surfaces a toast without blocking scenario tools (1.3s)
+windows-native	Build and test frontend	2026-11-13T19:28:19.8401606Z [WebServer] INFO:     127.0.0.1:49289 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:19.8404000Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:20.3648759Z   ok 30 [chromium] › tests\e2e\workflow-smoke.spec.ts:1074:1 › path template failure stays visible in the trajectory panel (872ms)
+windows-native	Build and test frontend	2026-11-13T19:28:20.7620031Z [WebServer] INFO:     127.0.0.1:53052 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:20.7621410Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:21.3223134Z   ok 31 [chromium] › tests\e2e\workflow-smoke.spec.ts:1098:1 › scenario list failure stays visible in the scenario panel (944ms)
+windows-native	Build and test frontend	2026-11-13T19:28:21.7113485Z [WebServer] INFO:     127.0.0.1:60752 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:21.7114839Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:22.6074839Z   ok 32 [chromium] › tests\e2e\workflow-smoke.spec.ts:1121:1 › scenario load and clear failures keep the scenario panel recoverable (1.3s)
+windows-native	Build and test frontend	2026-11-13T19:28:22.9892366Z [WebServer] INFO:     127.0.0.1:64944 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:22.9894271Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:23.7143205Z   ok 33 [chromium] › tests\e2e\workflow-smoke.spec.ts:1172:1 › scenario version refresh failure surfaces a toast without blocking scenario tools (1.1s)
+windows-native	Build and test frontend	2026-11-13T19:28:24.0737452Z [WebServer] INFO:     127.0.0.1:56611 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:24.0738882Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:24.9220374Z   ok 34 [chromium] › tests\e2e\workflow-smoke.spec.ts:1204:1 › scenario disturbance editor places, edits, and clears a road disturbance (1.2s)
+windows-native	Build and test frontend	2026-11-13T19:28:25.3003243Z [WebServer] INFO:     127.0.0.1:59762 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:25.3010461Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:26.2297697Z   ok 35 [chromium] › tests\e2e\workflow-smoke.spec.ts:1242:1 › disturbance action failures keep existing disturbance state visible (1.3s)
+windows-native	Build and test frontend	2026-11-13T19:28:26.6010194Z [WebServer] INFO:     127.0.0.1:58445 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:26.6013380Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:27.6431698Z   ok 36 [chromium] › tests\e2e\workflow-smoke.spec.ts:1318:1 › disturbance canvas placement and drag failures surface toasts (1.4s)
+windows-native	Build and test frontend	2026-11-13T19:28:27.9958397Z [WebServer] INFO:     127.0.0.1:57768 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:27.9968271Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:29.1164553Z   ok 37 [chromium] › tests\e2e\workflow-smoke.spec.ts:1403:1 › scenario fault injection panel adds, toggles, and clears faults (1.5s)
+windows-native	Build and test frontend	2026-11-13T19:28:29.5004482Z [WebServer] INFO:     127.0.0.1:57513 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:29.5005479Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:30.0405119Z   ok 38 [chromium] › tests\e2e\workflow-smoke.spec.ts:1437:1 › fault list failure does not masquerade as an empty fault configuration (911ms)
+windows-native	Build and test frontend	2026-11-13T19:28:30.4006273Z [WebServer] INFO:     127.0.0.1:50752 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:30.4007703Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:31.4617162Z   ok 39 [chromium] › tests\e2e\workflow-smoke.spec.ts:1459:1 › fault action failures keep configured faults visible (1.4s)
+windows-native	Build and test frontend	2026-11-13T19:28:31.8198632Z [WebServer] INFO:     127.0.0.1:59474 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:31.8199993Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:32.8982306Z   ok 40 [chromium] › tests\e2e\workflow-smoke.spec.ts:1544:1 › script library workflow loads, starts, lays out markers, and stops a fixed script (1.4s)
+windows-native	Build and test frontend	2026-11-13T19:28:33.2445784Z [WebServer] INFO:     127.0.0.1:55733 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:33.2447277Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:34.0614503Z   ok 41 [chromium] › tests\e2e\workflow-smoke.spec.ts:1578:1 › script parse failure stays visible in the script panel (1.1s)
+windows-native	Build and test frontend	2026-11-13T19:28:34.4307984Z [WebServer] INFO:     127.0.0.1:61527 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:34.4325096Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:36.1638388Z   ok 42 [chromium] › tests\e2e\workflow-smoke.spec.ts:1597:1 › script start and stop failures keep script controls recoverable (2.1s)
+windows-native	Build and test frontend	2026-11-13T19:28:36.5255755Z [WebServer] INFO:     127.0.0.1:59935 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:36.5257061Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:37.2644154Z   ok 43 [chromium] › tests\e2e\workflow-smoke.spec.ts:1654:1 › script library failure does not masquerade as an empty script library (1.1s)
+windows-native	Build and test frontend	2026-11-13T19:28:37.6297767Z [WebServer] INFO:     127.0.0.1:54085 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:37.6309930Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:38.2766271Z   ok 44 [chromium] › tests\e2e\workflow-smoke.spec.ts:1676:1 › script status failure stays visible without blocking script editing (997ms)
+windows-native	Build and test frontend	2026-11-13T19:28:38.6340517Z [WebServer] INFO:     127.0.0.1:55531 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:38.6342302Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:40.7961709Z [WebServer] Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)
+windows-native	Build and test frontend	2026-11-13T19:28:40.7963139Z [WebServer] handle: <Handle _ProactorBasePipeTransport._call_connection_lost(None)>
+windows-native	Build and test frontend	2026-11-13T19:28:40.7964448Z [WebServer] Traceback (most recent call last):
+windows-native	Build and test frontend	2026-11-13T19:28:40.7965660Z [WebServer]   File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\events.py", line 88, in _run
+windows-native	Build and test frontend	2026-11-13T19:28:40.7966801Z [WebServer]     self._context.run(self._callback, *self._args)
+windows-native	Build and test frontend	2026-11-13T19:28:40.7968118Z [WebServer]   File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+windows-native	Build and test frontend	2026-11-13T19:28:40.7969333Z [WebServer]     self._sock.shutdown(socket.SHUT_RDWR)
+windows-native	Build and test frontend	2026-11-13T19:28:40.7970516Z [WebServer] ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+windows-native	Build and test frontend	2026-11-13T19:28:40.8027413Z   ok 45 [chromium] › tests\e2e\workflow-smoke.spec.ts:1700:1 › recording panel records samples and exports csv (2.5s)
+windows-native	Build and test frontend	2026-11-13T19:28:41.1899743Z [WebServer] INFO:     127.0.0.1:60765 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:41.1902265Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:43.0898892Z   ok 46 [chromium] › tests\e2e\workflow-smoke.spec.ts:1732:1 › recording export failure stays visible in the recording panel (2.3s)
+windows-native	Build and test frontend	2026-11-13T19:28:43.4861365Z [WebServer] INFO:     127.0.0.1:51946 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:43.4862758Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:44.1965042Z   ok 47 [chromium] › tests\e2e\workflow-smoke.spec.ts:1763:1 › recording status failure stays visible without disabling controls (1.1s)
+windows-native	Build and test frontend	2026-11-13T19:28:44.6210698Z [WebServer] INFO:     127.0.0.1:51287 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:44.6212377Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:46.8515780Z   ok 48 [chromium] › tests\e2e\workflow-smoke.spec.ts:1787:1 › recording start and stop failures keep recording controls recoverable (2.6s)
+windows-native	Build and test frontend	2026-11-13T19:28:47.2263521Z [WebServer] INFO:     127.0.0.1:60906 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:47.2264441Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:28:54.4019508Z   ok 49 [chromium] › tests\e2e\workflow-smoke.spec.ts:1837:1 › analysis replay controls scrub selected run data (7.5s)
+windows-native	Build and test frontend	2026-11-13T19:28:54.7950613Z [WebServer] INFO:     127.0.0.1:51504 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:28:54.7952444Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:02.0551226Z   ok 50 [chromium] › tests\e2e\workflow-smoke.spec.ts:1862:1 › analysis replay metadata failure keeps replay usable with a visible fallback (7.6s)
+windows-native	Build and test frontend	2026-11-13T19:29:02.4415645Z [WebServer] INFO:     127.0.0.1:59621 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:02.4417393Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:02.8392774Z   ok 51 [chromium] › tests\e2e\workflow-smoke.spec.ts:1901:1 › command palette filters and navigates workflow pages from the keyboard (772ms)
+windows-native	Build and test frontend	2026-11-13T19:29:03.1998969Z [WebServer] INFO:     127.0.0.1:56483 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:03.2000052Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:03.5251137Z   ok 52 [chromium] › tests\e2e\workflow-smoke.spec.ts:1920:1 › command palette model switch failure surfaces a toast and closes cleanly (648ms)
+windows-native	Build and test frontend	2026-11-13T19:29:03.8893848Z [WebServer] INFO:     127.0.0.1:58051 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:03.8895300Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:04.4758377Z   ok 53 [chromium] › tests\e2e\workflow-smoke.spec.ts:1948:1 › gamepad mapping panel edits persist without a physical controller (933ms)
+windows-native	Build and test frontend	2026-11-13T19:29:04.8260144Z [WebServer] INFO:     127.0.0.1:65158 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:04.8262766Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:12.0247641Z [WebServer] INFO:     127.0.0.1:63251 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:12.0249041Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:17.4611726Z   ok 54 [chromium] › tests\e2e\workflow-smoke.spec.ts:1981:1 › visual baselines pin the analysis chart, 3D roof view, and geometry studio (13.0s)
+windows-native	Build and test frontend	2026-11-13T19:29:17.8354067Z [WebServer] INFO:     127.0.0.1:59173 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:17.8355120Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:19.0044226Z   ok 55 [chromium] › tests\e2e\zz-interaction.spec.ts:13:1 › manual input releases on navigation, editing, blur and explicit stop (1.5s)
+windows-native	Build and test frontend	2026-11-13T19:29:19.3492302Z [WebServer] INFO:     127.0.0.1:54657 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:19.3497178Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:20.8692005Z   ok 56 [chromium] › tests\e2e\zz-interaction.spec.ts:43:1 › script follows simulation clock, pauses with it and saves a full recording (1.9s)
+windows-native	Build and test frontend	2026-11-13T19:29:21.2772529Z [WebServer] INFO:     127.0.0.1:56615 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:21.2780791Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:24.5690810Z   ok 57 [chromium] › tests\e2e\zz-interaction.spec.ts:79:1 › Agent uncertain response retries once and full artifacts reach analysis on desktop and narrow screens (3.7s)
+windows-native	Build and test frontend	2026-11-13T19:29:24.9369555Z [WebServer] INFO:     127.0.0.1:59080 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:24.9373641Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:26.2564264Z [WebServer] INFO:     127.0.0.1:61134 - "WebSocket /ws/state" [accepted]
+windows-native	Build and test frontend	2026-11-13T19:29:26.2577563Z [WebServer] INFO:     connection open
+windows-native	Build and test frontend	2026-11-13T19:29:27.0886282Z   ok 58 [chromium] › tests\e2e\zz-multipoint.spec.ts:3:1 › multipoint UI preserves parameters and executes simultaneous and staggered timelines (2.5s)
+windows-native	Build and test frontend	2026-11-13T19:29:27.5926308Z 
+windows-native	Build and test frontend	2026-11-13T19:29:27.5937780Z   58 passed (2.3m)
+windows-native	Repeated whole-experiment benchmark	﻿2026-11-13T19:29:27.6876250Z ##[group]Run python scripts/benchmark_native_core.py --repeat 5 --duration 14 --output docs/reports/native_v0.106.0/benchmark-windows.json
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6877308Z ^[[36;1mpython scripts/benchmark_native_core.py --repeat 5 --duration 14 --output docs/reports/native_v0.106.0/benchmark-windows.json^[[0m
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6953167Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6953559Z env:
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6953746Z   SIM4WIS_ENGINE: native
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6953957Z   PYTHONUTF8: 1
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6954338Z   PW_PYTHON_EXECUTABLE: python
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6954570Z   PW_E2E_PORT: 18051
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6954857Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6955317Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6955762Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6956162Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6956598Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:29:27.6956929Z ##[endgroup]
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:31:35.5778404Z simplified_dynamic linear simultaneous speedup 2.163 parity PASS
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:33:54.4570262Z simplified_dynamic linear staggered speedup 2.039 parity PASS
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:36:11.1588514Z simplified_dynamic pacejka simultaneous speedup 2.371 parity PASS
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:38:39.7868153Z simplified_dynamic pacejka staggered speedup 2.224 parity PASS
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:40:59.6495172Z multibody linear simultaneous speedup 2.782 parity PASS
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:43:30.8443474Z multibody linear staggered speedup 2.557 parity PASS
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:45:59.6998641Z multibody pacejka simultaneous speedup 2.986 parity PASS
+windows-native	Repeated whole-experiment benchmark	2026-11-13T19:48:40.8302226Z multibody pacejka staggered speedup 2.74 parity PASS

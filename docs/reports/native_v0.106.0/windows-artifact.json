@@ -1,0 +1,13 @@
+{
+  "full_test_run": 43488657384,
+  "core_source_commit": "85202cde071aea1fcfc4e0b41ec9a638898afd8b",
+  "full_test_artifact_sha256": "4d2d09c6ba71e750c9bb5dfca7cfd20880b4baaa33a8e09b5d71bda957582053",
+  "package_run": 43496625894,
+  "package_source_commit": "e157b8927c8f3617e91cac20315ded9fa67cb572",
+  "artifact_id": 14072960580,
+  "artifact_bytes": 98026819,
+  "artifact_sha256": "d4053cfeda338eaf844151251ce4eecae7c007197d4534cb0150a59bc9bb849d",
+  "official_digest_verified": true,
+  "zip_crc_verified": true,
+  "package_sha256": "13ec4052ba14fe42d2e793ff6edc7a6581a1593352cee2c06806df73f93dcfc6"
+}
