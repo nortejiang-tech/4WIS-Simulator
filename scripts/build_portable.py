@@ -410,7 +410,28 @@ def install_native_wheel(pkg: Path, target: str, wheel: Path) -> None:
                     "native_source_sha256": source_hash,
                     "extension_sha256": hashlib.sha256(data).hexdigest(),
                     "extension": "app/src/"+name}
+        if target == "windows-x64":
+            manifest["windows_cpp_runtime"] = install_windows_cpp_runtime(pkg)
         (pkg / "native-core.json").write_text(json.dumps(manifest, indent=2)+"\n", encoding="utf-8")
+
+
+def install_windows_cpp_runtime(pkg: Path) -> dict[str, str]:
+    """Expose NumPy's already-bundled MSVC runtime under its import name.
+
+    The native .pyd imports MSVCP140.dll. NumPy's wheel carries the same runtime
+    with a delvewheel hash suffix, which cannot satisfy that DLL name. Keep the
+    vendor original and its licenses; put a byte-identical copy beside Python.
+    Do not rely on a developer machine's system-wide Visual C++ installation.
+    """
+    candidates = sorted((pkg / "vendor/numpy.libs").glob("msvcp140-*.dll"))
+    if len(candidates) != 1:
+        raise ValueError("expected exactly one NumPy-bundled MSVCP140 runtime")
+    source = candidates[0]
+    dest = pkg / "runtime/msvcp140.dll"
+    shutil.copy2(source, dest)
+    return {"source": source.relative_to(pkg).as_posix(),
+            "path": dest.relative_to(pkg).as_posix(),
+            "sha256": hashlib.sha256(dest.read_bytes()).hexdigest()}
 
 
 def build(target: str, update: bool, native_wheel: Path | None = None) -> Path:

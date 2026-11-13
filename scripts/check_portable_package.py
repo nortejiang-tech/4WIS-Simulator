@@ -171,6 +171,19 @@ def _static_checks(target: str, version: str, require_native: bool = False) -> l
                     pass
                 checks.append(Check(target, "native core source and binary provenance", native_ok,
                     "matching version/platform/source and binary SHA-256" if native_ok else "missing or mismatched native core"))
+                if target == "windows-x64":
+                    runtime_ok = False
+                    try:
+                        runtime = native["windows_cpp_runtime"]
+                        supplied = archive.read(_entry(prefix, runtime["path"]))
+                        original = archive.read(_entry(prefix, runtime["source"]))
+                        runtime_ok = (runtime["path"] == "runtime/msvcp140.dll" and
+                                      supplied == original and _sha256(supplied) == runtime["sha256"])
+                    except (KeyError, ValueError, UnboundLocalError):
+                        pass
+                    checks.append(Check(target, "app-local MSVC runtime provenance", runtime_ok,
+                                        "byte-identical vendor runtime, import name and SHA-256" if runtime_ok
+                                        else "missing or mismatched app-local MSVCP140.dll"))
 
             version_entry = _entry(prefix, "app/src/sim4wis/__init__.py")
             has_version = version_entry in names and f'__version__ = "{version}"'.encode() in archive.read(version_entry)
@@ -278,6 +291,26 @@ def _native_smoke(target: str, version: str, require_native: bool = False) -> li
         env["PYTHONPATH"] = os.pathsep.join(python_paths)
         if require_native:
             env["SIM4WIS_ENGINE"] = "native"
+            if target == "windows-x64":
+                dll_probe = subprocess.run([str(python), "-c", "\n".join([
+                    "from pathlib import Path",
+                    "import ctypes, sys",
+                    "from sim4wis import _native",
+                    "kernel=ctypes.WinDLL('kernel32', use_last_error=True)",
+                    "kernel.GetModuleHandleW.argtypes=[ctypes.c_wchar_p]",
+                    "kernel.GetModuleHandleW.restype=ctypes.c_void_p",
+                    "kernel.GetModuleFileNameW.argtypes=[ctypes.c_void_p,ctypes.c_wchar_p,ctypes.c_uint32]",
+                    "kernel.GetModuleFileNameW.restype=ctypes.c_uint32",
+                    "handle=kernel.GetModuleHandleW('MSVCP140.dll')",
+                    "assert handle, 'MSVCP140.dll was not loaded'",
+                    "name=ctypes.create_unicode_buffer(32768)",
+                    "assert kernel.GetModuleFileNameW(handle,name,len(name))",
+                    "expected=Path(sys.executable).parent/'msvcp140.dll'",
+                    "assert Path(name.value).samefile(expected), name.value",
+                    "print('PASS: native extension loaded package-local MSVCP140.dll')",
+                ])], cwd=pkg, env=env, text=True, capture_output=True, timeout=45)
+                checks.append(Check(target, "loaded package-local MSVC runtime", dll_probe.returncode == 0,
+                                    (dll_probe.stdout+dll_probe.stderr)[-1500:]))
             # Both models must actually execute using the loaded library from
             # this freshly extracted archive, never the development checkout.
             probe = subprocess.run([str(python), "-c", "\n".join([
