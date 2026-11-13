@@ -52,8 +52,10 @@ jobs:
           npx playwright test --reporter=list
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Repeated whole-experiment benchmark
+        if: ${{ !cancelled() }}
         run: python scripts/benchmark_native_core.py --repeat 5 --duration 14 --output docs/reports/native_v0.106.0/benchmark-windows.json
       - name: Build wheel and self-contained native archive
+        if: ${{ !cancelled() }}
         run: |
           python -m pip wheel ./backend --no-deps -w dist_portable/wheels
           $nativeWheel = (Get-ChildItem dist_portable/wheels/sim4wis-*-cp312-cp312-win_amd64.whl | Select-Object -First 1).FullName
