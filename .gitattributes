@@ -1,0 +1,8 @@
+# Identical source bytes across native Mac/Windows builds and package audits.
+*.py text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf

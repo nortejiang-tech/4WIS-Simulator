@@ -105,7 +105,9 @@ async def capabilities() -> dict[str, Any]:
     The intended first call for any agent: everything needed to write a valid
     spec, in one response, instead of discovering it endpoint by endpoint.
     """
+    from sim4wis.native import engine_info
     return {
+        "engine": engine_info(),
         "models": [
             {"id": m.id, "label": m.label, "layer": m.layer, "description": m.description}
             for m in model_infos()

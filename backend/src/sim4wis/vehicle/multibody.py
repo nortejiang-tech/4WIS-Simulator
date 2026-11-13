@@ -271,17 +271,27 @@ class MultiBodyModel(VehicleModel):
         def f(y):
             return self._derivatives(y, delta_cmd, wheel_mus, road_z)
 
-        k1 = f(y0)
-        k2 = f(y0 + 0.5 * dt * k1)
-        k3 = f(y0 + 0.5 * dt * k2)
-        k4 = f(y0 + dt * k3)
-        y1 = y0 + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        from sim4wis.native import integrate
+        native = integrate(
+            self, 1, y0, dt, delta_cmd, wheel_mus, road_z,
+            hooks_original=(type(self) is MultiBodyModel and all(
+                getattr(getattr(self, name), "__func__", None) is original
+                for name, original in _PY_HOOKS.items())),
+        )
+        if native is None:
+            k1 = f(y0)
+            k2 = f(y0 + 0.5 * dt * k1)
+            k3 = f(y0 + 0.5 * dt * k2)
+            k4 = f(y0 + dt * k3)
+            y1 = y0 + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+            accepted_derivative = f(y1)
+        else:
+            y1, accepted_derivative = native
 
         s.x, s.y, s.psi = float(y1[IX]), float(y1[IY]), float(y1[IPSI])
         s.z, s.roll, s.pitch = float(y1[IZ]), float(y1[IROLL]), float(y1[IPITCH])
         self._zu = y1[IZU]
         # Body-frame specific force (accelerometer reading at the CG).
-        accepted_derivative = f(y1)
         s.ax, s.ay = cg_acceleration(p, y1[IVX], y1[IVY], y1[IOMEGA],
                                     accepted_derivative[[IVX, IVY, IOMEGA]])
         s.vx, s.vy, s.yaw_rate = float(y1[IVX]), float(y1[IVY]), float(y1[IOMEGA])
@@ -600,3 +610,8 @@ class MultiBodyModel(VehicleModel):
             tire_radius=p.tire_radius,
         )
         s.wheel_pos_body = self._wheels
+
+
+_PY_HOOKS = {name: getattr(MultiBodyModel, name) for name in (
+    "_derivatives", "_suspension_forces", "_arb_corner",
+)}

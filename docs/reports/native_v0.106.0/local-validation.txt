@@ -1,0 +1,666 @@
+[pre-release] version backend/src/sim4wis/__init__.py         = 0.106.0
+[pre-release] version backend/pyproject.toml                  = 0.106.0
+[pre-release] version frontend/package.json                   = 0.106.0
+[pre-release] version frontend/package-lock.json              = 0.106.0
+[pre-release] version frontend/package-lock.json packages[''] = 0.106.0
+[pre-release] warning: working tree has uncommitted changes
+[pre-release] $ npm ci --dry-run --ignore-scripts  (cwd=frontend)
+
+up to date in 242ms
+
+58 packages are looking for funding
+  run `npm fund` for details
+[pre-release] $ /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/bin/python scripts/check_release_assets.py  (cwd=.)
+README.md: ok (19368 bytes)
+docs/user_manual.html: ok (12459147 bytes)
+docs/manual_figs/00_quickstart.png: ok (306788 bytes)
+docs/manual_figs/01_run_overview.png: ok (340773 bytes)
+docs/manual_figs/02_view3d.png: ok (181395 bytes)
+docs/manual_figs/03_model_panel.png: ok (23700 bytes)
+docs/manual_figs/04_strategy_panel.png: ok (30764 bytes)
+docs/manual_figs/05_drive_panel.png: ok (63119 bytes)
+docs/manual_figs/06_crab_drive.png: ok (97712 bytes)
+docs/manual_figs/07_gp_panel.png: ok (64648 bytes)
+docs/manual_figs/08_gp_frontrear.png: ok (257475 bytes)
+docs/manual_figs/09_gp_perwheel.png: ok (246867 bytes)
+docs/manual_figs/10_gp_holonomic.png: ok (168326 bytes)
+docs/manual_figs/11_scene_page.png: ok (351556 bytes)
+docs/manual_figs/12_disturbance.png: ok (143151 bytes)
+docs/manual_figs/13_fault_panel.png: ok (63205 bytes)
+docs/manual_figs/14_vehicle_page.png: ok (348669 bytes)
+docs/manual_figs/14a_vehicle_diagram.png: ok (74974 bytes)
+docs/manual_figs/14b_kingpin_diagram.png: ok (69813 bytes)
+docs/manual_figs/14c_rack_diagram.png: ok (74552 bytes)
+docs/manual_figs/15_experiment_page.png: ok (310198 bytes)
+docs/manual_figs/16_analysis_kpi.png: ok (399520 bytes)
+docs/manual_figs/17_analysis_charts.png: ok (384861 bytes)
+docs/manual_figs/18_replay.png: ok (362926 bytes)
+docs/manual_figs/19_load_page.png: ok (481195 bytes)
+docs/manual_figs/20_theory_page.png: ok (384963 bytes)
+docs/manual_figs/21_cmdk.png: ok (423017 bytes)
+docs/manual_figs/gif_crab.gif: ok (580930 bytes)
+docs/manual_figs/gif_drive.gif: ok (884245 bytes)
+docs/manual_figs/gif_frontrear.gif: ok (595849 bytes)
+docs/manual_figs/gif_holonomic.gif: ok (945839 bytes)
+docs/manual_figs/gif_perwheel.gif: ok (663553 bytes)
+docs/reports/reference_benchmark_review.md: ok (3118 bytes)
+docs/reports/single_wheel_failure_metrics.json: ok (44906 bytes)
+docs/reports/single_wheel_failure_safety_analysis.html: ok (1025347 bytes)
+scripts/build_manual.py: ok (44945 bytes)
+scripts/build_portable.py: ok (19641 bytes)
+backend/src/sim4wis_mcp/__init__.py: ok (342 bytes)
+backend/src/sim4wis_mcp/server.py: ok (22563 bytes)
+[pre-release] $ /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/bin/python -m pytest tests/ -q -n auto  (cwd=backend)
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  6%]
+........................................................................ [ 12%]
+........................................................................ [ 19%]
+........................................................................ [ 25%]
+........................................................................ [ 32%]
+........................................................................ [ 38%]
+........................................................................ [ 45%]
+........................................................................ [ 51%]
+........................................................................ [ 57%]
+........................................................................ [ 64%]
+........................................................................ [ 70%]
+........................................................................ [ 77%]
+........................................................................ [ 83%]
+........................................................................ [ 90%]
+........................................................................ [ 96%]
+.......................................                                  [100%]
+=============================== warnings summary ===============================
+tests/test_sim4wis_mcp.py::test_describe_is_the_first_stop
+  /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/lib/python3.11/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+    warnings.warn(  # deprecated in 14.0 - 2024-11-09
+
+tests/test_sim4wis_mcp.py::test_describe_is_the_first_stop
+  /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/lib/python3.11/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+    from websockets.server import WebSocketServerProtocol
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1119 passed, 2 warnings in 162.33s (0:02:42)
+[pre-release] $ /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/bin/python scripts/smoke_test.py  (cwd=.)
+────────────────────────────────────────────────────────────────
+§1 仿真核心
+────────────────────────────────────────────────────────────────
+  策略注册表  expected=['ackermann', 'crab', 'follow_trajectory', 'ideal_ackermann', 'rear_wheel_steer', 'zero_radius']
+             got     =['ackermann', 'crab', 'fault_reconfig', 'follow_trajectory', 'ideal_ackermann', 'manual_body', 'manual_wheel', 'rear_wheel_steer', 'user_js', 'user_python', 'zero_radius']  →  ✓
+  理想阿克曼四轮瞬心一致性  max_spread=5.745e-13 m  →  ✓
+  KinematicModel 圆周闭合  R=11.24m  闭合误差=0.047m (0.41%)  →  ✓
+  策略 ackermann          5s 后:  pose=( -13.06, +29.75, +216.8°)  |v|=12.96m/s  →  ✓
+  策略 ideal_ackermann    5s 后:  pose=( -11.16, +27.99, +223.2°)  |v|=12.60m/s  →  ✓
+  策略 rear_wheel_steer   5s 后:  pose=( +69.29, +72.76,  +88.7°)  |v|=22.25m/s  →  ✓
+  策略 crab               5s 后:  pose=(+109.34, +20.27,   +0.0°)  |v|=22.24m/s  →  ✓
+  策略 zero_radius        5s 后:  pose=(  -0.00,  -0.00,  +46.2°)  |v|= 0.00m/s  →  ✓
+────────────────────────────────────────────────────────────────
+§2 项目文件
+────────────────────────────────────────────────────────────────
+  bumpy_road.yaml           top_missing=∅  veh_missing=∅  →  ✓
+  compact_ev.yaml           top_missing=∅  veh_missing=∅  →  ✓
+  default.yaml              top_missing=∅  veh_missing=∅  →  ✓
+  delivery_robot.yaml       top_missing=∅  veh_missing=∅  →  ✓
+  dynamic_demo.yaml         top_missing=∅  veh_missing=∅  →  ✓
+  multibody_demo.yaml       top_missing=∅  veh_missing=∅  →  ✓
+  split_mu_demo.yaml        top_missing=∅  veh_missing=∅  →  ✓
+  bumpy_road.yaml           3 扰动 · model=simplified_dynamic  →  ✓
+  dynamic_demo.yaml         1 扰动 · model=simplified_dynamic  →  ✓
+  multibody_demo.yaml       2 扰动 · model=multibody  →  ✓
+  split_mu_demo.yaml        2 扰动 · model=simplified_dynamic  →  ✓
+────────────────────────────────────────────────────────────────
+§3 Simulator 异步
+────────────────────────────────────────────────────────────────
+  Simulator 状态推流  收到 10 条状态消息  →  ✓
+  Simulator 策略热切换  seen=['ackermann', 'crab', 'ideal_ackermann', 'rear_wheel_steer', 'zero_radius']  →  ✓
+  跟踪 slalom  到达终点=True  max_xtrack=0.91m  →  ✓
+────────────────────────────────────────────────────────────────
+§4 Recorder (Phase 2)
+────────────────────────────────────────────────────────────────
+  Recorder + CSV  rows=14  cols=48  monotonic=True  →  ✓
+  Channel selection  header=['t', 'vx', 'yaw_rate', 'delta_fl']  →  ✓
+────────────────────────────────────────────────────────────────
+§5 Disturbances (Phase 2)
+────────────────────────────────────────────────────────────────
+  pos=(  0.0, +0.0)  μ_eff=0.900 (exp 0.900, 绝对值)  ✓
+  pos=( 25.0, +2.0)  μ_eff=0.900 (exp 0.900, 绝对值)  ✓
+  pos=( 25.0, -2.0)  μ_eff=0.300 (exp 0.300, 绝对值)  ✓
+  pos=( 60.0, +0.0)  μ_eff=0.150 (exp 0.150, 绝对值)  ✓
+  pos=(100.0, +0.0)  μ_eff=0.900 (exp 0.900, 绝对值)  ✓
+  Scene roundtrip: serialize→from_dict→effective_mu equal  →  ✓
+  load split_mu_demo.yaml:  disturbances=2  μ@(25,2)=0.900(绝对)  μ@(100,0)=0.900  →  ✓
+────────────────────────────────────────────────────────────────
+§6 Scripts (Phase 2)
+────────────────────────────────────────────────────────────────
+  crab_park.yaml                 actions= 7 name=crab_park          ✓
+  double_lane_change.yaml        actions= 7 name=double_lane_change ✓
+  slalom.yaml                    actions= 8 name=slalom_3m          ✓
+  spin_demo.yaml                 actions= 4 name=spin_demo          ✓
+  ScriptRunner 执行  最终 throttle=0.000 (期望 0.0)  →  ✓
+────────────────────────────────────────────────────────────────
+§7 Dynamic Model (Phase 2)
+────────────────────────────────────────────────────────────────
+  ax=+0.0 ay=+0.0 → Fz=[  7247,  7247,  6977,  6977]  Σ=28449.0/28449.0  ✓
+  ax=+3.0 ay=+0.0 → Fz=[  6394,  6394,  7831,  7831]  Σ=28449.0/28449.0  ✓
+  ax=-5.0 ay=+0.0 → Fz=[  8670,  8670,  5555,  5555]  Σ=28449.0/28449.0  ✓
+  ax=+0.0 ay=+4.0 → Fz=[  4490, 10004,  5139,  8815]  Σ=28449.0/28449.0  ✓
+  ax=+2.0 ay=-3.0 → Fz=[  8746,  4611,  8925,  6168]  Σ=28449.0/28449.0  ✓
+  Dynamic 直线  vx=26.33 (期望 ~27.8)  y=0.0000  ψ=0.0000°  →  ✓
+  Dynamic 左转载荷:  Fz=[FL=839  FR=12955  RL=3247  RR=11325]  右侧>左侧?  True  →  ✓
+  μ=1.0 max|α|=2.63°  μ=0.3 max|α|=21.28°  低 μ 滑移更大?  True  →  ✓
+  τ_steer 峰值 (N·m):  steer=0→10  0.2→221  0.6→648  →  ✓
+  减速带 Fz 尖峰  baseline≈7247  peak=14118  ratio=1.95×  →  ✓
+  bump-steer  coeff0 δmax=0.10°  coeff2.5 δmax=13.30° vmin=8.00  →  ✓
+  multibody  静平衡=True  转弯侧倾+5.53°/外侧加载=True  制动俯仰-1.02°/前轴加载=True  →  ✓
+  坡度减速(2s 加速段)  平地 vx=15.42  上坡 vx=12.95  →  ✓
+  plugin loader: 0 found (0 loaded, 0 failed)  →  ✓
+  FMUControllerStrategy 构造  name=dummy_fmu  step=10.0ms  →  ✓
+  MatlabEngineControllerStrategy 构造  name=dummy_slx  step=20.0ms  →  ✓
+────────────────────────────────────────────────────────────────
+§8 v0.4 改进
+────────────────────────────────────────────────────────────────
+  每轮瞬心偏差  ideal max|dev|=8.88e-16 m, 直行=NaN  →  ✓
+  扰动 CRUD  inside=0.20 outside=0.90 removed=0.90  →  ✓
+  Pacejka 侧滑回归  max|vy|=0.31 m/s (<1.5)  →  ✓
+  切换无扭矩跳变  before=3000 N·m, after(0.5s)=532 N·m  →  ✓
+────────────────────────────────────────────────────────────────
+
+结果：32/32 通过
+  ✓  策略注册
+  ✓  瞬心一致性
+  ✓  圆周闭合
+  ✓  5 策略 5s 稳定
+  ✓  YAML schema
+  ✓  项目模型匹配扰动
+  ✓  状态推流
+  ✓  策略切换
+  ✓  轨迹跟踪
+  ✓  CSV round-trip
+  ✓  通道选择
+  ✓  扰动查询
+  ✓  Scene 序列化
+  ✓  加载扰动项目
+  ✓  脚本库 schema
+  ✓  ScriptRunner
+  ✓  载荷转移平衡
+  ✓  动力学直线
+  ✓  横向载荷转移
+  ✓  低μ滑移更大
+  ✓  kingpin τ 单调
+  ✓  减速带 Fz 尖峰
+  ✓  bump-steer 扰动
+  ✓  多体动力学
+  ✓  斜坡减速
+  ✓  插件加载器
+  ✓  FMU 适配器构造
+  ✓  MATLAB 适配器构造
+  ✓  每轮瞬心偏差
+  ✓  扰动 CRUD
+  ✓  Pacejka 侧滑回归
+  ✓  切换无扭矩跳变
+[pre-release] $ /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/bin/python scripts/check_golden_experiments.py  (cwd=.)
+step_steer_60kmh: ok (600 samples)
+iso3888_dlc_60kmh: ok (800 samples)
+oncentre_weave_100kmh: ok (1700 samples)
+sw_straight100_rl_stuck_value_baseline: ok (1600 samples)
+sw_straight100_rl_stuck_value_mitigated: ok (1600 samples)
+sw_curve60_fl_free_caster_baseline: ok (1600 samples)
+[pre-release] $ /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/bin/python scripts/check_reference_benchmarks.py  (cwd=.)
+analytic_steady_circle_30kmh: ok (6 metrics)
+analytic_step_steer_30kmh: ok (9 metrics)
+[pre-release] $ /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/bin/python scripts/check_reference_benchmarks.py --report docs/reports/reference_benchmark_review.md  (cwd=.)
+analytic_steady_circle_30kmh: ok (6 metrics)
+analytic_step_steer_30kmh: ok (9 metrics)
+[pre-release] docs/reports/reference_benchmark_review.md: already up to date
+[pre-release] $ /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/backend/.venv/bin/python scripts/check_v1_readiness.py --report docs/reports/v1_readiness.md  (cwd=.)
+analytic_steady_circle_30kmh: ok (6 metrics)
+analytic_step_steer_30kmh: ok (9 metrics)
+/Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/validation_data/.incoming: no incoming benchmark directory
+README.md: ok (19368 bytes)
+docs/user_manual.html: ok (12459548 bytes)
+docs/manual_figs/00_quickstart.png: ok (306788 bytes)
+docs/manual_figs/01_run_overview.png: ok (340773 bytes)
+docs/manual_figs/02_view3d.png: ok (181395 bytes)
+docs/manual_figs/03_model_panel.png: ok (23700 bytes)
+docs/manual_figs/04_strategy_panel.png: ok (30764 bytes)
+docs/manual_figs/05_drive_panel.png: ok (63119 bytes)
+docs/manual_figs/06_crab_drive.png: ok (97712 bytes)
+docs/manual_figs/07_gp_panel.png: ok (64648 bytes)
+docs/manual_figs/08_gp_frontrear.png: ok (257475 bytes)
+docs/manual_figs/09_gp_perwheel.png: ok (246867 bytes)
+docs/manual_figs/10_gp_holonomic.png: ok (168326 bytes)
+docs/manual_figs/11_scene_page.png: ok (351556 bytes)
+docs/manual_figs/12_disturbance.png: ok (143151 bytes)
+docs/manual_figs/13_fault_panel.png: ok (63205 bytes)
+docs/manual_figs/14_vehicle_page.png: ok (348669 bytes)
+docs/manual_figs/14a_vehicle_diagram.png: ok (74974 bytes)
+docs/manual_figs/14b_kingpin_diagram.png: ok (69813 bytes)
+docs/manual_figs/14c_rack_diagram.png: ok (74552 bytes)
+docs/manual_figs/15_experiment_page.png: ok (310198 bytes)
+docs/manual_figs/16_analysis_kpi.png: ok (399520 bytes)
+docs/manual_figs/17_analysis_charts.png: ok (384861 bytes)
+docs/manual_figs/18_replay.png: ok (362926 bytes)
+docs/manual_figs/19_load_page.png: ok (481195 bytes)
+docs/manual_figs/20_theory_page.png: ok (384963 bytes)
+docs/manual_figs/21_cmdk.png: ok (423017 bytes)
+docs/manual_figs/gif_crab.gif: ok (580930 bytes)
+docs/manual_figs/gif_drive.gif: ok (884245 bytes)
+docs/manual_figs/gif_frontrear.gif: ok (595849 bytes)
+docs/manual_figs/gif_holonomic.gif: ok (945839 bytes)
+docs/manual_figs/gif_perwheel.gif: ok (663553 bytes)
+docs/reports/reference_benchmark_review.md: ok (3118 bytes)
+docs/reports/single_wheel_failure_metrics.json: ok (44906 bytes)
+docs/reports/single_wheel_failure_safety_analysis.html: ok (1025347 bytes)
+scripts/build_manual.py: ok (45474 bytes)
+scripts/build_portable.py: ok (19641 bytes)
+backend/src/sim4wis_mcp/__init__.py: ok (342 bytes)
+backend/src/sim4wis_mcp/server.py: ok (22563 bytes)
+v1 readiness: NOT READY (1 strict blocker(s))
+golden_regression: PASS [strict] - 6 golden cases are recorded, including step steer, ISO 3888 DLC, and single-wheel-failure quick samples.
+validation_matrix: PASS [strict] - 14 capability rows declare levels, evidence, and boundaries.
+reference_reproducibility: PASS [strict] - 2/2 reference benchmarks pass with 15 checked metrics.
+independent_reference: GAP [strict] - no passing external_tool, bench, scaled_vehicle, or full_vehicle benchmark is present.
+incoming_reference_pipeline: PASS [advisory] - No incoming benchmark directories found; intake gate is clear.
+browser_smoke: PASS [strict] - workflow-smoke.spec.ts contains 54 browser smoke cases and package.json exposes e2e:prod.
+report_pipeline: PASS [strict] - single-wheel-failure study has reusable report helpers, metrics JSON, and self-contained HTML output.
+release_delivery: PASS [strict] - 39 delivery material checks pass.
+physical_validation_interface: PASS [advisory] - validation_data protocol reserves source types and channel metadata for scaled/full vehicle evidence.
+[pre-release] docs/reports/v1_readiness.md: REGENERATED (was stale) — commit it before tagging
+[pre-release] $ npm run type-check  (cwd=frontend)
+
+> sim4wis-frontend@0.106.0 type-check
+> tsc --noEmit
+
+[pre-release] $ npm run test  (cwd=frontend)
+
+> sim4wis-frontend@0.106.0 test
+> vitest run
+
+
+ RUN  v2.1.9 /Users/nortepro/Dev/4WIS_Simulator/4WIS Simulator/frontend
+
+ ✓ src/input/focusPolicy.test.ts (14 tests) 1ms
+ ✓ src/vehicle/geometryModel.test.ts (2 tests) 1ms
+ ✓ src/input/steerRamp.test.ts (10 tests) 2ms
+ ✓ src/view/renderPose.test.ts (8 tests) 3ms
+ ✓ src/input/driveIntent.test.ts (19 tests) 4ms
+ ✓ src/components/model/diagrams.test.tsx (1 test) 3ms
+
+ Test Files  6 passed (6)
+      Tests  54 passed (54)
+   Start at  00:34:43
+   Duration  167ms (transform 116ms, setup 0ms, collect 183ms, tests 14ms, environment 0ms, prepare 142ms)
+
+[pre-release] $ npm run build  (cwd=frontend)
+
+> sim4wis-frontend@0.106.0 build
+> tsc -b && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 925 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                         0.64 kB │ gzip:   0.36 kB
+dist/assets/KaTeX_Size3-Regular-CTq5MqoE.woff           4.42 kB
+dist/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2          4.93 kB
+dist/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2          5.21 kB
+dist/assets/KaTeX_Size1-Regular-mCD8mA8B.woff2          5.47 kB
+dist/assets/KaTeX_Size4-Regular-BF-4gkZK.woff           5.98 kB
+dist/assets/KaTeX_Size2-Regular-oD1tc_U0.woff           6.19 kB
+dist/assets/KaTeX_Size1-Regular-C195tn64.woff           6.50 kB
+dist/assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2    6.91 kB
+dist/assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2       6.91 kB
+dist/assets/KaTeX_Size3-Regular-DgpXs0kz.ttf            7.59 kB
+dist/assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff     7.66 kB
+dist/assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff        7.72 kB
+dist/assets/KaTeX_Script-Regular-D3wIWfF6.woff2         9.64 kB
+dist/assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2     10.34 kB
+dist/assets/KaTeX_Size4-Regular-DWFBv043.ttf           10.36 kB
+dist/assets/KaTeX_Script-Regular-D5yQViql.woff         10.59 kB
+dist/assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2       11.32 kB
+dist/assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2          11.35 kB
+dist/assets/KaTeX_Size2-Regular-B7gKUWhC.ttf           11.51 kB
+dist/assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2      12.03 kB
+dist/assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2        12.22 kB
+dist/assets/KaTeX_Size1-Regular-Dbsnue_I.ttf           12.23 kB
+dist/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff      12.32 kB
+dist/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf     12.34 kB
+dist/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf        12.37 kB
+dist/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff        13.21 kB
+dist/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff           13.30 kB
+dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2    13.57 kB
+dist/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff       14.11 kB
+dist/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff         14.41 kB
+dist/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff     16.03 kB
+dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2       16.40 kB
+dist/assets/KaTeX_Math-Italic-t53AETM-.woff2           16.44 kB
+dist/assets/KaTeX_Script-Regular-C5JkGWo-.ttf          16.65 kB
+dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2       16.78 kB
+dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2           16.99 kB
+dist/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff        18.67 kB
+dist/assets/KaTeX_Math-Italic-DA0__PXp.woff            18.75 kB
+dist/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff        19.41 kB
+dist/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf       19.44 kB
+dist/assets/KaTeX_Fraktur-Regular-CB_wures.ttf         19.57 kB
+dist/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf            19.58 kB
+dist/assets/KaTeX_Main-Italic-BMLOBm91.woff            19.68 kB
+dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf        22.36 kB
+dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf          24.50 kB
+dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2             25.32 kB
+dist/assets/KaTeX_Main-Regular-B22Nviop.woff2          26.27 kB
+dist/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf      27.56 kB
+dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2           28.08 kB
+dist/assets/KaTeX_Main-Bold-Jm3AIy58.woff              29.91 kB
+dist/assets/KaTeX_Main-Regular-Dr94JaBh.woff           30.77 kB
+dist/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf         31.20 kB
+dist/assets/KaTeX_Math-Italic-flOr_0UB.ttf             31.31 kB
+dist/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf         32.97 kB
+dist/assets/KaTeX_AMS-Regular-DMm9YOAa.woff            33.52 kB
+dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf             33.58 kB
+dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf               51.34 kB
+dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf            53.58 kB
+dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf             63.63 kB
+dist/assets/Canvas3D-DtarBliu.css                       1.27 kB │ gzip:   0.48 kB
+dist/assets/uPlot-D1GxaB_c.css                          1.65 kB │ gzip:   0.71 kB
+dist/assets/VehicleGeometryStudio-CE2xvvkf.css          3.89 kB │ gzip:   1.21 kB
+dist/assets/WorkflowPage-Bv11oqce.css                   5.47 kB │ gzip:   1.44 kB
+dist/assets/ModelTheoryPage-3KGJWLII.css                6.57 kB │ gzip:   1.79 kB
+dist/assets/LoadAnalysisPage-Fgd2b2-k.css              10.26 kB │ gzip:   2.24 kB
+dist/assets/index-D1w4XBKw.css                         23.44 kB │ gzip:   4.91 kB
+dist/assets/BodyCouplingControl-CgBsCa64.css           35.36 kB │ gzip:   9.66 kB
+dist/assets/styles-sV1eRN7N.js                          0.33 kB │ gzip:   0.24 kB
+dist/assets/ScriptWorkspace-v1mdsiC8.js                 0.86 kB │ gzip:   0.58 kB
+dist/assets/experiments-Dqlqy5PF.js                     1.53 kB │ gzip:   0.70 kB
+dist/assets/ScenarioPanel-CTb1bban.js                   2.16 kB │ gzip:   1.17 kB
+dist/assets/ResultArtifacts-D41BzOil.js                 2.18 kB │ gzip:   1.29 kB
+dist/assets/MeasurePanel-PjCdVruq.js                    2.40 kB │ gzip:   1.34 kB
+dist/assets/ChartPanel-BAPoHL6o.js                      2.42 kB │ gzip:   1.17 kB
+dist/assets/UserPythonPanel-DGR3B4lu.js                 2.51 kB │ gzip:   1.38 kB
+dist/assets/ComparePanel-BhOJNYqE.js                    3.13 kB │ gzip:   1.58 kB
+dist/assets/JsStrategyPanel-BoJf_byT.js                 3.37 kB │ gzip:   1.77 kB
+dist/assets/DisturbancePanel-CvATsCCq.js                3.57 kB │ gzip:   1.87 kB
+dist/assets/ScriptPanel-BI7VJc8x.js                     3.76 kB │ gzip:   1.84 kB
+dist/assets/parameterGroups-F9cSbU9a.js                 3.79 kB │ gzip:   1.95 kB
+dist/assets/RecordingPanel-C5eSSy4o.js                  3.90 kB │ gzip:   1.82 kB
+dist/assets/ScorePanel-CznNB5m_.js                      4.12 kB │ gzip:   1.95 kB
+dist/assets/ExcitationPanel-DQtW_2yC.js                 4.38 kB │ gzip:   2.14 kB
+dist/assets/geometryModel-CISSYnGw.js                   4.39 kB │ gzip:   2.40 kB
+dist/assets/GripPanel-D3stEYDL.js                       4.55 kB │ gzip:   2.14 kB
+dist/assets/uplotFactory-41FGILWJ.js                    4.83 kB │ gzip:   2.11 kB
+dist/assets/TrajectoryPanel-DxawBscr.js                 5.46 kB │ gzip:   2.31 kB
+dist/assets/AgentWorkspace-CgppyzEt.js                  7.36 kB │ gzip:   3.57 kB
+dist/assets/ExperimentPage-Bea6kKFU.js                 11.00 kB │ gzip:   3.87 kB
+dist/assets/FaultPanel-q0hjbgGK.js                     12.89 kB │ gzip:   5.45 kB
+dist/assets/AnalysisPage-BRInz3I4.js                   15.00 kB │ gzip:   6.58 kB
+dist/assets/StrategyDesignerPanel-U4TjY3RW.js          15.75 kB │ gzip:   6.10 kB
+dist/assets/VehicleGeometryStudio-BJV6D1EM.js          22.76 kB │ gzip:   8.64 kB
+dist/assets/Canvas3D-BJP_pfq3.js                       24.18 kB │ gzip:   8.79 kB
+dist/assets/ModelTheoryPage-C491kktA.js                26.24 kB │ gzip:  12.75 kB
+dist/assets/uPlot.min-Bx-lVsPA.js                      52.36 kB │ gzip:  23.33 kB
+dist/assets/LoadAnalysisPage-CLWbvic5.js               56.41 kB │ gzip:  22.56 kB
+dist/assets/BodyCouplingControl-C_XGC8M2.js           269.60 kB │ gzip:  84.29 kB
+dist/assets/vendor-three-react-D1KKu8ij.js            297.04 kB │ gzip:  95.38 kB
+dist/assets/index-66iGj76I.js                         376.04 kB │ gzip: 121.26 kB
+dist/assets/vendor-three-core-3Gc5QSh2.js             666.69 kB │ gzip: 172.44 kB
+✓ built in 1.85s
+[pre-release] $ npm run e2e:prod  (cwd=frontend)
+
+> sim4wis-frontend@0.106.0 e2e:prod
+> playwright test
+
+[WebServer] INFO:     Started server process [18791]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18051 (Press CTRL+C to quit)
+
+Running 58 tests using 1 worker
+
+(node:18795) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] INFO:     127.0.0.1:53264 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   1 [chromium] › tests/e2e/workflow-smoke.spec.ts:80:1 › workflow rail pages render from the production app shell (1.0s)
+[WebServer] INFO:     127.0.0.1:53271 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   2 [chromium] › tests/e2e/workflow-smoke.spec.ts:118:1 › model theory demo failure stays visible without blanking the page (418ms)
+[WebServer] INFO:     127.0.0.1:53279 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   3 [chromium] › tests/e2e/workflow-smoke.spec.ts:145:1 › experiment run can be handed to analysis with chart controls and screenshot evidence (1.8s)
+[WebServer] INFO:     127.0.0.1:53288 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   4 [chromium] › tests/e2e/workflow-smoke.spec.ts:201:1 › analysis data load failure surfaces an error state with screenshot evidence (236ms)
+[WebServer] INFO:     127.0.0.1:53297 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   5 [chromium] › tests/e2e/workflow-smoke.spec.ts:246:1 › analysis run list failure does not masquerade as an empty library (199ms)
+[WebServer] INFO:     127.0.0.1:53307 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   6 [chromium] › tests/e2e/workflow-smoke.spec.ts:263:1 › analysis run delete failure keeps the selected run visible (1.6s)
+[WebServer] INFO:     127.0.0.1:53316 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   7 [chromium] › tests/e2e/workflow-smoke.spec.ts:309:1 › experiment library failure does not masquerade as an empty library (240ms)
+[WebServer] INFO:     127.0.0.1:53321 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   8 [chromium] › tests/e2e/workflow-smoke.spec.ts:332:1 › experiment library write failures keep the editor and library state visible (340ms)
+[WebServer] INFO:     127.0.0.1:53326 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓   9 [chromium] › tests/e2e/workflow-smoke.spec.ts:379:1 › experiment maneuver template failure stays visible without blocking editing (214ms)
+[WebServer] INFO:     127.0.0.1:53331 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  10 [chromium] › tests/e2e/workflow-smoke.spec.ts:402:1 › experiment batch start failure surfaces an error state with screenshot evidence (269ms)
+[WebServer] INFO:     127.0.0.1:53336 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  11 [chromium] › tests/e2e/workflow-smoke.spec.ts:430:1 › run control backend failures stay visible in the control panels (217ms)
+[WebServer] INFO:     127.0.0.1:53341 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  12 [chromium] › tests/e2e/workflow-smoke.spec.ts:471:1 › user python status failure stays visible in the design panel (238ms)
+[WebServer] INFO:     127.0.0.1:53348 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  13 [chromium] › tests/e2e/workflow-smoke.spec.ts:494:1 › user python reload failure keeps the panel usable (299ms)
+[WebServer] INFO:     127.0.0.1:53354 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  14 [chromium] › tests/e2e/workflow-smoke.spec.ts:529:1 › vehicle geometry drag updates the shared parameter edit buffer (261ms)
+[WebServer] INFO:     127.0.0.1:53362 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  15 [chromium] › tests/e2e/workflow-smoke.spec.ts:547:1 › vehicle parameter rejection keeps edits visible with screenshot evidence (287ms)
+[WebServer] INFO:     127.0.0.1:53373 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  16 [chromium] › tests/e2e/workflow-smoke.spec.ts:580:1 › vehicle project list failure is visible and disables loading (230ms)
+[WebServer] INFO:     127.0.0.1:53380 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  17 [chromium] › tests/e2e/workflow-smoke.spec.ts:603:1 › vehicle project load failure stays local to the project panel (263ms)
+[WebServer] INFO:     127.0.0.1:53387 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  18 [chromium] › tests/e2e/workflow-smoke.spec.ts:638:1 › vehicle project save failure keeps the save form recoverable (281ms)
+[WebServer] INFO:     127.0.0.1:53412 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  19 [chromium] › tests/e2e/workflow-smoke.spec.ts:670:1 › load analysis charts expose deeper explanation state with screenshot evidence (556ms)
+[WebServer] INFO:     127.0.0.1:53419 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  20 [chromium] › tests/e2e/workflow-smoke.spec.ts:689:1 › load analysis sweep failure surfaces an error and keeps controls usable (289ms)
+[WebServer] INFO:     127.0.0.1:53427 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  21 [chromium] › tests/e2e/workflow-smoke.spec.ts:724:1 › load analysis profile list failure surfaces an error without blanking the page (537ms)
+[WebServer] INFO:     127.0.0.1:53438 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  22 [chromium] › tests/e2e/workflow-smoke.spec.ts:750:1 › load analysis params failure leaves a visible empty state (246ms)
+[WebServer] INFO:     127.0.0.1:53445 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  23 [chromium] › tests/e2e/workflow-smoke.spec.ts:777:1 › load analysis profile action failures stay visible without blocking the toolbar (738ms)
+[WebServer] INFO:     127.0.0.1:53453 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  24 [chromium] › tests/e2e/workflow-smoke.spec.ts:836:1 › load analysis sensitivity failure surfaces a toast without blanking load charts (513ms)
+[WebServer] INFO:     127.0.0.1:53461 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  25 [chromium] › tests/e2e/workflow-smoke.spec.ts:865:1 › scenario path workflow generates, follows, and clears a reference path (370ms)
+[WebServer] INFO:     127.0.0.1:53467 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  26 [chromium] › tests/e2e/workflow-smoke.spec.ts:887:1 › maneuver parameters reach the backend and the laid-out geometry is echoed back (307ms)
+[WebServer] INFO:     127.0.0.1:53474 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+[WebServer] INFO:     127.0.0.1:53478 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  27 [chromium] › tests/e2e/workflow-smoke.spec.ts:914:1 › 3D camera modes switch and the roof rig persists its settings (1.4s)
+[WebServer] INFO:     127.0.0.1:53484 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  28 [chromium] › tests/e2e/workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves (7.1s)
+[WebServer] INFO:     127.0.0.1:53526 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  29 [chromium] › tests/e2e/workflow-smoke.spec.ts:1034:1 › path version refresh failure surfaces a toast without blocking scenario tools (300ms)
+[WebServer] INFO:     127.0.0.1:53532 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  30 [chromium] › tests/e2e/workflow-smoke.spec.ts:1068:1 › path template failure stays visible in the trajectory panel (237ms)
+[WebServer] INFO:     127.0.0.1:53538 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  31 [chromium] › tests/e2e/workflow-smoke.spec.ts:1092:1 › scenario list failure stays visible in the scenario panel (239ms)
+[WebServer] INFO:     127.0.0.1:53545 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  32 [chromium] › tests/e2e/workflow-smoke.spec.ts:1115:1 › scenario load and clear failures keep the scenario panel recoverable (388ms)
+[WebServer] INFO:     127.0.0.1:53551 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  33 [chromium] › tests/e2e/workflow-smoke.spec.ts:1166:1 › scenario version refresh failure surfaces a toast without blocking scenario tools (296ms)
+[WebServer] INFO:     127.0.0.1:53557 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  34 [chromium] › tests/e2e/workflow-smoke.spec.ts:1198:1 › scenario disturbance editor places, edits, and clears a road disturbance (400ms)
+[WebServer] INFO:     127.0.0.1:53570 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  35 [chromium] › tests/e2e/workflow-smoke.spec.ts:1236:1 › disturbance action failures keep existing disturbance state visible (414ms)
+[WebServer] INFO:     127.0.0.1:53577 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  36 [chromium] › tests/e2e/workflow-smoke.spec.ts:1312:1 › disturbance canvas placement and drag failures surface toasts (422ms)
+[WebServer] INFO:     127.0.0.1:53583 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  37 [chromium] › tests/e2e/workflow-smoke.spec.ts:1397:1 › scenario fault injection panel adds, toggles, and clears faults (488ms)
+[WebServer] INFO:     127.0.0.1:53589 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  38 [chromium] › tests/e2e/workflow-smoke.spec.ts:1431:1 › fault list failure does not masquerade as an empty fault configuration (270ms)
+[WebServer] INFO:     127.0.0.1:53595 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  39 [chromium] › tests/e2e/workflow-smoke.spec.ts:1453:1 › fault action failures keep configured faults visible (443ms)
+[WebServer] INFO:     127.0.0.1:53601 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  40 [chromium] › tests/e2e/workflow-smoke.spec.ts:1538:1 › script library workflow loads, starts, lays out markers, and stops a fixed script (1.2s)
+[WebServer] INFO:     127.0.0.1:53609 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  41 [chromium] › tests/e2e/workflow-smoke.spec.ts:1572:1 › script parse failure stays visible in the script panel (271ms)
+[WebServer] INFO:     127.0.0.1:53616 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  42 [chromium] › tests/e2e/workflow-smoke.spec.ts:1591:1 › script start and stop failures keep script controls recoverable (750ms)
+[WebServer] INFO:     127.0.0.1:53623 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  43 [chromium] › tests/e2e/workflow-smoke.spec.ts:1648:1 › script library failure does not masquerade as an empty script library (277ms)
+[WebServer] INFO:     127.0.0.1:53630 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  44 [chromium] › tests/e2e/workflow-smoke.spec.ts:1670:1 › script status failure stays visible without blocking script editing (255ms)
+[WebServer] INFO:     127.0.0.1:53637 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  45 [chromium] › tests/e2e/workflow-smoke.spec.ts:1694:1 › recording panel records samples and exports csv (2.3s)
+[WebServer] INFO:     127.0.0.1:53668 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  46 [chromium] › tests/e2e/workflow-smoke.spec.ts:1726:1 › recording export failure stays visible in the recording panel (2.2s)
+[WebServer] INFO:     127.0.0.1:53675 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  47 [chromium] › tests/e2e/workflow-smoke.spec.ts:1757:1 › recording status failure stays visible without disabling controls (253ms)
+[WebServer] INFO:     127.0.0.1:53682 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  48 [chromium] › tests/e2e/workflow-smoke.spec.ts:1781:1 › recording start and stop failures keep recording controls recoverable (2.3s)
+[WebServer] INFO:     127.0.0.1:53690 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  49 [chromium] › tests/e2e/workflow-smoke.spec.ts:1831:1 › analysis replay controls scrub selected run data (1.6s)
+[WebServer] INFO:     127.0.0.1:53701 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  50 [chromium] › tests/e2e/workflow-smoke.spec.ts:1856:1 › analysis replay metadata failure keeps replay usable with a visible fallback (1.6s)
+[WebServer] INFO:     127.0.0.1:53711 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  51 [chromium] › tests/e2e/workflow-smoke.spec.ts:1895:1 › command palette filters and navigates workflow pages from the keyboard (161ms)
+[WebServer] INFO:     127.0.0.1:53719 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  52 [chromium] › tests/e2e/workflow-smoke.spec.ts:1914:1 › command palette model switch failure surfaces a toast and closes cleanly (152ms)
+[WebServer] INFO:     127.0.0.1:53724 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  53 [chromium] › tests/e2e/workflow-smoke.spec.ts:1942:1 › gamepad mapping panel edits persist without a physical controller (226ms)
+[WebServer] INFO:     127.0.0.1:53729 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+[WebServer] INFO:     127.0.0.1:53750 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  54 [chromium] › tests/e2e/workflow-smoke.spec.ts:1975:1 › visual baselines pin the analysis chart, 3D roof view, and geometry studio (2.5s)
+[WebServer] INFO:     127.0.0.1:53757 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  55 [chromium] › tests/e2e/zz-interaction.spec.ts:13:1 › manual input releases on navigation, editing, blur and explicit stop (977ms)
+[WebServer] INFO:     127.0.0.1:53770 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  56 [chromium] › tests/e2e/zz-interaction.spec.ts:43:1 › script follows simulation clock, pauses with it and saves a full recording (835ms)
+[WebServer] INFO:     127.0.0.1:53775 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  57 [chromium] › tests/e2e/zz-interaction.spec.ts:79:1 › Agent uncertain response retries once and full artifacts reach analysis on desktop and narrow screens (985ms)
+[WebServer] INFO:     127.0.0.1:53784 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+[WebServer] INFO:     127.0.0.1:53786 - "WebSocket /ws/state" [accepted]
+[WebServer] INFO:     connection open
+[WebServer] INFO:     connection closed
+  ✓  58 [chromium] › tests/e2e/zz-multipoint.spec.ts:3:1 › multipoint UI preserves parameters and executes simultaneous and staggered timelines (1.0s)
+
+  58 passed (45.4s)
+[pre-release] README status block REGENERATED — commit it before tagging
+[pre-release] 2 generated report(s) rewritten — commit them before tagging
+[pre-release] all checks passed

@@ -63,7 +63,7 @@ def _entry(prefix: str, rel: str) -> str:
     return f"{prefix}/{rel}"
 
 
-def _static_checks(target: str, version: str) -> list[Check]:
+def _static_checks(target: str, version: str, require_native: bool = False) -> list[Check]:
     path = archive_path(version, target)
     checks: list[Check] = []
     if not path.is_file():
@@ -155,6 +155,23 @@ def _static_checks(target: str, version: str) -> list[Check]:
                      or _sha256(archive.read(_entry(prefix, "app/src/" + p.relative_to(ROOT / "backend/src").as_posix()))) != _sha256(p.read_bytes())]
             checks.append(Check(target, "all backend source hashes", not stale, str(stale) if stale else f"{len(sources)} Python files match"))
 
+            marker = _entry(prefix, "native-core.json")
+            if require_native or marker in names:
+                native_ok = False
+                try:
+                    native = json.loads(archive.read(marker))
+                    binary = archive.read(_entry(prefix, native["extension"]))
+                    digest = _sha256(b"".join((ROOT / "backend" / p).read_bytes() for p in
+                        ("native/core.hpp", "native/module.cpp", "src/sim4wis/native.py")))
+                    native_ok = (native["native_source_sha256"] == digest and
+                        native["extension_sha256"] == _sha256(binary) and
+                        native["target"] == target and native["version"] == version and
+                        digest.encode() in binary)
+                except (KeyError, ValueError):
+                    pass
+                checks.append(Check(target, "native core source and binary provenance", native_ok,
+                    "matching version/platform/source and binary SHA-256" if native_ok else "missing or mismatched native core"))
+
             version_entry = _entry(prefix, "app/src/sim4wis/__init__.py")
             has_version = version_entry in names and f'__version__ = "{version}"'.encode() in archive.read(version_entry)
             checks.append(Check(target, "package version", has_version,
@@ -234,7 +251,7 @@ def _extract_with_archive_modes(archive: zipfile.ZipFile, dest: Path) -> None:
             (dest / info.filename).chmod(mode)
 
 
-def _native_smoke(target: str, version: str) -> list[Check]:
+def _native_smoke(target: str, version: str, require_native: bool = False) -> list[Check]:
     native = _native_target()
     if native != target:
         return [Check(target, "native smoke", None,
@@ -259,6 +276,23 @@ def _native_smoke(target: str, version: str) -> list[Check]:
             python_paths.extend((str(vendor / "win32"), str(vendor / "win32" / "lib"),
                                  str(vendor / "pywin32_system32")))
         env["PYTHONPATH"] = os.pathsep.join(python_paths)
+        if require_native:
+            env["SIM4WIS_ENGINE"] = "native"
+            # Both models must actually execute using the loaded library from
+            # this freshly extracted archive, never the development checkout.
+            probe = subprocess.run([str(python), "-c", "\n".join([
+                "import json",
+                "from sim4wis.experiment.schema import Experiment",
+                "from sim4wis.experiment.session import run_experiment",
+                "from sim4wis.native import engine_info",
+                "for model in ('simplified_dynamic','multibody'):",
+                " exp=Experiment.model_validate({'name':'native_package_probe','model_type':model,'maneuver':{'steps':[{'duration':.1,'speed_kmh':10}]}})",
+                " run=run_experiment(exp)",
+                " assert run.meta['engine']['body_core']=='cpp17',run.meta",
+                "print(json.dumps(engine_info()))",
+            ])], cwd=pkg, env=env, text=True, capture_output=True, timeout=45)
+            checks.append(Check(target, "embedded C++ integration both models", probe.returncode == 0,
+                                (probe.stdout+probe.stderr)[-1500:]))
 
         imports = subprocess.run(
             [str(python), "-c", "import sim4wis, sim4wis_mcp; from sim4wis.main import create_app; assert create_app(); print(sim4wis.__version__)"],
@@ -327,10 +361,13 @@ def _native_smoke(target: str, version: str) -> list[Check]:
                                 f"v{version}" if version_ok else body.decode("utf-8", "replace")[:500]))
             status, body = _http_json(f"http://127.0.0.1:{port}/api/agent/capabilities")
             agent_ok = status == 200 and json.loads(body).get("contract") == "4wis.agent.v1"
+            if require_native:
+                agent_ok = agent_ok and json.loads(body)["engine"]["native_available"]
             checks.append(Check(target, "embedded Agent API", agent_ok,
                                 "4wis.agent.v1" if agent_ok else body.decode("utf-8", "replace")[:500]))
             fault_smoke = subprocess.run(
-                [str(python), str(pkg / "scripts/portable_fault_smoke.py"), "--base", f"http://127.0.0.1:{port}"],
+                [str(python), str(pkg / "scripts/portable_fault_smoke.py"), "--base", f"http://127.0.0.1:{port}"] +
+                (["--require-native-core"] if require_native else []),
                 cwd=pkg, env=env, text=True, capture_output=True, timeout=90)
             checks.append(Check(target, "packaged MCP multipoint E2E", fault_smoke.returncode == 0,
                 (fault_smoke.stdout + fault_smoke.stderr)[-2000:]))
@@ -355,17 +392,18 @@ def main() -> int:
     parser.add_argument("--native-smoke", action="store_true",
                         help="extract and start the archive when this host matches the target")
     parser.add_argument("--json", action="store_true", help="also print a machine-readable result array")
+    parser.add_argument("--require-native-core", action="store_true", help="require compiled core provenance and actual native simulation")
     args = parser.parse_args()
 
     version = read_version()
     checks: list[Check] = []
     for target in args.targets:
-        target_checks = _static_checks(target, version)
+        target_checks = _static_checks(target, version, args.require_native_core)
         checks.extend(target_checks)
         # Do not extract an archive until its names and CRC have passed the
         # static safety checks above.
         if args.native_smoke and all(check.ok for check in target_checks):
-            checks.extend(_native_smoke(target, version))
+            checks.extend(_native_smoke(target, version, args.require_native_core))
 
     for check in checks:
         state = "PENDING" if check.ok is None else "PASS" if check.ok else "FAIL"

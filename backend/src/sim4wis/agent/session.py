@@ -147,8 +147,10 @@ class AgentSession:
         return clean(self._observe())
 
     def _observe(self):
+        from sim4wis.native import engine_info
         s = self.sim.model.state
         return {"contract": CONTRACT, "session_id": self.id, "label": self.config.label,
+                "engine": engine_info(self.sim.model),
                 "status": self.status, "revision": self.revision, "steps": self.n_steps,
                 "samples": len(self.t), "dt": self.config.experiment.dt,
                 "remaining_steps": MAX_STEPS - self.n_steps, "error": self.error,
@@ -246,8 +248,10 @@ class AgentSession:
             return response
 
     def result(self):
+        from sim4wis.native import engine_info
         return RunResult(self.t, self.channels, self.n_steps * self.config.experiment.dt, self.n_steps,
                          {"experiment": self.config.experiment.model_dump(mode="json"),
+                          "engine": engine_info(self.sim.model),
                           "source": "agent", "contract": CONTRACT, "session_id": self.id,
                           "resolved_vehicle": asdict(self.sim.params),
                           "config_sha256": hashlib.sha256(self.config.model_dump_json().encode()).hexdigest(),

@@ -1,0 +1,71 @@
+name: Native core Windows verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-native:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      SIM4WIS_ENGINE: native
+      PW_PYTHON_EXECUTABLE: python
+      PW_E2E_PORT: "18051"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build and verify native backend
+        run: |
+          python -m pip install -e "./backend[dev]"
+          python -m pytest backend/tests -n 4 -q --junitxml=windows-native-tests.xml
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build and test frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run type-check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run test -- --run
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npx playwright install chromium
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npx playwright test --reporter=list
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Repeated whole-experiment benchmark
+        run: python scripts/benchmark_native_core.py --repeat 5 --duration 14 --output docs/reports/native_v0.106.0/benchmark-windows.json
+      - name: Build wheel and self-contained native archive
+        run: |
+          python -m pip wheel ./backend --no-deps -w dist_portable/wheels
+          $nativeWheel = (Get-ChildItem dist_portable/wheels/sim4wis-*-cp312-cp312-win_amd64.whl | Select-Object -First 1).FullName
+          python scripts/build_portable.py --targets windows-x64 --native-wheel $nativeWheel
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/check_portable_package.py --targets windows-x64 --native-smoke --require-native-core --json | Tee-Object -FilePath windows-native-package.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git rev-parse HEAD | Out-File -FilePath windows-native-commit.txt
+      - name: Retain native artifacts and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-cpp-core-preview
+          path: |
+            dist_portable/4WIS_Simulator_v*_windows-x64.zip
+            dist_portable/wheels/*.whl
+            docs/reports/native_v0.106.0/benchmark-windows.json
+            windows-native-tests.xml
+            windows-native-package.log
+            windows-native-commit.txt
+            frontend/test-results/
+          retention-days: 30

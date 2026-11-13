@@ -841,6 +841,14 @@ def semi_implicit_wheel_spin(
     tb = (np.zeros(N_WHEELS) if brake_torque is None
           else np.asarray(brake_torque, dtype=np.float64).reshape(N_WHEELS))
 
+    from sim4wis.native import wheel_spin
+    native = wheel_spin(tire, dt, r, iw, min_longitudinal_speed,
+                        omega, vxw, al, fz_arr, mu_arr, tq, tb)
+    if native is not None:
+        return native[:, 0].copy(), WheelForceSet(
+            fx=native[:, 1].copy(), fy=native[:, 2].copy(), mz=native[:, 3].copy(),
+            frame="wheel"), native[:, 4].copy()
+
     omega_new = np.empty(N_WHEELS)
     fx_new = np.empty(N_WHEELS)
     fy_new = np.empty(N_WHEELS)

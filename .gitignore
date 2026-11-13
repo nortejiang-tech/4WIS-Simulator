@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.pyd
+backend/build/
 .Python
 .venv/
 venv/

@@ -209,6 +209,7 @@ class SimSession:
             if progress is not None:
                 progress(min(elapsed / total, 1.0))
 
+        from sim4wis.native import engine_info
         return RunResult(
             t=t_out,
             channels=chans,
@@ -219,6 +220,7 @@ class SimSession:
                 "record_hz": exp.record_hz,
                 "n_samples": len(t_out),
                 "fault_timeline": self.fault_injector.status(),
+                "engine": engine_info(self.model),
             },
         )
 

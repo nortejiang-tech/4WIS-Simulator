@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import hashlib
 import json
 import os
 import shutil
@@ -30,6 +31,7 @@ import subprocess
 import sys
 import tarfile
 import urllib.request
+import zipfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -207,7 +209,7 @@ def copy_app_and_data(pkg: Path) -> None:
         shutil.copytree(
             src,
             app_src / package,
-            ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.egg-info"),
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.egg-info", "*.so", "*.pyd"),
         )
     # frontend dist
     app_dist = pkg / "app" / "dist"
@@ -247,10 +249,15 @@ def copy_app_and_data(pkg: Path) -> None:
     if report_src.is_dir():
         shutil.copytree(report_src, pkg / "docs" / "reports" / f"multipoint_v{VERSION}", dirs_exist_ok=True)
 
+    native_report = REPO / "docs/reports/native_v0.106.0"
+    if native_report.is_dir():
+        shutil.copytree(native_report, pkg / "docs/reports/native_v0.106.0", dirs_exist_ok=True)
+
     # User-facing release material belongs in the archive too.  The detailed
     # changelog is versioned with the package rather than inferred from HEAD.
     for rel in (
         "docs/user_manual.html",
+        "docs/native_core.md",
         "docs/interaction_guide.md",
         "docs/multipoint_faults.md",
         "docs/agent_interface_design.md",
@@ -368,7 +375,45 @@ def write_launcher_and_readme(pkg: Path, kind: str) -> None:
     (pkg / "使用说明.txt").write_text(README, encoding="utf-8")
 
 
-def build(target: str, update: bool) -> Path:
+def install_native_wheel(pkg: Path, target: str, wheel: Path) -> None:
+    """Copy only the audited native extension from an exact CPython 3.12 wheel.
+
+    Python sources come from this checkout. Never copy a host binary into an
+    archive for another platform, or accept a wheel built from stale core code.
+    """
+    with zipfile.ZipFile(wheel) as z:
+        metadata = next(n for n in z.namelist() if n.endswith(".dist-info/METADATA"))
+        tags = next(n for n in z.namelist() if n.endswith(".dist-info/WHEEL"))
+        if f"Version: {VERSION}\n" not in z.read(metadata).decode():
+            raise ValueError("native wheel version does not match checkout")
+        lines = z.read(tags).decode().splitlines()
+        prefix = "Tag: cp312-cp312-"
+        platforms = [line[len(prefix):] for line in lines if line.startswith(prefix)]
+        valid = any(p == "win_amd64" if target == "windows-x64" else
+                    p.startswith("macosx_") and p.endswith("_arm64") for p in platforms)
+        if not valid:
+            raise ValueError("native wheel must match target architecture and CPython 3.12 ABI")
+        suffix = ".pyd" if target == "windows-x64" else ".so"
+        members = [n for n in z.namelist() if n.startswith("sim4wis/_native.") and
+                   n.endswith(suffix) and len(Path(n).parts) == 2]
+        if len(members) != 1:
+            raise ValueError("wheel must contain exactly one native numerical extension")
+        name = members[0]
+        data = z.read(name)
+        source_hash = hashlib.sha256(b"".join((REPO / "backend" / p).read_bytes() for p in
+            ("native/core.hpp", "native/module.cpp", "src/sim4wis/native.py"))).hexdigest()
+        if source_hash.encode() not in data:
+            raise ValueError("native wheel was built from different numerical sources")
+        (pkg / "app/src" / name).write_bytes(data)
+        manifest = {"engine": "cpp17", "abi": 1, "target": target, "version": VERSION,
+                    "wheel": wheel.name, "wheel_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(),
+                    "native_source_sha256": source_hash,
+                    "extension_sha256": hashlib.sha256(data).hexdigest(),
+                    "extension": "app/src/"+name}
+        (pkg / "native-core.json").write_text(json.dumps(manifest, indent=2)+"\n", encoding="utf-8")
+
+
+def build(target: str, update: bool, native_wheel: Path | None = None) -> Path:
     spec = TARGETS[target]
     pkg = OUT_ROOT / f"4WIS_Simulator_{target}"
     pkg.mkdir(parents=True, exist_ok=True)
@@ -391,6 +436,11 @@ def build(target: str, update: bool) -> Path:
 
     log(f"copying app + data for {target}")
     copy_app_and_data(pkg)
+    manifest = pkg / "native-core.json"
+    if manifest.exists():
+        manifest.unlink()
+    if native_wheel is not None:
+        install_native_wheel(pkg, target, native_wheel)
     write_launcher_and_readme(pkg, spec["launcher"])
 
     # Keep the on-disk dir name stable (so --update reuses runtime/vendor),
@@ -409,13 +459,17 @@ def main() -> None:
                     choices=list(TARGETS))
     ap.add_argument("--update", action="store_true",
                     help="only re-sync app + data folders (skip runtime/vendor download)")
+    ap.add_argument("--native-wheel", type=Path,
+                    help="matching CPython 3.12 native wheel (exactly one --targets entry)")
     args = ap.parse_args()
+    if args.native_wheel and len(args.targets) != 1:
+        ap.error("--native-wheel requires exactly one target")
 
     if not (FRONTEND_DIST / "index.html").is_file():
         sys.exit("frontend not built — run `cd frontend && npm run build` first")
 
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
-    zips = [build(t, args.update) for t in args.targets]
+    zips = [build(t, args.update, args.native_wheel) for t in args.targets]
     print("\n".join(str(z) for z in zips))
 
 

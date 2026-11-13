@@ -1,0 +1,16 @@
+{
+  "task": "native simulation core",
+  "date": "2026-11-14",
+  "branch": "codex/native-simulation-core",
+  "baseline": "a1a4d40c91ca21f5a8f77fcd95ff55770f1f6784",
+  "calls": [],
+  "call_count": 0,
+  "reason": "High-risk physical/numerical migration and native ABI/precision/packaging acceptance owned by Planner; no local Coder phase assigned.",
+  "evo_generated_tokens": 0,
+  "verified_cloud_tokens_saved": 0,
+  "planner_generated_tokens": "unavailable",
+  "supervisor_pass_rate": {"numerator": 0, "denominator": 0, "value": null},
+  "first_independent_acceptance_rate": {"numerator": 0, "denominator": 0, "value": null},
+  "useful_output_acceptance_rate": {"numerator": 0, "denominator": 0, "value": null},
+  "evaluation": "Not applicable: no calls; no inference about local model quality."
+}

@@ -9,7 +9,7 @@ import urllib.request
 from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
-async def smoke(base):
+async def smoke(base, require_native=False):
     # The SDK's safe default child environment omits PYTHONPATH. A portable
     # install deliberately uses bundled sources/vendor rather than site-packages.
     package_env={key:os.environ[key] for key in ('PYTHONPATH','SIM4WIS_DATA_DIR') if key in os.environ}
@@ -37,6 +37,8 @@ async def smoke(base):
                 result=await call('step_session',{'session_id':sid,'request_id':'run','expected_revision':1,
                     'steps':24,'control':{'front_angle_rad':.1,'speed_target_ms':5}})
                 assert result['status']=='ready' and result['steps']==24
+                if require_native:
+                    assert result['engine']['body_core']=='cpp17',result['engine']
                 events=result['fault_timeline']['events']
                 starts=[e['time'] for e in events if e['event']=='activated']
                 assert len(starts)==4 and all(abs(a-b)<1e-9 for a,b in zip(starts,[.023,.023,.037,.047]))
@@ -50,4 +52,6 @@ async def smoke(base):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--base',required=True)
-    asyncio.run(smoke(parser.parse_args().base))
+    parser.add_argument('--require-native-core',action='store_true')
+    args=parser.parse_args()
+    asyncio.run(smoke(args.base,args.require_native_core))

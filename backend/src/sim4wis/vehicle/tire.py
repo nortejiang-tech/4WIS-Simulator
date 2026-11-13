@@ -317,3 +317,9 @@ def make_tire(params: object) -> TireModel:
             ey=getattr(params, "tire_ey", -1.0),
         )
     return LinearTireModel(**kw)
+
+
+# Capture built-ins at definition time, before a plugin can patch class methods.
+# The optional native adapter must not replace a subsequently customized law.
+_BUILTIN_FORCE_METHODS = {cls: cls.forces for cls in (LinearTireModel, PacejkaTireModel)}
+_BUILTIN_STIFFNESS_METHODS = {cls: cls.c_alpha_eff for cls in _BUILTIN_FORCE_METHODS}

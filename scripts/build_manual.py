@@ -440,7 +440,7 @@ def _gif(name: str, caption: str = "") -> str:
     return f"<figure class='gif'><img src='data:image/gif;base64,{b64}' loading='lazy'/>{cap}</figure>"
 
 
-def build_html() -> None:
+def build_html(reused_capture: bool = False) -> None:
     img = _img
     gif = _gif
     html = f"""<!DOCTYPE html>
@@ -473,7 +473,7 @@ def build_html() -> None:
 
 <h1>4WIS Simulator 使用说明书 <span style="font-size:15px;color:#718096">v{VER} · 图文版</span></h1>
 <p class="meta">四轮独立转向（4WIS）仿真平台 —— 人工驾驶 · 脚本工况 · Agent 标准接口 · 批量实验 · 结果分析 · 负载选型 · 功能安全研究。
-本说明书全部截图由 <code>python scripts/build_manual.py</code> 从当前版本实跑生成。</p>
+本说明书截图由 <code>python scripts/build_manual.py</code> 实跑生成。{'本次沿用既有界面截图；原生内核验收及性能证据见随包 native_core.md 和验收报告。' if reused_capture else '本次已重新采集界面截图。'}</p>
 
 <div class="toc"><b>目录</b><br>
 <a href="#s1">1 安装启动</a> ·
@@ -731,7 +731,9 @@ HOTAS 等非标准轴序设备靠这个即插即用。</li>
 <tr><td>v0.100.0</td><td>研究报告流水线：单轮失效安全分析、解耦价值研究、后轮转角范围研究自包含 HTML</td></tr>
 <tr><td>v0.101.0–0.101.1</td><td>K&C 表驱动悬架特性；显示可读性与 3D 运动重建（航位推算去拍频）</td></tr>
 <tr><td>v0.103.0</td><td>转向控制层主线收尾：柔度三臂、调参工作台五通道、超包线定量研究、规格/选型闭环和研究交接</td></tr>
-<tr><td>v{VER}</td><td>物理数学与底盘动力学审查修订（质心力矩、轮胎接触、几何/齿条虚功、状态复位与步进）；三种交互路径与隔离 Agent 会话；完整图形、全量数据和图表工件；Mac/Windows 便携包含 MCP Agent 入口</td></tr>
+<tr><td>v0.104.0</td><td>物理数学与底盘动力学审查修订（质心力矩、轮胎接触、几何/齿条虚功、状态复位与步进）；三种交互路径与隔离 Agent 会话；完整图形、全量数据和图表工件；Mac/Windows 便携包含 MCP Agent 入口</td></tr>
+<tr><td>v0.105.0</td><td>多点同时/错时/恢复故障，共用仿真时间线与 MCP 原子设置，动力学内部步长 1.25 ms</td></tr>
+<tr><td>v0.106.0 预览</td><td>C++17 仿真计算内核；保留 Python 参照、界面和 MCP；提供明确内核状态、数值对照与重复性能测试</td></tr>
 </table>
 <p class="meta">完整变更见仓库 CHANGELOG.md · 本说明书由 scripts/build_manual.py 自动生成于 v{VER}</p>
 </body></html>"""
@@ -750,7 +752,7 @@ def main() -> None:
         n = sum(ok.values())
         print(f"  截图 {n}/{len(ok)} 成功")
     print("§2 组装 HTML …")
-    build_html()
+    build_html(reused_capture=args.skip_capture)
 
 
 if __name__ == "__main__":

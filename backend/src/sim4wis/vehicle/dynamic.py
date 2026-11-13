@@ -246,17 +246,26 @@ class SimplifiedDynamicModel(VehicleModel):
                 yv, wheel_omega_held, s.delta, wheel_mus, fz_offset, grade_long, env
             )
 
-        h = dt
-        k1 = f(y0)
-        k2 = f(y0 + h * 0.5 * k1)
-        k3 = f(y0 + h * 0.5 * k2)
-        k4 = f(y0 + h * k3)
-        y1 = y0 + (h / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+        from sim4wis.native import integrate
+        native = integrate(
+            self, 0, y0, dt, s.delta, wheel_mus, ground_z, fz_offset=fz_offset,
+            hooks_original=(type(self) is SimplifiedDynamicModel and
+                getattr(self._derivatives, "__func__", None) is _PY_DERIVATIVES),
+        )
+        if native is None:
+            h = dt
+            k1 = f(y0)
+            k2 = f(y0 + h * 0.5 * k1)
+            k3 = f(y0 + h * 0.5 * k2)
+            k4 = f(y0 + h * k3)
+            y1 = y0 + (h / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+            accepted_derivative = f(y1)
+        else:
+            y1, accepted_derivative = native
 
         # Inertial CG acceleration in body axes (grade gravity included).
         # Taken from the RK4 slope at the accepted state rather than from a
         # finite difference of vx/vy, so it stays clean at 200 Hz.
-        accepted_derivative = f(y1)
         s.ax, s.ay = cg_acceleration(p, *y1, accepted_derivative)
 
         s.vx = float(y1[0])
@@ -522,3 +531,6 @@ class SimplifiedDynamicModel(VehicleModel):
 
         # Pure RHS: repeated evaluation at one state must give the same result.
         return planar_derivatives(p, vx, vy, omega, fx_total, fy_total, m_z_total)
+
+
+_PY_DERIVATIVES = SimplifiedDynamicModel._derivatives

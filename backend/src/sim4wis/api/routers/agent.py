@@ -23,7 +23,9 @@ def _call(fn, *args):
 def capabilities():
     from sim4wis.core.telemetry import AVAILABLE_CHANNELS
     from sim4wis.experiment.artifacts import channel_unit
+    from sim4wis.native import engine_info
     return {"contract": CONTRACT, "execution": "isolated fixed-step; GUI input never changes an Agent session",
+            "engine": engine_info(),
             "models": ["kinematic", "simplified_dynamic", "multibody"], "strategies": sorted(STRATEGIES),
             "limits": {"max_steps_per_request": 1000, "max_steps_per_session": MAX_STEPS,
                        "max_internal_dynamics_dt_s": 0.00125, "max_sessions": MAX_SESSIONS, "idle_ttl_s": TTL_S, "max_preview_points": 1000},

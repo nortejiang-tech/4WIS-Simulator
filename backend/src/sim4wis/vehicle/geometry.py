@@ -222,6 +222,10 @@ def steering_linkage_metrics(
         rack_travel_derivative: signed ds/d(delta) [m/rad], from the constraint
         valid: whether this wheel angle is reachable with the given rack stroke
     """
+    from sim4wis.native import linkage
+    native = linkage(delta, geometry, rack_mech_efficiency, steering_arm_length_fallback)
+    if native is not None:
+        return native
     d = np.asarray(delta, dtype=np.float64).reshape(4)
     arm_tie = np.zeros(4)
     tie_rack = np.zeros(4)
