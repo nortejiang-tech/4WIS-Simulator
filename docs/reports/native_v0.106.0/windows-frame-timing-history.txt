@@ -1,13 +1,13 @@
 Historical FAIL — run 43485693370; source d83a724; do not treat the final PASS as root-cause isolation.
-windows-native	Build and test frontend	2026-11-13T19:10:18.7765495Z   1) [chromium] › tests\e2e\workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves 
-windows-native	Build and test frontend	2026-11-13T19:10:18.7766520Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7765495Z   1) [chromium] › tests\e2e\workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves
+windows-native	Build and test frontend	2026-11-13T19:10:18.7766520Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7767052Z     Error: frame intervals carry a periodic beat (worst |ac| = 0.559)
-windows-native	Build and test frontend	2026-11-13T19:10:18.7767631Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7767631Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7767873Z     expect(received).toBeLessThan(expected)
-windows-native	Build and test frontend	2026-11-13T19:10:18.7768501Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7768501Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7768942Z     Expected: < 0.35
 windows-native	Build and test frontend	2026-11-13T19:10:18.7769558Z     Received:   0.5585515959807938
-windows-native	Build and test frontend	2026-11-13T19:10:18.7769890Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7769890Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7770626Z       1031 |     viewport: { width: 960, height: 540 }, samples: deltas.length, medianMs: median, worstAutocorrelation: worst,
 windows-native	Build and test frontend	2026-11-13T19:10:18.7771579Z       1032 |   }, null, 2), contentType: "application/json" });
 windows-native	Build and test frontend	2026-11-13T19:10:18.7772325Z     > 1033 |   expect(worst, `frame intervals carry a periodic beat (worst |ac| = ${worst.toFixed(3)})`).toBeLessThan(0.35);
@@ -16,18 +16,18 @@ windows-native	Build and test frontend	2026-11-13T19:10:18.7773515Z       1034 |
 windows-native	Build and test frontend	2026-11-13T19:10:18.7773843Z       1035 |   await request.post("/api/script/stop");
 windows-native	Build and test frontend	2026-11-13T19:10:18.7774423Z       1036 |   await attachPageScreenshot(page, testInfo, "workflow-render-smoothness");
 windows-native	Build and test frontend	2026-11-13T19:10:18.7775556Z         at D:\a\4WIS-Simulator\4WIS-Simulator\frontend\tests\e2e\workflow-smoke.spec.ts:1033:93
-windows-native	Build and test frontend	2026-11-13T19:10:18.7776006Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7776006Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7776808Z     Error Context: test-results\workflow-smoke-the-3D-roof-cc90c-stutter-while-the-car-moves-chromium\error-context.md
-windows-native	Build and test frontend	2026-11-13T19:10:18.7777371Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7777371Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7777933Z     attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
 windows-native	Build and test frontend	2026-11-13T19:10:18.7778721Z     test-results\workflow-smoke-the-3D-roof-cc90c-stutter-while-the-car-moves-chromium\trace.zip
 windows-native	Build and test frontend	2026-11-13T19:10:18.7779300Z     Usage:
-windows-native	Build and test frontend	2026-11-13T19:10:18.7779443Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7779443Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7779977Z         npx playwright show-trace test-results\workflow-smoke-the-3D-roof-cc90c-stutter-while-the-car-moves-chromium\trace.zip
-windows-native	Build and test frontend	2026-11-13T19:10:18.7780525Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7780525Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7780899Z     ────────────────────────────────────────────────────────────────────────────────────────────────
-windows-native	Build and test frontend	2026-11-13T19:10:18.7781225Z 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7781225Z
 windows-native	Build and test frontend	2026-11-13T19:10:18.7781318Z   1 failed
-windows-native	Build and test frontend	2026-11-13T19:10:18.7782021Z     [chromium] › tests\e2e\workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves 
+windows-native	Build and test frontend	2026-11-13T19:10:18.7782021Z     [chromium] › tests\e2e\workflow-smoke.spec.ts:971:1 › the 3D roof view animates with no periodic stutter while the car moves
 windows-native	Build and test frontend	2026-11-13T19:10:18.7782660Z   57 passed (2.4m)
 windows-native	Build and test frontend	2026-11-13T19:10:18.8366185Z ##[error]Process completed with exit code 1.

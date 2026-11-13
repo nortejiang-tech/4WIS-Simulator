@@ -1,11 +1,11 @@
 windows-native	Verify and repackage app-local Windows runtime	﻿2026-11-13T19:55:04.9649059Z ##[group]Run python -m unittest discover -s scripts/tests -p test_windows_runtime.py -v
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9650265Z ^[[36;1mpython -m unittest discover -s scripts/tests -p test_windows_runtime.py -v^[[0m
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9650842Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9651193Z ^[[36;1mpython scripts/repack_native_artifact.py^[[0m
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9651517Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9652265Z ^[[36;1mpython scripts/check_portable_package.py --targets windows-x64 --native-smoke --require-native-core --json | Tee-Object -FilePath windows-native-package.log^[[0m
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9653010Z ^[[36;1mif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }^[[0m
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9653410Z ^[[36;1mgit rev-parse HEAD | Out-File -FilePath windows-native-commit.txt^[[0m
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9650265Z python -m unittest discover -s scripts/tests -p test_windows_runtime.py -v
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9650842Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9651193Z python scripts/repack_native_artifact.py
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9651517Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9652265Z python scripts/check_portable_package.py --targets windows-x64 --native-smoke --require-native-core --json | Tee-Object -FilePath windows-native-package.log
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9653010Z if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:04.9653410Z git rev-parse HEAD | Out-File -FilePath windows-native-commit.txt
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0402297Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0402908Z env:
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:05.0403189Z   SIM4WIS_ENGINE: native
@@ -21,15 +21,15 @@ windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:0
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4787660Z test_ambiguous_runtime_fails_closed (test_windows_runtime.WindowsRuntimeTests.test_ambiguous_runtime_fails_closed) ... ok
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4991222Z test_bundles_exact_vendor_bytes_and_provenance (test_windows_runtime.WindowsRuntimeTests.test_bundles_exact_vendor_bytes_and_provenance) ... ok
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4998456Z test_missing_runtime_fails_closed (test_windows_runtime.WindowsRuntimeTests.test_missing_runtime_fails_closed) ... ok
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999235Z 
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999235Z
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999404Z ----------------------------------------------------------------------
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999766Z Ran 3 tests in 0.035s
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999903Z 
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999903Z
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:07.4999978Z OK
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.4115645Z ^[[36m[build]^[[0m [update] keeping runtime + vendor for windows-x64
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.4116211Z ^[[36m[build]^[[0m copying app + data for windows-x64
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.5719721Z ^[[36m[build]^[[0m zipping 4WIS_Simulator_windows-x64 (v0.106.0)
-windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:28.7384665Z ^[[36m[build]^[[0m done windows-x64: D:\a\4WIS-Simulator\4WIS-Simulator\dist_portable\4WIS_Simulator_v0.106.0_windows-x64.zip  (100 MB)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.4115645Z [build] [update] keeping runtime + vendor for windows-x64
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.4116211Z [build] copying app + data for windows-x64
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:13.5719721Z [build] zipping 4WIS_Simulator_windows-x64 (v0.106.0)
+windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:28.7384665Z [build] done windows-x64: D:\a\4WIS-Simulator\4WIS-Simulator\dist_portable\4WIS_Simulator_v0.106.0_windows-x64.zip  (100 MB)
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8056085Z windows-x64: safe archive paths: PASS (no absolute/traversal entries)
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8060745Z windows-x64: zip CRC: PASS (all members readable)
 windows-native	Verify and repackage app-local Windows runtime	2026-11-13T19:55:59.8063457Z windows-x64: app/dist/index.html: PASS (present)
