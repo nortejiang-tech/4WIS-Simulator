@@ -28,7 +28,22 @@
 
 位置 x/y 分量的最大绝对差为 5.12e-13 m。这是两份程序的数值一致性，不是实车位置精度。各次原始耗时、全部通道差值及实验配置见 benchmark-macos.json。
 
-Windows 测量：PENDING；尚未收到原生 runner 结果。
+## windows 实测
+
+状态：PASS；Python 3.12.10；Windows-2025Server-10.0.26100-SP0。源提交 d0b71bf1a7df327d5114806f38edcf8daa0e3692；原生源指纹 59c3cb2b411f4c5d1471fe43695b8cd281e663a1e96069788058ef732a712fc4。
+
+|模型|轮胎|故障组合|Python 中位 s|C++ 中位 s|提速|数值对照|
+|---|---|---|---:|---:|---:|---|
+|simplified_dynamic|linear|simultaneous|14.107|6.454|2.19×|PASS|
+|simplified_dynamic|linear|staggered|15.063|7.358|2.05×|PASS|
+|simplified_dynamic|pacejka|simultaneous|15.725|6.522|2.41×|PASS|
+|simplified_dynamic|pacejka|staggered|16.756|7.426|2.26×|PASS|
+|multibody|linear|simultaneous|16.755|5.976|2.80×|PASS|
+|multibody|linear|staggered|17.638|6.879|2.56×|PASS|
+|multibody|pacejka|simultaneous|18.399|6.036|3.05×|PASS|
+|multibody|pacejka|staggered|19.425|6.984|2.78×|PASS|
+
+位置 x/y 分量的最大绝对差为 1.49e-13 m。这是两份程序的数值一致性，不是实车位置精度。各次原始耗时、全部通道差值及实验配置见 benchmark-windows.json。
 
 ## 软件与物理验收边界
 

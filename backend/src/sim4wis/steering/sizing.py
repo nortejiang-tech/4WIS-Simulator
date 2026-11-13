@@ -224,9 +224,17 @@ def _rack_force_curve(params: VehicleParams, speed_kmh: float, mu: float):
     )
     xs, ys = [], []
     for row in data["rows"]:
-        xs.append(abs(float(row["delta"])))
+        # The analysis response includes all four wheels at every command.
+        # This sizing approximation uses the selected front wheel and mirrors
+        # its load onto the other tie rod. Mixing unsteered rear/partner rows
+        # creates repeated abscissae with unrelated forces and order-dependent
+        # interpolation. The plant input is the actuator coordinate, so use
+        # delta_cmd before static toe, not the aligned tire angle delta.
+        if int(row["wheel_index"]) != 0:
+            continue
+        xs.append(abs(float(row["delta_cmd"])))
         ys.append(abs(float(row["rack_force"])))
-    order = np.argsort(xs)
+    order = np.argsort(xs, kind="stable")
     xs = np.asarray(xs)[order]
     ys = np.asarray(ys)[order]
     v = abs(speed_kmh) / 3.6
