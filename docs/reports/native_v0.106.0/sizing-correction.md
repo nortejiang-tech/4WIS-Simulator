@@ -9,3 +9,14 @@
 该修正不改变车辆数值内核、故障调度或性能测试工况，原 Windows/Mac 数值指纹仍适用。最终安装包必须包含修正后的 Python 选型源文件。
 
 Windows 第三轮：后端 1119、前端单测 54、浏览器 58、8 组五次重复性能测量通过；原生打包因 METADATA 的 CRLF 换行被错误识别为版本不符而失败，已改为按行解析。最终包验证另行记录，不能将该轮整体写为 PASS。
+
+## Cross-version duration bound
+
+Windows Python 3.12 and Mac Python 3.11 exposed a one-step discrepancy in the
+sizing run time cap: `sum()` changed its floating point summation algorithm,
+and truncation at an integer boundary altered an RMS result by 0.001 N·m.
+Both routes now use the closed-form sum of the conservative leg-distance bound
+and round the upper time budget up. This keeps the waypoint trajectory and
+inner integration unchanged while removing version-dependent accumulated sums.
+C++ uses the same radians multiplication order as Python for these limits.
+The strict sizing/compliance comparison is retained, not widened.
