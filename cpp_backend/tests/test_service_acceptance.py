@@ -126,3 +126,26 @@ def test_completed_batch_registry_is_bounded(client):
   assert job['status']=='done',job
  assert len(client.get('/api/batch').json()['jobs'])==50
  assert client.get('/api/batch/'+first).status_code==404
+
+
+def test_unicode_named_resources(cpp_http):
+ client,_,_,folder,_=cpp_http
+ name='中文车型_测试'
+ assert client.post('/api/vehicle-profiles/'+name,json={'label':'中文标定'}).status_code==200
+ assert client.get('/api/vehicle-profiles/'+name).status_code==200
+ assert client.post('/api/vehicle-profiles/'+name+'/apply').status_code==200
+ assert client.delete('/api/vehicle-profiles/'+name).status_code==200
+ assert client.get('/api/vehicle-profiles/'+name).status_code==404
+ experiment={'name':name,'maneuver':{'steps':[{'duration':.01,'speed_kmh':0}]}}
+ assert client.post('/api/experiments/'+name,json=experiment).status_code==200
+ assert client.get('/api/experiments/'+name).status_code==200
+ assert client.delete('/api/experiments/'+name).status_code==200
+ assert client.get('/api/experiments/'+name).status_code==404
+ assert client.post('/api/projects/'+name,json={'name':name,'description':'中文工程'}).status_code==200
+ assert client.get('/api/projects/'+name).json()['project']['name']==name
+ assert client.post('/api/projects/'+name+'/load').status_code==200
+ scripts=folder/'scripts_lib';scripts.mkdir(exist_ok=True)
+ (scripts/(name+'.yaml')).write_text('name: 中文脚本\nactions: []\n',encoding='utf-8')
+ response=client.get('/api/script/library/'+name)
+ assert response.status_code==200,response.text
+ assert '中文脚本' in response.json()['yaml']

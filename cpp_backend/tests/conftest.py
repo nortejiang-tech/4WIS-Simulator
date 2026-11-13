@@ -9,7 +9,7 @@ def cpp_http(tmp_path):
  tmp_path=tmp_path/'中文数据 目录';tmp_path.mkdir()
  with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
  env=os.environ.copy()
- for name in ('runs','studies','vehicle_profiles','projects','experiments','targets','plugins'):
+ for name in ('runs','studies','vehicle_profiles','projects','experiments','targets','plugins','scripts_lib'):
   env['SIM4WIS_'+name.upper()+'_DIR']=str(tmp_path/name)
  plugin=tmp_path/'plugins';plugin.mkdir(exist_ok=True)
  (plugin/'user_strategy.py').write_text('def compute(driver,state):\n return {"delta_cmd":[driver["steering"]*.2]*4}\n')

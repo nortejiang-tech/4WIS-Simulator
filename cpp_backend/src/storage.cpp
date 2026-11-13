@@ -45,7 +45,7 @@ std::string hex_sha(const std::string &text) {
 std::string file_text(const fs::path &p) {
   std::ifstream f(p, std::ios::binary);
   if (!f)
-    throw Error(404, "file not found: " + p.filename().string());
+    throw Error(404, "file not found: " + p.filename().u8string());
   return {std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>()};
 }
 void atomic_text(const fs::path &p, const std::string &text) {
@@ -499,7 +499,7 @@ json Storage::runs() const {
     try {
       auto m = read_json(p / "meta.json"),
            e = m.value("experiment", json::object());
-      out.push_back({{"run_id", m.value("run_id", p.filename().string())},
+      out.push_back({{"run_id", m.value("run_id", p.filename().u8string())},
                      {"label", str(m, "label")},
                      {"created_at", str(m, "created_at")},
                      {"duration_s", m.value("duration_s", json())},

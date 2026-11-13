@@ -70,7 +70,7 @@ inline bool yes(const json &j, const std::string &k, bool d = false) {
 inline json read_json(const std::filesystem::path &p) {
   std::ifstream f(p);
   if (!f)
-    throw std::runtime_error("cannot read " + p.string());
+    throw std::runtime_error("cannot read " + p.u8string());
   json j;
   f >> j;
   return j;

@@ -531,9 +531,10 @@ Response Service::request(const std::string &method, const std::string &path,
   if (path == "/api/script/library")
     return Response(json{{"scripts", store.names("scripts_lib")}});
   if (parts.size() == 4 && parts[1] == "script" && parts[2] == "library")
-    return Response(json{{"name", parts[3]},
-                         {"yaml", file_text(store.dir("scripts_lib") /
-                                            (safe_name(parts[3]) + ".yaml"))}});
+    return Response(
+        json{{"name", parts[3]},
+             {"yaml", file_text(store.dir("scripts_lib") /
+                                fs::u8path(safe_name(parts[3]) + ".yaml"))}});
   if (parts.size() == 3 && parts[1] == "recording") {
     if (parts[2] == "start" && post)
       live.start_record(body);
@@ -636,7 +637,8 @@ Response Service::request(const std::string &method, const std::string &path,
         if (del) {
           if (name == "LS9" || name == "im_ls9")
             throw Error(400, "built-in profile cannot be deleted");
-          if (!fs::remove(store.dir("vehicle_profiles") / (name + ".yaml")))
+          if (!fs::remove(store.dir("vehicle_profiles") /
+                          fs::u8path(name + ".yaml")))
             throw Error(404, "vehicle profile not found");
           return Response(json{{"status", "deleted"}, {"name", name}});
         }
@@ -695,7 +697,7 @@ Response Service::request(const std::string &method, const std::string &path,
             {"status", "saved"}, {"name", name}, {"path", saved.u8string()}});
       }
       if (del) {
-        if (!fs::remove(store.dir("experiments") / (name + ".yaml")))
+        if (!fs::remove(store.dir("experiments") / fs::u8path(name + ".yaml")))
           throw Error(404, "experiment not found");
         return Response(json{{"status", "deleted"}, {"name", name}});
       }
