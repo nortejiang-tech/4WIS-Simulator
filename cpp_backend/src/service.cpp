@@ -62,6 +62,31 @@ json Service::validate_body(const std::string &method, const std::string &path,
   }
   return body;
 }
+void Service::reap_jobs() {
+  // Called with mutex held. finished is the worker's last protected update;
+  // after releasing that guard it returns without acquiring another lock.
+  for (auto it = workers.begin(); it != workers.end();) {
+    if (it->first->finished > 0) {
+      if (it->second.joinable())
+        it->second.join();
+      it = workers.erase(it);
+    } else
+      ++it;
+  }
+  for (auto *registry : {&jobs, &study_jobs}) {
+    while (registry->size() > 50) {
+      auto oldest = registry->end();
+      for (auto it = registry->begin(); it != registry->end(); ++it)
+        if (it->second->finished > 0 &&
+            (oldest == registry->end() ||
+             it->second->started < oldest->second->started))
+          oldest = it;
+      if (oldest == registry->end())
+        break;
+      registry->erase(oldest);
+    }
+  }
+}
 json Service::job_status(const std::shared_ptr<Job> &job) const {
   auto data = job->data;
   data["elapsed_s"] =
@@ -104,41 +129,42 @@ std::string Service::batch(const json &request) {
                {"current_label", ""},   {"error", ""},
                {"runs", json::array()}};
   jobs[id] = job;
-  workers.emplace_back([this, job, items, id] {
-    try {
-      for (auto &item : items) {
-        if (job->cancel || !running) {
+  workers.emplace_back(
+      job, std::thread([this, job, items, id] {
+        try {
+          for (auto &item : items) {
+            if (job->cancel || !running) {
+              std::lock_guard<std::recursive_mutex> guard(mutex);
+              job->data["status"] = "cancelled";
+              break;
+            }
+            {
+              std::lock_guard<std::recursive_mutex> guard(mutex);
+              job->data["current_label"] = item.first;
+            }
+            Simulation sim(item.second, store.params(item.second["vehicle"]));
+            auto result = sim.run();
+            auto metrics = kpis(result, item.second);
+            auto run = store.save_run(result, item.first, metrics, id);
+            {
+              std::lock_guard<std::recursive_mutex> guard(mutex);
+              job->data["runs"].push_back(
+                  {{"run_id", run}, {"label", item.first}, {"kpis", metrics}});
+              job->data["done"] = job->data["done"].get<int>() + 1;
+            }
+          }
           std::lock_guard<std::recursive_mutex> guard(mutex);
-          job->data["status"] = "cancelled";
-          break;
-        }
-        {
+          if (str(job->data, "status") == "running")
+            job->data["status"] = "done";
+        } catch (const std::exception &e) {
           std::lock_guard<std::recursive_mutex> guard(mutex);
-          job->data["current_label"] = item.first;
+          job->data["status"] = "error";
+          job->data["error"] = e.what();
         }
-        Simulation sim(item.second, store.params(item.second["vehicle"]));
-        auto result = sim.run();
-        auto metrics = kpis(result, item.second);
-        auto run = store.save_run(result, item.first, metrics, id);
-        {
-          std::lock_guard<std::recursive_mutex> guard(mutex);
-          job->data["runs"].push_back(
-              {{"run_id", run}, {"label", item.first}, {"kpis", metrics}});
-          job->data["done"] = job->data["done"].get<int>() + 1;
-        }
-      }
-      std::lock_guard<std::recursive_mutex> guard(mutex);
-      if (str(job->data, "status") == "running")
-        job->data["status"] = "done";
-    } catch (const std::exception &e) {
-      std::lock_guard<std::recursive_mutex> guard(mutex);
-      job->data["status"] = "error";
-      job->data["error"] = e.what();
-    }
-    std::lock_guard<std::recursive_mutex> guard(mutex);
-    job->data["current_label"] = "";
-    job->finished = epoch();
-  });
+        std::lock_guard<std::recursive_mutex> guard(mutex);
+        job->data["current_label"] = "";
+        job->finished = epoch();
+      }));
   return id;
 }
 void Service::disconnect(const std::string &owner) {
@@ -172,6 +198,7 @@ Response Service::request(const std::string &method, const std::string &path,
                           json body,
                           const std::map<std::string, std::string> &query) {
   std::lock_guard<std::recursive_mutex> guard(mutex);
+  reap_jobs();
   if (path != "/api/study/run" && path != "/api/study/dry-run")
     body = validate_body(method, path, body);
   if (body.is_null())

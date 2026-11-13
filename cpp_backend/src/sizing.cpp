@@ -17,9 +17,9 @@ json sizing(const Storage &store, const VehicleParams &p) {
   };
   for (auto &scenario : cases) {
     double speed = num(scenario, "speed_kmh") / 3.6, mu = num(scenario, "mu"),
-           amp = rad(num(scenario, "amplitude_deg")),
-           rate = rad(num(scenario, "rate_deg_s")),
-           accel = rad(std::max(num(scenario, "accel_deg_s2"), 1e-6)),
+           amp = num(scenario, "amplitude_deg") * (pi / 180.0),
+           rate = num(scenario, "rate_deg_s") * (pi / 180.0),
+           accel = std::max(num(scenario, "accel_deg_s2"), 1e-6) * (pi / 180.0),
            dt = .002;
     auto id = str(scenario, "id");
     json request = {{"speeds", json::array({speed})},
@@ -47,13 +47,11 @@ json sizing(const Storage &store, const VehicleParams &p) {
     for (int i = 0; i < std::max(1, int(num(scenario, "cycles", 1))); i++)
       for (double value : {amp, -amp, 0.})
         targets.push_back(value);
-    double span = amp;
-    for (size_t i = 0; i < targets.size() - 2; i++)
-      span += 2 * amp;
-    span += amp;
+    double span = 2.0 * (targets.size() - 1) * amp;
     double total =
         span / std::max(rate, 1e-6) + 2 * targets.size() * rate / accel + .5;
-    int n = std::max(int(total / dt), 10), steps = 0, limited = 0, sat = 0;
+    int n = std::max(int(std::ceil(total / dt)), 10), steps = 0, limited = 0,
+        sat = 0;
     size_t leg = 0;
     double delta = 0, delta_rate = 0, settle = 0, sq = 0;
     json values = {{"peak_motor_torque_nm", 0.}, {"peak_motor_speed_rpm", 0.},

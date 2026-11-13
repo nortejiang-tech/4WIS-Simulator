@@ -3,14 +3,16 @@
 #include <csignal>
 #include <iostream>
 #ifdef _WIN32
+#define NOMINMAX
 #include <fcntl.h>
 #include <io.h>
+#include <windows.h>
 #endif
 namespace {
 volatile std::sig_atomic_t stopped = 0;
 void stop(int) { stopped = 1; }
 } // namespace
-int main(int argc, char **argv) {
+int run_main(int argc, char **argv) {
   using namespace fourwis;
   mg_init_library(0);
 #ifdef _WIN32
@@ -153,3 +155,27 @@ int main(int argc, char **argv) {
     return 1;
   }
 }
+
+#ifdef _WIN32
+int wmain(int argc, wchar_t **argv) {
+  std::vector<std::string> utf8;
+  for (int i = 0; i < argc; ++i) {
+    int length = WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, nullptr, 0,
+                                     nullptr, nullptr);
+    if (length <= 0)
+      return 1;
+    std::string value(length, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, value.data(), length, nullptr,
+                        nullptr);
+    value.pop_back();
+    utf8.push_back(std::move(value));
+  }
+  std::vector<char *> pointers;
+  for (auto &value : utf8)
+    pointers.push_back(value.data());
+  pointers.push_back(nullptr);
+  return run_main(argc, pointers.data());
+}
+#else
+int main(int argc, char **argv) { return run_main(argc, argv); }
+#endif

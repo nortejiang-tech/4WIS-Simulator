@@ -1,0 +1,32 @@
+{
+  "task": "independent full C++ backend migration",
+  "date": "2026-11-14",
+  "branch": "codex/cpp-full-backend",
+  "baseline": "e609c4c",
+  "calls": [],
+  "call_count": 0,
+  "reason": "Cross-system physics, controllers, native process and API/MCP migration is a high-risk Planner-owned stage; no local Coder implementation phase assigned.",
+  "evo_generated_tokens": 0,
+  "verified_cloud_tokens_saved": 0,
+  "planner_generated_tokens": "unavailable",
+  "supervisor_pass_rate": {
+    "numerator": 0,
+    "denominator": 0,
+    "value": null
+  },
+  "first_independent_acceptance_rate": {
+    "numerator": 0,
+    "denominator": 0,
+    "value": null
+  },
+  "useful_output_acceptance_rate": {
+    "numerator": 0,
+    "denominator": 0,
+    "value": null
+  },
+  "evaluation": "Not applicable: zero calls; no conclusion about local model quality.",
+  "validation_evidence": [
+    "docs/reports/cpp_v0.107.0/acceptance.md",
+    "docs/reports/cpp_v0.107.0/benchmark-macos.json"
+  ]
+}

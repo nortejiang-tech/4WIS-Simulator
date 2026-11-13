@@ -284,10 +284,10 @@ def run_scenario(
 
     # Upper bound on the run: every leg at worst covers its distance at the
     # slowest of the two limits, plus the ramp at each end, plus a settle.
-    leg = 2.0 * amp
-    span = sum([amp] + [leg] * (len(targets) - 2) + [amp])
+    # Closed form avoids Python-version-dependent float sum algorithms.
+    span = 2.0 * (len(targets) - 1) * amp
     total = span / max(rate, 1e-6) + 2.0 * len(targets) * rate / accel + 0.5
-    n = max(int(total / dt), 10)
+    n = max(math.ceil(total / dt), 10)
 
     res = ScenarioResult(scenario=scenario)
     sq_sum = 0.0

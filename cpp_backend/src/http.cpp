@@ -190,8 +190,8 @@ void HttpServer::ws_close(const mg_connection *c, void *user) {
 HttpServer::HttpServer(Service &s, int port) : service(s) {
   if (port < 1 || port > 65535)
     throw Error(422, "invalid HTTP port");
-  const char *dist = std::getenv("SIM4WIS_DIST_DIR");
-  frontend = dist ? fs::u8path(dist) : service.store.root / "frontend/dist";
+  auto dist = env_path("SIM4WIS_DIST_DIR");
+  frontend = dist.value_or(service.store.root / "frontend/dist");
   if (!fs::exists(frontend) && !dist)
     frontend = service.store.root / "app/web";
   std::string binding = "127.0.0.1:" + std::to_string(port);

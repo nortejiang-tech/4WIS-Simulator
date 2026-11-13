@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -16,6 +17,23 @@
 #include <vector>
 namespace fourwis {
 using json = nlohmann::json;
+// Windows CRT narrow environment values use the system code page, not UTF-8.
+// Read native wide paths so Chinese installation/data locations remain intact.
+inline std::optional<std::filesystem::path> env_path(const char *name) {
+#ifdef _WIN32
+  std::wstring key;
+  while (*name)
+    key.push_back(static_cast<wchar_t>(*name++));
+  const wchar_t *value = _wgetenv(key.c_str());
+  if (value && *value)
+    return std::filesystem::path(value);
+#else
+  const char *value = std::getenv(name);
+  if (value && *value)
+    return std::filesystem::u8path(value);
+#endif
+  return std::nullopt;
+}
 inline constexpr const char *wheel_names[] = {"fl", "fr", "rl", "rr"};
 using V4 = std::array<double, 4>;
 using V2 = std::array<double, 2>;

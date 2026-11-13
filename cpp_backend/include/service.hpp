@@ -24,7 +24,7 @@ public:
   std::recursive_mutex mutex;
   std::map<std::string, std::shared_ptr<AgentSession>> sessions;
   std::map<std::string, std::shared_ptr<Job>> jobs, study_jobs;
-  std::vector<std::thread> workers;
+  std::vector<std::pair<std::shared_ptr<Job>, std::thread>> workers;
   std::atomic<bool> running{true};
   size_t subscribers = 0;
   json scenarios;
@@ -41,8 +41,8 @@ public:
     for (auto &j : jobs)
       j.second->cancel = true;
     for (auto &t : workers)
-      if (t.joinable())
-        t.join();
+      if (t.second.joinable())
+        t.second.join();
   }
   Response request(const std::string &method, const std::string &path,
                    json body = json(),
@@ -51,6 +51,7 @@ public:
   void disconnect(const std::string &owner);
   json validate_body(const std::string &method, const std::string &path,
                      const json &body) const;
+  void reap_jobs();
   std::string batch(const json &request);
   json job_status(const std::shared_ptr<Job> &job) const;
   std::optional<Response> analysis(const std::string &path, const json &body);

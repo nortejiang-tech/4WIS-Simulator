@@ -1,0 +1,590 @@
+{
+  "method": "14 s, same 5 ms outer and <=1.25 ms dynamics inner steps; 200 Hz recording; 40 km/h target with 1 s ramp; 2 degree / 0.2 Hz sinusoidal steering",
+  "cases": [
+    {
+      "case": "Healthy",
+      "max_abs_yaw_dps": 12.574520273569162,
+      "max_abs_time_aligned_lateral_delta_m": 0.0,
+      "final_x_m": 142.49291529362026,
+      "final_y_m": 14.44253881925977,
+      "min_fz_n": 4641.911030319966,
+      "peak_grip_utilization": 1.0000000000000002
+    },
+    {
+      "case": "Simultaneous",
+      "max_abs_yaw_dps": 11.9873082967297,
+      "max_abs_time_aligned_lateral_delta_m": 70.05327803798907,
+      "final_x_m": 107.503950281212,
+      "final_y_m": 82.62986800616996,
+      "min_fz_n": 4641.911030319966,
+      "peak_grip_utilization": 1.0000000000000002
+    },
+    {
+      "case": "Staggered",
+      "max_abs_yaw_dps": 15.903993681332095,
+      "max_abs_time_aligned_lateral_delta_m": 49.027646707284255,
+      "final_x_m": 123.7882567139299,
+      "final_y_m": 62.49115491419927,
+      "min_fz_n": 4641.911030319966,
+      "peak_grip_utilization": 1.0000000000000002
+    }
+  ],
+  "definitions": {
+    "Healthy": {
+      "name": "healthy_reference",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {
+          "tire_model": "pacejka"
+        }
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "ideal_ackermann",
+      "mode_params": {},
+      "scene": null,
+      "path": null,
+      "faults": [],
+      "fault_seed": 20261114,
+      "maneuver": {
+        "name": "untitled",
+        "steps": [
+          {
+            "name": "",
+            "duration": 14.0,
+            "steer": {
+              "kind": "sine",
+              "amplitude": 2.0,
+              "unit": "front_deg",
+              "freq_hz": 0.2,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 40.0,
+            "speed_ramp_s": 1.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 200.0,
+      "kpis": []
+    },
+    "Simultaneous": {
+      "name": "native_benchmark",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {
+          "tire_model": "pacejka"
+        }
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "ideal_ackermann",
+      "mode_params": {},
+      "scene": null,
+      "path": null,
+      "faults": [
+        {
+          "fault_type": "stuck_hold",
+          "wheel": 0,
+          "value": 0.0,
+          "t_start": 1.713,
+          "t_end": 13.679,
+          "active": true,
+          "id": "fl",
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        },
+        {
+          "fault_type": "stuck_hold",
+          "wheel": 1,
+          "value": 0.0,
+          "t_start": 1.713,
+          "t_end": 13.679,
+          "active": true,
+          "id": "fr",
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        }
+      ],
+      "fault_seed": 20261114,
+      "maneuver": {
+        "name": "untitled",
+        "steps": [
+          {
+            "name": "",
+            "duration": 14.0,
+            "steer": {
+              "kind": "sine",
+              "amplitude": 2.0,
+              "unit": "front_deg",
+              "freq_hz": 0.2,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 40.0,
+            "speed_ramp_s": 1.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 200.0,
+      "kpis": []
+    },
+    "Staggered": {
+      "name": "native_benchmark",
+      "description": "",
+      "vehicle": {
+        "profile": null,
+        "overrides": {
+          "tire_model": "pacejka"
+        }
+      },
+      "model_type": "simplified_dynamic",
+      "strategy": "ideal_ackermann",
+      "mode_params": {},
+      "scene": null,
+      "path": null,
+      "faults": [
+        {
+          "fault_type": "stuck_hold",
+          "wheel": 0,
+          "value": 0.0,
+          "t_start": 1.713,
+          "t_end": 13.679,
+          "active": true,
+          "id": "fl",
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        },
+        {
+          "fault_type": "free_caster",
+          "wheel": 3,
+          "value": 0.0,
+          "t_start": 2.123,
+          "t_end": 13.679,
+          "active": true,
+          "id": "rr",
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        },
+        {
+          "fault_type": "sensor_bias",
+          "wheel": 1,
+          "value": 0.02,
+          "t_start": 2.321,
+          "t_end": null,
+          "active": true,
+          "id": "bias",
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        },
+        {
+          "fault_type": "sensor_noise",
+          "wheel": 1,
+          "value": 0.003,
+          "t_start": 2.321,
+          "t_end": null,
+          "active": true,
+          "id": "noise",
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        },
+        {
+          "fault_type": "sensor_dropout",
+          "wheel": 0,
+          "value": 0.0,
+          "t_start": 2.543,
+          "t_end": 13.877,
+          "active": true,
+          "id": "drop",
+          "eta_rev": 0.6,
+          "j_steer": 3.0,
+          "c_damp": 80.0,
+          "tau_coulomb": 5.0
+        }
+      ],
+      "fault_seed": 20261114,
+      "maneuver": {
+        "name": "untitled",
+        "steps": [
+          {
+            "name": "",
+            "duration": 14.0,
+            "steer": {
+              "kind": "sine",
+              "amplitude": 2.0,
+              "unit": "front_deg",
+              "freq_hz": 0.2,
+              "f0_hz": 0.1,
+              "f1_hz": 2.0,
+              "t_step": 0.5,
+              "start": 0.0
+            },
+            "speed_kmh": 40.0,
+            "speed_ramp_s": 1.0,
+            "mode_params": {}
+          }
+        ]
+      },
+      "dt": 0.005,
+      "record_hz": 200.0,
+      "kpis": []
+    }
+  },
+  "timelines": {
+    "Healthy": {
+      "clock": "simulation",
+      "events": [],
+      "faults": [],
+      "seed": 20261114,
+      "time": 14.000000000000062
+    },
+    "Simultaneous": {
+      "clock": "simulation",
+      "events": [
+        {
+          "config": {
+            "active": true,
+            "c_damp": 80.0,
+            "eta_rev": 0.6,
+            "fault_type": "stuck_hold",
+            "id": "fl",
+            "j_steer": 3.0,
+            "t_end": 13.679,
+            "t_start": 1.713,
+            "tau_coulomb": 5.0,
+            "value": 0.0,
+            "wheel": 0
+          },
+          "event": "activated",
+          "fault_type": "stuck_hold",
+          "id": "fl",
+          "scheduled_time": 1.713,
+          "time": 1.713,
+          "wheel": 0
+        },
+        {
+          "config": {
+            "active": true,
+            "c_damp": 80.0,
+            "eta_rev": 0.6,
+            "fault_type": "stuck_hold",
+            "id": "fr",
+            "j_steer": 3.0,
+            "t_end": 13.679,
+            "t_start": 1.713,
+            "tau_coulomb": 5.0,
+            "value": 0.0,
+            "wheel": 1
+          },
+          "event": "activated",
+          "fault_type": "stuck_hold",
+          "id": "fr",
+          "scheduled_time": 1.713,
+          "time": 1.713,
+          "wheel": 1
+        },
+        {
+          "event": "deactivated",
+          "id": "fl",
+          "time": 13.679
+        },
+        {
+          "event": "deactivated",
+          "id": "fr",
+          "time": 13.679
+        }
+      ],
+      "faults": [
+        {
+          "active": true,
+          "c_damp": 80.0,
+          "effective_active": false,
+          "eta_rev": 0.6,
+          "fault_type": "motor_stuck_hold",
+          "id": "fl",
+          "j_steer": 3.0,
+          "phase": "completed",
+          "t_end": 13.679,
+          "t_start": 1.713,
+          "tau_coulomb": 5.0,
+          "value": 0.0,
+          "wheel": "fl"
+        },
+        {
+          "active": true,
+          "c_damp": 80.0,
+          "effective_active": false,
+          "eta_rev": 0.6,
+          "fault_type": "motor_stuck_hold",
+          "id": "fr",
+          "j_steer": 3.0,
+          "phase": "completed",
+          "t_end": 13.679,
+          "t_start": 1.713,
+          "tau_coulomb": 5.0,
+          "value": 0.0,
+          "wheel": "fr"
+        }
+      ],
+      "seed": 20261114,
+      "time": 14.000000000000062
+    },
+    "Staggered": {
+      "clock": "simulation",
+      "events": [
+        {
+          "config": {
+            "active": true,
+            "c_damp": 80.0,
+            "eta_rev": 0.6,
+            "fault_type": "stuck_hold",
+            "id": "fl",
+            "j_steer": 3.0,
+            "t_end": 13.679,
+            "t_start": 1.713,
+            "tau_coulomb": 5.0,
+            "value": 0.0,
+            "wheel": 0
+          },
+          "event": "activated",
+          "fault_type": "stuck_hold",
+          "id": "fl",
+          "scheduled_time": 1.713,
+          "time": 1.713,
+          "wheel": 0
+        },
+        {
+          "config": {
+            "active": true,
+            "c_damp": 80.0,
+            "eta_rev": 0.6,
+            "fault_type": "free_caster",
+            "id": "rr",
+            "j_steer": 3.0,
+            "t_end": 13.679,
+            "t_start": 2.123,
+            "tau_coulomb": 5.0,
+            "value": 0.0,
+            "wheel": 3
+          },
+          "event": "activated",
+          "fault_type": "free_caster",
+          "id": "rr",
+          "scheduled_time": 2.123,
+          "time": 2.123,
+          "wheel": 3
+        },
+        {
+          "config": {
+            "active": true,
+            "c_damp": 80.0,
+            "eta_rev": 0.6,
+            "fault_type": "sensor_bias",
+            "id": "bias",
+            "j_steer": 3.0,
+            "t_end": null,
+            "t_start": 2.321,
+            "tau_coulomb": 5.0,
+            "value": 0.02,
+            "wheel": 1
+          },
+          "event": "activated",
+          "fault_type": "sensor_bias",
+          "id": "bias",
+          "scheduled_time": 2.321,
+          "time": 2.321,
+          "wheel": 1
+        },
+        {
+          "config": {
+            "active": true,
+            "c_damp": 80.0,
+            "eta_rev": 0.6,
+            "fault_type": "sensor_noise",
+            "id": "noise",
+            "j_steer": 3.0,
+            "t_end": null,
+            "t_start": 2.321,
+            "tau_coulomb": 5.0,
+            "value": 0.003,
+            "wheel": 1
+          },
+          "event": "activated",
+          "fault_type": "sensor_noise",
+          "id": "noise",
+          "scheduled_time": 2.321,
+          "time": 2.321,
+          "wheel": 1
+        },
+        {
+          "config": {
+            "active": true,
+            "c_damp": 80.0,
+            "eta_rev": 0.6,
+            "fault_type": "sensor_dropout",
+            "id": "drop",
+            "j_steer": 3.0,
+            "t_end": 13.877,
+            "t_start": 2.543,
+            "tau_coulomb": 5.0,
+            "value": 0.0,
+            "wheel": 0
+          },
+          "event": "activated",
+          "fault_type": "sensor_dropout",
+          "id": "drop",
+          "scheduled_time": 2.543,
+          "time": 2.543,
+          "wheel": 0
+        },
+        {
+          "event": "deactivated",
+          "id": "fl",
+          "time": 13.679
+        },
+        {
+          "event": "deactivated",
+          "id": "rr",
+          "time": 13.679
+        },
+        {
+          "event": "deactivated",
+          "id": "drop",
+          "time": 13.877
+        }
+      ],
+      "faults": [
+        {
+          "active": true,
+          "c_damp": 80.0,
+          "effective_active": false,
+          "eta_rev": 0.6,
+          "fault_type": "motor_stuck_hold",
+          "id": "fl",
+          "j_steer": 3.0,
+          "phase": "completed",
+          "t_end": 13.679,
+          "t_start": 1.713,
+          "tau_coulomb": 5.0,
+          "value": 0.0,
+          "wheel": "fl"
+        },
+        {
+          "active": true,
+          "c_damp": 80.0,
+          "effective_active": false,
+          "eta_rev": 0.6,
+          "fault_type": "motor_free_caster",
+          "id": "rr",
+          "j_steer": 3.0,
+          "phase": "completed",
+          "t_end": 13.679,
+          "t_start": 2.123,
+          "tau_coulomb": 5.0,
+          "value": 0.0,
+          "wheel": "rr"
+        },
+        {
+          "active": true,
+          "c_damp": 80.0,
+          "effective_active": true,
+          "eta_rev": 0.6,
+          "fault_type": "sensor_bias",
+          "id": "bias",
+          "j_steer": 3.0,
+          "phase": "active",
+          "t_end": null,
+          "t_start": 2.321,
+          "tau_coulomb": 5.0,
+          "value": 0.02,
+          "wheel": "fr"
+        },
+        {
+          "active": true,
+          "c_damp": 80.0,
+          "effective_active": true,
+          "eta_rev": 0.6,
+          "fault_type": "sensor_noise",
+          "id": "noise",
+          "j_steer": 3.0,
+          "phase": "active",
+          "t_end": null,
+          "t_start": 2.321,
+          "tau_coulomb": 5.0,
+          "value": 0.003,
+          "wheel": "fr"
+        },
+        {
+          "active": true,
+          "c_damp": 80.0,
+          "effective_active": false,
+          "eta_rev": 0.6,
+          "fault_type": "sensor_dropout",
+          "id": "drop",
+          "j_steer": 3.0,
+          "phase": "completed",
+          "t_end": 13.877,
+          "t_start": 2.543,
+          "tau_coulomb": 5.0,
+          "value": 0.0,
+          "wheel": "fl"
+        }
+      ],
+      "seed": 20261114,
+      "time": 14.000000000000062
+    }
+  },
+  "kpis": {
+    "Healthy": {
+      "icr_dev_peak_m": 1.5534621783425362,
+      "icr_dev_rms_m": 0.7729595034941116,
+      "rack_force_peak_n": 1166.7891532393528,
+      "slip_alpha_peak_deg": 1.1515221575362673,
+      "speed_error_rms_kmh": 0.15158220825281493,
+      "steer_energy_nms": 63.81461385773247,
+      "vy_peak_kmh": 0.6224674509836656,
+      "yaw_rate_peak_dps": 12.574520273569162
+    },
+    "Simultaneous": {
+      "icr_dev_peak_m": 5.807601163514765,
+      "icr_dev_rms_m": 0.8465779590483181,
+      "rack_force_peak_n": 1613.3088572894483,
+      "slip_alpha_peak_deg": 1.7779216859939635,
+      "speed_error_rms_kmh": 0.15094034253578362,
+      "steer_energy_nms": 50.31813877546842,
+      "vy_peak_kmh": 1.33623920291604,
+      "yaw_rate_peak_dps": 11.9873082967297
+    },
+    "Staggered": {
+      "icr_dev_peak_m": 6.195268183453388,
+      "icr_dev_rms_m": 1.7954536743308063,
+      "rack_force_peak_n": 1923.2841468118204,
+      "slip_alpha_peak_deg": 2.73964779563779,
+      "speed_error_rms_kmh": 0.1628344129426065,
+      "steer_energy_nms": 82.19237105027781,
+      "vy_peak_kmh": 1.3315125634875777,
+      "yaw_rate_peak_dps": 15.903993681332096
+    }
+  },
+  "model_validity": "Internal numerical/analytic verification only. No bench or vehicle correlation."
+}

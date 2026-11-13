@@ -40,7 +40,7 @@ all built-in steering architectures and controllers, random streams, paths,
 load analysis, metrics, study/target results, API sessions and official MCP.
 The existing 58 browser workflows run with `PW_CPP_EXECUTABLE` pointing at the
 binary. `tools/package.py` creates archives; `tools/check_package.py` extracts
-them to a path containing spaces and tests the shipped binary, production
+them to a path containing Chinese characters and spaces and tests the shipped binary, production
 frontend, multifault cases, exact artifacts, MCP and plugin runtime.
 
 Reports will record actual platform results and measured performance. Software

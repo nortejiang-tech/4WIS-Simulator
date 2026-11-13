@@ -15,7 +15,7 @@ async def mcp_check(binary,root,port):
 
 def main():
  parser=argparse.ArgumentParser();parser.add_argument('archive',type=pathlib.Path);parser.add_argument('--output',type=pathlib.Path);args=parser.parse_args();checks=[]
- with tempfile.TemporaryDirectory(prefix='4wis cpp extracted ') as folder:
+ with tempfile.TemporaryDirectory(prefix='4wis C++ 解压 ') as folder:
   dest=pathlib.Path(folder)
   with zipfile.ZipFile(args.archive) as archive:
    assert all(not pathlib.PurePosixPath(n).is_absolute() and '..' not in pathlib.PurePosixPath(n).parts for n in archive.namelist())

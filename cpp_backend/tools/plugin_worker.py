@@ -4,6 +4,8 @@ Not a security sandbox: plugins are trusted user programs, as in the Python
 route. A separate process contains crashes and enforces the C++ deadline.
 """
 import argparse, contextlib, dataclasses, json, math, os, pathlib, sys, time
+for stream in (sys.stdin,sys.stdout,sys.stderr):
+ if hasattr(stream,'reconfigure'):stream.reconfigure(encoding='utf-8')
 args=argparse.ArgumentParser();args.add_argument('--root',required=True);root=pathlib.Path(args.parse_args().root)
 sys.path.insert(0,str(root/'backend/src'))
 sys.path.insert(0,str(root/'app/backend'))

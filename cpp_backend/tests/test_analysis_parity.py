@@ -11,6 +11,7 @@ from sim4wis.project.params_codec import params_from_dict
 EXE=os.environ.get('CPP_SERVER',str(ROOT/'cpp_backend/build/sim4wis-cpp'))
 @pytest.fixture
 def api(tmp_path):
+ tmp_path=tmp_path/'中文数据 目录';tmp_path.mkdir()
  env=os.environ.copy()
  for name in ('runs','studies','vehicle_profiles','projects','experiments','targets'):
   env['SIM4WIS_'+name.upper()+'_DIR']=str(tmp_path/name)
@@ -51,7 +52,7 @@ def test_rack_inverse(api,wheel):
  response=api('/api/load-analysis/rack-solve',dict(rack_travels=travels.tolist(),wheel_index=wheel,hint_delta=.03))
  assert response['status']==200,response
  assert_tree(response['body'],dict(wheel_index=wheel,solutions=expected))
-@pytest.mark.parametrize('vary,values',[('suspension.caster_angle',[.02,.06,.12]),('static_toe_front',[-.003,0,.003]),('cg_to_front',[1.2,1.6,1.9])])
+@pytest.mark.parametrize('vary,values',[('suspension.caster_angle',[.02,.06,.12]),('static_toe_front',[-.003,0,.003]),('cg_to_front',[1.2,1.6,1.9]),('mass_typo',[1000,2000]),('suspension.caster_typo',[.02,.06])])
 def test_sensitivity(api,vary,values):
  req=dict(vary_param=vary,values=values,speed=12,angles=np.linspace(-.5,.5,41).tolist(),wheel_index=2,mu=.8,body_coupling='vehicle')
  expected=sweep_sensitivity(VehicleParams(),**req);response=api('/api/load-analysis/sensitivity',req)

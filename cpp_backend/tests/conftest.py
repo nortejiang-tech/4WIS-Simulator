@@ -6,6 +6,7 @@ sys.path.insert(0,str(ROOT/'backend/tests'))
 SERVER=os.environ.get('CPP_SERVER',str(ROOT/'cpp_backend/build/sim4wis-cpp'))
 @pytest.fixture
 def cpp_http(tmp_path):
+ tmp_path=tmp_path/'中文数据 目录';tmp_path.mkdir()
  with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
  env=os.environ.copy()
  for name in ('runs','studies','vehicle_profiles','projects','experiments','targets','plugins'):

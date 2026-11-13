@@ -18,14 +18,14 @@ namespace fourwis {
 namespace {
 fs::path plugin_root;
 fs::path directory() {
-  if (const char *v = std::getenv("SIM4WIS_PLUGINS_DIR"))
-    return fs::u8path(v);
-  const char *base = std::getenv("SIM4WIS_DATA_DIR");
-  return (base ? fs::u8path(base) : plugin_root) / "plugins/strategies";
+  if (auto v = env_path("SIM4WIS_PLUGINS_DIR"))
+    return *v;
+  return env_path("SIM4WIS_DATA_DIR").value_or(plugin_root) /
+         "plugins/strategies";
 }
 fs::path python() {
-  if (const char *v = std::getenv("SIM4WIS_PLUGIN_PYTHON"))
-    return fs::u8path(v);
+  if (auto v = env_path("SIM4WIS_PLUGIN_PYTHON"))
+    return *v;
   for (auto &p : {plugin_root / "app/python/python.exe",
                   plugin_root / "app/python/bin/python3",
                   plugin_root / "backend/.venv/bin/python",

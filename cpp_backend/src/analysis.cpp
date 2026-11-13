@@ -399,6 +399,13 @@ std::optional<Response> Service::analysis(const std::string &path,
     for (size_t i = 0; i < std::min<size_t>(64, values.size()); i++) {
       json candidate = p;
       try {
+        auto path_parts = split(key, '.');
+        bool known = path_parts.size() == 1 && candidate.contains(key);
+        if (path_parts.size() == 2 && (path_parts[0] == "suspension" ||
+                                       path_parts[0] == "steering_geometry"))
+          known = candidate[path_parts[0]].contains(path_parts[1]);
+        if (!known)
+          throw Error(422, "unknown sensitivity parameter");
         set_dotted(candidate, key, values[i]);
         auto pp = candidate.get<VehicleParams>();
         auto request = body;

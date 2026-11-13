@@ -330,9 +330,8 @@ fs::path Storage::dir(const std::string &name) const {
   for (char c : name)
     e += char(std::toupper(static_cast<unsigned char>(c)));
   e += "_DIR";
-  const char *v = std::getenv(e.c_str());
-  const char *base = std::getenv("SIM4WIS_DATA_DIR");
-  fs::path out = v ? fs::u8path(v) : (base ? fs::u8path(base) : root) / name;
+  auto v = env_path(e.c_str());
+  fs::path out = v ? *v : env_path("SIM4WIS_DATA_DIR").value_or(root) / name;
   fs::create_directories(out);
   return out;
 }

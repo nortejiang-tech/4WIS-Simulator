@@ -108,3 +108,21 @@ async def test_official_mcp_client(cpp_http):
    assert not stepped.is_error,stepped
    exported=await session.call_tool('export_session',{'session_id':sid});assert not exported.is_error,exported
    closed=await session.call_tool('close_session',{'session_id':sid});assert not closed.is_error
+
+
+def test_completed_batch_registry_is_bounded(client):
+ first=None
+ for index in range(53):
+  body={'experiment':{'name':f'bounded_{index}','maneuver':{'steps':[{'duration':.01,'speed_kmh':0}]}}}
+  response=client.post('/api/batch',json=body)
+  assert response.status_code==200,response.text
+  jid=response.json()['job_id'];first=first or jid
+  for _ in range(200):
+   queried=client.get('/api/batch/'+jid)
+   assert queried.status_code==200,(index,jid,queried.text)
+   job=queried.json()
+   if job['status']!='running':break
+   time.sleep(.01)
+  assert job['status']=='done',job
+ assert len(client.get('/api/batch').json()['jobs'])==50
+ assert client.get('/api/batch/'+first).status_code==404

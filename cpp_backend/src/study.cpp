@@ -452,21 +452,21 @@ Service::studies(const std::string &method,
                  {"error", ""},         {"study_id", nullptr},
                  {"result", nullptr}};
     study_jobs[id] = job;
-    workers.emplace_back([this, spec, job] {
-      try {
-        auto result = run_study(store, spec, &running);
-        std::lock_guard<std::recursive_mutex> lock(mutex);
-        job->data["study_id"] = result.first;
-        job->data["result"] = result.second;
-        job->data["status"] = "done";
-      } catch (const std::exception &e) {
-        std::lock_guard<std::recursive_mutex> lock(mutex);
-        job->data["status"] = "error";
-        job->data["error"] = e.what();
-      }
-      std::lock_guard<std::recursive_mutex> lock(mutex);
-      job->finished = epoch();
-    });
+    workers.emplace_back(job, std::thread([this, spec, job] {
+                           try {
+                             auto result = run_study(store, spec, &running);
+                             std::lock_guard<std::recursive_mutex> lock(mutex);
+                             job->data["study_id"] = result.first;
+                             job->data["result"] = result.second;
+                             job->data["status"] = "done";
+                           } catch (const std::exception &e) {
+                             std::lock_guard<std::recursive_mutex> lock(mutex);
+                             job->data["status"] = "error";
+                             job->data["error"] = e.what();
+                           }
+                           std::lock_guard<std::recursive_mutex> lock(mutex);
+                           job->finished = epoch();
+                         }));
     return Response(
         json{{"job_id", id}, {"total", check["runs"]}, {"estimate", check}});
   }
