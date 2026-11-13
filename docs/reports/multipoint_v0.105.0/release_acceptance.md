@@ -14,7 +14,7 @@
 - 全量收集后补充数值失败暂停保护测试；最终故障/物理集 99 passed，新增 1 项。没有重复计数为额外 99 个新用例。
 - Mac 原生便携包：**PASS，41 项**，含解压后的嵌入式 Python/后端/前端、全部后端源文件哈希、真实 MCP 双模型同时/错时故障和导出。首次发现测试子进程未继承包内 PYTHONPATH，修复测试启动环境后通过。
 - Windows 原生 CI 包与 GitHub release：PENDING，待本提交推送后执行。
-- 原始完整门禁输出经本地路径脱敏保存在 `local-validation.log`；结构化汇总为 `local_validation.json`；Mac 包证据为 `mac_portable_checks.json`。
+- 原始完整门禁输出经本地路径脱敏保存在 `local-validation.txt`；结构化汇总为 `local_validation.json`；Mac 包证据为 `mac_portable_checks.json`。
 
 ## 范围与回滚
 
