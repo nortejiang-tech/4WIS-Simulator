@@ -213,7 +213,7 @@ def test_session_drives_through_the_speed_channel():
 
     root = Path(__file__).resolve().parents[2]
     exp = Experiment.model_validate(
-        yaml.safe_load((root / "experiments" / "step_steer_60kmh.yaml").read_text())
+        yaml.safe_load((root / "experiments" / "step_steer_60kmh.yaml").read_text(encoding="utf-8"))
     )
     session = SimSession(exp)
     original = session.strategy.compute

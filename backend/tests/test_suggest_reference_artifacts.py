@@ -30,7 +30,7 @@ def sha256_text(content: str) -> str:
 def write_artifact(path: Path, rel_path: str, content: str) -> None:
     file_path = path / rel_path
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    file_path.write_text(content, encoding="utf-8")
+    file_path.write_bytes(content.encode("utf-8"))
 
 
 def test_suggest_reference_artifacts_builds_snippets(tmp_path: Path) -> None:
