@@ -7,7 +7,7 @@
 > vitest run --run
 
 
- RUN  v2.1.9 /Users/nortepro/.codex/worktrees/cpp-full-backend/4WIS Simulator/frontend
+ RUN  v2.1.9 <workspace>/frontend
 
  ✓ src/vehicle/geometryModel.test.ts (2 tests) 1ms
  ✓ src/input/focusPolicy.test.ts (14 tests) 2ms
