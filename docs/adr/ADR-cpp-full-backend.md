@@ -1,9 +1,12 @@
 # ADR — independent full C++ service route
 
+Status: Accepted as the canonical product and release route by
+[ADR-2026-11-14-cpp-canonical-release.md](ADR-2026-11-14-cpp-canonical-release.md).
 Date: 2026-11-14. Branch: `codex/cpp-full-backend`. Implementation complete;
 platform release evidence is recorded separately in
 `docs/reports/cpp_v0.107.0/acceptance.md`. Base: e609c4c, the already committed
-native simulation route. Main and the native route remain independent.
+native simulation route. The native route remains only as a maintenance porting
+bridge; the full C++ route is the product release line.
 
 ## Decision and scope
 
@@ -51,6 +54,5 @@ and JSON serialization/parsing. Raw samples and build identities are retained.
 Software equivalence does not establish vehicle correlation. Reduced planar
 physics, research multibody behavior, operator-selected parameters, observation-
 only sensor faults, and symmetric duplicated single-wheel sizing loads remain
-explicit limits. Main is not merged and stable v0.105.0 is not replaced.
-Rollback is stopping this process and starting another independent package;
-there is no user-data schema migration.
+explicit limits. Main tracks this selected full C++ route; v0.105.0 remains the
+previous stable rollback release. There is no user-data schema migration.

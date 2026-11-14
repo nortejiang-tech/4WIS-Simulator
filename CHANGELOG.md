@@ -1,10 +1,18 @@
 # Changelog
 
-## v0.106.0 — C++ 原生内核独立预览（2026-11-14）
+## v0.107.0 — 全 C++ 后端正式发布（2026-11-14）
+
+- 将仿真、控制、故障、分析、存储、HTTP/WebSocket 与 MCP 统一迁入独立 C++17 服务，继续使用 React 浏览器界面。
+- 选为唯一正式发布路线，Mac Apple Silicon 与 Windows x64 便携包、分析报告和测试证据见 [GitHub Release](https://github.com/nortejiang-tech/4WIS-Simulator/releases/tag/v0.107.0)。
+- Mac/Windows C++ 差分、接口和 MCP 238 项通过；两平台前端 54 项、浏览器流程 58 项及便携包检查通过。实测与物理边界见 [验收记录](docs/reports/cpp_v0.107.0/acceptance.md)。
+- 内核迁移版保留为维护过渡分支，不再作为独立产品版本发布。
+- 完整功能清单与部署边界见 [v0.107.0 变更说明](docs/v0.107.0_changelog.md)。
+
+## v0.106.0 — C++ 原生内核迁移中间阶段（2026-11-14）
 
 - 两种动力学模型、轮胎/轮速和连杆几何迁入 C++17，保留 Python 参照及接口兼容。
 - 提供明确内核状态、逐通道对照、重复端到端性能测试与分平台原生包。
-- 独立分支，不替换 main/v0.105.0。详见 [变更说明](docs/v0.106.0_changelog.md)。
+- 仅作为 A 路线的历史迁移状态，不是独立正式产品线；后续维护先移植到全 C++ 后端并通过验收后才能发布。过渡实现见 [A 分支变更说明](https://github.com/nortejiang-tech/4WIS-Simulator/blob/codex/native-simulation-core/docs/v0.106.0_changelog.md)。
 
 ## v0.105.0 — 多点故障、动力学数值复核与 MCP 时间线（2026-11-13）
 

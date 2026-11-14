@@ -1,11 +1,12 @@
-# Independent C++ backend preview — v0.107.0
+# C++ backend — v0.107.0
 
 This branch keeps the existing React browser presentation and runs simulation,
 controllers, faults, experiments, studies, metrics, target checks, storage,
 HTTP/WebSocket and MCP in a standalone C++17 process. The Python service in
 `backend/` is the differential test oracle and optional user-code adapter; it
-is not launched for built-in execution. `main` and the native-kernel branch
-remain separate.
+is not launched for built-in execution. This is the canonical product backend
+on `main`. The native-kernel route remains available as a maintenance porting
+bridge and does not publish separate product releases.
 
 Build offline with `cmake -S cpp_backend -B cpp_backend/build -DCMAKE_BUILD_TYPE=Release`
 and `cmake --build cpp_backend/build --config Release --parallel 4`.
@@ -54,5 +55,5 @@ observations in this version, and actuator sizing uses a symmetric duplicated
 single-wheel load approximation. See the shared sizing correction report for
 the original mixed-wheel interpolation defect fixed on both candidate routes.
 
-Rollback is stopping this executable and starting a separate candidate/stable
-package. No production database migration or main-branch merge is performed.
+Rollback is stopping this executable and starting the previous stable v0.105.0
+package. No production database migration is performed.

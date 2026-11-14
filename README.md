@@ -1,12 +1,12 @@
 # 4WIS Simulator
 
-四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前独立预览分支版本是 `v0.107.0`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到 macOS/Windows 便携版发布的闭环。
+四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前正式版本是 `v0.107.0`，采用独立 C++17 后端，默认车辆标定为智己 LS9，覆盖实时驾驶、参数建模、实验批跑、KPI 分析、run 回放和安全研究。
 
 项目仍定位为内部预研和工程分析工具，不是经过实车标定或认证的安全结论工具。模型可信度和边界见 [docs/validation_matrix.md](docs/validation_matrix.md)。
 
-> 本分支是全 C++17 后端候选：仿真、控制器、故障编排、研究分析、HTTP/WebSocket 和 MCP 由独立原生程序执行，保留同一 React 浏览器界面。用户 Python/FMU/MATLAB 插件在独立兼容进程运行。默认端口 **8020**；内核迁移版使用 **8010**。正式版 main / v0.105.0 保留。
+> 正式 v0.107.0 使用全 C++17 后端：仿真、控制器、故障编排、研究分析、HTTP/WebSocket 和 MCP 由独立原生程序执行，保留同一 React 浏览器界面。用户 Python/FMU/MATLAB 插件在独立兼容进程运行。默认端口 **8020**。A 路线的内核迁移分支只作为维护过渡状态，不再单独发布。
 >
-> [构建、启动和 MCP](cpp_backend/README.md) · [两条路线的实测对照与样例](docs/reports/cpp_v0.107.0/comparison.md) · [最终验收记录](docs/reports/cpp_v0.107.0/acceptance.md)。以下保留的 Python 开发命令用于参照服务和兼容层；启动本候选请按 C++ 指南操作。
+> [构建、启动和 MCP](cpp_backend/README.md) · [实测对照与多点故障样例](docs/reports/cpp_v0.107.0/comparison.md) · [最终验收记录](docs/reports/cpp_v0.107.0/acceptance.md) · [发布路线决策](docs/adr/ADR-2026-11-14-cpp-canonical-release.md)。以下 Python 命令只用于参照服务和兼容层；正式产品请按 C++ 指南启动。
 
 > v0.105.0 增加多点同时/错时/恢复故障，实时、批跑和 MCP 共用时间线；修正机械卡滞与自由转向的执行器旁路、摩擦与积分处理。动力学内部步长限制为 1.25 ms，外层控制节拍不变。见 [多点故障与 MCP 用法](docs/multipoint_faults.md)、[样例分析](docs/reports/multipoint_v0.105.0/analysis.md) 和 [数值修订证据](docs/reports/multipoint_v0.105.0/numerical_review.md)。旧版数值基线不可直接混用。
 
@@ -47,19 +47,27 @@
 
 ### 一键启动
 
-不想装任何东西：从 [Releases](https://github.com/nortejiang-tech/4WIS-Simulator/releases)
-下载对应平台的便携包解压，双击 `start.command`（macOS）或 `start.bat`（Windows）。
-包里自带 Python 运行时和已构建的前端，无需安装 Python / Node，浏览器会自动打开
-`http://127.0.0.1:8010/`。macOS 首次会被 Gatekeeper 拦截 → 右键点 `start.command`
-→ 打开 → 再点"打开"。
+不想装任何东西：从 [v0.107.0 Release](https://github.com/nortejiang-tech/4WIS-Simulator/releases/tag/v0.107.0)
+下载对应平台的便携包并解压，启动 `Start.command`（macOS）或 `Start.bat`（Windows）。
+包里自带原生后端、已构建前端和可选插件运行时，无需安装开发版 Python / Node，
+浏览器地址为 `http://127.0.0.1:8020/`。macOS 首次运行可能需要在系统确认后打开。
 
-有源码的话：
+开发 B 版 C++ 后端：
+
+```bash
+cmake -S cpp_backend -B cpp_backend/build -DCMAKE_BUILD_TYPE=Release
+cmake --build cpp_backend/build --config Release --parallel 4
+```
+
+详细配置、MCP 和测试命令见 [C++ 后端指南](cpp_backend/README.md)。
+
+Python 参照服务开发：
 
 ```bash
 python scripts/start.py
 ```
 
-首次运行会自动装依赖（`pip install -e backend` + `npm install`），然后起后端
+首次运行会自动装依赖（`pip install -e backend` + `npm install`），然后起参照后端
 （`:8010`）和 Vite 开发服务器（`:5173`），并打开 `http://localhost:5173/`。
 加 `--build` 则改为构建前端并由后端单口托管，浏览器打开 `http://127.0.0.1:8010/`。
 

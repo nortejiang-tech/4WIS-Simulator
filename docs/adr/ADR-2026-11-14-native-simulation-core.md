@@ -1,10 +1,14 @@
 # ADR — C++ numerical core behind the existing application
 
 Date: 2026-11-14. Baseline: v0.105.0 / a1a4d40c91ca21f5a8f77fcd95ff55770f1f6784.
-Branch: `codex/native-simulation-core`. Status: implementation accepted by user.
+Branch: `codex/native-simulation-core`. Status: retained as an implementation
+bridge; independent product releases are superseded by
+[ADR-2026-11-14-cpp-canonical-release.md](ADR-2026-11-14-cpp-canonical-release.md).
 
-The user chose a native simulation core, retaining the UI, Python services and
-MCP. The branch must remain independent of main and the existing release.
+The original user decision chose a native simulation core while retaining the
+UI, Python services and MCP. After comparing the complete backend route, the
+user selected B for the sole product line. Keep this branch only as an
+intermediate path for staging and porting future maintenance into full C++.
 
 ## Evidence and decision
 
