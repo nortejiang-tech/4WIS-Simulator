@@ -1,10 +1,10 @@
 # 4WIS Simulator
 
-四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前独立预览分支版本是 `v0.106.0`，默认车辆标定为智己 LS9，已经形成从实时驾驶、参数建模、实验批跑、KPI 分析、run 回放、安全研究报告到 macOS/Windows 便携版发布的闭环。
+四轮独立转向（4-Wheel Independent Steering）工程研究平台。当前正式产品版本是 `v0.107.0`，全 C++ 后端位于 main。默认车辆标定为智己 LS9，支持实时驾驶、参数建模、实验批跑、KPI 分析、run 回放和安全研究。
 
 项目仍定位为内部预研和工程分析工具，不是经过实车标定或认证的安全结论工具。模型可信度和边界见 [docs/validation_matrix.md](docs/validation_matrix.md)。
 
-> 本分支将数值计算迁入 C++17，保留界面与 MCP。正式版 main / v0.105.0 保留。见 [原生内核与回退说明](docs/native_core.md)。
+> 本分支 `codex/native-simulation-core` 仅作为维护升级到全 C++ 的中间移植状态，不是独立产品版本，不再单独发布。用户安装请使用 [v0.107.0 全 C++ 正式版](https://github.com/nortejiang-tech/4WIS-Simulator/releases/tag/v0.107.0)。见 [原生内核与回退说明](docs/native_core.md)。
 
 > v0.105.0 增加多点同时/错时/恢复故障，实时、批跑和 MCP 共用时间线；修正机械卡滞与自由转向的执行器旁路、摩擦与积分处理。动力学内部步长限制为 1.25 ms，外层控制节拍不变。见 [多点故障与 MCP 用法](docs/multipoint_faults.md)、[样例分析](docs/reports/multipoint_v0.105.0/analysis.md) 和 [数值修订证据](docs/reports/multipoint_v0.105.0/numerical_review.md)。旧版数值基线不可直接混用。
 
